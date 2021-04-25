@@ -1,0 +1,60 @@
+diff --git a/br-ext/package/optee_client_ext/S30optee b/br-ext/package/optee_client_ext/S30optee
+index 6e43a70..db83790 100755
+--- a/br-ext/package/optee_client_ext/S30optee
++++ b/br-ext/package/optee_client_ext/S30optee
+@@ -4,6 +4,7 @@ DAEMON="tee-supplicant"
+ DAEMON_PATH="/usr/sbin"
+ DAEMON_ARGS="-d /dev/teepriv0"
+ PIDFILE="/var/run/$DAEMON.pid"
++MEGCC_CI_CA_BIN="optee_example_megcc_inference"
+ 
+ start() {
+ 	# tee-supplicant and the client applications need not run as
+@@ -48,6 +49,16 @@ start() {
+ 	else
+ 		echo "FAIL"
+ 	fi
++    printf "Starting run ${MEGCC_CI_CA_BIN} \n"
++    ${MEGCC_CI_CA_BIN}
++    status=$?
++	if [ "$status" -eq 0 ]; then
++		echo "run optee_example_megcc_inference sunccess"
++	else
++		echo "run optee_example_megcc_inference failed!!!"
++	fi
++    printf "poweroff qemu now"
++    poweroff
+ 	return "$status"
+ }
+ 
+diff --git a/qemu_v8.mk b/qemu_v8.mk
+index 2f22622..f8b76ea 100644
+--- a/qemu_v8.mk
++++ b/qemu_v8.mk
+@@ -414,16 +414,10 @@ endif
+ .PHONY: run-only
+ run-only:
+ 	ln -sf $(ROOT)/out-br/images/rootfs.cpio.gz $(BINARIES_PATH)/
+-	$(call check-terminal)
+-	$(call run-help)
+-	$(call launch-terminal,54320,"Normal World")
+-	$(call launch-terminal,54321,"Secure World")
+-	$(call wait-for-ports,54320,54321)
+ 	cd $(BINARIES_PATH) && $(QEMU_BUILD)/aarch64-softmmu/qemu-system-aarch64 \
+ 		-nographic \
+-		-serial tcp:localhost:54320 -serial tcp:localhost:54321 \
+ 		-smp $(QEMU_SMP) \
+-		-s -S -machine virt,secure=on,gic-version=$(QEMU_GIC_VERSION),virtualization=$(QEMU_VIRT) \
++		-machine virt,secure=on,gic-version=$(QEMU_GIC_VERSION),virtualization=$(QEMU_VIRT) \
+ 		-cpu $(QEMU_CPU) \
+ 		-d unimp -semihosting-config enable=on,target=native \
+ 		-m $(QEMU_MEM) \
+@@ -432,7 +426,7 @@ run-only:
+ 		-kernel Image -no-acpi \
+ 		-append 'console=ttyAMA0,38400 keep_bootcon root=/dev/vda2 $(QEMU_KERNEL_BOOTARGS)' \
+ 		$(QEMU_XEN) \
+-		$(QEMU_EXTRA_ARGS)
++		$(QEMU_EXTRA_ARGS) -no-reboot
+ 
+ ifneq ($(filter check check-rust,$(MAKECMDGOALS)),)
+ CHECK_DEPS := all

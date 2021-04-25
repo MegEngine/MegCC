@@ -1,0 +1,385 @@
+namespace MegCC;
+
+// Please only add new dtypes at the end of this list
+enum DTypeEnum : byte {
+    Float32 = 0,
+    Float16 =1,
+    Int32 = 2,
+    Int8 = 3,
+    Int16 = 4,
+    Uint8 = 5,
+    QInt8 = 100,
+    QInt32 = 101,
+    QUint8 = 102,
+}
+
+table DTypeParam {
+    scale:float = 1.0;
+
+    // Won't be set for symmetric quantization types
+    zero_point:ubyte = 0;
+}
+
+table DType {
+    type:DTypeEnum;
+    param:DTypeParam;
+}
+
+// Layout
+
+// Please only add new layout at the end of this list
+enum Format : byte {
+    NCHW = 0,
+    NHWC,
+    NCHW4,
+    NCHW8,
+    OIHW,
+}
+
+// Please only add new device at the end of this list
+enum Device : byte {
+    BARE_METAL = 0,
+    ARM64,
+    ARM32,
+    ARM64_V82,
+    ARM32_V82,
+    OPENCL_MALI,
+}
+
+// flag the tensor type
+enum TensorType : byte {
+    TENSOR = 0,
+    WEIGHT = 1,
+}
+
+table Layout {
+    dims: [int];
+    stride: [int];
+    format: Format;
+}
+
+// Tensor, offset is the length in byte from base memory in static memory plan
+table Tensor {
+    dtype: DType;
+    layout: Layout;
+    offset: long;
+
+    dynamic: bool;
+
+    // the total use count in the network, this is useful when memory plan when
+    // input shape changed
+    use_count: int;
+    name: string;
+}
+
+// Workspace, size: the total size of the workspace, nr_thread: the thread
+// number to share the workspace, offset: the workspace offset in tensor memory
+table Workspace {
+    size: long;
+    offset: long;
+}
+
+// Weight, the weight of the model
+table Weight {
+    dtype: DType;
+    layout: Layout;
+
+    use_count: int;
+    data: [byte];
+    name: string;
+
+    checksum: uint32 = 0;
+}
+
+// Opr, the abstract opr of all the operators, in the runtime frame all opr only
+// have one action, just execute the kernel with the inputs, outputs tensor and
+// weights
+table Opr {
+    name: string;
+    type: string;
+
+    // the input/outputs tensor idx in the all tensors of the model
+    inputs: [int];
+    // flag the corresponding inputs tensor type, weights or tensor
+    input_types: [TensorType];
+
+    outputs: [int];
+
+    workspace: Workspace;
+
+    // the init function index in all init functions to execute before execute kernel
+    init_id: int = -1;
+
+    // the kernel function index in all kernel functions to perform real computation
+    kernel_id: int;
+
+    // get the workspace of when the opr executing, this should consider multi
+    // thread
+    workspace_id: int = -1;
+
+    // deduce the output shape, when input is not the origin input of the model
+    deduce_id: int = -1;
+}
+
+// DevMemAlloc instruction which means alloc memory on specific device
+table DevMemAlloc {
+    tensor: int;
+}
+
+// DevMemFree instruction which means free memory on specific device
+table DevMemFree {
+    tensor: int;
+}
+
+enum MemForwardType : byte {
+    RESHAPE = 0,
+    SUBTENSOR = 1,
+}
+
+table MemForward {
+    // the input tensor idx
+    input: int;
+    // the output tensor idx
+    output: int;
+    // the offset of dst tensor ptr from src ptr
+    offset: int;
+    // the origin opr type
+    type: MemForwardType;
+}
+
+table Dimshuffle {
+    pattern: [int];
+    // the input tensor idx
+    input: int;
+    //! input tensor type
+    input_type: TensorType;
+    // the output tensor idx
+    output: int;
+}
+
+table BroadCast {
+    // the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+table Reshape {
+    // the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+enum ArithMode : byte {
+    ROUND = 0,
+    NEGATE,
+    SUB,
+    ADD,
+    MUL,
+    Max,
+    Min,
+    LT,
+    LEQ,
+    FLOORDIV,
+    TRUE_DIV,
+}
+
+table Arithmetic {
+    mode: ArithMode;
+    // the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+table Concat {
+    axis: int;
+    // the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+table ShapeOf {
+    // the input tensor idx
+    input: int;
+    //! input tensor type
+    input_type: TensorType;
+    // the output tensor idx
+    output: int;
+}
+
+table IndexDesc {
+    axis: int;
+    start: int;
+    end: int;
+    step: int;
+    index: int;
+}
+
+table SubTensor {
+    //! descs is the arrary of subtensor param start, end, step, index
+    descs: [IndexDesc];
+    //! flags the corresponding of subtensor param start, end, step, index
+    //! if -1, mean it is not exist
+    //! if 0, mean the corresponding items is static value
+    //! if 1, mean the corresponding items is dynamic, and items store the index
+    //! of input
+    flags: [IndexDesc];
+    //! the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    //! the output tensor idx
+    output: int;
+}
+
+table IndexingMultiAxis {
+    //! axis list used 
+    axis: [int];
+    //! the inputs tensor idx
+    inputs: [int];
+    //! input tensor type
+    input_types: [TensorType];
+    //! the output tensor idx
+    output: int;
+}
+
+table SetSubTensor {
+    //! iterms is the arrary of subtensor param start, end, step, index
+    descs: [IndexDesc];
+    //! flags the corresponding of subtensor param start, end, step, index
+    //! if -1, mean it is not exist
+    //! if 0, mean the corresponding items is static value
+    //! if 1, mean the corresponding items is dynamic, and items store the index
+    //! of input
+    flags: [IndexDesc];
+
+    // the inputs tensor idx
+    inputs: [int];
+
+    // input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+enum InterpolationMode : byte {
+    NEAREST = 0,
+    LINEAR,
+    AREA,
+    CUBIC,
+    LANCZOS4,
+}
+
+enum BorderModeMode : byte {
+    REPLICATE = 0,
+    REFLECT,
+    REFLECT_101,
+    WRAP,
+    CONSTANT,
+    TRANSPARENT,
+    ISOLATED,
+}
+
+table WarpPerspective {
+    bmode: BorderModeMode;
+    imode: InterpolationMode;
+    format: Format;
+    bval: float;
+    mat_id: [int];
+
+    // the inputs tensor idx
+    inputs: [int];
+    // input tensor type
+    input_types: [TensorType];
+    // the output tensor idx
+    output: int;
+}
+
+table TypeCvt{
+    idtype: string;
+    odtype: string;
+    // the input tensor idx
+    input: int;
+    // input tensor type
+    input_type: TensorType;
+    // the output tensor idx
+    output: int;
+}
+
+table ArgSort{
+    // ascend or decend
+    order: string;
+    // the input tensor idx
+    input: int;
+    // input tensor type
+    input_type: TensorType;
+    // the output tensor idx
+    output: int;
+}
+
+table INSTRUCTION_TABLE_END {}
+
+union Instruction {
+    Opr = 1,
+    DevMemAlloc = 2,
+    DevMemFree = 3,
+    MemForward = 4,
+    Dimshuffle = 5,
+    BroadCast = 6,
+    Arithmetic = 7,
+    Concat = 8,
+    SubTensor = 9,
+    SetSubTensor = 10,
+    ShapeOf = 11,
+    WarpPerspective = 12,
+    TypeCvt = 13,
+    IndexingMultiAxis = 14,
+    ArgSort = 15,
+    Reshape = 16,
+    // terminator to mark the end of instruction definitions
+    // all instruction types should be placed before here
+    INSTRUCTION_TABLE_END = 17
+}
+
+// device base data for a Model
+table DeviceModel {
+    device: Device;
+
+    tensor_pool: [Tensor];
+    instructions: [Instruction];
+
+    // the total tensor memory used
+    tensor_memory: ulong;
+
+    // the model input/output tensor index
+    inputs: [int];
+    outputs: [int];
+}
+
+// Model
+table Model {
+    weight_pool: [Weight];
+    device_models: [DeviceModel];
+
+    // whether the input of the model is variable
+    const_shape: bool;
+
+    // the model name
+    name: string;
+    // model id is used to identify the model, and check when load with the
+    // generated kernel
+    model_id: ulong;
+}
+
+root_type Model;

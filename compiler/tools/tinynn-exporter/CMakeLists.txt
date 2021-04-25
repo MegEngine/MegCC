@@ -1,0 +1,5 @@
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+add_llvm_executable(tinynn-exporter tinynn-exporter.cpp)
+llvm_update_compile_flags(tinynn-exporter)
+target_link_libraries(tinynn-exporter PRIVATE ${dialect_libs} MLIRTinyNNExporter Common)
+mlir_check_all_link_libraries(tinynn-exporter)

@@ -1,0 +1,5 @@
+file(GLOB_RECURSE SOURCES_FILE *.cpp *.h)
+add_library(KernelGenAuto STATIC ${SOURCES_FILE})
+target_include_directories(KernelGenAuto PRIVATE ${PROJECT_SOURCE_DIR}/lib/KernelGen/)
+target_include_directories(KernelGenAuto PRIVATE ${PROJECT_SOURCE_DIR}/include/)
+target_compile_options(KernelGenAuto PRIVATE -Werror)

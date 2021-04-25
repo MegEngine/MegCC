@@ -1,0 +1,11 @@
+{
+    "dump_dir":"./kernel_yolox_s_arm/",
+    "models":[
+        {
+            "model_name":"yolox_s",
+            "model_path":"./yolox_s.mge",
+            "input_shape_str":"data=(1,3,640,640)",
+            "enable_nchw44":true
+        }
+    ]
+}

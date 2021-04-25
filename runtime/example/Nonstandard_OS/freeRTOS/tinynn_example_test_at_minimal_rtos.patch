@@ -1,0 +1,55 @@
+diff --git a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
+index 06eab00ec..51b5623a2 100644
+--- a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
++++ b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/FreeRTOSConfig.h
+@@ -46,7 +46,7 @@
+ #define configCPU_CLOCK_HZ				( ( unsigned long ) 25000000 )
+ #define configTICK_RATE_HZ				( ( TickType_t ) 1000 )
+ #define configMINIMAL_STACK_SIZE		( ( unsigned short ) 80 )
+-#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 60 * 1024 ) )
++#define configTOTAL_HEAP_SIZE			( ( size_t ) ( 60 * 1024 * 30) )
+ #define configMAX_TASK_NAME_LEN			( 12 )
+ #define configUSE_TRACE_FACILITY		0
+ #define configUSE_16_BIT_TICKS			0
+diff --git a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/build/gcc/Makefile b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/build/gcc/Makefile
+index 33e0cdde6..331020111 100644
+--- a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/build/gcc/Makefile
++++ b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/build/gcc/Makefile
+@@ -39,6 +39,7 @@ SOURCE_FILES += $(KERNEL_DIR)/portable/GCC/ARM_CM3/port.c
+ DEMO_ROOT = $(FREERTOS_ROOT)/Demo
+ COMMON_DEMO_FILES = $(DEMO_ROOT)/Common/Minimal
+ INCLUDE_DIRS += -I$(DEMO_ROOT)/Common/include
++INCLUDE_DIRS += -I$(DEMO_ROOT)/Common/Minimal/tinynn_sdk/include
+ VPATH += $(COMMON_DEMO_FILES)
+ SOURCE_FILES += (COMMON_DEMO_FILES)/AbortDelay.c
+ SOURCE_FILES += (COMMON_DEMO_FILES)/BlockQ.c
+@@ -67,6 +68,7 @@ SOURCE_FILES += (COMMON_DEMO_FILES)/StreamBufferInterrupt.c
+ SOURCE_FILES += (COMMON_DEMO_FILES)/TaskNotify.c
+ SOURCE_FILES += (COMMON_DEMO_FILES)/TaskNotifyArray.c
+ SOURCE_FILES += (COMMON_DEMO_FILES)/TimerDemo.c
++SOURCE_FILES += (COMMON_DEMO_FILES)/tinynn_freeRTOS_example.c
+ 
+ #
+ # Application entry point.  main_blinky is self contained.  main_full builds
+@@ -105,7 +107,7 @@ $(OUTPUT_DIR)/$(IMAGE): ./mps2_m3.ld $(OBJS_OUTPUT) Makefile
+ 	@echo ""
+ 	$(LD) $(OBJS_OUTPUT) $(CFLAGS) -Xlinker --gc-sections -Xlinker -T ./mps2_m3.ld \
+ 		-Xlinker -Map=$(OUTPUT_DIR)/RTOSDemo.map -specs=nano.specs \
+-		-specs=nosys.specs -specs=rdimon.specs -o $(OUTPUT_DIR)/$(IMAGE)
++		-specs=nosys.specs -specs=rdimon.specs -lTinyNN -lm -L$(DEMO_ROOT)/Common/Minimal/tinynn_sdk/lib -o $(OUTPUT_DIR)/$(IMAGE)
+ 	$(SIZE) $(OUTPUT_DIR)/$(IMAGE)		
+ 
+ $(DEP_OUTPUT):
+diff --git a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/main.c b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/main.c
+index 0f135c5e0..c6ea21c5c 100644
+--- a/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/main.c
++++ b/FreeRTOS/Demo/CORTEX_MPS2_QEMU_IAR_GCC/main.c
+@@ -107,6 +107,8 @@ void main( void )
+ 
+ 	/* The mainCREATE_SIMPLE_BLINKY_DEMO_ONLY setting is described at the top
+ 	of this file. */
++	printf("start tinynn inference!!!\n");
++	tinynn_main();
+ 	#if ( mainCREATE_SIMPLE_BLINKY_DEMO_ONLY == 1 )
+ 	{
+ 		main_blinky();
