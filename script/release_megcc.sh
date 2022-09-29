@@ -18,6 +18,8 @@ mkdir -p ${OUT_DIR}/build_host
 mkdir -p ${OUT_DIR}/bin
 mkdir -p ${OUT_DIR}/runtime
 mkdir -p ${OUT_DIR}/example
+mkdir -p ${OUT_DIR}/yolox_example 
+cp -rf ${PROJECT_PATH}/yolox_example/* ${OUT_DIR}/yolox_example/ 
 mkdir -p ${OUT_DIR}/script
 cp -a ${PROJECT_PATH}/script/{ppl_gen.sh,ppl_build.sh,test_model.py} ${OUT_DIR}/script/
 cp -r ${PROJECT_PATH}/doc ${OUT_DIR}/doc
@@ -38,4 +40,7 @@ cp -a $RUNTIME_PATH/{flatcc,include,schema,example,src,CMakeLists.txt,scripts} $
 strip ${OUT_DIR}/bin/*
 rm -fr ${OUT_DIR}/build_host
 MEGCC_VER=`${OUT_DIR}/bin/mgb-to-tinynn --version | grep MegCC | awk '{print $3}'`
-tar -czf megcc_release_${MEGCC_VER}_${GIT_ID}.tar.gz "${OUT_DIR_RP}"
+pushd ${PROJECT_PATH}
+   tar -czf megcc_release_${MEGCC_VER}_${GIT_ID}.tar.gz "${OUT_DIR_RP}"
+popd
+

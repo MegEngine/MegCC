@@ -20,10 +20,6 @@ wget https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yol
 
 ```bash
 mkdir -p kernel_yolox_s_arm 
-#get your model input shape and name
-<your_release_MegCC_dir>/bin/mgb-importer yolox_s.mge yolox_s.mlir && cat yolox_s.mlir | grep func
-# the output is al follow the input shape is (1,3,640,640) and the name is "data"
-# func @yolox_s(%arg0: tensor<1x3x640x640xf32> {mgb.func_arg_name = "data"}) -> (tensor<1x8400x85xf32> {mgb.func_result_name = "head.Dimshuffle"}) {
 
 # build MegCC yolox kernel and MegCC lib for arm 
 <your_release_MegCC_dir>/bin/mgb-to-tinynn --json="./yolox_arm.json" --arm64v7
@@ -42,8 +38,8 @@ mv  OpenCV-android-sdk OpenCV
 mkdir -p build_arm64 && cd build_arm64 && mkdir -p install
 
 export NDK_DIR=<your_NDK_DIR> 
-cmake .. -DCMAKE_TOOLCHAIN_FILE="${NDK_DIR}/build/cmake/android.toolchain.cmake"  -DANDROID_NDK="$NDK_DIR" -DANDROID_ABI=arm64-v8a  -DANDROID_NATIVE_API_LEVEL=21 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install -DRUNTIME_KERNEL_DIR=$PWD../kernel_yolox_s_arm -DOpenCV_DIR=$PWD/../OpenCV/sdk/native/jni/abi-arm64-v8a
-make install -j32
+cmake .. -DCMAKE_TOOLCHAIN_FILE="${NDK_DIR}/build/cmake/android.toolchain.cmake"  -DANDROID_NDK="$NDK_DIR" -DANDROID_ABI=arm64-v8a  -DANDROID_NATIVE_API_LEVEL=21 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install -DRUNTIME_KERNEL_DIR=$PWD/../kernel_yolox_s_arm -DOpenCV_DIR=$PWD/../OpenCV/sdk/native/jni/abi-arm64-v8a
+make install/strip -j32
 
 ```
 ## step6: run the test 
@@ -52,7 +48,7 @@ make install -j32
 2. run test with cmdline:
 
 ```bash
-./yolox_test yolox_s.tiny --input=dog.png --output=<your_output_image>
+./yolox_test yolox_s.tiny --input=dog.jpg --output=<your_output_image>
 ```
 
 3. copy `your_output_image` back to your local machine, the result is showed in the image
