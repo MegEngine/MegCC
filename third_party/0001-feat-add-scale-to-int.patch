@@ -1,0 +1,338 @@
+From a340ba229d5a438f198fab19b9fec92cea951b32 Mon Sep 17 00:00:00 2001
+From: liujunjie <liujunjie@megvii.com>
+Date: Tue, 12 Oct 2021 15:15:01 +0800
+Subject: [PATCH] feat: add scale to int
+
+---
+ mlir/include/mlir/IR/BuiltinTypes.td |  6 ++--
+ mlir/lib/IR/AsmPrinter.cpp           |  7 +++++
+ mlir/lib/IR/BuiltinTypes.cpp         |  7 +++--
+ mlir/lib/IR/MLIRContext.cpp          | 13 ++++-----
+ mlir/lib/IR/TypeDetail.h             | 42 +++++++++++++++++++++++-----
+ mlir/lib/Parser/Lexer.cpp            | 14 ++++++++--
+ mlir/lib/Parser/Token.cpp            | 37 +++++++++++++++++++++---
+ mlir/lib/Parser/Token.h              |  3 ++
+ mlir/lib/Parser/TypeParser.cpp       |  9 ++++--
+ 9 files changed, 111 insertions(+), 27 deletions(-)
+
+diff --git a/mlir/include/mlir/IR/BuiltinTypes.td b/mlir/include/mlir/IR/BuiltinTypes.td
+index d2d249bba7eb..da8f69cf76d1 100644
+--- a/mlir/include/mlir/IR/BuiltinTypes.td
++++ b/mlir/include/mlir/IR/BuiltinTypes.td
+@@ -228,10 +228,10 @@ def Builtin_Integer : Builtin_Type<"Integer"> {
+     for hardware synthesis (where a 13 bit multiplier is a lot cheaper/smaller
+     than a 16 bit one).
+   }];
+-  let parameters = (ins "unsigned":$width, "SignednessSemantics":$signedness);
++  let parameters = (ins "unsigned":$width, "SignednessSemantics":$signedness, "float":$scale);
+   let builders = [
+     TypeBuilder<(ins "unsigned":$width,
+-                     CArg<"SignednessSemantics", "Signless">:$signedness)>
++                     CArg<"SignednessSemantics", "Signless">:$signedness, CArg<"float","-1.f">:$scale)>,
+   ];
+ 
+   // IntegerType uses a special storage class that compacts parameters to save
+@@ -259,6 +259,8 @@ def Builtin_Integer : Builtin_Type<"Integer"> {
+     /// Return null if the scaled element type cannot be represented.
+     IntegerType scaleElementBitwidth(unsigned scale);
+ 
++    bool isQuant() const {return getScale() >= 0.f;}
++
+     /// Integer representation maximal bitwidth.
+     /// Note: This is aligned with the maximum width of llvm::IntegerType.
+     static constexpr unsigned kMaxWidth = (1 << 24) - 1;
+diff --git a/mlir/lib/IR/AsmPrinter.cpp b/mlir/lib/IR/AsmPrinter.cpp
+index ba5628272a31..cb7cdf121977 100644
+--- a/mlir/lib/IR/AsmPrinter.cpp
++++ b/mlir/lib/IR/AsmPrinter.cpp
+@@ -36,6 +36,7 @@
+ #include "llvm/ADT/StringExtras.h"
+ #include "llvm/ADT/StringSet.h"
+ #include "llvm/ADT/TypeSwitch.h"
++#include "llvm/ADT/bit.h"
+ #include "llvm/Support/CommandLine.h"
+ #include "llvm/Support/Endian.h"
+ #include "llvm/Support/Regex.h"
+@@ -1921,11 +1922,17 @@ void AsmPrinter::Impl::printType(Type type) {
+       .Case<Float80Type>([&](Type) { os << "f80"; })
+       .Case<Float128Type>([&](Type) { os << "f128"; })
+       .Case<IntegerType>([&](IntegerType integerTy) {
++        if (integerTy.isQuant())
++          os << 'q';
+         if (integerTy.isSigned())
+           os << 's';
+         else if (integerTy.isUnsigned())
+           os << 'u';
+         os << 'i' << integerTy.getWidth();
++        if (integerTy.isQuant()) {
++          uint32_t u32_flt = llvm::bit_cast<uint32_t>(integerTy.getScale());
++          os << "<" << u32_flt << ":" << integerTy.getScale() << ">";
++        }
+       })
+       .Case<FunctionType>([&](FunctionType funcTy) {
+         os << '(';
+diff --git a/mlir/lib/IR/BuiltinTypes.cpp b/mlir/lib/IR/BuiltinTypes.cpp
+index 6d3ed12cedf2..58e3eab5a89d 100644
+--- a/mlir/lib/IR/BuiltinTypes.cpp
++++ b/mlir/lib/IR/BuiltinTypes.cpp
+@@ -66,7 +66,7 @@ constexpr unsigned IntegerType::kMaxWidth;
+ /// Verify the construction of an integer type.
+ LogicalResult IntegerType::verify(function_ref<InFlightDiagnostic()> emitError,
+                                   unsigned width,
+-                                  SignednessSemantics signedness) {
++                                  SignednessSemantics signedness, float scale) {
+   if (width > IntegerType::kMaxWidth) {
+     return emitError() << "integer bitwidth is limited to "
+                        << IntegerType::kMaxWidth << " bits";
+@@ -76,6 +76,8 @@ LogicalResult IntegerType::verify(function_ref<InFlightDiagnostic()> emitError,
+ 
+ unsigned IntegerType::getWidth() const { return getImpl()->width; }
+ 
++float IntegerType::getScale() const { return getImpl()->scale; }
++
+ IntegerType::SignednessSemantics IntegerType::getSignedness() const {
+   return getImpl()->signedness;
+ }
+@@ -83,7 +85,8 @@ IntegerType::SignednessSemantics IntegerType::getSignedness() const {
+ IntegerType IntegerType::scaleElementBitwidth(unsigned scale) {
+   if (!scale)
+     return IntegerType();
+-  return IntegerType::get(getContext(), scale * getWidth(), getSignedness());
++  return IntegerType::get(getContext(), scale * getWidth(), getSignedness(),
++                          getScale());
+ }
+ 
+ //===----------------------------------------------------------------------===//
+diff --git a/mlir/lib/IR/MLIRContext.cpp b/mlir/lib/IR/MLIRContext.cpp
+index a144769a3fd3..dc643d215a46 100644
+--- a/mlir/lib/IR/MLIRContext.cpp
++++ b/mlir/lib/IR/MLIRContext.cpp
+@@ -832,19 +832,16 @@ getCachedIntegerType(unsigned width,
+ }
+ 
+ IntegerType IntegerType::get(MLIRContext *context, unsigned width,
+-                             IntegerType::SignednessSemantics signedness) {
+-  if (auto cached = getCachedIntegerType(width, signedness, context))
+-    return cached;
+-  return Base::get(context, width, signedness);
++                             IntegerType::SignednessSemantics signedness,
++                             float scale) {
++  return Base::get(context, width, signedness, scale);
+ }
+ 
+ IntegerType
+ IntegerType::getChecked(function_ref<InFlightDiagnostic()> emitError,
+                         MLIRContext *context, unsigned width,
+-                        SignednessSemantics signedness) {
+-  if (auto cached = getCachedIntegerType(width, signedness, context))
+-    return cached;
+-  return Base::getChecked(emitError, context, width, signedness);
++                        SignednessSemantics signedness, float scale) {
++  return Base::getChecked(emitError, context, width, signedness, scale);
+ }
+ 
+ /// Get an instance of the NoneType.
+diff --git a/mlir/lib/IR/TypeDetail.h b/mlir/lib/IR/TypeDetail.h
+index 1ae66555715f..9f86ebc70322 100644
+--- a/mlir/lib/IR/TypeDetail.h
++++ b/mlir/lib/IR/TypeDetail.h
+@@ -26,29 +26,57 @@ namespace detail {
+ 
+ /// Integer Type Storage and Uniquing.
+ struct IntegerTypeStorage : public TypeStorage {
+-  IntegerTypeStorage(unsigned width,
+-                     IntegerType::SignednessSemantics signedness)
+-      : width(width), signedness(signedness) {}
+ 
+   /// The hash key used for uniquing.
+-  using KeyTy = std::pair<unsigned, IntegerType::SignednessSemantics>;
++  struct KeyTy {
++    KeyTy(unsigned width,
++          IntegerType::SignednessSemantics signedness =
++              IntegerType::SignednessSemantics::Signless,
++          float scale = -1.f)
++        : width(width), signedness(signedness), scale(scale) {}
++
++    unsigned width;
++    IntegerType::SignednessSemantics signedness;
++    float scale;
++
++    // Check for equality of two structures that share KeyTy data members
++    // (by name).
++    template <typename T, typename U>
++    static bool genericIsEqual(const T &lhs, const U &rhs) {
++      return lhs.width == rhs.width && lhs.signedness == rhs.signedness &&
++             lhs.scale == rhs.scale;
++    }
++
++    bool operator==(const KeyTy &other) const {
++      return genericIsEqual(*this, other);
++    }
++
++    unsigned getHashValue() const {
++      int32_t scaleBits = llvm::bit_cast<int32_t>(scale);
++      return llvm::hash_combine(width, signedness, scaleBits);
++    }
++  };
++
++  IntegerTypeStorage(const KeyTy &key)
++      : width(key.width), signedness(key.signedness), scale(key.scale) {}
+ 
+   static llvm::hash_code hashKey(const KeyTy &key) {
+-    return llvm::hash_value(key);
++    return key.getHashValue();
+   }
+ 
+   bool operator==(const KeyTy &key) const {
+-    return KeyTy(width, signedness) == key;
++    return KeyTy(width, signedness, scale) == key;
+   }
+ 
+   static IntegerTypeStorage *construct(TypeStorageAllocator &allocator,
+                                        KeyTy key) {
+     return new (allocator.allocate<IntegerTypeStorage>())
+-        IntegerTypeStorage(key.first, key.second);
++        IntegerTypeStorage(key);
+   }
+ 
+   unsigned width : 30;
+   IntegerType::SignednessSemantics signedness : 2;
++  float scale;
+ };
+ 
+ /// Function Type Storage and Uniquing.
+diff --git a/mlir/lib/Parser/Lexer.cpp b/mlir/lib/Parser/Lexer.cpp
+index 8d48a60948a8..d550a1ce11a4 100644
+--- a/mlir/lib/Parser/Lexer.cpp
++++ b/mlir/lib/Parser/Lexer.cpp
+@@ -207,13 +207,23 @@ Token Lexer::lexBareIdentifierOrKeyword(const char *tokStart) {
+     return llvm::all_of(str, [](char c) { return llvm::isDigit(c); });
+   };
+ 
+-  // Check for i123, si456, ui789.
++  // Check for i123, si456, ui789, qsi8<123:0.1>
+   if ((spelling.size() > 1 && tokStart[0] == 'i' &&
+        isAllDigit(spelling.drop_front())) ||
+       ((spelling.size() > 2 && tokStart[1] == 'i' &&
+         (tokStart[0] == 's' || tokStart[0] == 'u')) &&
+-       isAllDigit(spelling.drop_front(2))))
++       isAllDigit(spelling.drop_front(2))) ||
++      ((spelling.size() > 2 && tokStart[0] == 'q' && tokStart[1] == 's' &&
++        tokStart[2] == 'i') &&
++       isAllDigit(spelling.drop_front(3)))) {
++    if (spelling[0] == 'q') {
++      while ((*curPtr) != '>')
++        ++curPtr;
++      ++curPtr;
++      spelling = StringRef(tokStart, curPtr - tokStart);
++    }
+     return Token(Token::inttype, spelling);
++  }
+ 
+   Token::Kind kind = StringSwitch<Token::Kind>(spelling)
+ #define TOK_KEYWORD(SPELLING) .Case(#SPELLING, Token::kw_##SPELLING)
+diff --git a/mlir/lib/Parser/Token.cpp b/mlir/lib/Parser/Token.cpp
+index 6cc167da5f95..eb3e06aedea0 100644
+--- a/mlir/lib/Parser/Token.cpp
++++ b/mlir/lib/Parser/Token.cpp
+@@ -13,6 +13,7 @@
+ #include "Token.h"
+ #include "llvm/ADT/StringExtras.h"
+ 
++#include "llvm/ADT/bit.h"
+ using namespace mlir;
+ 
+ SMLoc Token::getLoc() const { return SMLoc::getFromPointer(spelling.data()); }
+@@ -58,22 +59,50 @@ Optional<double> Token::getFloatingPointValue() const {
+ Optional<unsigned> Token::getIntTypeBitwidth() const {
+   assert(getKind() == inttype);
+   unsigned bitwidthStart = (spelling[0] == 'i' ? 1 : 2);
++  if (spelling[0] == 'q') {
++    bitwidthStart = (spelling[1] == 'i' ? 2 : 3);
++  }
++
+   unsigned result = 0;
+-  if (spelling.drop_front(bitwidthStart).getAsInteger(10, result))
++  auto bit_with_scale = spelling.drop_front(bitwidthStart);
++  auto scale_start_idx = bit_with_scale.find_first_of('<');
++  auto bit_str = bit_with_scale;
++  if (scale_start_idx != StringRef::npos) {
++    bit_str = bit_with_scale.substr(0, scale_start_idx);
++  }
++  if (bit_str.getAsInteger(10, result))
+     return None;
+   return result;
+ }
+ 
+ Optional<bool> Token::getIntTypeSignedness() const {
+   assert(getKind() == inttype);
+-  if (spelling[0] == 'i')
++  int drop_char = 0;
++  if (spelling[0] == 'q') {
++    drop_char = 1;
++  }
++  if (spelling[drop_char] == 'i')
+     return llvm::None;
+-  if (spelling[0] == 's')
++  if (spelling[drop_char] == 's')
+     return true;
+-  assert(spelling[0] == 'u');
++  assert(spelling[drop_char] == 'u');
+   return false;
+ }
+ 
++Optional<float> Token::getIntTypeScale() const {
++  assert(getKind() == inttype);
++  auto start = spelling.find_first_of('<');
++  auto end = spelling.find_first_of(':');
++  if (start != StringRef::npos && end != StringRef::npos) {
++    auto float_str = spelling.substr(start + 1, end - start - 1);
++    uint32_t u32_res;
++    if (!float_str.getAsInteger<uint32_t>(10, u32_res)) {
++      float res = llvm::bit_cast<float>(u32_res);
++      return res;
++    }
++  }
++  return llvm ::None;
++}
+ /// Given a token containing a string literal, return its value, including
+ /// removing the quote characters and unescaping the contents of the string. The
+ /// lexer has already verified that this token is valid.
+diff --git a/mlir/lib/Parser/Token.h b/mlir/lib/Parser/Token.h
+index be0924cb9d67..d2028818d3c9 100644
+--- a/mlir/lib/Parser/Token.h
++++ b/mlir/lib/Parser/Token.h
+@@ -78,6 +78,9 @@ public:
+   /// For an inttype token, return its bitwidth.
+   Optional<unsigned> getIntTypeBitwidth() const;
+ 
++  /// For an inttype token, return its scale.
++  Optional<float> getIntTypeScale() const;
++
+   /// For an inttype token, return its signedness semantics: llvm::None means no
+   /// signedness semantics; true means signed integer type; false means unsigned
+   /// integer type.
+diff --git a/mlir/lib/Parser/TypeParser.cpp b/mlir/lib/Parser/TypeParser.cpp
+index c4699ee5b729..ea2fab6eca2e 100644
+--- a/mlir/lib/Parser/TypeParser.cpp
++++ b/mlir/lib/Parser/TypeParser.cpp
+@@ -321,9 +321,14 @@ Type Parser::parseNonFunctionType() {
+     IntegerType::SignednessSemantics signSemantics = IntegerType::Signless;
+     if (Optional<bool> signedness = getToken().getIntTypeSignedness())
+       signSemantics = *signedness ? IntegerType::Signed : IntegerType::Unsigned;
+-
++    auto scale = getToken().getIntTypeScale();
+     consumeToken(Token::inttype);
+-    return IntegerType::get(getContext(), width.getValue(), signSemantics);
++    if (scale.hasValue()) {
++      return IntegerType::get(getContext(), width.getValue(), signSemantics,
++                              scale.getValue());
++    } else {
++      return IntegerType::get(getContext(), width.getValue(), signSemantics);
++    }
+   }
+ 
+   // float-type
+-- 
+2.25.1
+
