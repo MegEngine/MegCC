@@ -16,7 +16,7 @@ When release all the third party will build into MegCC, for convenience，MegCC 
 ## Release
 
 1. Modify major/minor/patch in compiler/include/compiler/Common/Version.h.in
-2. Write changelog https://discourse.brainpp.cn/t/topic/56470
+2. Write changelog
 3. Git tag branch
 4. Run the script [release_megcc.sh](../script/docker_release_megcc.sh) in [docker image](../script/docker/Dockerfile) with a directory in which all release file will be generated. Finally a tar file named `megcc_relase_*.tar.gz` will created by compressing all file in the release directory.
 

@@ -18,7 +18,7 @@ bin
 ```
 
 # 使用 MegCC 完成模型部署
-首先需要从 [brain++ oss web](https://oss.iap.hh-b.brainpp.cn/megengine-built/megcc) 上下载需要的 MegCC 发版包，然后解压这个压缩包：`tar -xvf megcc_release_*.tar.gz`。使用 MegCC 完成模型部署主要步骤有三个步：
+首先需要从 [github](https://github.com/MegEngine/MegCC/releases/download/v0.1.2/megcc_release_0.1.2.tar.gz) 上下载需要的 MegCC 发版包，然后解压这个压缩包：`tar -xvf megcc_release_*.tar.gz`。使用 MegCC 完成模型部署主要步骤有三个步：
 - 模型编译：编译 MegEngine 模型，生成运行这个模型对应的 Kernel 以及和这些 Kernel 绑定的模型。
 - Runtime编译：这个阶段会将 Runtime 和上一步中生成的 Kernel 一起编译成一个静态库。
 - 集成到应用中：调用上一步编译的静态库的接口进行推理。
