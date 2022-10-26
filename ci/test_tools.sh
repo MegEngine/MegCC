@@ -12,7 +12,12 @@ function build_dump(){
 function dump_model_and_gen_kernel(){
   rm -rf "${OUTPUT_DIR}"
   mkdir -p "${OUTPUT_DIR}"
-  $COMPILER_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn "$MODEL_PATH" "$OUTPUT_DIR" --input-shapes="${INPUT_SHAPE_STR}"
+  COMPILER_FLAG="${1}"
+  Args=""
+  if [ "${COMPILER_FLAG}" == "compress" ];then
+    Args="--enable_compress_fp16"
+  fi
+  $COMPILER_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn "$MODEL_PATH" "$OUTPUT_DIR" --input-shapes="${INPUT_SHAPE_STR}" ${Args}
 }
 
 function build_runtime(){
@@ -79,6 +84,8 @@ function dump_and_build_arm_sdk(){
   elif [ "${DUMP_MODE}" == "nchw44-dot" ];then
     DUMP_OPT="--enable_nchw44_dot"
     GEN_ARMV7_FLAG=0
+  elif [ "${DUMP_MODE}" == "compress" ];then
+    DUMP_OPT="--enable_compress_fp16"
   fi
   ARM_OUTPUT_DIR="${OUTPUT_DIR}/arm/"
   mkdir -p $ARM_OUTPUT_DIR
@@ -98,7 +105,7 @@ function run_single_test(){
   MODEL_PATH="$(readlink -f ${2})"
   INPUT_SHAPE_STR="${3}"
   if [[ ${ONLY_DUMP_ARM} == 0 ]];then
-    dump_model_and_gen_kernel
+    dump_model_and_gen_kernel "${7}"
     RUNTIME_BUILD_DIR="$OUTPUT_DIR/runtime"
     build_runtime $RUNTIME_BUILD_DIR
     compare_output_with_mgb "${4}" "${5}" "${6}"
