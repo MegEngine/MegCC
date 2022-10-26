@@ -17,9 +17,12 @@ rm -fr ${OUT_DIR}/*
 mkdir -p ${OUT_DIR}/build_host
 mkdir -p ${OUT_DIR}/bin
 mkdir -p ${OUT_DIR}/runtime
+mkdir -p ${OUT_DIR}/immigration
+mkdir -p ${OUT_DIR}/immigration/include
 mkdir -p ${OUT_DIR}/example
 mkdir -p ${OUT_DIR}/yolox_example 
 cp -rf ${PROJECT_PATH}/yolox_example/* ${OUT_DIR}/yolox_example/ 
+cp -rf ${PROJECT_PATH}/immigration/include/* ${OUT_DIR}/immigration/include/
 mkdir -p ${OUT_DIR}/script
 cp -a ${PROJECT_PATH}/script/{ppl_gen.sh,ppl_build.sh,test_model.py} ${OUT_DIR}/script/
 cp -r ${PROJECT_PATH}/doc ${OUT_DIR}/doc
