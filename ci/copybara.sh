@@ -20,7 +20,7 @@ function pull_megcc_export(){
         mkdir -p ${MEGCC_WORKSPACE_DIR}
     fi
     pushd "${MEGCC_WORKSPACE_DIR}" > /dev/null
-        git clone -b ${megcc_export_copybara_branch} "${MEGCC_EXPORT_URL}"
+        git clone "${MEGCC_EXPORT_URL}"
     popd > /dev/null
     echo "Finished pulling megcc_export"
 }
