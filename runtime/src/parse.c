@@ -14,6 +14,29 @@
 #include "vm.h"
 #include "kernels.h"
 
+static uint as_uint(const float x) {
+    return *(uint*)&x;
+}
+static float as_float(const uint x) {
+    return *(float*)&x;
+}
+
+//! From:
+//! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
+static float half_to_float(const uint16_t x) {
+    const uint e = (x & 0x7C00) >> 10;  // exponent
+    const uint m = (x & 0x03FF) << 13;  // mantissa
+    const uint v =
+            as_uint((float)m) >> 23;  // evil log2 bit hack to count leading
+                                      // zeros in denormalized format
+    return as_float(
+            (x & 0x8000) << 16 | (e != 0) * ((e + 112) << 23 | m) |
+            ((e == 0) & (m != 0)) *
+                    ((v - 37) << 23 |
+                     ((m << (150 - v)) &
+                      0x007FE000)));  // sign : normalized : denormalized
+}
+
 static TinyNNDType dtype_from_fbs(ns(DTypeEnum_enum_t) fbs_dtype) {
     switch (fbs_dtype) {
         case ns(DTypeEnum_Float32):
@@ -174,10 +197,14 @@ TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
 
     //! check data length
     size_t length = tensor_length_in_byte(weight);
-
-    TINYNN_ASSERT_MSG(length == weight_length_in_byte,
-                  "weight length error when parse.\n");
-    weight->size = length;
+    int compressed = ns(Weight_compressed(fbs_weight));
+    if (!compressed) {
+        TINYNN_ASSERT_MSG(length == weight_length_in_byte,
+                          "weight length error when parse.\n");
+    } else {
+        LOG_DEBUG("Model weights is compressed.\n");
+    }
+    weight->size = weight_length_in_byte;
 
     //! don't allocate new memory directly, just share the model memory, and
     //! align them after all data have parsed
@@ -216,17 +243,38 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
     for (int i = 0; i < nr_weight; i++) {
         Tensor* weight = sorted_weights[i];
         size_t length = weight->size;
+        size_t layout_size = tensor_length_in_byte(weight);
+        int compressed = 0;
+        if (length > 0 && weight->dtype.type_enum == TinyNN_FLOAT &&
+            length == layout_size / 2) {
+            compressed = 1;
+            LOG_DEBUG(
+                    "The weight data is compressed, decompressed it to "
+                    "fp32.\n");
+        }
+
         void* origin_ptr = weight->ptr;
         TINYNN_ASSERT_MSG(current_addr < (uintptr_t)origin_ptr,
                           "weight pointer addr error.\n");
         uintptr_t alignment_addr =
                 (uintptr_t)origin_ptr & (~((uintptr_t)alignment - 1));
-        if (!share_weights || alignment_addr < current_addr) {
-            if (!(weight->ptr = host_dev->malloc(length))) {
+        if (!share_weights || alignment_addr < current_addr || compressed) {
+            if (!(weight->ptr = host_dev->malloc(layout_size))) {
                 LOG_ERROR("malloc weight memory fail.\n");
             }
             weight->is_shared = 0;
-            memcpy(weight->ptr, origin_ptr, length);
+            if (!compressed) {
+                memcpy(weight->ptr, origin_ptr, length);
+            } else {
+                weight->size = layout_size;
+                uint16_t* src = (uint16_t*)origin_ptr;
+                float* dst = (float*)(weight->ptr);
+                for (int id = 0; id < layout_size / sizeof(float); id++) {
+                    *dst = half_to_float(*src);
+                    dst++;
+                    src++;
+                }
+            }
         } else {
             uintptr_t more_fit_addr = (current_addr + alignment - 1) &
                                       (~((uintptr_t)alignment - 1));

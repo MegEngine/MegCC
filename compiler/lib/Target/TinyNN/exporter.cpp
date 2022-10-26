@@ -23,6 +23,31 @@
 extern llvm::cl::opt<megcc::KernelGen::Arch> target_arch;
 
 using namespace flatbuffers;
+namespace {
+uint as_uint(const float x) {
+    return *(uint*)&x;
+}
+float as_float(const uint x) {
+    return *(float*)&x;
+}
+
+//! From:
+//! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
+ushort float_to_half(const float x) {
+    const uint b = as_uint(x) + 0x00001000;  // round-to-nearest-even: add last
+                                             // bit after truncated mantissa
+    const uint e = (b & 0x7F800000) >> 23;   // exponent
+    const uint m = b & 0x007FFFFF;  // mantissa; in line below: 0x007FF000 =
+                                    // 0x00800000-0x00001000 = decimal indicator
+                                    // flag - initial rounding
+    return (b & 0x80000000) >> 16 |
+           (e > 112) * ((((e - 112) << 10) & 0x7C00) | m >> 13) |
+           ((e < 113) & (e > 101)) *
+                   ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) |
+           (e > 143) * 0x7FFF;  // sign : normalized : denormalized : saturate
+}
+
+}  // namespace
 
 namespace mlir {
 namespace {
@@ -31,7 +56,7 @@ public:
     Exporter(ModuleOp top_module) : m_root(top_module) {}
 
     void save_model(std::string model_path, KernelExporter& kernel_exporter,
-                    const bool save_model) {
+                    const bool save_model, bool weight_compress) {
         symbol2weight_id.clear();
 
         std::vector<Offset<MegCC::Weight>> weights;
@@ -41,7 +66,8 @@ public:
             llvm::TypeSwitch<Operation*>(&_)
                     .Case([&](Kernel::WeightStorage op) {
                         weights.push_back(attr_to_weight(
-                                op.value(), op.sym_name(), op.user_count()));
+                                op.value(), op.sym_name(), op.user_count(),
+                                weight_compress));
                         symbol2weight_id[op.sym_name().str()] =
                                 weights.size() - 1;
                     })
@@ -995,7 +1021,8 @@ private:
     }
 
     Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name,
-                                         int32_t user_count) {
+                                         int32_t user_count,
+                                         bool weight_compress) {
         auto dense = attr.cast<DenseElementsAttr>();
         auto size_in_bits = dense.getType().getSizeInBits();
         if (size_in_bits & 0x7) {
@@ -1003,12 +1030,25 @@ private:
         }
 
         auto size_in_bytes = size_in_bits >> 3;
+        if (dense.getType().getElementType().isF32() && weight_compress) {
+            llvm::outs() << "This weights is float32, megcc will compress to "
+                            "float16.\n";
+            size_in_bytes = size_in_bytes >> 1;
+        }
         std::vector<int8_t> data(size_in_bytes);
         if (dense.getType().getElementType().isF32()) {
-            float* ptr = reinterpret_cast<float*>(data.data());
-            for (auto&& i : dense.getValues<float>()) {
-                *ptr = i;
-                ++ptr;
+            if (!weight_compress) {
+                float* ptr = reinterpret_cast<float*>(data.data());
+                for (auto&& i : dense.getValues<float>()) {
+                    *ptr = i;
+                    ++ptr;
+                }
+            } else {
+                ushort* ptr = reinterpret_cast<ushort*>(data.data());
+                for (auto&& i : dense.getValues<float>()) {
+                    *ptr = float_to_half(i);
+                    ++ptr;
+                }
             }
         } else if (dense.getType().getElementType().isInteger(32)) {
             int* ptr = reinterpret_cast<int*>(data.data());
@@ -1067,7 +1107,11 @@ private:
                 // data
                 m_fbs_builder.CreateVector(data),
                 // name
-                m_fbs_builder.CreateString(name.str()));
+                m_fbs_builder.CreateString(name.str()),
+                // TODO: checksum default 0
+                0,
+                // compressed
+                weight_compress);
     }
 
     MegCC::ArithMode convert_arithmetic_mode(llvm::StringRef strref) {
@@ -1160,10 +1204,12 @@ private:
 
 void export_tinynn_model(ModuleOp top_module, std::string save_path,
                          const bool save_model_as_symbol,
-                         KernelExporter& kernel_exporter) {
+                         KernelExporter& kernel_exporter,
+                         bool weight_compress) {
     LOG_DEBUG << "\n\t\t\t Begin Export TinyNN \t\t\t\n";
     Exporter exporter(top_module);
-    exporter.save_model(save_path, kernel_exporter, save_model_as_symbol);
+    exporter.save_model(save_path, kernel_exporter, save_model_as_symbol,
+                        weight_compress);
     LOG_DEBUG << "\t\t\t End Export TinyNN \t\t\t\n\n";
 }
 

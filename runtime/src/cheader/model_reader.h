@@ -724,6 +724,7 @@ __flatbuffers_define_scalar_field(2, MegCC_Weight, use_count, flatbuffers_int32,
 __flatbuffers_define_vector_field(3, MegCC_Weight, data, flatbuffers_int8_vec_t, 0)
 __flatbuffers_define_string_field(4, MegCC_Weight, name, 0)
 __flatbuffers_define_scalar_field(5, MegCC_Weight, checksum, flatbuffers_uint32, uint32_t, UINT32_C(0))
+__flatbuffers_define_scalar_field(6, MegCC_Weight, compressed, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
 
 struct MegCC_Opr_table { uint8_t unused__; };
 
