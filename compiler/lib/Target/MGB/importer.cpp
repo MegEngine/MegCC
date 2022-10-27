@@ -147,8 +147,8 @@ public:
         m_context->loadDialect<mlir::StandardOpsDialect>();
     }
 
-    mlir::LogicalResult import_mgb(std::string model_path, Options options,
-                                   int hako_ver = 0) {
+    mlir::LogicalResult import_mgb(std::string model_path, Options options
+                                   ) {
         std::vector<uint8_t> mdl_model_buffer;
         std::unique_ptr<serialization::InputFile> inp_file;
             inp_file = serialization::InputFile::make_fs(model_path.c_str());
@@ -1179,7 +1179,8 @@ mlir::LogicalResult removeUnusedParam(mlir::ModuleOp module) {
 }
 }  // namespace
 mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
-                               MGBImporterOptions options, int hako_ver) {
+                               MGBImporterOptions options
+) {
     LOG_DEBUG << "\n\t\t\t Begin Import MBG \t\t\t\n";
     LOG_DEBUG << "load model from " << model_path
               << " with Options:\n\tuse_static_memory_plan="
@@ -1189,7 +1190,8 @@ mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
               << "\n\tgraph_opt_level="
               << static_cast<int>(options.graph_opt_level) << "\n";
     Importer imp(module);
-    auto result = imp.import_mgb(model_path, options, hako_ver);
+    auto result = imp.import_mgb(model_path, options
+    );
     LOG_DEBUG << "\t\t\t End Import MBG \t\t\t\n\n";
     if (failed(result))
         return result;

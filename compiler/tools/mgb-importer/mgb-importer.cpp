@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     auto status =
             mlir::MGB::import_mgb(mod.get(), InputFile.getValue(), options);
     if (mlir::failed(status)) {
-        llvm::errs() << "import megbrain model failed\n";
+        llvm::errs() << "import megengine model failed\n";
         return -1;
     }
     std::error_code EC;

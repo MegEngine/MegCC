@@ -116,7 +116,6 @@ def parse_env(dump_dir, bin_dir=None):
         project_path = os.path.dirname(os.path.dirname(script_abs))
         env['build_script'] = os.path.join(project_path, 'runtime', 'scripts', 'runtime_build.py')
         env['mgb_runner_path'] = find('mgb-runner', os.path.curdir)
-        env['hako_to_mgb_path'] = find('hako-to-mgb', os.path.curdir)
         env['model_dir'] = dump_dir
         env['model_info_dir'] = dump_dir
         env['kern_dir'] = dump_dir
@@ -126,7 +125,6 @@ def parse_env(dump_dir, bin_dir=None):
         env['build_script'] = os.path.join(dump_dir, 'script','runtime_build.py')
         bin_dir = os.path.abspath(bin_dir) if bin_dir else os.path.dirname(dump_dir)
         env['mgb_runner_path'] = find('mgb-runner', bin_dir)
-        env['hako_to_mgb_path'] = find('hako-to-mgb', bin_dir)
         env['model_dir'] = os.path.join(dump_dir, 'model')
         env['kern_dir'] = os.path.join(dump_dir, 'kern')
         env['build_dir'] = os.path.join(dump_dir, 'build')
@@ -136,7 +134,6 @@ def parse_env(dump_dir, bin_dir=None):
 def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
     build_script = env['build_script']
     mgb_runner_path = env['mgb_runner_path']
-    hako_to_mgb_path = env['hako_to_mgb_path']
     model_dir = env['model_dir']
     kern_dir = env['kern_dir']
     build_dir = env['build_dir']
@@ -182,10 +179,6 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
                 mdl_model_path = model_name_2_all[model_name]
                 mgb_out_dir = os.path.join(local_run_dir, 'mgb_out')
                 os.mkdir(mgb_out_dir)
-                if mdl_model_path.endswith('.emod'):
-                    emod_path = mdl_model_path
-                    mdl_model_path = mdl_model_path + '.mdl'
-                    local_call([hako_to_mgb_path, emod_path, mdl_model_path])
                 local_call([mgb_runner_path, mdl_model_path, mgb_out_dir, '--input-shapes={}'.format(model_shape_info), '--input-data={}'.format(model_data_info_local)])
                 try:
                     compare_file_or_dir(local_run_dir+'/tiny_out', mgb_out_dir, eps)

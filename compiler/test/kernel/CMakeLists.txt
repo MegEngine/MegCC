@@ -80,7 +80,7 @@ if(CMAKE_TOOLCHAIN_FILE)
       COMMAND ${MGB_BUILD_SCRIPT} -a ${MEGCC_COMPILER_KERNEL_TEST_ARCH}
       COMMAND cp ${MGB_BUILD_LIBS} ${CMAKE_CURRENT_BINARY_DIR}/MGB_CROSS/
       COMMAND cp -r ${MGB_INCLUDE_DIR} ${MGB_INCLUDE_COPY_DIR}/
-      COMMENT "Building megbrain to static library."
+      COMMENT "Building megengine to static library."
       DEPENDS)
   endif()
 else()

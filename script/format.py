@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# This file is part of MegBrain.
+# This file is part of MegEngine.
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 import argparse
 import os
@@ -11,7 +11,7 @@ from multiprocessing import Manager
 
 from tqdm.contrib.concurrent import process_map
 
-# change workspace to MegBrain root dir
+# change workspace to MegEngine root dir
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 failed_files = Manager().list()
@@ -73,7 +73,7 @@ def main():
     )
 
     parser.add_argument(
-        "path", nargs="+", help="file name or path based on MegBrain root dir."
+        "path", nargs="+", help="file name or path based on MegEngine root dir."
     )
     parser.add_argument(
         "-w",

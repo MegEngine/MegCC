@@ -11,4 +11,4 @@ LLVM_DIR="$1" $(dirname $0)/../third_party/prepare.sh
 
 # we use prebuilt llvm for ci instead of in-tree building
 # git submodule update -f --init llvm-project
-python3 -m pip install MegBrain==8.13.0 --user -i https://pypi.megvii-inc.com/simple
+python3 -m pip install MegEngine --user -i https://pypi.megvii-inc.com/simple
