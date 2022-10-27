@@ -38,13 +38,6 @@ function compare_output_with_mgb(){
   $RUNTIME_BUILD_DIR/tinynn_test_lite ${TINYMODEL_PATH} "$TINYNN_OUTPUT_DIR" 0 $INPUT_DATA_STR ${TINYNN_SHAPE_STR}
   MGB_OUTPUT_DIR="$OUTPUT_DIR/mgb_out/"
   mkdir -p "${MGB_OUTPUT_DIR}"
-# BEGIN-INTERNAL
-  if [[ "$MODEL_PATH" == *".emod" ]];then
-    HAKO_MODEL_PATH=$MODEL_PATH
-    MODEL_PATH="${MODEL_PATH}.mdl"
-    $COMPILER_BUILD_DIR/tools/hako-to-mgb/hako-to-mgb $HAKO_MODEL_PATH $MODEL_PATH
-  fi
-# END-NTERNAL
   $COMPILER_BUILD_DIR/tools/mgb-runner/mgb-runner "$MODEL_PATH" "$MGB_OUTPUT_DIR" --input-shapes="${INPUT_DATA_SHAPE_STR}" --input-data="${INPUT_DATA_STR}"
   python3 $PROJECT_PATH/ci/compare_output_bin.py $TINYNN_OUTPUT_DIR $MGB_OUTPUT_DIR --eps="$EPS"
 }

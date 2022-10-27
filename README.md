@@ -11,7 +11,7 @@ MegCC 是一个面向推理的深度学习模型编译器，具有如下特点�
 * <font color=Red size= 4>**方便移植**</font>：运行时所有 Code 都是纯 C 代码，可以方便在 Arm，X86，裸板中进行移植。
 * <font color=Red size= 4>**低内存使用，快启动**</font>：模型编译期间会进行内存规划，尽可能的复用内存，并进行静态绑定，减少运行时开销。
 
-### MegCC 框架
+## MegCC 框架
 <div  align="center">
 <img src="doc/picture/megcc.png" width = "60%" height = "60%" alt="MegCC结构" align=center />
 </div>
