@@ -51,7 +51,7 @@ make install/strip -j32
 ./yolox_test yolox_s.tiny --input=dog.jpg --output=<your_output_image>
 ```
 
-3. copy `your_output_image` back to your local machine, the result is showed in the image
+3. copy `your_output_image` back to your local machine, the result is shown in the image
 
 ## result example
 origin：
