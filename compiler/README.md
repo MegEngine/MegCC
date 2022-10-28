@@ -1,6 +1,6 @@
 ## building
 
-megcc depend on llvm-project and megbrain, now llvm-project and megbrain are integrated by submodule, and static linked into megcc
+megcc depends on llvm-project and megbrain, now llvm-project and megbrain are integrated by submodule, and static linked into megcc
 - update third-party submodule
 
     $ cd megcc
@@ -13,10 +13,10 @@ megcc depend on llvm-project and megbrain, now llvm-project and megbrain are int
     $ cmake .. -G Ninja
     $ ninja
 
-after build the compiler tools is stored in build/tools/...
+after build, the compiler tools are stored in build/tools/...
 
 ### kernel test
-Ninja is recommend(make is not tested ...)
+Ninja is recommended(make is not tested ...)
 X86 test
 
     $ mkdir -p build_x86
@@ -43,7 +43,7 @@ ensure `lit` was already installed:
 and add option `-DLLVM_EXTERNAL_LIT=/path/to/lit` when cmake build
 
 ## ycm support
-if you are vimer, you can use ycm, you just need
+if you are a vimer, you can use ycm, you just need
 - cd compiler
 - mkdir build
 - building the whole compiler
