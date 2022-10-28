@@ -51,7 +51,7 @@ RUN apt-get install gitlab-runner=13.12.0 -y
 # install llvm-lit for testing
 RUN pip3 install lit
 
-# copy prebuilt megbrain & mlir
+# copy prebuilt megengine & mlir
 COPY llvm-project /root/llvm-project
 
 # allow normal user to access root privilege

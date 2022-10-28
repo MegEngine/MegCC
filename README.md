@@ -1,6 +1,10 @@
-# MegCC
-![logo](doc/picture/cc.png)
+
+<div  align="center">
+<img src="doc/picture/cc.png" width = "50%" height = "50%" alt="logo" align=center/>
+</div>
+
 [English Document](doc/README_ENGLISH.md)
+
 ## MegCC 特点
 MegCC 是一个面向推理的深度学习模型编译器，具有如下特点：
 * <font color=Red size= 4>**极其轻量的运行时库**</font> ：只编译 mobilenetv1 模型进行推理情况下，stripped符号之后，整个运行时二进制大小只有<font color=Red size= 4>**81KB**</font> 。
@@ -9,7 +13,10 @@ MegCC 是一个面向推理的深度学习模型编译器，具有如下特点�
 * <font color=Red size= 4>**低内存使用，快启动**</font>：模型编译期间会进行内存规划，尽可能的复用内存，并进行静态绑定，减少运行时开销。
 
 ### MegCC 框架
-![MegCC结构](doc/picture/megcc.png)
+<div  align="center">
+<img src="doc/picture/megcc.png" width = "60%" height = "60%" alt="MegCC结构" align=center />
+</div>
+
 MegCC 主要由两部分组成：
 * 编译器：负责将模型进行编译，优化，最终生成新模型和对应的 Kernels
 * runtime 运行时：运行时需要和生成的 Kernels 结合在一起进行编译，编译完成之后可以加载编译器生成的模型，并计算输出结果
@@ -27,19 +34,21 @@ MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 
 
 ## 文档
 
-#### 获取 MegCC 编译器
+##### 获取 MegCC 编译器
 * 下载提预编译好的 MegCC 模型编译器 [下载 MegCC 编译器](https://github.com/MegEngine/MegCC/releases/download/v0.1.2/megcc_release_0.1.2.tar.gz)
 
-下载解压
+##### 从源码获取 MegCC 编译器
 * 如果是开发者需要从源码编译 MegCC 编译器，参考文档 [源码编译 MegCC](compiler/README.md)
+
+##### MegCC 发行新版本
 * 如果需要对 MegCC 进行发版，则参考文档 [MegCC 发版](doc/how-to-release.md)
 
-#### 如何使用 MegCC
+##### 如何使用 MegCC
 
 目前 MegCC 只支持 MegEngine 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 转换到 MegEngine。
 
-* 首次使用尝鲜，参考 [初次使用文档](doc/first-use.md)。
-* MegCC 的 [使用文档](doc/how-to-use-chinese.md)，用户可以参考这个文档进行模型的编译，运行时编译，并执行。
+* 首次尝鲜，参考 [初次使用](doc/first-use.md)。
+* 模型的编译，运行时库编译以及推理执行相关的详细文档，请参考 [使用文档](doc/how-to-use-chinese.md)。
 
 ## License
 
