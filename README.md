@@ -1,9 +1,8 @@
-
 <div  align="center">
 <img src="doc/picture/cc.png" width = "50%" height = "50%" alt="logo" align=center/>
 </div>
 
-[English Document](doc/README_ENGLISH.md)
+[English README](./README_ENGLISH.md)
 
 ## MegCC 特点
 MegCC 是一个面向推理的深度学习模型编译器，具有如下特点：
