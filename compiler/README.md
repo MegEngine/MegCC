@@ -2,17 +2,17 @@
 
 megcc depend on llvm-project and megbrain, now llvm-project and megbrain are integrated by submodule, and static linked into megcc
 - update third-party submodule
-
+```
     $ cd megcc
     $ ./third_party/prepare.sh
-
+```
 - build megcc
-
+```
     $ cd megcc/compiler
     $ mkdir build
     $ cmake .. -G Ninja
     $ ninja
-
+```
 after build the compiler tools is stored in build/tools/...
 
 ### kernel test
