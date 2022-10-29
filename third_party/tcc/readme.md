@@ -1,6 +1,5 @@
 ## tcc
 MegCC 中的 JIT 是通过 [tcc](https://download.savannah.gnu.org/releases/tinycc/) 实现的，
-实现方法请参考 [demo](https://www.developing-stuff.com/how-to-compile-run-c-code-at-runtime-or-how-to-use-c-as-a-scripting-language/)。
 third_party 中的库和头文件是手动从 [tcc](https://download.savannah.gnu.org/releases/tinycc/) 的源码编译的 linux x86-64 版本。
 注意：libtcc.a 依赖 ld，编译 tcc 时候 ld 的版本不要太高
 

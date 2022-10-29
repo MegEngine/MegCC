@@ -3,7 +3,7 @@
 
 ## 下载 MegCC 预编译的包
 
-下载提预编译好的 MegCC 模型编译器 [下载 MegCC 编译器](https://oss.iap.hh-b.brainpp.cn/megengine-built/megcc)，然后进行解压，将获得如下的预编译产物：
+下载提预编译好的 MegCC 模型编译器 [下载 MegCC 编译器](https://github.com/MegEngine/MegCC/releases/download/v0.1.2/megcc_release_0.1.2.tar.gz)，然后进行解压，将获得如下的预编译产物：
 ```
 .
 ├── bin       : MegCC 的主要编译工具，以及包含一些辅助的工具集。
