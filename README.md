@@ -6,7 +6,7 @@
 
 ## MegCC 特点
 MegCC 是一个面向推理的深度学习模型编译器，具有如下特点：
-* <font color=Red size= 4>**极其轻量的运行时库**</font> ：只编译 mobilenetv1 模型进行推理情况下，stripped符号之后，整个运行时二进制大小只有<font color=Red size= 4>**81KB**</font> 。
+* <font color=Red size= 4>**极其轻量的运行时库**</font> ：只编译 mobilenetv1 模型进行推理情况下，strip 符号后，整个运行时二进制大小只有 <font color=Red size= 4>**81KB**</font> 。
 * <font color=Red size= 4>**高性能**</font> ：Arm 上的每一个 Kernel 都是经过人工精心调优的，<font color=Red size= 4>**同样的模型，性能比 MegEngine 好**</font> 。
 * <font color=Red size= 4>**方便移植**</font>：运行时所有 Code 都是纯 C 代码，可以方便在 Arm，X86，裸板中进行移植。
 * <font color=Red size= 4>**低内存使用，快启动**</font>：模型编译期间会进行内存规划，尽可能的复用内存，并进行静态绑定，减少运行时开销。
@@ -44,7 +44,7 @@ MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 
 
 ##### 如何使用 MegCC
 
-目前 MegCC 只支持 MegEngine 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 转换到 MegEngine。
+目前 MegCC 只支持 MegEngine 模型作为输入，其他模型格式可以考虑转到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 转换到 MegEngine。
 
 * 首次尝鲜，参考 [初次使用](doc/first-use.md)。
 * 模型的编译，运行时库编译以及推理执行相关的详细文档，请参考 [使用文档](doc/how-to-use-chinese.md)。
