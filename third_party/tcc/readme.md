@@ -1,7 +1,6 @@
 ## tcc
 MegCC 中的 JIT 是通过 [tcc](https://download.savannah.gnu.org/releases/tinycc/) 实现的，
-third_party 中的库和头文件是手动从 [tcc](https://download.savannah.gnu.org/releases/tinycc/) 的源码编译的 linux/macos x86-64 版本。
-如果是 MacOS, 在构建 libtcc_apple_x86.a 时，需要先打上补丁: compat_new_macos.patch
+third_party 中的库和头文件是手动从 [tcc](https://download.savannah.gnu.org/releases/tinycc/) 的源码编译的 linux x86-64 版本。
 注意：libtcc.a 依赖 ld，编译 tcc 时候 ld 的版本不要太高
 
 ### JIT实现

@@ -28,8 +28,7 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
     bool mode_ok = mode == "RELU" || mode == "EXP" || mode == "SIGMOID" ||
                    mode == "H_SWISH" || mode == "ADD" || mode == "SUB" ||
                    mode == "MUL" || mode == "TRUE_DIV" ||
-                   mode == "FUSE_ADD_RELU" || mode == "FUSE_MUL_ADD3" ||
-                   mode == "MAX" || mode == "MIN";
+                   mode == "FUSE_ADD_RELU" || mode == "FUSE_MUL_ADD3";
     if (mode == "FUSE_MUL_ADD3") {
         auto bcast_type = ElemwiseGenTernary::GetBcastType(
                 ctx->getAttrOprand("operand:0"),
@@ -120,7 +119,7 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     if ("SIGMOID" == mode) {
         writer << gi_math.GiSigmoidPsFloat32() << "\n";
     }
-    if ("H_SWISH" == mode) {
+    if ("H_SWISH") {
         writer << gi_math.GiHSwishFloat32() << "\n";
     }
     writer << "\n\n";

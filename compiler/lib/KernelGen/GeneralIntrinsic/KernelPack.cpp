@@ -11,10 +11,8 @@
 #include <memory>
 #include "CVTranspose.h"
 #include "ConvKernel/ConvKernel.h"
-#include "CvtColor.h"
 #include "Elemwise/Elemwise.h"
 #include "Flip.h"
-#include "FusedElemwiseKernel.h"
 #include "InternalKernel/InternalKernel.h"
 #include "MatMulKernel/Fp32MatMul.h"
 #include "PoolingKernel/Pooling.h"
@@ -24,7 +22,7 @@
 #include "Rotate.h"
 #include "Typecvt.h"
 #include "WarpAffine.h"
-
+#include "CvtColor.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace GeneralIntrinsic;
@@ -46,15 +44,11 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::MatmulM4N12Kernel>(),
                 std::make_shared<GeneralIntrinsic::MatmulM4N12MK4Kernel>()};
         inner_map[KernelPack::KernType::ConvKernel] = {
-                std::make_shared<GeneralIntrinsic::Conv1x1FloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ChannelWiseFloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ConvFloatNCHWNCHW44>(),
-                std::make_shared<GeneralIntrinsic::WinogradFloatF63Nchw44>(),
-                std::make_shared<GeneralIntrinsic::WinogradFloatF43Nchw44>(),
-                std::make_shared<GeneralIntrinsic::WinogradFloatF23NCHW44>(),
                 std::make_shared<GeneralIntrinsic::ConvIm2colFloat>(),
-
-        };
+                std::make_shared<GeneralIntrinsic::WinogradFloatF23NCHW44>(),
+                std::make_shared<GeneralIntrinsic::Conv1x1FloatMk4>()};
 
         inner_map[KernelPack::KernType::PoolingKernel] = {
                 std::make_shared<GeneralIntrinsic::PoolingNchw44Fp32>(),
@@ -86,9 +80,6 @@ struct AllGICommonKernel {
 
         inner_map[KernelPack::KernType::WarpAffineKernel] = {
                 std::make_shared<GeneralIntrinsic::WarpAffineKernel>()};
-
-        inner_map[KernelPack::KernType::FusedElemwiseKernel] = {
-                std::make_shared<GeneralIntrinsic::FusedElmwiseKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType,

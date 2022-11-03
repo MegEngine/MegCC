@@ -14,12 +14,10 @@
 ## bin文件细节
 ```
 bin
-├── mgb-importer    : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
-├── megcc-opt       : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
-├── mgb-runner      : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
-├── hako-to-mgb     : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
-├── mgb-to-tinynn   : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
-└── kernel_exporter : 辅助工具，用于指定 kernel C 代码的导出。
+├── mgb-importer  : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
+├── megcc-opt     : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
+├── mgb-runner    : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
+└── mgb-to-tinynn : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
 ```
 
 ## 获取模型
@@ -63,14 +61,14 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 * 编译模型
   
   ```
-    /path/to/mgb-to-tinynn path/to/shufflenetv2.mge path/to/shufflenetv2_generate --input-shapes="data=(1,3,224,224)"  --arm64
-  
+    /path/to/mgb-to-tinynn path/to/shufflenetv2.mge path/to/shufflenetv2_generate --input-shapes="data=(1,3,224,224)  --arm64
+
   ```
-  编译模型时候需要指定需要编译的模型，生成目录以及模型的输入 shape 等，最重要的需要指明目标平台，这里是 arm64，目标是运行在手机中。
-  输出一堆 log 之后，将完成编译，编译完成之后会在 shufflenetv2_generate 中生成新的模型，结尾为 shufflenetv2.tiny，另外会生成一堆 Kernels。
+编译模型时候需要指定需要编译的模型，生成目录以及模型的输入 shape等，最重要的需要指明目标平台，这里是 arm64，目标是运行在手机中。
+输出一堆 log 之后，将完成编译，编译完成之后会在 shufflenetv2_generate 中生成新的模型，结尾为 shufflenetv2.tiny，另外会生成一堆 Kernels。
 
 ## 编译runtime + kernel为可执行文件
-上面生成的 kernel 的目标平台是 Arm，因此可以运行在 Linux arm 中，也可以运行在 android Arm 手机中，这里以 android Arm 手机作为展示。
+上面生成的 kernel 的目标平台是 Arm，因此可以运行在 Linux arm中，也可以运行在 android Arm手机中，这里以 android Arm 手机作为展示。
 编译 android 平台需要下载 NDK，并设置环境变量 NDK_ROOT。如：
 
 ```
@@ -80,7 +78,7 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 目前在下载的预编译包中已经包含了 runtime 编译的脚本，runtime/script/runtime_build.py，运行：
 
 ```
-   python3 runtime/scripts/runtime_build.py --cross_build --kernel_dir path/to/shufflenetv2_generate
+   python3 runtime/script/runtime_build.py --cross_build --kernel_dir path/to/shufflenetv2_generate
 ```
 
 编译完成之后会在打印：
@@ -109,7 +107,7 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 
 ## 如果用于编译的模型是 ONNX 模型
 
-如果是输入模型是 ONNX 模型，则需要先将 ONNX 模型转换为 mge 模型，可以使用 [mgeconvert](https://github.com/MegEngine/mgeconvert#13-sparkles-onnx%E6%A8%A1%E5%9E%8B%E4%BA%92%E8%BD%AC) 进行模型转换。具体使用可以参考 mgeconvert。
+如果是输入模型是 ONNX 模型，则需要先将 ONNX 模型转换为 mge 模型，可以使用 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型转换。具体使用可以参考 mgeconvert。
 
 
 

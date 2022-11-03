@@ -627,7 +627,7 @@ __ai float32x4_t vfmsq_laneq_f32_impl_3(float32x4_t a, float32x4_t b,
 #undef vfmaq_laneq_f32
 #define vfmaq_laneq_f32(a, b, v, lane) vfmaq_laneq_f32_impl_##lane(a, b, v)
 #undef vfmsq_laneq_f32
-#define vfmsq_laneq_f32(a, b, v, lane) vfmsq_laneq_f32_impl_##lane(a, b, v)
+#define vfmsq_laneq_f32(a, b, v, lane) Vfmsq_laneq_f32_impl_##lane(a, b, v)
 
 #endif
 

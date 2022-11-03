@@ -8,7 +8,6 @@
 
 #include "rc4_cryption_impl.h"
 
-#include <cstdio>
 #include <cstring>
 
 using namespace megcc;
@@ -170,10 +169,9 @@ void SimpleFastRC4Impl::init_sfrc4_state() {
     /*! \brief test the hash_val. */
     if (hashvalue != dechash.get()) {
         printf("The checksum of the file cannot be verified. The file may "
-               "be encrypted in the wrong algorithm or different keys. %lld != "
-               "%lld",
-               static_cast<long long int>(hashvalue),
-               static_cast<long long int>(dechash.get()));
+               "be encrypted in the wrong algorithm or different keys. %lx != "
+               "%lx",
+               hashvalue, dechash.get());
         exit(-1);
     }
 

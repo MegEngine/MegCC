@@ -139,10 +139,6 @@ public:
         return *this;
     }
 
-    void check_tensors(const TensorNDArray& expected,
-                       const TensorNDArray& computed, float epsilon,
-                       float max_avg_error, float max_avg_biased_error);
-
 private:
     bool m_run_cc_only = false;
     bool m_run_cc_dynamic = false;

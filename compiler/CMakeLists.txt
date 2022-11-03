@@ -5,8 +5,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
 
 project(MegCC)
 
-option(MEGCC_FRIENDLY_TO_DEBUGGER "make MegCC friendly to debugger." OFF)
-
 # set llvm build options
 set(LLVM_INSTALL_UTILS
     ON
@@ -106,35 +104,18 @@ set(MGB_INSTALL_LIB ${MGB_INSTALL_FLAT_LIB} ${MGB_INSTALL_MGE_LIB})
 
 set(MGB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../third_party/MegEngine/install/include)
 
-add_library(mgb_imported INTERFACE)
-target_link_libraries(mgb_imported INTERFACE ${MGB_INSTALL_LIB})
-target_include_directories(mgb_imported INTERFACE ${MGB_INCLUDE_DIR})
+add_library(mgb_imported STATIC ${MGB_INSTALL_LIB})
+target_link_libraries(mgb_imported PUBLIC ${MGB_INSTALL_LIB})
+target_include_directories(mgb_imported PUBLIC ${MGB_INCLUDE_DIR})
+set_target_properties(mgb_imported PROPERTIES LINKER_LANGUAGE CXX)
 
-if(APPLE)
-  set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a)
-else()
-  set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc.a)
-endif()
+set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc.a)
 set(TCC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../third_party/tcc/include)
 
 set(RUNTIME_SRC_DIR ${PROJECT_SOURCE_DIR}/../runtime/src)
 set(RUNTIME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../runtime/include)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g -Wno-error=non-virtual-dtor")
-check_cxx_compiler_flag("-Wno-error=covered-switch-default"
-                        CHECK_COVERED-SWITCH-DEFAULT)
-check_cxx_compiler_flag("-Wno-error=delete-non-abstract-non-virtual-dtor"
-                        CHECK_DELETE-NON-VIRTUAL-DTOR)
-if(CHECK_COVERED-SWITCH-DEFAULT)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=covered-switch-default")
-endif()
-if(CHECK_DELETE-NON-VIRTUAL-DTOR)
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-error=delete-non-abstract-non-virtual-dtor")
-endif()
-if(MEGCC_FRIENDLY_TO_DEBUGGER)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
 include(cmake/GenLiteSchema.cmake)
 gen_lite_schema()

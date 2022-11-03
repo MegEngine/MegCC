@@ -14,6 +14,7 @@
 #include "vm/instruction.h"
 
 #include "model_reader.h"
+
 struct VM;
 
 typedef TinyNNStatus (*InstructionCall)(Instruction*, struct VM*);
@@ -43,16 +44,22 @@ typedef struct VM {
 
     //! attached model
     CombineModel* model;
+
+    //! flag init
+    int init;
 } VM;
+
+//! get virtual machine singleton instance
+VM* vm_global_inst();
 
 //! reset virtual machine state and register all instructions handler
 TinyNNStatus vm_reset(VM* vm);
 
-//! detach model from vm
-TinyNNStatus vm_detach(CombineModel* model);
-
 //! attach model onto vm
-TinyNNStatus vm_attach(CombineModel* model);
+TinyNNStatus vm_attach(VM* vm, CombineModel* model);
+
+//! detach model from vm
+TinyNNStatus vm_detach(VM* vm, CombineModel* model);
 
 //! call instruction inst in vm
 TinyNNStatus vm_instruction_call(VM* vm, Instruction* inst);

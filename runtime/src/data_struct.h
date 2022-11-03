@@ -49,7 +49,7 @@ typedef struct Tensor {
     //! used for memory runtime memory plan
     int use_count;
 
-    //! flag tensor type, weights or tensor
+    //!flag tensor type, weights or tensor
     int is_weight;
     int is_dynamic;
     uint32_t checksum;
@@ -117,8 +117,6 @@ typedef struct {
     void* model_ptr;
     size_t model_len;
     struct ComboIOTensorS* combo_iotensor;
-    //! make CombineModel(always user network) bind with vm
-    void* vm;
 } CombineModel;
 
 typedef struct ComboIOTensorS {
@@ -154,6 +152,7 @@ typedef TinyNNStatus (*WorkspaceFunc)(Tensor** inputs, int nr_input,
 //! the uniform kernel function for all kernels of all operators
 typedef TinyNNStatus (*DeduceFunc)(Tensor** inputs, int nr_input,
                                    Tensor** outputs, int nr_output);
+
 #endif
 
 // vim: syntax=cpp.doxygen

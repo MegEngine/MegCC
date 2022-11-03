@@ -20,7 +20,7 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
         TContext* ctx, bool need_postprocess = true) {
     std::string call_str;
     std::stringstream declare_ss;
-    auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
+    auto nonline_mode = ctx->haveAttr("nonlineMode")
                                 ? ctx->getAttrStr("nonlineMode")
                                 : "IDENTITY";
     if ((nonline_mode == "SIGMOID") && need_postprocess) {
@@ -206,13 +206,11 @@ static inline void transpose_1x4_4_s(const float* inptr0, float* outptr) {
 }
 
 static std::string kern_4x12(TContext* ctx) {
-    auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
+    auto nonline_mode = ctx->haveAttr("nonlineMode")
                                 ? ctx->getAttrStr("nonlineMode")
                                 : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
-    bool with_bias = ctx && ctx->getAttrBool("with_bias")
-                             ? ctx->getAttrBool("with_bias")
-                             : false;
+    bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
     writer << R"(
 static inline void kern_4x12_bias_relu(const float* packA, const float* packB, int K,
@@ -439,13 +437,11 @@ static inline void kern_4x12_bias_relu(const float* packA, const float* packB, i
 }
 
 static std::string kern_4x4(TContext* ctx) {
-    auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
+    auto nonline_mode = ctx->haveAttr("nonlineMode")
                                 ? ctx->getAttrStr("nonlineMode")
                                 : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
-    bool with_bias = ctx && ctx->getAttrBool("with_bias")
-                             ? ctx->getAttrBool("with_bias")
-                             : false;
+    bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
     writer << R"(
 static inline void kern_4x4_bias_relu(const float* packA, const float* packB, int K,
@@ -700,10 +696,10 @@ std::string gen_kernel(const std::string& sig, TContext* ctx,
 std::string MatmulM4N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
     std::stringstream ss;
     ss << "GI_fp32_m4_n12_k4_matmul";
-    if (ctx && ctx->getAttrBool("with_bias")) {
+    if (ctx->getAttrBool("with_bias")) {
         ss << "_bias";
     }
-    if (ctx && ctx->haveAttr("nonlineMode") &&
+    if (ctx->haveAttr("nonlineMode") &&
         ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         ss << "_" << ctx->getAttrStr("nonlineMode");
     }

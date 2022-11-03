@@ -10,12 +10,11 @@
 ## bin文件细节
 ```
 bin
-├── mgb-importer    : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
-├── megcc-opt       : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
-├── mgb-runner      : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
-├── hako-to-mgb     : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
-├── mgb-to-tinynn   : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
-└── kernel_exporter : 辅助工具，用于指定 kernel C 代码的导出。
+├── mgb-importer  : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
+├── megcc-opt     : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
+├── mgb-runner    : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
+├── hako-to-mgb   : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
+└── mgb-to-tinynn : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
 ```
 
 # 使用 MegCC 完成模型部署
@@ -27,7 +26,7 @@ bin
 ## 模型编译
 模型编译阶段主要使用 mgb-to-tinynn 工具，编译完成之后，会在用户给定的目录下面，生成对应的纯 C 代码的 Kernel 以及对应的模型。为了编译模型，mgb-to-tinynn 工具需要用户提供一个 [Json](https://en.wikipedia.org/wiki/JSON) 文件来描述编译的具体细节。
 
-> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转换到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert#13-sparkles-onnx%E6%A8%A1%E5%9E%8B%E4%BA%92%E8%BD%AC) 进行模型格式转换。
+> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型格式转换。
 
 ### 编写 Json 文件
 先看一下具体示例吧：
@@ -213,7 +212,7 @@ MegCC 是在 MLIR 的基础组件上开发的，你可以通过下面的工具�
 用于直接使用 MegEngine 运行模型，可以和 MegCC Runtime 的计算结果进行对比，用于验证正确性等。 执行示例：
 ```bash
  ./bin/mgb-runner ./example/mobilenet.mdl ./mgb_out --input-shapes="data=(1,3,224,224)" --input-data="data=input_1_3_224_224_fp32.bin"
-```
+ ```
 其中`./example/mobilenet.mdl` 为原始的 MegEngine 模型，输入 Tensor 的名字为 `data`，数据为 `input_1_3_224_224_fp32.bin`。
 
 ### hako-to-mgb
@@ -221,27 +220,3 @@ MegCC 是在 MLIR 的基础组件上开发的，你可以通过下面的工具�
 
 ### megcc-opt
 将编译 MegEngine 模型，并输出运行指定 Pass 之后的模型 IR 表示。通过这个工具你可以一步一步的探索 MegCC 的编译细节，以及每一个 Pass 完成之后，mlir IR 发生的变化。MegCC 中使用到的主要 Pass 有：`--MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning` 等。
-
-### kernel_exporter
-导出指定 kernel 的 C代码，获取 kernel 对于不同后端的具体实现。使用方法如下：
-##### 使用默认 kernel 属性
-
-```bash
-./kernel_exporter --arch <arch_type> --kernel <kernel_type> --use_default_attr
-```
-##### 交互式用户指定 kernel 属性
-```bash
-./kernel_exporter --arch <arch_type> --kernel <kernel_type>
-```
-
-具体 arch_type 和 kenrel_type 可以通过 `--help` 查看。目前支持的 kenrel type有：
-```bash
-ArgSortKernel           ArgmaxKernel                BatchMatmulKernel       CVTransposeKernel
-ConcatKernel            ConvBackDataKernel          ConvKernel              CvtColorKernel
-ElemwiseKernel          ElemwiseMultiKernel         FlipKernel              IndexingMultiAxisKernel
-IndexingOneHotKernel    MatrixInvKernel             MatrixMulKernel         PoolingKernel
-PowCKernel              ReduceKernel                RelayoutKernel          ResizeKernel
-RoiCopyKernel           RotateKernel                TopK                    TypeCvtKernel
-WarpAffineKernel        WarpPerspectiveKernel
-```
-

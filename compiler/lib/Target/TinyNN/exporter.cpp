@@ -23,28 +23,6 @@
 extern llvm::cl::opt<megcc::KernelGen::Arch> target_arch;
 
 using namespace flatbuffers;
-namespace {
-uint as_uint(const float x) {
-    return *(uint*)&x;
-}
-
-//! From:
-//! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
-ushort float_to_half(const float x) {
-    const uint b = as_uint(x) + 0x00001000;  // round-to-nearest-even: add last
-                                             // bit after truncated mantissa
-    const uint e = (b & 0x7F800000) >> 23;   // exponent
-    const uint m = b & 0x007FFFFF;  // mantissa; in line below: 0x007FF000 =
-                                    // 0x00800000-0x00001000 = decimal indicator
-                                    // flag - initial rounding
-    return (b & 0x80000000) >> 16 |
-           (e > 112) * ((((e - 112) << 10) & 0x7C00) | m >> 13) |
-           ((e < 113) & (e > 101)) *
-                   ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) |
-           (e > 143) * 0x7FFF;  // sign : normalized : denormalized : saturate
-}
-
-}  // namespace
 
 namespace mlir {
 namespace {
@@ -53,7 +31,7 @@ public:
     Exporter(ModuleOp top_module) : m_root(top_module) {}
 
     void save_model(std::string model_path, KernelExporter& kernel_exporter,
-                    const bool save_model, bool weight_compress) {
+                    const bool save_model) {
         symbol2weight_id.clear();
 
         std::vector<Offset<MegCC::Weight>> weights;
@@ -62,9 +40,8 @@ public:
         for (auto&& _ : *m_root.getBody()) {
             llvm::TypeSwitch<Operation*>(&_)
                     .Case([&](Kernel::WeightStorage op) {
-                        weights.push_back(attr_to_weight(
-                                op.value(), op.sym_name(), op.user_count(),
-                                weight_compress));
+                        weights.push_back(
+                                attr_to_weight(op.value(), op.sym_name(), op.user_count()));
                         symbol2weight_id[op.sym_name().str()] =
                                 weights.size() - 1;
                     })
@@ -224,7 +201,7 @@ public:
         {
             //! hack: ignore armv7 in arm64v7 mode
             if (!func.getName().endswith(
-                        megcc::KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX)) {
+                        megcc::KernelGen::ARM64V7_ARMV7_POSTFIX)) {
                 std::stringstream ss;
                 ss << "[";
                 for (size_t i = 0; i < model_info_vec.size(); ++i) {
@@ -290,41 +267,6 @@ public:
                                 std::make_pair(
                                         MegCC::TensorType_WEIGHT,
                                         symbol2weight_id[op.name().str()]));
-                    })
-                    .Case([&](Kernel::ExternOpr op) {
-                        kernel_exporter.addInst("EXTERN_OPR");
-
-                        std::vector<int32_t> input_tensors, output_tensors;
-                        for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
-                            input_tensors.push_back(tensor.second);
-                        }
-
-                        for (auto&& i : op.results()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
-                            output_tensors.push_back(tensor.second);
-                        }
-
-                        std::string name(op.name().data(), op.name().size());
-                        std::string data(op.data().data(), op.data().size());
-                        uint32_t data_len = op.data_len();
-
-                        LOG_DEBUG << "Add ExternOpr instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_ExternOpr);
-                        instructions.push_back(
-                                MegCC::CreateExternOpr(
-                                        m_fbs_builder,
-                                        m_fbs_builder.CreateVector(
-                                                input_tensors),
-                                        m_fbs_builder.CreateString(name),
-                                        m_fbs_builder.CreateString(data),
-                                        data_len,
-                                        m_fbs_builder.CreateVector(
-                                                output_tensors))
-                                        .Union());
                     })
                     .Case([&](Kernel::MemPlan op) {
                         createTensor(op->getResult(0));
@@ -459,7 +401,7 @@ public:
                         output_tensor = tensor.second;
                         auto descs = llvm::to_vector<4>(
                                 op.descs().getAsRange<ArrayAttr>());
-                        auto flags = llvm::to_vector<4>(
+                        auto flags= llvm::to_vector<4>(
                                 op.flags().getAsRange<ArrayAttr>());
                         std::vector<Offset<MegCC::IndexDesc>> descs_;
                         std::vector<Offset<MegCC::IndexDesc>> flags_;
@@ -475,8 +417,7 @@ public:
                         auto descs_fbs = m_fbs_builder.CreateVector(descs_);
                         auto flags_fbs = m_fbs_builder.CreateVector(flags_);
 
-                        MegCC::SubTensorBuilder subtensor_builder(
-                                m_fbs_builder);
+                        MegCC::SubTensorBuilder subtensor_builder(m_fbs_builder);
                         subtensor_builder.add_inputs(input_tensors_);
                         subtensor_builder.add_input_types(input_types_);
                         subtensor_builder.add_output(output_tensor);
@@ -484,10 +425,8 @@ public:
                         subtensor_builder.add_flags(flags_fbs);
 
                         LOG_DEBUG << "Add subtensor instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_SubTensor);
-                        instructions.push_back(
-                                subtensor_builder.Finish().Union());
+                        instructions_type.push_back(MegCC::Instruction_SubTensor);
+                        instructions.push_back(subtensor_builder.Finish().Union());
                     })
                     .Case([&](Kernel::SetSubtensorIns op) {
                         kernel_exporter.addInst("SETSUBTENSOR");
@@ -593,8 +532,7 @@ public:
                         auto&& out_tensor = value2typed_tensor.at(
                                 op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Broadcast instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_BroadCast);
+                        instructions_type.push_back(MegCC::Instruction_BroadCast);
                         instructions.push_back(
                                 MegCC::CreateBroadCast(
                                         m_fbs_builder, input_tensors_,
@@ -752,7 +690,7 @@ public:
                         auto&& out_tensor = value2typed_tensor.at(
                                 op.result().getAsOpaquePointer());
 
-                        auto mat_id = op.mat_idx();
+                        auto mat_id= op.mat_idx();
                         auto member = llvm::to_vector<4>(
                                 mat_id.getAsRange<IntegerAttr>());
                         std::vector<int32_t> mat_id_v;
@@ -1009,17 +947,15 @@ private:
                                    m_fbs_builder.CreateString(name));
     }
 
-    Offset<MegCC::IndexDesc> indexdesc_to_fbs(ArrayAttr desc) {
-        CC_ASSERT(desc.size() == 5);
+    Offset<MegCC::IndexDesc> indexdesc_to_fbs(ArrayAttr desc){
+        CC_ASSERT(desc.size()==5);
         auto member = llvm::to_vector<5>(desc.getAsRange<IntegerAttr>());
         return MegCC::CreateIndexDesc(m_fbs_builder, member[0].getInt(),
                                       member[1].getInt(), member[2].getInt(),
                                       member[3].getInt(), member[4].getInt());
     }
 
-    Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name,
-                                         int32_t user_count,
-                                         bool weight_compress) {
+    Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name, int32_t user_count) {
         auto dense = attr.cast<DenseElementsAttr>();
         auto size_in_bits = dense.getType().getSizeInBits();
         if (size_in_bits & 0x7) {
@@ -1027,25 +963,12 @@ private:
         }
 
         auto size_in_bytes = size_in_bits >> 3;
-        if (dense.getType().getElementType().isF32() && weight_compress) {
-            llvm::outs() << "This weights is float32, megcc will compress to "
-                            "float16.\n";
-            size_in_bytes = size_in_bytes >> 1;
-        }
         std::vector<int8_t> data(size_in_bytes);
         if (dense.getType().getElementType().isF32()) {
-            if (!weight_compress) {
-                float* ptr = reinterpret_cast<float*>(data.data());
-                for (auto&& i : dense.getValues<float>()) {
-                    *ptr = i;
-                    ++ptr;
-                }
-            } else {
-                ushort* ptr = reinterpret_cast<ushort*>(data.data());
-                for (auto&& i : dense.getValues<float>()) {
-                    *ptr = float_to_half(i);
-                    ++ptr;
-                }
+            float* ptr = reinterpret_cast<float*>(data.data());
+            for (auto&& i : dense.getValues<float>()) {
+                *ptr = i;
+                ++ptr;
             }
         } else if (dense.getType().getElementType().isInteger(32)) {
             int* ptr = reinterpret_cast<int*>(data.data());
@@ -1104,11 +1027,7 @@ private:
                 // data
                 m_fbs_builder.CreateVector(data),
                 // name
-                m_fbs_builder.CreateString(name.str()),
-                // TODO: checksum default 0
-                0,
-                // compressed
-                weight_compress);
+                m_fbs_builder.CreateString(name.str()));
     }
 
     MegCC::ArithMode convert_arithmetic_mode(llvm::StringRef strref) {
@@ -1178,13 +1097,12 @@ private:
                 return MegCC::Device_ARM32;
             case megcc::KernelGen::ARM64V7: {
                 //! magic str
-                if (func_name.endswith(megcc::KernelGen::DumpHelper::
-                                               ARM64V7_ARM64_POSTFIX)) {
+                if (func_name.endswith(
+                            megcc::KernelGen::ARM64V7_ARM64_POSTFIX)) {
                     return MegCC::Device_ARM64;
                 } else {
-                    CC_ASSERT(
-                            func_name.endswith(megcc::KernelGen::DumpHelper::
-                                                       ARM64V7_ARMV7_POSTFIX));
+                    CC_ASSERT(func_name.endswith(
+                            megcc::KernelGen::ARM64V7_ARMV7_POSTFIX));
                     return MegCC::Device_ARM32;
                 }
             }
@@ -1202,12 +1120,10 @@ private:
 
 void export_tinynn_model(ModuleOp top_module, std::string save_path,
                          const bool save_model_as_symbol,
-                         KernelExporter& kernel_exporter,
-                         bool weight_compress) {
+                         KernelExporter& kernel_exporter) {
     LOG_DEBUG << "\n\t\t\t Begin Export TinyNN \t\t\t\n";
     Exporter exporter(top_module);
-    exporter.save_model(save_path, kernel_exporter, save_model_as_symbol,
-                        weight_compress);
+    exporter.save_model(save_path, kernel_exporter, save_model_as_symbol);
     LOG_DEBUG << "\t\t\t End Export TinyNN \t\t\t\n\n";
 }
 

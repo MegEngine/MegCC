@@ -6,10 +6,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include <getopt.h>
 #include <string.h>
 #include <sys/time.h>
-#include "extern_c_opr.h"
 #include "lite-c/common_enum_c.h"
 #include "lite-c/global_c.h"
 #include "lite-c/network_c.h"
@@ -58,31 +56,27 @@ static void write_file(const char* file_name, void* ptr, size_t length) {
 }
 
 static inline void run_model(LiteNetwork model, const char* output_dir,
-                             int instance_cnt, const int print_out,
-                             const size_t warmup_count,
-                             const size_t iter_count) {
-    size_t number = iter_count;
-    size_t warmup = warmup_count;
+                             int instance_cnt, const int print_out) {
 #if TINYNN_DUMP_TENSOR || DEBUG_MODE
-    number = 1;
-    warmup = 0;
-    printf("(DEBUG or TINYNN_DUMP_TENSOR enable)overwriting run iter to: %zu, "
-           "warmup count to: %zu\n",
-           number, warmup);
+    const int number = 1;
+    const int warmup = 0;
+#else
+    const int number = 100;
+    const int warmup = 20;
 #endif
-    for (size_t i = 0; i < warmup; i++) {
+    for (int i = 0; i < warmup; i++) {
         LITE_CAPI_CHECK(LITE_forward(model), "run model failed\n");
         LITE_CAPI_CHECK(LITE_wait(model), "wait model failed\n");
-        printf("warmup iter %zu finished.\n", i);
+        printf("warmup iter %d finished.\n\n", i);
     }
 
     struct timeval start;
     struct timeval end;
     gettimeofday(&start, NULL);
-    for (size_t i = 0; i < number; i++) {
+    for (int i = 0; i < number; i++) {
         LITE_CAPI_CHECK(LITE_forward(model), "run model failed\n");
         LITE_CAPI_CHECK(LITE_wait(model), "wait model failed\n");
-        printf("execute iter %zu finished.\n", i);
+        printf("execute iter %d finished.\n", i);
     }
     gettimeofday(&end, NULL);
     unsigned long diff =
@@ -162,128 +156,30 @@ static TinyNnCallBack g_cb = {
         .tinynn_fread_cb = fread,
 };
 #endif
-
-void usage() {
-    fprintf(stderr,
-            "Usage:\n"
-            "\t--input-model/-m: input model path\n"
-            "\t--output-dir/-o: output file path\n"
-            "\t--log-level/-l: 0:ERROR, 1:WARN, 2:INFO, 3:DEBUG\n"
-            "\t--input-data/-d: var=path/to/data_file, create by: "
-            "python3 compiler/script/debug/gen_input.py\n"
-            "\t--data-shape/-s: data shape\n"
-            "\t--c-opr-lib/-c: path to extern opr lib file(.so)\n"
-            "\t--c-opr-init-interface/-i: the init API of your loader\n"
-            "\t--warmup-count/-w: warmup count before run model\n"
-            "\t--iter-count/-t: iter run model\n");
-}
-
-#if defined(_WIN32)
-#include <io.h>
-#include <windows.h>
-#define RTLD_LAZY 0
-
-static void* dlopen(const char* file, int) {
-    return (void*)(LoadLibrary(file));
-}
-
-static void* dlsym(void* handle, const char* name) {
-    FARPROC symbol = GetProcAddress((HMODULE)handle, name);
-    return (void*)symbol;
-}
-
-#else
-#include <dlfcn.h>
-#endif
-
-const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int version);
-
 int main(int argc, char** argv) {
     LITE_set_log_level(WARN);
 #if TINYNN_CALLBACK_ENABLE
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
 #endif
-    char* model_path = NULL;
-    char* output_dir = NULL;
-    int print_out = 0;
-    char* data_str = NULL;
-    char* data_shape_str = NULL;
-    char* extern_so = NULL;
-    const char* c_opr_lib_interface = "mgb_c_opr_init";
-    size_t warmup_count = 1;
-    size_t iter = 10;
-
-    const struct option long_options[] = {
-            {"input-model", required_argument, 0, 'm'},
-            {"output-dir", required_argument, 0, 'o'},
-            {"log-level", required_argument, 0, 'l'},
-            {"input-data", required_argument, 0, 'd'},
-            {"data-shape", required_argument, 0, 's'},
-            {"c-opr-lib", required_argument, 0, 'c'},
-            {"c-opr-init-interface", required_argument, 0, 'i'},
-            {"warmup-count", required_argument, 0, 'w'},
-            {"iter-count", required_argument, 0, 't'},
-            {"help", no_argument, 0, 'h'},
-            {0, 0, 0, 0}};
-    const char* shortopt = "m:o:l:d:s:c:i:w:t:h";
-    int c, option_idx = 0;
-    while (1) {
-        c = getopt_long(argc, argv, shortopt, long_options, &option_idx);
-        if (c == -1) {
-            break;
-        }
-        switch (c) {
-            case 'm':
-                model_path = optarg;
-                break;
-            case 'o':
-                output_dir = optarg;
-                break;
-            case 'l':
-                print_out = atoi(optarg);
-                break;
-            case 'd':
-                data_str = optarg;
-                break;
-            case 's':
-                data_shape_str = optarg;
-                break;
-            case 'c':
-                extern_so = optarg;
-                break;
-            case 'i':
-                c_opr_lib_interface = optarg;
-                break;
-            case 'w':
-                warmup_count = atoi(optarg);
-                break;
-            case 't':
-                iter = atoi(optarg);
-                break;
-            case 'h':
-                usage();
-                exit(0);
-                break;
-            default:
-                abort();
-        }
+    if (argc < 2) {
+        fprintf(stderr, "input error, please run with:\n");
+        fprintf(stderr,
+                "tinynn_test <input_model> <output_dir> "
+                "<print_out_info_debug=0/1/2/3> "
+                "<input_data>..."
+                "\n");
+        return -1;
     }
-
+    const char* model_path = argv[1];
+    const char* output_dir = argc > 2 ? argv[2] : NULL;
+    int print_out = argc > 3 ? atoi(argv[3]) : 0;
     if (print_out == 2) {
         LITE_set_log_level(INFO);
     } else if (print_out == 3) {
         LITE_set_log_level(DEBUG);
     }
-
-    if (extern_so) {
-        void* handle = dlopen(extern_so, RTLD_LAZY);
-        EXAMPLE_ASSERT(handle, "load loader failed.\n");
-        void (*func)(const MGBExternCOprApi* (*)(int)) = NULL;
-        *(void**)&func = dlsym(handle, c_opr_lib_interface);
-        EXAMPLE_ASSERT(func, "load init interface of loader failed.\n");
-        func(megcc_get_extern_c_opr_api_versioned);
-    }
-
+    char* data_str = argc > 4 ? argv[4] : NULL;
+    char* data_shape_str = argc > 5 ? argv[5] : NULL;
     LiteNetwork model;
     LITE_CAPI_CHECK(
             LITE_make_network(&model, *default_config(), *default_network_io()),
@@ -371,8 +267,7 @@ int main(int argc, char** argv) {
                        nr_input, input_cnt);
             }
         }
-        run_model(model, output_dir, instance_cnt, print_out, warmup_count,
-                  iter);
+        run_model(model, output_dir, instance_cnt, print_out);
         for (size_t i = 0; i < nr_input; ++i) {
             free(data[i]);
         }
@@ -384,12 +279,10 @@ int main(int argc, char** argv) {
     }
     //! if no input data set, just run the model with random input data
     if (instance_cnt == 0) {
-        run_model(model, output_dir, instance_cnt, print_out, warmup_count,
-                  iter);
+        run_model(model, output_dir, instance_cnt, print_out);
     }
 
     LITE_CAPI_CHECK(LITE_destroy_network(model), "delete model failed\n");
-
     return 0;
 }
 

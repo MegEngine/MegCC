@@ -24,11 +24,6 @@ cl::opt<bool> Verbose(
         "verbose", cl::desc("log more detail information when compiler model"));
 cl::opt<bool> SaveModel("save-model", cl::desc("save model to c file"));
 
-cl::opt<bool> EnableCompressWeightToFp16(
-        "enable_compress_fp16",
-        cl::desc("enable compress model weight from fp32 to fp16, enable this "
-                 "may effect model precision."));
-
 int main(int argc, char** argv) {
     cl::AddExtraVersionPrinter(
             [](raw_ostream& oss) { oss << megcc::getMegccVersionString(); });
@@ -47,8 +42,7 @@ int main(int argc, char** argv) {
                  << OutputDir.getValue() << "\n";
     mlir::KernelExporter kernel_exporter;
     mlir::export_tinynn_model(mod.get(), OutputDir.getValue() + "/model.tiny",
-                              SaveModel, kernel_exporter,
-                              EnableCompressWeightToFp16.getValue());
+                              SaveModel, kernel_exporter);
     llvm::outs() << "Export tinynn model and kernel done.\n";
     return 0;
 }

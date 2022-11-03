@@ -1,13 +1,6 @@
 ## building
 
 megcc depends on llvm-project and megbrain, now llvm-project and megbrain are integrated by submodule, and static linked into megcc
-- install cmake ninja
-    ```bash
-    $ python3 -m pip install cmake
-    $ cmake --version
-    ..
-    $ sudo apt install ninja-build
-    ```
 - update third-party submodule
     ```bash
     $ cd megcc

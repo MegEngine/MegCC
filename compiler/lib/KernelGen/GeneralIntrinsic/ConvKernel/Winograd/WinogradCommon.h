@@ -20,7 +20,6 @@ class WinogradStrategyBase {
 public:
     virtual uint32_t GetKernelSize() = 0;
     virtual uint32_t GetOutputBlockSize() = 0;
-    virtual uint32_t GetTileSize() { return 32; };
 
     //! transform the weight to winograd space, input strings are:
     //! 0: inptr, the start pointer of the convolution weight
@@ -64,6 +63,8 @@ public:
 };
 
 class WinogradFrameNchw44 {
+    uint32_t m_tile_per_loop = 24;
+
 public:
     //! gen init code
     std::string GenInitCode(TContext*, WinogradStrategyBase*);

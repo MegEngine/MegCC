@@ -14,8 +14,6 @@
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Winograd/WinogradF23Strategy4x8MK4.h"
-#include "Winograd/WinogradF43Strategy4x16MK4.h"
-#include "Winograd/WinogradF63Strategy4x16MK4.h"
 #include "compiler/KernelGen/KernelGen.h"
 
 namespace megcc {
@@ -130,41 +128,6 @@ private:
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
     MatmulM4N12MK4Kernel m_inner_gemm;
-};
-class WinogradFloatF43Nchw44 : public GIConvImpl {
-    mutable WinogradFrameNchw44 m_framework;
-    mutable WinogradF43Strategy4x16MK4 m_winograd_strategy;
-
-public:
-    bool IsAvailable(TContext* context) const override;
-    //! kernel gen
-    std::string GetKernelBody(TContext* context) const override;
-    //! init gen
-    std::string GetInitBody(TContext* context) const override;
-    std::string GetWorkspaceBody(TContext* context) const override;
-
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
-
-    std::string GetKernelSymbol(TContext* context) const override;
-};
-
-class WinogradFloatF63Nchw44 : public GIConvImpl {
-    mutable WinogradFrameNchw44 m_framework;
-    mutable WinogradF63Strategy4x16MK4 m_winograd_strategy;
-
-public:
-    bool IsAvailable(TContext* context) const override;
-    //! kernel gen
-    std::string GetKernelBody(TContext* context) const override;
-    //! init gen
-    std::string GetInitBody(TContext* context) const override;
-    std::string GetWorkspaceBody(TContext* context) const override;
-
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
-
-    std::string GetKernelSymbol(TContext* context) const override;
 };
 
 }  // namespace GeneralIntrinsic

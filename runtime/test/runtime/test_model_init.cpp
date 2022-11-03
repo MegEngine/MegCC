@@ -21,10 +21,10 @@ DeduceFunc deduce_func[10];
 
 //! not thread safe
 void load_kernel_init_function() {
-    return;
+    return ;
 }
 
-namespace {
+namespace{
 TinyNNStatus Init0(Tensor** inputs, int nr_input, Tensor* out_weights,
                    int* nr_out_weight, const RuntimeOpt* opt) {
     if (out_weights == NULL && nr_out_weight != NULL) {
@@ -87,16 +87,16 @@ TEST(RUNTIME, ShareWithOldWeights) {
     auto combine_model = simple_model.m_combine_model;
     auto w0 = create_tensor({2, 5}, TinyNNDType::TinyNN_FLOAT, weight1.data());
     w0->is_shared = 1;
-    w0->is_dynamic = 0;
+    w0->is_dynamic= 0;
     w0->use_count = 1;
-    w0->ptr = weight1.data();
+    w0->ptr= weight1.data();
     w0->size = 10 * sizeof(float);
     w0->name = (char*)"w0";
     auto w1 = create_tensor({8, 5}, TinyNNDType::TinyNN_FLOAT, weight1.data());
     w1->is_shared = 1;
     w1->use_count = 1;
-    w1->is_dynamic = 0;
-    w1->ptr = weight2.data();
+    w1->is_dynamic= 0;
+    w1->ptr= weight2.data();
     w1->size = 40 * sizeof(float);
     w1->name = (char*)"w1";
     *(combine_model->weights) = *w0;
@@ -114,6 +114,7 @@ TEST(RUNTIME, ShareWithOldWeights) {
     ins1->workload.opr.init_func = 1;
 
     init_model_weights(combine_model);
+
 
     ASSERT_EQ(ins0->workload.opr.inputs[0]->is_shared, 1);
     ASSERT_EQ(ins1->workload.opr.inputs[0]->is_shared, 1);
@@ -141,16 +142,16 @@ TEST(RUNTIME, ShareWithOldWeightsAndCrossDeviceModel) {
     auto combine_model = simple_model.m_combine_model;
     auto w0 = create_tensor({2, 5}, TinyNNDType::TinyNN_FLOAT, weight1.data());
     w0->is_shared = 1;
-    w0->is_dynamic = 0;
+    w0->is_dynamic= 0;
     w0->use_count = 2;
-    w0->ptr = weight1.data();
+    w0->ptr= weight1.data();
     w0->size = 10 * sizeof(float);
     w0->name = (char*)"w0";
     auto w1 = create_tensor({8, 5}, TinyNNDType::TinyNN_FLOAT, weight1.data());
     w1->is_shared = 1;
     w1->use_count = 2;
-    w1->is_dynamic = 0;
-    w1->ptr = weight2.data();
+    w1->is_dynamic= 0;
+    w1->ptr= weight2.data();
     w1->size = 40 * sizeof(float);
     w1->name = (char*)"w1";
     *(combine_model->weights) = *w0;
@@ -176,6 +177,7 @@ TEST(RUNTIME, ShareWithOldWeightsAndCrossDeviceModel) {
     ins1_1->workload.opr.init_func = 1;
 
     init_model_weights(combine_model);
+
 
     ASSERT_EQ(ins0_0->workload.opr.inputs[0]->is_shared, 1);
     ASSERT_EQ(ins0_1->workload.opr.inputs[0]->is_shared, 1);
@@ -206,26 +208,4 @@ TEST(RUNTIME, ShareWithOldWeightsAndCrossDeviceModel) {
     tinynn_free(dev_model1->processed_weights);
 }
 
-TEST(RUNTIME, BindVmWithModel) {
-    auto m1 = new CombineModel;
-    auto m2 = new CombineModel;
-
-    vm_attach(m1);
-    vm_attach(m2);
-
-    auto vm1 = static_cast<VM*>(m1->vm);
-    auto vm2 = static_cast<VM*>(m2->vm);
-
-    //! check vm already bind with model
-    ASSERT_EQ(m1, vm1->model);
-    ASSERT_EQ(m2, vm2->model);
-
-    //! check different model use different vm
-    ASSERT_NE(vm1, vm2);
-
-    delete vm1->model;
-    delete vm2->model;
-
-    vm_detach(m1);
-    vm_detach(m2);
-}
+// vim: syntax=cpp.doxygen

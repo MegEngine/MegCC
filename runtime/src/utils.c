@@ -17,9 +17,7 @@ static int has_timer_cb = 0;
 // default logger
 tinynn_log __tinynn_log__ = NULL;
 #else
-#if !__APPLE__
 #include <malloc.h>
-#endif
 #include <stdlib.h>
 #include <sys/time.h>
 //! default gettime imp, we only use gettimeofday

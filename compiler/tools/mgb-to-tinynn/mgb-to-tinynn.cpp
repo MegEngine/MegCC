@@ -56,11 +56,6 @@ cl::opt<std::string> JsonFile("json", cl::Optional,
                               cl::desc("config app by json"),
                               cl::value_desc("<path/to/json/file>"));
 
-cl::opt<bool> EnableCompressWeightToFp16(
-        "enable_compress_fp16",
-        cl::desc("enable compress model weight from fp32 to fp16, enable this "
-                 "may effect model precision."));
-
 extern llvm::cl::opt<megcc::KernelGen::Arch> target_arch;
 struct DumpJson {
     struct ModelJson {
@@ -72,7 +67,6 @@ struct DumpJson {
             bool_options["enable_nchw44_dot"] = false;
             bool_options["add_nhwc2nchw_to_input"] = false;
             bool_options["mgb_fuse_kernel"] = false;
-            bool_options["enable_compress_fp16"] = false;
             int_options["hako_ver"] = 0;
         }
         static ModelJson parse(json::Object& obj) {
@@ -342,8 +336,6 @@ int main(int argc, char** argv) {
         model_json.bool_options["add_nhwc2nchw_to_input"] =
                 Add_nhwc2nchw_to_input.getValue();
         model_json.bool_options["mgb_fuse_kernel"] = MGBFuseKernel.getValue();
-        model_json.bool_options["enable_compress_fp16"] =
-                EnableCompressWeightToFp16.getValue();
         dump_info->models.push_back(model_json);
     }
     auto dump_dir = dump_info->dump_dir;
@@ -408,8 +400,7 @@ int main(int argc, char** argv) {
                      << "\n";
         mlir::export_tinynn_model(
                 mod.get(), dump_dir + "/" + options.module_name + ".tiny",
-                SaveModel, kernel_exporter,
-                model.bool_options.at("enable_compress_fp16"));
+                SaveModel, kernel_exporter);
         llvm::outs() << "Mgb/mge model convert to tinynn model "
                      << options.module_name << " done.\n";
     }

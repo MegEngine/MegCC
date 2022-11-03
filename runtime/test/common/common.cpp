@@ -6,8 +6,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 #include "common.h"
-#include <math.h>
 #include "float.h"
+#include <math.h>
 
 using namespace test;
 
@@ -178,11 +178,9 @@ std::shared_ptr<Tensor> test::create_tensor(std::vector<uint32_t> shape,
     return tensor;
 }
 class SimpleVM {
-    CombineModel* cb_model;
-
 public:
     SimpleVM() {
-        cb_model = new CombineModel;
+        auto cb_model = new CombineModel;
         cb_model->nr_device_model = 1;
         cb_model->device_models = new DeviceModel*;
         cb_model->device_models[0] = new DeviceModel;
@@ -193,15 +191,15 @@ public:
         model->device.device_type = TinyNN_BARE_METAL;
         init_device(&model->device);
         model->opt = create_runtime_opt(&model->device);
-        vm_attach(cb_model);
+        auto vm = vm_global_inst();
+        vm_attach(vm, cb_model);
     }
-    VM* getvm() { return (VM*)(cb_model->vm); }
+    VM* getvm() { return vm_global_inst(); }
     ~SimpleVM() {
-        auto vm = getvm();
+        auto vm = vm_global_inst();
         delete vm->model->device_models[0];
         delete vm->model->device_models;
         delete vm->model;
-        vm_detach(cb_model);
     }
 };
 

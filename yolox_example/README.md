@@ -53,15 +53,9 @@ make install/strip -j32
 
 3. copy `your_output_image` back to your local machine, the result is shown in the image
 
-## example result
+## result example
 origin：
+![origin](./dog.jpg)
 
-<div  align="center">
-<img src="./dog.jpg" width = "50%" height = "50%" alt="origin" align=center />
-</div>
-
-detection  output：
-
-<div  align="center">
-<img src="./out.jpg" width = "50%" height = "50%" alt="output" align=center />
-</div>
+detection example：
+![output](./out.jpg)

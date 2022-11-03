@@ -46,25 +46,17 @@ bool ConvFloatNCHWNCHW44::IsAvailable(TContext* ctx) const {
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
 std::string ConvFloatNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
-    if (ctx) {
-        auto src_tensor = ctx->getAttrOprand("operand:0");
-        CC_ASSERT(src_tensor.shape.size() > 0)
-                << "src_tensor size should > 0, now" << src_tensor.shape.size();
-        uint32_t ic = src_tensor.shape[1];
-        auto dst_tensor = ctx->getAttrOprand(
-                "operand:" +
-                std::to_string(ctx->getAttrInt("nr_operands") - 1));
-        uint32_t oc = dst_tensor.shape[1] * 4;
-        std::string name_temp =
-                "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
-        return StringTemplate::StringTemplateArgs(ctx)
-                .add("base_kernel_sym", GIConvImpl::GetKernelSymbol(ctx))
-                .add("oc", oc)
-                .add("ic", ic)
-                .render(name_temp);
-    } else {
-        return "GI_kernel_conv2d_nchw_nchw44";
-    }
+    auto src_tensor = ctx->getAttrOprand("operand:0");
+    uint32_t ic = src_tensor.shape[1];
+    auto dst_tensor = ctx->getAttrOprand(
+            "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
+    uint32_t oc = dst_tensor.shape[1] * 4;
+    std::string name_temp = "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
+    return StringTemplate::StringTemplateArgs(ctx)
+            .add("base_kernel_sym", GIConvImpl::GetKernelSymbol(ctx))
+            .add("oc", oc)
+            .add("ic", ic)
+            .render(name_temp);
 }
 
 std::string ConvFloatNCHWNCHW44::GetInitBody(TContext* ctx) const {
@@ -159,8 +151,7 @@ std::string render_init(int c_idx, int nr_ow, bool with_bias) {
     for (int src_idx = 0; src_idx < nr_ow; ++src_idx) {
         if (with_bias) {
             ss << "c[" << c_idx << "][" << src_idx
-               << "] = GiFloat32Type2FixLenType(GiLoadFloat32(bias_ptr + "
-               << c_idx << " * 4));";
+               << "] = GiFloat32Type2FixLenType(GiLoadFloat32(bias_ptr + " << c_idx << " * 4));";
         } else {
             ss << "c[" << c_idx << "][" << src_idx
                << "] = GiFloat32Type2FixLenType(GiBroadcastFloat32(0.f));";
@@ -181,23 +172,20 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
     } else {
         for (int src_idx = 0; src_idx < src_reg_size; ++src_idx) {
             fw_ss << "src[" << src_idx
-                  << "] = GiFloat32Type2FixLenType(GiLoadFloat32(src_ptr + "
-                     "${fh_idx} * packed_iw + "
+                  << "] = GiFloat32Type2FixLenType(GiLoadFloat32(src_ptr + ${fh_idx} * packed_iw + "
                   << src_idx << "* ${simd_len}));\n";
         }
     }
 
     for (int fw_idx = 0; fw_idx < filter_size; ++fw_idx) {
         fw_ss << "weight[0][" << fw_idx
-              << "] = GiFloat32Type2FixLenType(GiLoadFloat32(filter_ptr + "
-                 "${fh_idx} * ${ld_weight_fw} + "
+              << "] = GiFloat32Type2FixLenType(GiLoadFloat32(filter_ptr + ${fh_idx} * ${ld_weight_fw} + "
               << fw_idx << " * ${simd_len}));\n";
     }
     if (is_big_oc) {
         for (int fw_idx = 0; fw_idx < filter_size; ++fw_idx) {
             fw_ss << "weight[1][" << fw_idx
-                  << "] = GiFloat32Type2FixLenType(GiLoadFloat32(filter_ptr + "
-                     "${ld_weight_oc} + "
+                  << "] = GiFloat32Type2FixLenType(GiLoadFloat32(filter_ptr + ${ld_weight_oc} + "
                      "${fh_idx} * "
                      "${ld_weight_fw} + "
                   << fw_idx << " * ${simd_len}));\n";
@@ -207,22 +195,14 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
         auto src_idx = fw_idx;
         auto weight_idx = fw_idx;
         for (int i = 0; i < nr_ow; ++i) {
-            fw_ss << "c[0][" << i
-                  << "] = "
-                     "GiFloat32Type2FixLenType(GiSimdFmaLane("
-                     "GiFixLenType2GiFloat32Type(c[0]["
-                  << i << "]), GiFixLenType2GiFloat32Type(weight[0]["
-                  << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[(" << i
+            fw_ss << "c[0][" << i << "] = GiFloat32Type2FixLenType(GiSimdFmaLane(GiFixLenType2GiFloat32Type(c[0][" << i
+                  << "]), GiFixLenType2GiFloat32Type(weight[0][" << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[(" << i
                   << " * ${stride} + " << src_idx << ") / 4]), "
                   << (i * stride + src_idx) % 4 << "));";
             if (is_big_oc) {
-                fw_ss << "c[1][" << i
-                      << "] = "
-                         "GiFloat32Type2FixLenType(GiSimdFmaLane("
-                         "GiFixLenType2GiFloat32Type(c[1]["
-                      << i << "]), GiFixLenType2GiFloat32Type(weight[1]["
-                      << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[("
-                      << i << " * ${stride} + " << src_idx << ") / 4]), "
+                fw_ss << "c[1][" << i << "] = GiFloat32Type2FixLenType(GiSimdFmaLane(GiFixLenType2GiFloat32Type(c[1][" << i
+                      << "]), GiFixLenType2GiFloat32Type(weight[1][" << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[(" << i
+                      << " * ${stride} + " << src_idx << ") / 4]), "
                       << (i * stride + src_idx) % 4 << "));";
             }
         }
@@ -243,11 +223,11 @@ std::string render_store(int nr_ow, int c_idx, const std::string& store_offset,
                          const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     for (int ow_idx = 0; ow_idx < nr_ow; ++ow_idx) {
-        ss << act.GenIntrinsicFloatStore(
-                "GiFixLenType2GiFloat32Type(c[" + std::to_string(c_idx) + "][" +
-                        std::to_string(ow_idx) + "])",
-                "dst_ptr + " + store_offset + " + " + std::to_string(ow_idx) +
-                        " * simd_len");
+        ss << act.GenIntrinsicFloatStore("GiFixLenType2GiFloat32Type(c[" + std::to_string(c_idx) + "][" +
+                                                 std::to_string(ow_idx) + "])",
+                                         "dst_ptr + " + store_offset + " + " +
+                                                 std::to_string(ow_idx) +
+                                                 " * simd_len");
     }
     return ss.str();
 }

@@ -46,34 +46,30 @@ bool Conv1x1FloatMk4::IsAvailable(TContext* ctx) const {
 
 std::string Conv1x1FloatMk4::GetKernelSymbol(TContext* ctx) const {
     std::stringstream extra_ss;
-    if (ctx) {
-        if (is_bias(ctx)) {
-            extra_ss << "_bias";
-        }
-        if (ctx->haveAttr("nonlineMode") &&
-            ctx->getAttrStr("nonlineMode") != "IDENTITY") {
-            extra_ss << "_" << ctx->getAttrStr("nonlineMode");
-        }
-        std::string name_temp =
-                "GI_kernel_conv2d_conv1x1_${format}_${kernel_h}x${kernel_w}_${"
-                "sparse}_p${pad_h}x${pad_w}_s${stride_h}x${stride_w}_d${"
-                "dilate_h}x${dilate_w}${extra}";
-        return StringTemplate::StringTemplateArgs(ctx)
-                .add_ctx_int("kernel_h")
-                .add_ctx_int("kernel_w")
-                .add_ctx_str("format")
-                .add_ctx_str("sparse")
-                .add_ctx_int("pad_h")
-                .add_ctx_int("pad_w")
-                .add_ctx_int("stride_h")
-                .add_ctx_int("stride_w")
-                .add_ctx_int("dilate_h")
-                .add_ctx_int("dilate_w")
-                .add("extra", extra_ss.str())
-                .render(name_temp);
-    } else {
-        return "GI_kernel_conv2d_conv1x1";
+    if (is_bias(ctx)) {
+        extra_ss << "_bias";
     }
+    if (ctx->haveAttr("nonlineMode") &&
+        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+        extra_ss << "_" << ctx->getAttrStr("nonlineMode");
+    }
+    std::string name_temp =
+            "GI_kernel_conv2d_conv1x1_${format}_${kernel_h}x${kernel_w}_${"
+            "sparse}_p${pad_h}x${pad_w}_s${stride_h}x${stride_w}_d${"
+            "dilate_h}x${dilate_w}${extra}";
+    return StringTemplate::StringTemplateArgs(ctx)
+            .add_ctx_int("kernel_h")
+            .add_ctx_int("kernel_w")
+            .add_ctx_str("format")
+            .add_ctx_str("sparse")
+            .add_ctx_int("pad_h")
+            .add_ctx_int("pad_w")
+            .add_ctx_int("stride_h")
+            .add_ctx_int("stride_w")
+            .add_ctx_int("dilate_h")
+            .add_ctx_int("dilate_w")
+            .add("extra", extra_ss.str())
+            .render(name_temp);
 }
 
 std::string Conv1x1FloatMk4::GetInitBody(TContext* ctx) const {
@@ -168,6 +164,7 @@ std::shared_ptr<TContext> Conv1x1FloatMk4::GetInnerCtx(TContext* ctx) const {
 
 std::string Conv1x1FloatMk4::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
+    MatmulM4N12MK4Kernel inner_gemm;
     auto inner_ctx = GetInnerCtx(ctx);
     writer << m_inner_gemm.GetNakedKernelSignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetPackBSignature(inner_ctx.get()) << ";\n";

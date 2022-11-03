@@ -124,13 +124,13 @@ TEST(AARCH64, BenchmarkConvNCHWNCHW44) {
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = ConvBiasForward::Param::Format::NCHW44;
     benchmarker.set_param(param);
-    benchmarker
-            .execs({{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}})
-            .print();
+    benchmarker.execs(
+            {{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}}).print();
 }
 
 TEST(AARCH64, BenchmarkConvF32Winograd) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
+    benchmarker.set_kernel_symbol(".*_winograd_f23");
 
     ConvBiasForward::Param param;
     param.pad_h = 1;
@@ -140,29 +140,25 @@ TEST(AARCH64, BenchmarkConvF32Winograd) {
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = ConvBiasForward::Param::Format::NCHW44;
     benchmarker.set_param(param);
-    std::vector<std::vector<std::string>> algo_pairs = {
-            {".*_winograd_f23", "WINOGRAD_NCHW44:AARCH64_F32_MK4_4x16:4:2:24"},
-            {".*_winograd_f43", "WINOGRAD_NCHW44:AARCH64_F32_MK4_4x16:4:4:68"},
-            {".*_winograd_f63", "WINOGRAD_NCHW44:AARCH64_F32_MK4_4x16:4:6:16"}};
-
-    for (auto algo : algo_pairs) {
-        printf("megcc algo: %s VS megdnn algo: %s\n", algo[0].c_str(),
-               algo[1].c_str());
-        for (size_t Channel : {32, 256}) {
-            for (size_t HW : {56, 28, 14}) {
-                benchmarker.set_kernel_symbol(algo[0]);
-                benchmarker.set_before_exec_callback(
-                        megdnn::test::AlgoChecker<ConvBiasForward>(
-                                algo[1].c_str()));
-
-                auto result = benchmarker.execs(
-                        {{1, Channel / 4, HW, HW, 4},
-                         {Channel / 4, Channel / 4, 3, 3, 4, 4},
-                         {1, Channel / 4, 1, 1, 4},
-                         {},
-                         {}});
-                result.print();
-            }
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>(
+                    "WINOGRAD_NCHW44:AARCH64_F32_MK4_4x16:4:2:24"));
+    for (size_t Channel : {32, 256}) {
+        for (size_t HW : {56, 28, 14}) {
+            auto result =
+                    benchmarker.execs({{1, Channel / 4, HW, HW, 4},
+                                       {Channel / 4, Channel / 4, 3, 3, 4, 4},
+                                       {1, Channel / 4, 1, 1, 4},
+                                       {},
+                                       {}});
+            printf("megcc result time = %f, throughput %f Gops, %f mbps\n",
+                   result.megcc_performance.kernel_time_ms,
+                   result.megcc_performance.compute_throughput_gops,
+                   result.megcc_performance.memory_throughput_mbps);
+            printf("dnn result time = %f, throughput %f Gops, %f mbps\n",
+                   result.dnn_performance.kernel_time_ms,
+                   result.dnn_performance.compute_throughput_gops,
+                   result.dnn_performance.memory_throughput_mbps);
         }
     }
 }

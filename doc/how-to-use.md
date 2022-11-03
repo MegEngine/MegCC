@@ -8,17 +8,16 @@
 ```
 ```
 bin
-├── mgb-importer    : aux app, import mdl model and output model mlir
-├── megcc-opt       : aux app, use megcc pass to optimize the mlir, it can show the detail of ir transform
-├── mgb-runner      : aux app, run mdl model with mgb naive kernel, used to check megcc correctness
-├── hako-to-mgb     : aux app, unpack hako model to mgb model
-├── mgb-to-tinynn   : core app, megcc compiler, compile mdl model to kernel and binded model
-└── kernel_exporter : aux app, export kernel C code of given kernel type 
+├── mgb-importer  :aux app, import mdl model and output model mlir
+├── megcc-opt     :aux app, use megcc pass to optimize the mlir, it can show the detail of ir transform
+├── mgb-runner    :aux app, run mdl model with mgb naive kernel, used to check megcc correctness
+├── hako-to-mgb   :aux app, unpack hako model to mgb model
+└── mgb-to-tinynn :core app, megcc compiler, compile mdl model to kernel and binded model
 
 ```
 
 ## Use Example In Android
-- Download the precompiled megcc from [github](https://github.com/MegEngine/MegCC/releases)
+- Download the precompiled megcc from [barin++ oss web](https://oss.iap.hh-b.brainpp.cn/megengine-built/megcc)
 - Extract the download tar file. `tar -xvf megcc_release_*.tar.gz`
 ### Fast Try
 > warning: **You should make sure a ndk is install in your computer，and set env NDK_ROOT to its direction** 
@@ -114,25 +113,3 @@ hako-to-mgb is used to unpack hako model which end with '.emod'. Version 2 unpac
 
 ### megcc-opt
 megcc-opt is used to show intermediate result of mgb-to-tinynn. You can get origin mlir from mgb-importer, and trans it to final mlir by `--MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning` args.  
-### kernel_exporter
-export given kernel C code，get the implementation of given kernel type for different architecture。the ussage is as follow:
-##### run with default attribute for given kernel
-
-```bash
-./kernel_exporter --arch <arch_type> --kernel <kernel_type> --use_default_attr
-```
-##### set attribute and run
-```bash
-./kernel_exporter --arch <arch_type> --kernel <kernel_type>
-```
-
-the specifical arch_type and kenrel_type can be seen by using `--help` option。the supported kenrel types:
-```bash
-ArgSortKernel           ArgmaxKernel                BatchMatmulKernel       CVTransposeKernel
-ConcatKernel            ConvBackDataKernel          ConvKernel              CvtColorKernel
-ElemwiseKernel          ElemwiseMultiKernel         FlipKernel              IndexingMultiAxisKernel
-IndexingOneHotKernel    MatrixInvKernel             MatrixMulKernel         PoolingKernel
-PowCKernel              ReduceKernel                RelayoutKernel          ResizeKernel
-RoiCopyKernel           RotateKernel                TopK                    TypeCvtKernel
-WarpAffineKernel        WarpPerspectiveKernel
-```

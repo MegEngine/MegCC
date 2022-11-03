@@ -9,11 +9,11 @@
 
 #include "Arm/Arm64/Activation.h"
 #include "Arm/ArmCommon/MatmulCommon.h"
-#include "Arm/ArmCommon/common_asm_utils.h"
 #include "InternalKernel.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/Utils.h"
 #include "compiler/Common/Logger.h"
+#include "Arm/ArmCommon/common_asm_utils.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace Arm64;
@@ -51,10 +51,10 @@ std::string interleave_1x4_4_b() {
 }
 
 std::string prefetch() {
-    return R"(
+     return R"(
         #define ASM_PREFETCH(address) "PRFM PLDL1KEEP, " address "\n"
-    )" + KernelGen::ArmCommon::gen_common_prefetch_2x_f32() +
-           KernelGen::ArmCommon::gen_common_prefetch_3x_f32();
+    )" + KernelGen::ArmCommon::gen_common_prefetch_2x_f32()
+    + KernelGen::ArmCommon::gen_common_prefetch_3x_f32();
 }
 
 std::string transpose_1x12() {
@@ -1500,11 +1500,6 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
         CC_ASSERT(dtype == "8832");
         ss << "_" << dtype;
     }
-    if (ctx->haveAttr("last_dtype")) {
-        auto last_dtype = ctx->getAttrStr("last_dtype");
-        ss << "_"
-           << "output_dtype_" << last_dtype;
-    }
     return ss.str();
 }
 
@@ -1538,10 +1533,6 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     writer << prefetch();
     writer << transpose_1x12();
     auto dtype = ctx->getAttrStr("dtype");
-    std::string last_dtype = "si8";
-    if (ctx->haveAttr("last_dtype")) {
-        last_dtype = ctx->getAttrStr("last_dtype");
-    }
     std::string dst_specifier = "int32_t";
     auto nonline_mode = ctx->haveAttr("nonlineMode")
                                 ? ctx->getAttrStr("nonlineMode")
@@ -1549,7 +1540,7 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     if (Utils::is_quant_dtype(dtype) &&
         (nonline_mode == "RELU" || nonline_mode == "IDENTITY" ||
          nonline_mode == "H_SWISH")) {
-        dst_specifier = Utils::cvt_dtype_specifier(last_dtype);
+        dst_specifier = "int8_t";
     }
     //! sigmoid use explicit postprocess
     bool need_temp_dst = need_post_process(ctx);

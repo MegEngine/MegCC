@@ -89,7 +89,6 @@ table Weight {
     name: string;
 
     checksum: uint32 = 0;
-    compressed: bool = 0;
 }
 
 // Opr, the abstract opr of all the operators, in the runtime frame all opr only
@@ -176,18 +175,6 @@ table Reshape {
     output: int;
 }
 
-table ExternOpr {
-    // the input tensor idx
-    input: [int];
-    // opr name
-    name: string;
-    // opr user data
-    data: string;
-    data_len: uint32;
-    // the output tensor idx
-    output: [int];
-}
-
 enum ArithMode : byte {
     ROUND = 0,
     NEGATE,
@@ -240,7 +227,7 @@ table IndexDesc {
 }
 
 table SubTensor {
-    //! descs is the array of subtensor param start, end, step, index
+    //! descs is the arrary of subtensor param start, end, step, index
     descs: [IndexDesc];
     //! flags the corresponding of subtensor param start, end, step, index
     //! if -1, mean it is not exist
@@ -268,7 +255,7 @@ table IndexingMultiAxis {
 }
 
 table SetSubTensor {
-    //! iterms is the array of subtensor param start, end, step, index
+    //! iterms is the arrary of subtensor param start, end, step, index
     descs: [IndexDesc];
     //! flags the corresponding of subtensor param start, end, step, index
     //! if -1, mean it is not exist
@@ -331,7 +318,7 @@ table TypeCvt{
 }
 
 table ArgSort{
-    // ascend or descend
+    // ascend or decend
     order: string;
     // the input tensor idx
     input: int;
@@ -360,10 +347,9 @@ union Instruction {
     IndexingMultiAxis = 14,
     ArgSort = 15,
     Reshape = 16,
-    ExternOpr = 17,
     // terminator to mark the end of instruction definitions
     // all instruction types should be placed before here
-    INSTRUCTION_TABLE_END = 18
+    INSTRUCTION_TABLE_END = 17
 }
 
 // device base data for a Model

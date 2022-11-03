@@ -356,7 +356,7 @@ std::string WinogradF23Strategy4x8MK4::OutputFeatureTrans(
             MULTI_TWO(1);
 #undef MULTI_TWO
 
-            if (bias_ptr_) {
+            if (bias_ptr) {
                 GI_FLOAT32_t vbias = GiLoadFloat32(bptr + oc);
                 dst_v[0][0]= GiFloat32Type2FixLenType(GiAddFloat32(GiFixLenType2GiFloat32Type(dst_v[0][0]), vbias));
                 dst_v[0][1]= GiFloat32Type2FixLenType(GiAddFloat32(GiFixLenType2GiFloat32Type(dst_v[0][1]), vbias));

@@ -28,19 +28,6 @@ TEST(AARCH64, ElementwiseUnique) {
     }
 }
 
-TEST(AARCH64, ElementwiseUnique_asm) {
-    Checker<ElemwiseForward> checker(Arch::ARM64);
-    checker.set_kernel_symbol("Arm64_kernel_elementwise.+");
-    ElemwiseForward::Param param;
-    for (auto mode : {MODE::SIGMOID}) {
-        param.mode = mode;
-        checker.set_param(param);
-        checker.execs({{1, 10}, {}});
-        checker.execs({{1, 10, 12, 13}, {}});
-        checker.execs({{10, 8, 2, 1}, {}});
-    }
-}
-
 TEST(AARCH64, ElementwiseBinary) {
     Checker<ElemwiseForward> checker(Arch::ARM64);
     ElemwiseForward::Param param;

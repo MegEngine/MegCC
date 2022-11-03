@@ -96,14 +96,6 @@ def FuseMulAdd3Kernel: TernaryElemwiseKernel<"FUSE_MUL_ADD3">;
 
 def FuseMulAdd4Kernel: QuaterElemwiseKernel<"FUSE_MUL_ADD4">;
 
-def FusedElemwiseKernel:AbstractKernelBase<"FusedElemwise"> {
-   let arguments = (ins
-        ArrayAttr:$modes,
-        Arg<Variadic<AnyMemRef>, "", [MemRead]>:$input,
-        Arg<AnyMemRef, "", [MemWrite]>:$output
-    );
-}
-
 def Conv2DKernel: AbstractKernelBase<"Conv2d", [AttrSizedOperandSegments]> {
     let arguments = (ins
         StrAttr:$mode,

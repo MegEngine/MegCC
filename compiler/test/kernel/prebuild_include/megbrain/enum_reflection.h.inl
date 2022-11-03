@@ -1,4 +1,6 @@
-
+// BEGIN_INTERNAL
+//! prebuild with megengine 8.11.1
+// BEGIN_INTERNAL
 template<>
 struct EnumTrait<::megdnn::param::PoolingV0::Mode> : public std::true_type {
     static inline std::string nameof(::megdnn::param::PoolingV0::Mode v) {

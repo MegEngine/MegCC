@@ -33,7 +33,7 @@ TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor,
 TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
                           Device* host_dev);
 
-TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
+TinyNNStatus parse_device_model(DeviceModel* model,
                                 ns(DeviceModel_table_t) device_model);
 
 //! all resource are allocate here
