@@ -119,7 +119,7 @@ private:
 
 void export_tinynn_model(ModuleOp top_module, std::string save_path,
                          const bool save_model_as_symbol,
-                         KernelExporter& kernel_exporter, bool weight_compress);
+                         KernelExporter& kernel_exporter);
 
 }  // namespace mlir
 

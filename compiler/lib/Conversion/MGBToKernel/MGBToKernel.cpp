@@ -233,7 +233,7 @@ public:
             case Mode::EQ:
                 return createOp<Kernel::EqualKernel>(op, operands, rewriter);
             case Mode::SILU:
-                return createOp<Kernel::SILUKernel>(op, operands, rewriter);
+                return createOp<Kernel::SILUKernel>(op, operands, rewriter); 
             default:
                 CC_ABORT << "Unsupport Elemwise mode :"
                          << static_cast<int>(op.mode()) << "\n";
@@ -290,26 +290,6 @@ public:
         } else {
             return failure();
         }
-    }
-};
-
-class ConvertFusedElemwise final
-        : public OpConversionPattern<MGB::FusedElemwise> {
-public:
-    using OpConversionPattern::OpConversionPattern;
-    LogicalResult matchAndRewrite(
-            MGB::FusedElemwise op, MGB::FusedElemwise::Adaptor adaptor,
-            ConversionPatternRewriter& rewriter) const override {
-        LOG_DEBUG << "Convert FusedElemwise MGB dialect to Abstract kernel of "
-                     "opr name: "
-                  << op.getOperationName().str() << "\n";
-        auto operands = adaptor.getOperands();
-        CC_ASSERT(!isDynamicShape(operands))
-                << "FusedElemwise operands shape should not be dynamic.\n";
-
-        auto attrs = op->getAttrs();
-        return createOp<Kernel::FusedElemwiseKernel>(op, adaptor.getOperands(),
-                                                     rewriter, attrs);
     }
 };
 
@@ -550,37 +530,14 @@ public:
     }
 };
 
-class ExternOprConverter : public OpConversionPattern<MGB::ExternOpr> {
-public:
-    using OpAdaptor = typename MGB::ExternOpr::Adaptor;
-    using OpConversionPattern<MGB::ExternOpr>::OpConversionPattern;
-    LogicalResult matchAndRewrite(
-            MGB::ExternOpr op, OpAdaptor adaptor,
-            ConversionPatternRewriter& rewriter) const override {
-        LOG_DEBUG << "Convert ExternOpr MGB dialect to Abstract kernel of "
-                     "opr name: "
-                  << op.getOperationName().str() << "\n";
-        auto operands = adaptor.getOperands();
-        CC_ASSERT(!isDynamicShape(operands))
-                << "ExternOpr operands shape should not be dynamic.\n";
-        auto attrs = ConvertAttr<MGB::ExternOpr>(op->getAttrDictionary(),
-                                                 op->getContext());
-        setOperandSegmentAttr(op->getContext(), attrs,
-                              {static_cast<int>(op.nr_input()),
-                               static_cast<int>(op.nr_output())});
-        return createOp<Kernel::ExternOpr>(op, operands, rewriter, attrs);
-    }
-};
-
 }  // namespace
 
 void populateMGBToKernelConversionPatterns(TypeConverter& typeConverter,
                                            RewritePatternSet& patterns) {
     patterns.add<
             ConvertParamStorage, ConvertParamProvider, ConvertElemwise,
-            ConvertFusedElemwise, ConvertConvLike, ConvertReduce,
-            ConvertReshape, ConvertSubtensor, ConvertSetSubtensor,
-            ConvertConcat, ExternOprConverter,
+            ConvertConvLike, ConvertReduce, ConvertReshape, ConvertSubtensor,
+            ConvertSetSubtensor, ConvertConcat,
             GenericConverter<MGB::WarpPerspective,
                              Kernel::WarpPerspectiveKernel>,
             GenericConverter<MGB::IndexingMultiAxisVec,

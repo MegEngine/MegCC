@@ -154,6 +154,16 @@ static inline uint64_t key_gen_hash_key() {
 
     return rst;
 }
+
+// The encryption keys are always inlined.
+static inline uint64_t global_key_gen_enc_key() {
+    return 0x272de6aa57433b6a;
+}
+
+static inline uint64_t global_key_gen_hash_key() {
+    return 0xc74ecc224703f00b;
+}
+
 }  // namespace rc4
 }  // namespace megcc
 

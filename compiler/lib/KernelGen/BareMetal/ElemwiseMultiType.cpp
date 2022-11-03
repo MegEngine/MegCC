@@ -32,27 +32,10 @@ std::string gen_dep(std::string mode) {
         }
     )";
 }
-std::string gen_unary(std::string mode) {
-    if (mode == "QRELU") {
-        return "int8_t out_val = fp32_to_int8(((scale_0 * val_0) > 0?(scale_0 "
-               "* "
-               "val_0 ):0) * scale_div)";
-    } else {
-        CC_ABORT << "not support mode " << mode.c_str() << "\n";
-    }
-    return "";
-}
 
 std::string gen_binary(std::string mode) {
     if (mode == "QADD") {
-        return "int8_t out_val = fp32_to_int8((scale_0 * val_0 + scale_1 * "
-               "val_1) * scale_div);";
-    } else if (mode == "QFUSE_ADD_RELU") {
-        return R"(
-        float val0 = scale_0 * val_0;
-        float val1 = scale_1 * val_1;     
-        int8_t out_val  = fp32_to_int8( ((val0 + val1) > 0? (val0 + val1):0) * scale_div);
-        )";
+        return "fp32_to_int8((scale_0 * val_0 + scale_1 * val_1) * scale_div)";
     } else {
         CC_ABORT << "not support mode " << mode.c_str() << "\n";
     }
@@ -64,11 +47,9 @@ std::string gen_binary(std::string mode) {
 bool ElemwiseMultiTypeKernel::IsAvailable(TContext* context) const {
     auto mode = context->getAttrStr("mode");
     auto nr_operands = context->getAttrInt("nr_operands");
-    bool nr_operands_ok = nr_operands == 2 || nr_operands == 3;
-    bool mode_ok_unary = nr_operands == 2 && mode == "QRELU";
-    bool mode_ok_binary =
-            nr_operands == 3 && (mode == "QADD" || mode == "QFUSE_ADD_RELU");
-    return nr_operands_ok && (mode_ok_unary || mode_ok_binary);
+    bool nr_operands_ok = nr_operands == 3;
+    bool mode_ok_binary = mode == "QADD";
+    return nr_operands_ok && (mode_ok_binary);
 }
 
 std::string ElemwiseMultiTypeKernel::GetKernelSymbol(TContext* context) const {
@@ -86,41 +67,8 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
     writer << gen_dep(mode);
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context);
-    if (context->getAttrInt("nr_operands") == 2) {
-        auto op0 = context->getAttrOprand("operand:0");
-        auto dst = context->getAttrOprand("operand:1");
-        CC_ASSERT(Utils::is_quant_dtype(op0.dtype, 8) &&
-                  Utils::is_quant_dtype(dst.dtype, 8));
-        auto op0_specifier = Utils::cvt_dtype_specifier(op0.dtype);
-        auto dst_specifier = Utils::cvt_dtype_specifier(dst.dtype);
-        std::string binary_str = R"({
-                ${op0_specifier}* input_0 = (${op0_specifier}*)inputs[0]->ptr;
-                float scale_0 = inputs[0]->dtype.param.scale;
-                TINYNN_ASSERT(input_0);
-                ${dst_specifier}* output_data = (${dst_specifier}*)outputs[0]->ptr;
-                float scale_dst = outputs[0]->dtype.param.scale;
-                TINYNN_ASSERT(output_data);
-                float scale_div = 1.f / scale_dst;
 
-                Layout in_layout = inputs[0]->layout;
-                size_t nr_elem = 1;
-                for (int i = 0; i < in_layout.nr_dim; ++i) {
-                    nr_elem *= in_layout.dims[i];
-                }
-                for(size_t i = 0; i < nr_elem; ++i){
-                    ${op0_specifier} val_0 = input_0[i];
-                    ${act};
-                    output_data[i] = out_val;
-                }
-                return TinyNN_SUCCESS;
-                }
-            )";
-        writer << StringTemplate::StringTemplateArgs()
-                          .add("op0_specifier", op0_specifier)
-                          .add("dst_specifier", dst_specifier)
-                          .add("act", gen_unary(mode))
-                          .render(binary_str);
-    } else if (context->getAttrInt("nr_operands") == 3) {
+    if (context->getAttrInt("nr_operands") == 3) {
         auto op0 = context->getAttrOprand("operand:0");
         auto op1 = context->getAttrOprand("operand:1");
         auto dst = context->getAttrOprand("operand:2");
@@ -151,8 +99,7 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
                 for(size_t i = 0; i < nr_elem; ++i){
                     ${op0_specifier} val_0 = input_0[i];
                     ${op1_specifier} val_1 = input_1[i];
-                    ${act};
-                    output_data[i] = out_val;
+                    output_data[i] = ${act};
                 }
                 return TinyNN_SUCCESS;
                 }

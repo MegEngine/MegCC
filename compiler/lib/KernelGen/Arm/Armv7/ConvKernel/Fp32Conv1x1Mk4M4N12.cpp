@@ -164,6 +164,7 @@ std::shared_ptr<TContext> Conv1x1FloatMk4::GetInnerCtx(TContext* ctx) const {
 
 std::string Conv1x1FloatMk4::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
+    MatmulM4N12MK4Kernel inner_gemm;
     auto inner_ctx = GetInnerCtx(ctx);
     writer << m_inner_gemm.GetNakedKernelSignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetPackBSignature(inner_ctx.get()) << ";\n";

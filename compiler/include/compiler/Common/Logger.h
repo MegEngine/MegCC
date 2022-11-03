@@ -20,8 +20,6 @@ enum class LogLevel : uint32_t {
 
 void SetLogLevel(LogLevel);
 
-void setAssertThrow(bool);
-
 LogLevel GetLogLevel();
 
 class Logger {
@@ -61,8 +59,8 @@ private:
 
 class LogFatal : public Logger {
 public:
-    LogFatal();
-    ~LogFatal();
+    LogFatal() : Logger(LogLevel::ERROR) {}
+    ~LogFatal() { abort(); }
 };
 
 #define LOG_DEBUG megcc::Logger::debug()

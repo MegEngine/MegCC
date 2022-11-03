@@ -35,7 +35,9 @@
 
 using namespace megcc;
 using namespace test;
-
+using KernelGenRet =
+        std::pair<std::vector<const ::megcc::KernelGen::KernelFunc*>,
+                  const ::megcc::KernelGen::DeduceFunc*>;
 namespace {
 DType dnndtype_2_ccdtype(megdnn::DType dtype) {
     DType res;
@@ -365,26 +367,9 @@ PerformanceResult call_kernel(
 
 }  // namespace
 
-void megcc::test::fused_elemwise_exec(
-        const TensorNDArray& tensors, KernelGen::Arch arch,
-        std::unordered_map<std::string, CCAttr>& proxy_attr,
-        const std::string& symbol) {
-    OutputScope output_idx{-1, -1};
-    output_idx.normalize((int)tensors.size());
-    fill_operands(proxy_attr, tensors, output_idx, false);
-    megcc::CodeGenContext ctx(proxy_attr);
-    auto kernels = megcc::KernelGen::KernelPack::GetKernel(
-            KernType::FusedElemwiseKernel, arch);
-#if MEGCC_TEST_GEN
-    gen_kernel(kernels, &ctx, arch, symbol, false);
-#else
-    //! call kernel
-    call_kernel(kernels, &ctx, tensors, {}, symbol, output_idx, false);
-#endif
-}
-
 namespace megcc {
 namespace test {
+namespace {}  // namespace
 
 //! [start, end]
 template <typename Opr>

@@ -44,7 +44,6 @@ bool ConvDotNCHWNCHW44::IsAvailable(TContext* ctx) const {
 }
 std::string ConvDotNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
     auto src_tensor = ctx->getAttrOprand("operand:0");
-    CC_ASSERT((src_tensor.shape.size()) > 0) << "src_tensor.shape.size > 0";
     uint32_t ic = src_tensor.shape[1];
     auto dst_tensor = ctx->getAttrOprand(
             "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));

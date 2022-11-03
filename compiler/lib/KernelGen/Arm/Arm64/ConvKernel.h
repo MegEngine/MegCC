@@ -9,9 +9,9 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "Arm/ArmCommon/ConvKernel/Fp32/Winograd/WinogradCommon.h"
 #include "Common/ConvKernel.h"
 #include "ConvKernel/Fp32/Winograd/WinogradF23Strategy4x16MK4.h"
+#include "Arm/ArmCommon/ConvKernel/Fp32/Winograd/WinogradCommon.h"
 #include "InternalKernel/InternalKernel.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
@@ -138,7 +138,6 @@ public:
 class WinogradFloatF23Nchw44 : public Arm64ConvImpl {
     mutable ArmCommon::WinogradFrameNchw44 m_framework;
     mutable WinogradF23Strategy4x16MK4 m_winograd_strategy;
-
 public:
     bool IsAvailable(TContext* context) const override;
     //! kernel gen
@@ -155,6 +154,6 @@ public:
 
 }  // namespace Arm64
 }  // namespace KernelGen
-}  // namespace megcc
+}  // namespace megcc 
 
 // vim: syntax=cpp.doxygen

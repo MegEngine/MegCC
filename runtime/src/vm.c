@@ -7,7 +7,6 @@
  */
 
 #include "vm.h"
-#include "init.h"
 #include "vm/registry.h"
 
 void register_all(VM* vm) {
@@ -19,7 +18,15 @@ void register_all(VM* vm) {
     register_dimshuffle(vm);
     register_broadcast_shape_of(vm);
     register_reshape(vm);
-    register_extern_opr(vm);
+}
+
+VM* vm_global_inst() {
+    static VM vm;
+    if (!vm.init) {
+        vm_reset(&vm);
+        vm.init = 1;
+    }
+    return &vm;
 }
 
 TinyNNStatus vm_reset(VM* vm) {
@@ -28,16 +35,14 @@ TinyNNStatus vm_reset(VM* vm) {
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus vm_attach(CombineModel* model) {
-    void* vm = tinynn_malloc(sizeof(VM));
-    vm_reset((VM*)vm);
-    model->vm = vm;
-    VM* vm_r = (VM*)vm;
-    vm_r->model = model;
+TinyNNStatus vm_attach(VM* vm, CombineModel* model) {
+    vm->model = model;
     return TinyNN_SUCCESS;
 }
-TinyNNStatus vm_detach(CombineModel* model) {
-    FREE(model->vm);
+
+TinyNNStatus vm_detach(VM* vm, CombineModel* model) {
+    TINYNN_ASSERT(model == vm->model);
+    vm->model = NULL;
     return TinyNN_SUCCESS;
 }
 

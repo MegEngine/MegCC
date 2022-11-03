@@ -12,8 +12,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "utils.h"
-
 namespace megcc {
 struct CCOperand {
     std::vector<size_t> shape;
@@ -60,6 +58,7 @@ public:
     CCAttr() = default;
 
     CCAttr(const char* value) {
+        //! TODO: new unique_ptr may be not efficient
         std::string value_str = std::string(value);
         mHolder = std::make_unique<AnyHolder<std::string>>(value_str);
         mType = Type::STRING;
@@ -67,18 +66,21 @@ public:
     }
 
     CCAttr(std::string value) {
+        //! TODO: new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<std::string>>(value);
         mType = Type::STRING;
         mLength = value.size();
     }
 
     CCAttr(bool value) {
+        //! TODO: new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<bool>>(value);
         mType = Type::BOOL;
         mLength = sizeof(bool);
     }
 
     CCAttr(const CCOperand& value) {
+        //! TODO: new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<CCOperand>>(value);
         mType = Type::OPERAND;
         mLength = sizeof(CCOperand);
@@ -87,6 +89,7 @@ public:
     template <typename T,
               std::enable_if_t<std::is_integral<T>::value, bool> = true>
     CCAttr(T value) {
+        //! TODO: new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::INT;
         mLength = sizeof(T);
@@ -95,6 +98,7 @@ public:
     template <typename T,
               std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
     CCAttr(T value) {
+        //! TODO: new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::FLOAT;
         mLength = sizeof(T);
@@ -256,4 +260,4 @@ private:
 
 #undef DefineFunction
 }  // namespace megcc
-   // vim: syntax=cpp.doxygen
+// vim: syntax=cpp.doxygen

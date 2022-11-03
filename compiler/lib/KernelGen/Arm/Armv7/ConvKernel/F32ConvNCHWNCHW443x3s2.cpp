@@ -50,8 +50,6 @@ bool ConvFloatNCHWNCHW443x3s2::IsAvailable(TContext* ctx) const {
 }
 std::string ConvFloatNCHWNCHW443x3s2::GetKernelSymbol(TContext* ctx) const {
     auto src_tensor = ctx->getAttrOprand("operand:0");
-    CC_ASSERT(src_tensor.shape.size() > 0)
-            << "src_tensor size should > 0, now" << src_tensor.shape.size();
     uint32_t ic = src_tensor.shape[1];
     auto dst_tensor = ctx->getAttrOprand(
             "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
@@ -119,8 +117,7 @@ std::string ConvFloatNCHWNCHW443x3s2::GetInitBody(TContext* ctx) const {
     return writer.str();
 }
 
-std::string ConvFloatNCHWNCHW443x3s2::GetWorkspaceBody(
-        TContext* context) const {
+std::string ConvFloatNCHWNCHW443x3s2::GetWorkspaceBody(TContext* context) const {
     std::stringstream ss;
     ss << R"(
         static inline int round_up(int x, int d){

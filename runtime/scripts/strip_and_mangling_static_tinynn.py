@@ -18,8 +18,7 @@ def create_mangling_string(len):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument(
         "--tinynn_lib",
         help="tinynn lib for stip debug section and mangling symbols",
@@ -28,14 +27,14 @@ def main():
     args = parser.parse_args()
     args.tinynn_lib = os.path.abspath(args.tinynn_lib)
 
-    assert os.path.isfile(
-        args.tinynn_lib), "can not find tinynn lib at: {}".format(
-            args.tinynn_lib)
+    assert os.path.isfile(args.tinynn_lib), "can not find tinynn lib at: {}".format(
+        args.tinynn_lib
+    )
     cmd = "file {}".format(args.tinynn_lib)
     file_log = subprocess.check_output(cmd, shell=True).decode("utf-8")
-    assert file_log.find(
-        "current ar archive") > 0, "%s should be a static lib".format(
-            args.tinynn_lib)
+    assert file_log.find("current ar archive") > 0, "%s should be a static lib".format(
+        args.tinynn_lib
+    )
 
     # please keep same with runtime/version.ld
     api_symbols = [
@@ -68,8 +67,7 @@ def main():
 
     # handle static symbols
     cmd = "llvm-nm {}".format(args.tinynn_lib)
-    nm_raw_log = subprocess.check_output(
-        cmd, shell=True).decode("utf-8").split("\n")
+    nm_raw_log = subprocess.check_output(cmd, shell=True).decode("utf-8").split("\n")
     unique_symbols = []
     alread_push_symbols = []
     mangling_map = {}
@@ -91,14 +89,14 @@ def main():
             need_skip = True
 
         if symbol_type not in handle_sym_type:
-            logging.debug("skip handle symbol:{} of type: {}".format(
-                symbol, symbol_type))
+            logging.debug(
+                "skip handle symbol:{} of type: {}".format(symbol, symbol_type)
+            )
             need_skip = True
 
         for api in api_symbols + load_from_mem_sym:
             if symbol.find(api) == 0:
-                logging.debug(
-                    "skip handle api or model mem sym: {}".format(symbol))
+                logging.debug("skip handle api or model mem sym: {}".format(symbol))
                 need_skip = True
                 break
 
@@ -119,8 +117,9 @@ def main():
                         break
                 if valid_mangling:
                     mangling_map[mangling_s] = symbol
-                    logging.debug("create mangling map for: {} -- {}".format(
-                        symbol, mangling_s))
+                    logging.debug(
+                        "create mangling map for: {} -- {}".format(symbol, mangling_s)
+                    )
                     break
     # strip debug section
     cmd = "llvm-objcopy {} --strip-debug".format(args.tinynn_lib)
@@ -129,7 +128,8 @@ def main():
     for mangling_s in mangling_map:
         symbol = mangling_map[mangling_s]
         cmd = "llvm-objcopy {} --redefine-sym={}={}".format(
-            args.tinynn_lib, symbol, mangling_s)
+            args.tinynn_lib, symbol, mangling_s
+        )
         logging.debug("call cmd: {}".format(cmd))
         subprocess.check_call(cmd, shell=True)
 
@@ -137,8 +137,6 @@ def main():
 if __name__ == "__main__":
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
     DATE_FORMAT = "%Y/%m/%d %H:%M:%S"
-    logging.basicConfig(level=logging.DEBUG,
-                        format=LOG_FORMAT,
-                        datefmt=DATE_FORMAT)
+    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
     main()

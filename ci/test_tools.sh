@@ -12,12 +12,7 @@ function build_dump(){
 function dump_model_and_gen_kernel(){
   rm -rf "${OUTPUT_DIR}"
   mkdir -p "${OUTPUT_DIR}"
-  COMPILER_FLAG="${1}"
-  Args=""
-  if [ "${COMPILER_FLAG}" == "compress" ];then
-    Args="--enable_compress_fp16"
-  fi
-  $COMPILER_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn "$MODEL_PATH" "$OUTPUT_DIR" --input-shapes="${INPUT_SHAPE_STR}" ${Args}
+  $COMPILER_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn "$MODEL_PATH" "$OUTPUT_DIR" --input-shapes="${INPUT_SHAPE_STR}"
 }
 
 function build_runtime(){
@@ -40,7 +35,7 @@ function compare_output_with_mgb(){
   mkdir -p "${TINYNN_OUTPUT_DIR}"
   TINYMODEL_PATH=`find  ${OUTPUT_DIR} -name "*.tiny"`
   TINYNN_SHAPE_STR=`echo $INPUT_DATA_SHAPE_STR | sed 's/[()]//g'`
-  $RUNTIME_BUILD_DIR/tinynn_test_lite -m ${TINYMODEL_PATH} -o "$TINYNN_OUTPUT_DIR" -l 0 -d $INPUT_DATA_STR -s ${TINYNN_SHAPE_STR}
+  $RUNTIME_BUILD_DIR/tinynn_test_lite ${TINYMODEL_PATH} "$TINYNN_OUTPUT_DIR" 0 $INPUT_DATA_STR ${TINYNN_SHAPE_STR}
   MGB_OUTPUT_DIR="$OUTPUT_DIR/mgb_out/"
   mkdir -p "${MGB_OUTPUT_DIR}"
   if [[ "$MODEL_PATH" == *".emod" ]];then
@@ -69,7 +64,7 @@ function check_mem_leak_with_asan(){
   cmake --build "$RUNTIME_BUILD_DIR_ASAN" --target tinynn_test_lite
   TINYNN_OUTPUT_ASAN_DIR="$OUTPUT_DIR/tinynn_out_asan"
   mkdir -p ${TINYNN_OUTPUT_ASAN_DIR}  
-  $RUNTIME_BUILD_DIR_ASAN/tinynn_test_lite -m ${TINYMODEL_PATH} -o "$TINYNN_OUTPUT_ASAN_DIR" -l 0 -d $INPUT_DATA_STR -s $TINYNN_SHAPE_STR
+  $RUNTIME_BUILD_DIR_ASAN/tinynn_test_lite ${TINYMODEL_PATH} "$TINYNN_OUTPUT_ASAN_DIR" 0 $INPUT_DATA_STR $TINYNN_SHAPE_STR
   python3 $PROJECT_PATH/ci/compare_output_bin.py $TINYNN_OUTPUT_ASAN_DIR $MGB_OUTPUT_DIR --eps="$EPS"
 }
 
@@ -84,8 +79,6 @@ function dump_and_build_arm_sdk(){
   elif [ "${DUMP_MODE}" == "nchw44-dot" ];then
     DUMP_OPT="--enable_nchw44_dot"
     GEN_ARMV7_FLAG=0
-  elif [ "${DUMP_MODE}" == "compress" ];then
-    DUMP_OPT="--enable_compress_fp16"
   fi
   ARM_OUTPUT_DIR="${OUTPUT_DIR}/arm/"
   mkdir -p $ARM_OUTPUT_DIR
@@ -105,7 +98,7 @@ function run_single_test(){
   MODEL_PATH="$(readlink -f ${2})"
   INPUT_SHAPE_STR="${3}"
   if [[ ${ONLY_DUMP_ARM} == 0 ]];then
-    dump_model_and_gen_kernel "${7}"
+    dump_model_and_gen_kernel
     RUNTIME_BUILD_DIR="$OUTPUT_DIR/runtime"
     build_runtime $RUNTIME_BUILD_DIR
     compare_output_with_mgb "${4}" "${5}" "${6}"

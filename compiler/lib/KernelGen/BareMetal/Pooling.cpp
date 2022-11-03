@@ -63,8 +63,8 @@ std::string get_acc_dtype_specifier(const std::string& src_dtype,
             return "int";
         }
     } else {
-        CC_ASSERT(false) << "not support dtype and mode " << src_dtype << ","
-                         << mode << "\n";
+        CC_ASSERT("not support dtype and mode ")
+                << src_dtype << "," << mode << "\n";
     }
     return "InvalidType";
 }

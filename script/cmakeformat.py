@@ -21,8 +21,7 @@ CMAKE_FILS_DIRS = [
 
 def main():
     os.chdir(str(Path(__file__).resolve().parent.parent))
-    parser = argparse.ArgumentParser(
-        formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--check", action="store_true", help="check model")
     parser.add_argument(
         "--cmake_files",
@@ -39,19 +38,19 @@ def main():
         for cmake_file in handle_files:
             assert os.path.isfile(
                 cmake_file
-            ), "error input --cmake_files, can not find file: {}".format(
-                cmake_file)
+            ), "error input --cmake_files, can not find file: {}".format(cmake_file)
     else:
         for cmake_file_dir in CMAKE_FILS_DIRS:
             assert os.path.isdir(
                 cmake_file_dir
             ), "{} is not a directory, may config error for CMAKE_FILS_DIRS".format(
-                cmake_file_dir)
+                cmake_file_dir
+            )
             for cmake_file in [
-                    os.path.join(root, file)
-                    for root, dirs, files in os.walk(cmake_file_dir)
-                    for file in files if file.endswith("CMakeLists.txt")
-                    or file.endswith(".cmake")
+                os.path.join(root, file)
+                for root, dirs, files in os.walk(cmake_file_dir)
+                for file in files
+                if file.endswith("CMakeLists.txt") or file.endswith(".cmake")
             ]:
                 print("find cmake_file: {}".format(cmake_file))
                 assert os.path.isfile(cmake_file), "code issue happened!!"
@@ -62,9 +61,9 @@ def main():
         if args.check:
             handle_type = ["check", "--check"]
         cmd = "cmake-format -c script/cmake_format_config.json {} {}".format(
-            handle_type[1], cmake_file)
-        print("try {}: {} with command: {}".format(handle_type[0], cmake_file,
-                                                   cmd))
+            handle_type[1], cmake_file
+        )
+        print("try {}: {} with command: {}".format(handle_type[0], cmake_file, cmd))
         try:
             subprocess.check_call(cmd, shell=True)
         except Exception as exc:
@@ -79,6 +78,5 @@ def main():
 
 
 if __name__ == "__main__":
-    subprocess.check_call("python3 -m pip install cmakelang==0.6.13 --user",
-                          shell=True)
+    subprocess.check_call("python3 -m pip install cmakelang==0.6.13 --user", shell=True)
     main()

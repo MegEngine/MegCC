@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradF23Strategy4x8MK4.h
+ * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/Winograd_strategy_4x16_mk4.h
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *

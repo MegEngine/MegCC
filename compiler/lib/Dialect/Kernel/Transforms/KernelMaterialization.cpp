@@ -103,30 +103,21 @@ std::unordered_map<std::string, CCAttr> convertAttrToKernelAttr(
             auto attr_list = attribute.dyn_cast<ArrayAttr>();
             int cnt = 0;
             for (auto attr_iter : attr_list) {
-                if (attr_iter.dyn_cast_or_null<IntegerAttr>()) {
-                    auto value = attr_iter.dyn_cast<IntegerAttr>().getValue();
-                    auto type = attr_iter.dyn_cast<IntegerAttr>().getType();
-                    CC_ASSERT(type.getIntOrFloatBitWidth() <= 32)
-                            << "is sign " << type.isSignedInteger()
-                            << ", bitwise " << type.getIntOrFloatBitWidth()
-                            << "\n";
-                    if (type.isSignedInteger()) {
-                        attr_map[attr.getName().str() + ":" +
-                                 std::to_string(cnt++)] =
-                                (int32_t)(value.getSExtValue());
-                    } else {
-                        attr_map[attr.getName().str() + ":" +
-                                 std::to_string(cnt++)] =
-                                (int32_t)(value.getZExtValue());
-                    }
-                } else if (attr_iter.dyn_cast<StringAttr>()) {
-                    auto value =
-                            attr_iter.dyn_cast<StringAttr>().getValue().str();
+                auto value = attr_iter.dyn_cast<IntegerAttr>().getValue();
+                auto type = attr_iter.dyn_cast<IntegerAttr>().getType();
+                CC_ASSERT(type.getIntOrFloatBitWidth() <= 32)
+                        << "is sign " << type.isSignedInteger() << ", bitwise "
+                        << type.getIntOrFloatBitWidth() << "\n";
+                if (type.isSignedInteger()) {
                     attr_map[attr.getName().str() + ":" +
-                             std::to_string(cnt++)] = value;
+                             std::to_string(cnt++)] =
+                            (int32_t)(value.getSExtValue());
+                } else {
+                    attr_map[attr.getName().str() + ":" +
+                             std::to_string(cnt++)] =
+                            (int32_t)(value.getZExtValue());
                 }
             }
-            attr_map[attr.getName().str() + ":size"] = cnt;
         }
     }
     return attr_map;
@@ -184,14 +175,12 @@ public:
     LogicalResult matchAndRewrite(FuncOp op,
                                   PatternRewriter& rewriter) const override {
         auto op_name = op.getName();
-        auto is_modi =
-                op_name.contains(KernelGen::DumpHelper::ARM64V7_COMMON_POSTFIX);
+        auto is_modi = op_name.contains(KernelGen::ARM64V7_COMMON_POSTFIX);
         if (llvm::isa<FuncOp>(op) && !is_modi) {
             auto clone_op = op.clone();
             clone_op.setName(op.getName().str() +
-                             KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX);
-            op.setName(op.getName().str() +
-                       KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX);
+                             KernelGen::ARM64V7_ARMV7_POSTFIX);
+            op.setName(op.getName().str() + KernelGen::ARM64V7_ARM64_POSTFIX);
             rewriter.insert(clone_op);
             return success();
         }
@@ -293,7 +282,7 @@ private:
 void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
     if (target_arch == megcc::KernelGen::ARM64V7) {
         auto a64_registry = std::make_unique<Kernel::KernelTemplateRegistry>();
-        Kernel::addBuiltinTemplates(*a64_registry, megcc::KernelGen::ARM64V7);
+        Kernel::addBuiltinTemplates(*a64_registry, megcc::KernelGen::ARM64);
         //! a32_registry and a64_registry shared the same map to avoid
         //! generating redundant armcommon kernel
         auto a32_registry = std::make_unique<Kernel::KernelTemplateRegistry>(
@@ -308,10 +297,10 @@ void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
         //! postfix
         patterns.add(std::make_unique<KernelMaterialization>(
                 patterns.getContext(), std::move(a32_registry),
-                KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX));
+                KernelGen::ARM64V7_ARMV7_POSTFIX));
         patterns.add(std::make_unique<KernelMaterialization>(
                 patterns.getContext(), std::move(a64_registry),
-                KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX));
+                KernelGen::ARM64V7_ARM64_POSTFIX));
     } else {
         auto registry = std::make_unique<Kernel::KernelTemplateRegistry>();
         Kernel::addBuiltinTemplates(*registry, target_arch);

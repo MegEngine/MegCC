@@ -56,7 +56,7 @@ int LITE_make_network(LiteNetwork* network, const LiteConfig config,
                       const LiteNetworkIO network_io) {
     CombineModel* model = tinynn_malloc(sizeof(CombineModel));
     memset(model, 0, sizeof(CombineModel));
-    vm_attach(model);
+    vm_attach(vm_global_inst(), model);
     *network = model;
     LOG_DEBUG("create model and ignore all config\n");
     return TinyNN_SUCCESS;
@@ -185,7 +185,7 @@ int LITE_forward(const LiteNetwork network) {
         int32_t start_tv_sec, start_tv_usec, end_tv_sec, end_tv_usec;
         tinynn_gettime(&start_tv_sec, &start_tv_usec);
 #endif
-        TinyNNStatus error = vm_instruction_call((VM*)(cb_model->vm), inst);
+        TinyNNStatus error = vm_instruction_call(vm_global_inst(), inst);
         if (error != TinyNN_SUCCESS) {
             return error;
         }
@@ -200,8 +200,8 @@ int LITE_forward(const LiteNetwork network) {
 
             Layout in_layout = opr->inputs[0]->layout;
             Layout out_layout = opr->outputs[0]->layout;
-            LOG_INFO(
-                    " instruction: %s \nuse %fms \t"
+            LOG_ERROR(
+                    " instruction %s \n%f \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)] \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)]\n",
                     opr->type, inst->time_ms / inst->time_count,
@@ -216,9 +216,9 @@ int LITE_forward(const LiteNetwork network) {
                     out_layout.stride[4]);
 
         } else {
-            LOG_INFO("execute used time %f ms of instruction %s.\n",
-                     inst->time_ms / inst->time_count,
-                     instruction_type_name(inst->tag));
+            LOG_ERROR("execute used time %f ms of instruction %s.\n",
+                      inst->time_ms / inst->time_count,
+                      instruction_type_name(inst->tag));
         }
 #endif
     }
@@ -315,7 +315,7 @@ int LITE_destroy_network(LiteNetwork network) {
         Tensor* weight = cb_model->weights + i;
         FREE(weight->name);
         //! only the use count>0, the memory is not free
-        if (weight->use_count > 0 && !weight->is_shared) {
+        if (weight->use_count > 0 && !weight->is_weight) {
             cb_model->host_dev.free(weight->ptr);
         }
     }
@@ -335,7 +335,7 @@ int LITE_destroy_network(LiteNetwork network) {
         //! preprocessed weight
         for (int i = 0; i < model->nr_processed_weight; i++) {
             Tensor* weight = model->processed_weights + i;
-            if (!weight->is_shared)
+            if(!weight->is_shared)
                 model->device.free(weight->ptr);
         }
         FREE(model->processed_weights);
@@ -343,7 +343,7 @@ int LITE_destroy_network(LiteNetwork network) {
         //! instruction
         for (int i = 0; i < model->nr_instruction; i++) {
             Instruction* inst = model->instructions + i;
-            vm_instruction_destruct((VM*)(cb_model->vm), inst);
+            vm_instruction_destruct(vm_global_inst(), inst);
         }
         FREE(model->instructions);
 
@@ -361,8 +361,7 @@ int LITE_destroy_network(LiteNetwork network) {
     }
     FREE(cb_model->device_models);
 
-    //! free combine model struct
-    vm_detach(cb_model);
+    //! free combine model struce
     FREE(cb_model);
     return TinyNN_SUCCESS;
 }

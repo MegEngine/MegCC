@@ -133,20 +133,10 @@ endif()
 
 message(STATUS "Gen flatcc header.")
 set(FLATCC_DIR ${PROJECT_SOURCE_DIR}/flatcc)
-if(APPLE)
-  set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc_macos_x86)
-else()
-  set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc)
-endif()
+set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc)
 set(SCHEMA_SOURCE ${PROJECT_SOURCE_DIR}/schema/model.fbs)
 set(SCHEMA_OUTPUT ${PROJECT_SOURCE_DIR}/src/cheader)
 set(CMAKE_C_FLAGS "-fPIC -fpie ${CMAKE_C_FLAGS}")
-include(CheckCCompilerFlag)
-check_c_compiler_flag("-Wno-error=implicit-function-declaration"
-                      CHECK_IMPLICIT-FUNCTION-DECLARATION)
-if(CHECK_IMPLICIT-FUNCTION-DECLARATION)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=implicit-function-declaration")
-endif()
 
 add_custom_command(
   OUTPUT ${SCHEMA_OUTPUT}
@@ -193,7 +183,7 @@ target_include_directories(
 
 if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
   add_executable(tinynn_test_lite example/standard_OS/lite_main.c)
-  target_link_libraries(tinynn_test_lite TinyNN m dl)
+  target_link_libraries(tinynn_test_lite TinyNN m)
 endif()
 
 if(TINYNN_ACHIEVE_ALL AND NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)

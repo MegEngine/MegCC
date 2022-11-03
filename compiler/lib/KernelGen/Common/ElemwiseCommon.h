@@ -54,9 +54,6 @@ enum BcastType {
     DYNAMIC_TYPE = BINARY_END + 1001
 };
 #undef CAL_BCAST3
-//! get the TensorType type of operand when the dst provided
-TensorType GetOperandTensorType(const CCOperand& dst, const CCOperand& operand);
-
 BcastType GetBinaryBcastType(const CCOperand& operand0,
                              const CCOperand& operand1);
 

@@ -425,7 +425,7 @@ endif()
 set(CMAKE_C_FLAGS
     "${XCODE_IOS_PLATFORM_VERSION_FLAGS} ${BITCODE} -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_C_FLAGS}"
 )
-# Hidden visibility is required for C++ on iOS.
+# Hidden visibilty is required for C++ on iOS.
 set(CMAKE_CXX_FLAGS
     "${XCODE_IOS_PLATFORM_VERSION_FLAGS} ${BITCODE} ${VISIBILITY} -fvisibility-inlines-hidden -fobjc-abi-version=2 ${FOBJC_ARC} ${CMAKE_CXX_FLAGS}"
 )

@@ -99,7 +99,7 @@ lib
 
 ### Kernel生成
 MegCC Compiler会为中的每个Operator都会生成一个对应的Kernel来完成计算。
-* 每一个Kernel都是和具体Operator的一类参数绑定的，如命名为：ArmCommon_chanwise_kernel_conv2d_3x3_NCHW44_GROUP_p1x1_s1x1_d1x1_f32f32f32f32_bias_RELU的Kernel绑定的参数为：kernel = 3x3，stride = 1x1，padding = 1x1 的 channel wise的卷积，并且支持的format是nchw44，数据类型是fp32，后处理是RELU。
+* 每一个Kernel都是和具体Operator的一类参数绑定的，如命名为：ArmCommon_chanwise_kernel_conv2d_3x3_NCHW44_GROUP_p1x1_s1x1_d1x1_f32f32f32f32_bias_RELU的Kernel绑定的参数为：kenrel = 3x3，stride = 1x1，padding = 1x1 的 channel wise的卷积，并且支持的format是nchw44，数据类型是fp32，后处理是RELU。
 * 绝大多数 Kernel 没有和对应的输入Tensor的shape绑定，这样可以让多个参数相同的Operator共享一个Kernel
 * 每个Kernel的生成方式有两种：
   * 人工优化之后写好的模板Kernel

@@ -6,7 +6,6 @@ add_mlir_dialect_library(
   ${KERNEL_TRANS_SRC}
   DEPENDS
   MLIRMGBTransformsPassIncGen
-  MGBEnumReflectionGen
   LINK_LIBS
   PUBLIC
   MLIRMGB

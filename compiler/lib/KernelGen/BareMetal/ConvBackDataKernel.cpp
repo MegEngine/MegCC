@@ -11,6 +11,7 @@
 #include <sstream>
 #include <string>
 
+#include "Activation.h"
 #include "ConvBackDataKernel.h"
 #include "FormatHelper.h"
 #include "Utils/StringTemplate.h"
@@ -63,19 +64,6 @@ std::string gen_inline_addr(std::string format_str, std::string sparse) {
     return ss.str();
 }
 
-std::string gen_dep() {
-    return R"(
-        static inline int8_t fp32_to_int8(float src){
-                int res = roundf(src);
-                if(res > 127){
-                    res=127;
-                }else if(res < -128){
-                    res=-128;
-                }
-                return (int8_t)(res);
-        }
-    )";
-}
 std::string get_format(TContext* ctx) {
     auto format_str = ctx->getAttrStr("format");
     return format_str;
@@ -95,17 +83,12 @@ bool ConvBackDataGeneral::IsAvailable(TContext* ctx) const {
     bool param_mode_ok = (ctx->getAttrStr("format") == "NCHW" ||
                           ctx->getAttrStr("format") == "NCHW44") &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
-    bool type_float_ok = ctx->getAttrInt("nr_operands") == 3 &&
+    bool type_float_ok = ctx->getAttrInt("nr_operands") >= 3 &&
                          ((ctx->getAttrOprand("operand:0").dtype == "f32" &&
                            ctx->getAttrOprand("operand:1").dtype == "f32" &&
                            ctx->getAttrOprand("operand:2").dtype == "f32"));
-    bool type_qint_ok =
-            ctx->getAttrInt("nr_operands") == 3 &&
-            (Utils::is_quant_dtype(ctx->getAttrOprand("operand:0").dtype, 8) &&
-             Utils::is_quant_dtype(ctx->getAttrOprand("operand:1").dtype, 8) &&
-             Utils::is_quant_dtype(ctx->getAttrOprand("operand:2").dtype, 8));
 
-    return param_mode_ok && (type_float_ok || type_qint_ok);
+    return param_mode_ok && (type_float_ok);
 }
 
 std::string ConvBackDataGeneral::GetKernelSymbol(TContext* ctx) const {
@@ -153,13 +136,8 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
     auto flt_specifier = Utils::cvt_dtype_specifier(flt_dtype);
     auto dst_specifier = Utils::cvt_dtype_specifier(dst_dtype);
     std::string acc_specifier = "float";
-    std::string convert = "";
-    std::string compute_kern = "(*sval) + dval  * fval";
     if (src_specifier == "int8_t" && flt_specifier == "int8_t") {
-        convert = "fp32_to_int8";
-        compute_kern =
-                "((*sval) * scale + dval * dst_scale  * fval * "
-                "flt_scale)/scale";
+        acc_specifier = "int";
     }
 
     uint32_t spatial_start = 2;
@@ -190,10 +168,10 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
     ss << R"(
 #include <stdbool.h>
 )";
+    ss << GenActivation::gen_func_call_with_typecvt_dep(
+                  noline_mode, acc_specifier, dst_specifier)
+       << "\n";
     ss << gen_inline_addr(filter_format_str, sparse_str);
-    if (src_specifier == "int8_t" && flt_specifier == "int8_t") {
-        ss << gen_dep();
-    }
     ss << GenCommonRet() << " " << GetKernelSignature(context) << "{\n";
     ss << "const uint32_t spatial_start = " << spatial_start << ";\n";
     ss << "const uint32_t channel_pos = " << channel_pos << ";\n";
@@ -266,7 +244,7 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
                 uint32_t oc_idx = group_idx * ocpg + ocpg_idx;
                 for (uint32_t oh_idx = 0; oh_idx < oh; ++oh_idx) {
                     for (uint32_t ow_idx = 0; ow_idx < ow; ++ow_idx) {
-                        ${dst_specifier} dval = dst_ptr[${dst_layout_iter_symbol}(batch_idx, oc_idx, oh_idx,
+                        ${acc_specifier} dval = dst_ptr[${dst_layout_iter_symbol}(batch_idx, oc_idx, oh_idx,
                                                 ow_idx, dst_layout.stride,
                                                 true)];
                         for (uint32_t fh_idx = 0; fh_idx < fh; ++fh_idx) {
@@ -280,16 +258,14 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
                                          ++icpg_idx) {
                                         uint32_t ic_idx =
                                                 group_idx * icpg + icpg_idx;
-                                        ${src_specifier}* sval = &src_ptr[${src_layout_iter_symbol}(
+                                        ${acc_specifier}* sval = &src_ptr[${src_layout_iter_symbol}(
                                                 batch_idx, ic_idx, ih_idx,
                                                 iw_idx, src_layout.stride,
                                                 false)];
-                                        ${flt_specifier} fval = flt_ptr[${filter_iter_symbol}(
+                                        ${acc_specifier} fval = flt_ptr[${filter_iter_symbol}(
                                                 group_idx, ocpg_idx, icpg_idx,
                                                 fh_idx, fw_idx, filter_stride)];
-                                          ${acc_specifier}  tmp_mid_val0 = ${compute_kern};
-                                          ${src_specifier} tmp_mid_val = ${convert}(tmp_mid_val0);
-                                          *sval = tmp_mid_val;
+                                        *sval += dval * fval;
                                     }
                                 }
                             }
@@ -314,12 +290,14 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
                     .add("filter_iter_symbol", "get_filter_addr_" +
                                                        filter_format_str + "_" +
                                                        sparse_str)
+                    .add("act_func", GenActivation::gen_func_call_with_typecvt(
+                                             noline_mode, "dval", acc_specifier,
+                                             dst_specifier, "scale",
+                                             "flt_scale", "dst_scale"))
                     .add("src_specifier", src_specifier)
                     .add("flt_specifier", flt_specifier)
                     .add("dst_specifier", dst_specifier)
                     .add("acc_specifier", acc_specifier)
-                    .add("convert", convert)
-                    .add("compute_kern", compute_kern)
                     .render(body_template);
     return ss.str();
 }

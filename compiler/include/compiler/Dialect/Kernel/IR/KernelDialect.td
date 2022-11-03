@@ -90,19 +90,6 @@ def KernelCall: KernelBase<"KernelCall", [
     );
 }
 
-def ExternOpr: KernelBase<"ExternOpr", [
-        DeclareOpInterfaceMethods<SymbolUserOpInterface>,
-        AttrSizedOperandSegments
-    ]> { 
-    let arguments = (ins
-    Arg<Variadic<AnyMemRef>, "", [MemRead]>:$operands,
-    Arg<Variadic<AnyMemRef>, "", [MemWrite]>:$results,
-    StrAttr:$name,
-    StrAttr:$data,
-    UI32Attr:$data_len
-  );
-}
-
 class InstructBase<string mnemonic, dag extraArgs=(ins), list<Trait> traits=[]>:
     KernelBase<mnemonic, !listconcat(traits, [
         NoSideEffect

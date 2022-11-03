@@ -256,11 +256,18 @@ template <typename ctype>
                                         maxerr_avg_biased)            \
     ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, \
                         maxerr_avg_biased)
-
+void check_tensors(const TensorNDArray& expected, const TensorNDArray& computed,
+                   float epsilon, float max_avg_error,
+                   float max_avg_biased_error) {
+    for (size_t i = 0; i < expected.size(); ++i) {
+        if (expected[i].layout.ndim == 0)
+            continue;
+        MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(expected[i], computed[i], epsilon,
+                                        max_avg_error, max_avg_biased_error);
+    }
 }
 
-
-
+}  // namespace
 
 template <typename Opr>
 void fix_addition_attr_map(
@@ -289,19 +296,6 @@ void fix_addition_attr_map<megdnn::TopK>(
 }
 
 template <typename Opr>
-void Checker<Opr>::check_tensors(const TensorNDArray& expected,
-                                 const TensorNDArray& computed, float epsilon,
-                                 float max_avg_error,
-                                 float max_avg_biased_error) {
-    for (size_t i = 0; i < expected.size(); ++i) {
-        if (expected[i].layout.ndim == 0)
-            continue;
-        MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(expected[i], computed[i], epsilon,
-                                        max_avg_error, max_avg_biased_error);
-    }
-}
-
-template <typename Opr>
 void Checker<Opr>::exec(TensorLayoutArray all_layouts) {
     using CCProxy = CCOprProxy<Opr>;
     auto dnn_handle = Runner<Opr>::get_dnn_handle();
@@ -315,6 +309,7 @@ void Checker<Opr>::exec(TensorLayoutArray all_layouts) {
             dnn_alloc_tensors(dnn_handle, all_layouts, 0);
     auto tensor_array_dnn = *tensor_array_naive_storage;
     auto tensor_array = *tensor_array_storage;
+    MEGDNN_MARK_USED_VAR(check_tensors);
 #if !MEGCC_TEST_GEN
     Runner<Opr>::init_tensor(tensor_array_dnn, m_rng);
     dnn_copy_tensors(tensor_array, tensor_array_dnn);
@@ -388,6 +383,7 @@ namespace test {
                 dnn_alloc_tensors(dnn_handle, all_layouts, 0);                \
         auto tensor_array_dnn = *tensor_array_naive_storage;                  \
         auto tensor_array = *tensor_array_storage;                            \
+        MEGDNN_MARK_USED_VAR(check_tensors);                                  \
         INIT_TENSOR_MACRO();                                                  \
         CCProxy cc_proxy;                                                     \
         cc_proxy.exec(&cv_opr, tensor_array, m_arch, {}, m_kernel_symbol, {}, \
