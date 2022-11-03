@@ -29,7 +29,7 @@ MegCC 模型编译器是基于 MLIR 框架构建起来的，使用 MLIR 的 IR �
 
 MegCC runtime 会在运行时会加载生成的模型，并调用生成的高性能 Kernel 进行计算，并输出计算结果，目前测试一个可以高效运行 mobilenetv1 的可执行文件大小仅仅只需要 81KB。
 
-MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 所有支持的 Operator 列表见：[operator lists](doc/opr.md).
+MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 所有支持的 Operator 列表见：[operator list](doc/opr.md).
 
 ## 文档
 
