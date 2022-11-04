@@ -5,6 +5,7 @@ add_mlir_translation_library(
   importer.cpp
   DEPENDS
   MLIRMGBIncGen
+  HakoParse
   LINK_LIBS
   PUBLIC
   MLIRIR

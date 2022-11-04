@@ -92,12 +92,8 @@ add_mlir_dialect_library(
   MLIRTosaTransforms
   MLIROptLib
   MLIREmitC
-
   MLIRTosaToLinalg
   MLIRSCFToStandard
   MLIRMemRefToLLVM
   MLIRReconcileUnrealizedCasts
-
-  MLIRExecutionEngine
-)
-
+  MLIRExecutionEngine)

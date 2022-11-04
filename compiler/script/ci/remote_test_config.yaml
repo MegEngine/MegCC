@@ -1,0 +1,37 @@
+android_arm64_kernel_test:
+    build:
+        cmd: ["./compiler/script/ci/build_android_arm64v8_kernel_ut.sh ./compiler/kernel_ut_arm64v8 /root/android-ndk-r21"]
+    test:
+        type: remote
+        device-tags: ["android", "asan"]
+        envs:
+            MGB_TEST_NO_LOG: "1"
+            MGB_STABLE_RNG: "1"
+            ASAN_OPTIONS: "detect_odr_violation=0"
+        input-files: [
+            "compiler/kernel_ut_arm64v8/megcc_test_run",
+            ]
+        oss-enabled: true
+        cmd: [
+            "chmod +x ./megcc_test_run",
+            "./megcc_test_run",
+            ]
+
+android_armv7_kernel_test:
+    build:
+        cmd: ["./compiler/script/ci/build_android_armv7_kernel_ut.sh ./compiler/kernel_ut_armv7 /root/android-ndk-r21"]
+    test:
+        type: remote
+        device-tags: ["android", "asan"]
+        envs:
+            MGB_TEST_NO_LOG: "1"
+            MGB_STABLE_RNG: "1"
+            ASAN_OPTIONS: "detect_odr_violation=0"
+        input-files: [
+            "compiler/kernel_ut_armv7/megcc_test_run",
+            ]
+        oss-enabled: true
+        cmd: [
+            "chmod +x ./megcc_test_run",
+            "./megcc_test_run",
+            ]
