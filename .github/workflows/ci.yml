@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test_compiler:
+    runs-on: self-hosted
+    timeout-minutes: 240
+    container:
+      image: mcd.io/mcd-apps/megcc-ci:v1
+    steps:
+      - name: Checkout MegCC
+        uses: actions/checkout@v3
+      - name: Prepare env
+        run: |
+          python3 -m pip install boto3
+          python3 -m pip install redis
+          python3 -m pip install -i https://pypi.megvii-inc.com/simple korok
+          export NDK_ROOT=/root/android-ndk-r21/
+          export RISCV_TOOLCHAIN_ROOT=/root/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.2.6/
+          ./ci/prepare.sh /root/llvm-project
+      - name: Cmake build MegCC
+        run: ./compiler/script/ci/run_local_cmake_build.sh ./compiler/local_cmake_build  /root/llvm-project
+      - name: Regression test
+        run: ./compiler/script/ci/run_local_regression_test.sh ./compiler/local_cmake_build
+
+  test_kernel:
+    runs-on: self-hosted
+    timeout-minutes: 240
+    container:
+      image: mcd.io/mcd-apps/megcc-ci:v1
+    steps:
+      - name: Checkout MegCC
+        uses: actions/checkout@v3
+      - name: Prepare env
+        run: |
+          python3 -m pip install boto3
+          python3 -m pip install redis
+          python3 -m pip install -i https://pypi.megvii-inc.com/simple korok
+          export NDK_ROOT=/root/android-ndk-r21/
+          export RISCV_TOOLCHAIN_ROOT=/root/Xuantie-900-gcc-linux-5.10.4-glibc-x86_64-V2.2.6/
+          ./ci/prepare.sh /root/llvm-project
+      - name: Cmake build and run kernel test
+        run: ./compiler/script/ci/run_local_kernel_ut.sh ./compiler/kernel_ut_x86_64 /root/llvm-project
+      - name: Cmake build and run instruction test
+        run: ./runtime/scripts/run_local_instruction_test.sh
+      - name: Remote test
+        run: ./compiler/script/ci/remote_test.py android_arm64_kernel_test android_armv7_kernel_test
