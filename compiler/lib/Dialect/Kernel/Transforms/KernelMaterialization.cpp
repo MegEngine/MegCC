@@ -216,7 +216,7 @@ public:
         if (m_prefix.size() > 0 && !func_name.endswith(m_prefix)) {
             return failure();
         }
-        //! TODO: cache the kernel_attr for the same op
+        //! TODO(performance): cache the kernel_attr for the same op
         auto kernel_attr = getKernelAttr(op);
         for (auto* kernelTemplate : registry->getCandidates(op)) {
             Operation* kernelDef = nullptr;

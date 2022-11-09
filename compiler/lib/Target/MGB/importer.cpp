@@ -18,6 +18,7 @@
 #include "compiler/Common/Logger.h"
 #include "compiler/Common/MemoryStatus.h"
 #include "compiler/Dialect/MGB/IR/MGBDialect.h"
+#include "compiler/Target/Hako/hako_parse.h"
 #include "compiler/Target/MGB/helper.h"
 #include "compiler/Target/MGB/import.h"
 
@@ -35,6 +36,10 @@
 #include "megbrain/opr/nn_int.h"
 #include "megbrain/opr/tensor_manip.h"
 #include "megbrain/serialization/serializer.h"
+
+llvm::cl::opt<int> hako_version(
+        "hako", llvm::cl::desc("specific version used for encrypt"),
+        llvm::cl::init(2));
 
 using namespace mgb;
 using namespace llvm;
@@ -148,10 +153,22 @@ public:
     }
 
     mlir::LogicalResult import_mgb(std::string model_path, Options options
-                                   ) {
+                                   , int hako_ver = 0) {
         std::vector<uint8_t> mdl_model_buffer;
         std::unique_ptr<serialization::InputFile> inp_file;
+        hako_ver = hako_ver == 0 ? hako_version.getValue() : hako_ver;
+        if (model_path.substr(model_path.size() - 5, model_path.size()) ==
+            ".emod") {
+            auto model_buffer = read_file(model_path);
+            mdl_model_buffer = megcc::parse_hako(model_buffer, hako_ver);
+            std::shared_ptr<void> ptr;
+            ptr.reset((char*)malloc(mdl_model_buffer.size()));
+            memcpy(ptr.get(), mdl_model_buffer.data(), mdl_model_buffer.size());
+            inp_file = serialization::InputFile::make_mem_proxy(
+                    ptr, mdl_model_buffer.size());
+        } else {
             inp_file = serialization::InputFile::make_fs(model_path.c_str());
+        }
         auto format = serialization::GraphLoader::identify_graph_dump_format(
                 *inp_file);
         CC_ASSERT(format.valid()) << "invalid model: unknown model format.\n";
@@ -1179,8 +1196,7 @@ mlir::LogicalResult removeUnusedParam(mlir::ModuleOp module) {
 }
 }  // namespace
 mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
-                               MGBImporterOptions options
-) {
+                               MGBImporterOptions options, int hako_ver) {
     LOG_DEBUG << "\n\t\t\t Begin Import MBG \t\t\t\n";
     LOG_DEBUG << "load model from " << model_path
               << " with Options:\n\tuse_static_memory_plan="
@@ -1190,8 +1206,7 @@ mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
               << "\n\tgraph_opt_level="
               << static_cast<int>(options.graph_opt_level) << "\n";
     Importer imp(module);
-    auto result = imp.import_mgb(model_path, options
-    );
+    auto result = imp.import_mgb(model_path, options, hako_ver);
     LOG_DEBUG << "\t\t\t End Import MBG \t\t\t\n\n";
     if (failed(result))
         return result;

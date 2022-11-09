@@ -31,8 +31,7 @@ struct MGBImporterOptions {
 };
 
 mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
-                               MGBImporterOptions options
-                               );
+                               MGBImporterOptions options, int hako_ver = 0);
 
 mlir::LogicalResult parseInputShapes(std::string s,
                                      mlir::MGB::MGBImporterOptions& options);

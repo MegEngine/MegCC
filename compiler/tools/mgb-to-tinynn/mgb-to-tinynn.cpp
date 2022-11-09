@@ -67,6 +67,7 @@ struct DumpJson {
             bool_options["enable_nchw44_dot"] = false;
             bool_options["add_nhwc2nchw_to_input"] = false;
             bool_options["mgb_fuse_kernel"] = false;
+            int_options["hako_ver"] = 0;
         }
         static ModelJson parse(json::Object& obj) {
             ModelJson res;
@@ -371,7 +372,7 @@ int main(int argc, char** argv) {
         mlir::OwningOpRef<mlir::ModuleOp> mod =
                 mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
         auto status = mlir::MGB::import_mgb(mod.get(), model_input, options
-        );
+        , model.int_options["hako_ver"]);
         if (mlir::failed(status)) {
             llvm::outs() << "import megengine model failed\n";
             return -1;

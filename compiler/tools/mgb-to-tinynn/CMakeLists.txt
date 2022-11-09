@@ -1,6 +1,6 @@
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
-# since it links with imported megengine library, it should use default RPATH settings or
-# llvm would rewrite it but missing correct rpath of libmegengine
+# since it links with imported megengine library, it should use default RPATH settings
+# or llvm would rewrite it but missing correct rpath of libmegengine
 add_llvm_executable(mgb-to-tinynn mgb-to-tinynn.cpp NO_INSTALL_RPATH)
 llvm_update_compile_flags(mgb-to-tinynn)
 target_link_libraries(
@@ -15,5 +15,5 @@ target_link_libraries(
           MLIRKernelTransforms
           KernelGen
           Common
-          )
+          HakoParse)
 mlir_check_all_link_libraries(mgb-to-tinynn)

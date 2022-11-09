@@ -34,6 +34,7 @@ pushd ${OUT_DIR}/build_host
     cp tools/mgb-to-tinynn/mgb-to-tinynn ${OUT_DIR}/bin/
     cp tools/mgb-runner/mgb-runner ${OUT_DIR}/bin/
     cp tools/mgb-importer/mgb-importer ${OUT_DIR}/bin/
+    cp tools/hako-to-mgb/hako-to-mgb ${OUT_DIR}/bin/
     cp tools/megcc-opt/megcc-opt ${OUT_DIR}/bin/
 popd
 pushd ${PROJECT_PATH}/compiler
