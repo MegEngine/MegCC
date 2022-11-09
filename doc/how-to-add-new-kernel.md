@@ -3,7 +3,7 @@
 ## add kernel IR
 
 kernel IR is used to transform your target framework model which can be discribed with MLIR  into megcc model.
-The kernel IR is defined in [AbstractKernels.td](compiler/include/compiler/Dialect/Kernel/IR/AbstractKernels.td) with pattern as follow:
+The kernel IR is defined in [AbstractKernels.td](../compiler/include/compiler/Dialect/Kernel/IR/AbstractKernels.td) with pattern as follow:
 
 ``` mlir
 def Pooling2DKernel: AbstractKernelBase<"Pool2d"> {
@@ -29,7 +29,7 @@ it declare the parameters, inputs and outputs for the kernel used, with this def
 
 #### registe kernel type in kernel generate template
 
-the kernel type is registe in [KernelGen.h](compiler/include/compiler/KernelGen/KernelGen.h), which is as follow:
+the kernel type is registe in [KernelGen.h](../compiler/include/compiler/KernelGen/KernelGen.h), which is as follow:
 
 ``` cpp
 
@@ -163,7 +163,7 @@ if other functions need to override, you must override it
 
 #### add new kernel in kernel package
 
-the kernel package is defined in [KernelPack.cpp](compiler/lib/KernelGen/XXXX/KernelPack.cpp):
+the kernel package is defined in [KernelPack.cpp](../compiler/lib/KernelGen/BareMetal/KernelPack.cpp):
 
 ``` cpp
 ##include "Pooling.h"
@@ -216,7 +216,7 @@ TEST(NAIVE, PoolingNCHW) {
 
 #### add test module implementation
 
-after the testcase is added already, you need to add checker, megcc test porxy, attribute convert function, benchmarker and workload proxy implementation for test, which is separtely defined in [checker.cpp](compiler/test/kernel/common/src/checker.cpp), [cc_proxy.cpp](compiler/test/kernel/common/src/cc_proxy.cpp), [cc_fill_attr.cpp](compiler/test/kernel/common/src/cc_fill_attr.cpp), [benchmark.cpp](compiler/test/kernel/common/src/benchmark.cpp) and [workload_proxy.cpp](compiler/test/kernel/common/src/workload_proxy.cpp) for example:
+after the testcase is added already, you need to add checker, megcc test porxy, attribute convert function, benchmarker and workload proxy implementation for test, which is separtely defined in [checker.cpp](../compiler/test/kernel/common/src/checker.cpp), [cc_proxy.cpp](../compiler/test/kernel/common/src/cc_proxy.cpp), [cc_fill_attr.cpp](../compiler/test/kernel/common/src/cc_fill_attr.cpp), [benchmark.cpp](../compiler/test/kernel/common/src/benchmark.cpp) and [workload_proxy.cpp](../compiler/test/kernel/common/src/workload_proxy.cpp) for example:
 
 ```cpp
 // template specilization compiler/test/kernel/common/src/checker.cpp
@@ -304,11 +304,11 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Pooling>(
 }
 ```
 
-this is added in [MGBToKernelHelper.h](compiler/lib/Conversion/MGBToKernel/MGBToKernelHelper.h)
+this is added in [MGBToKernelHelper.h](../compiler/lib/Conversion/MGBToKernel/MGBToKernelHelper.h)
 
 #### add kernel convert funtion
 
-the pattern  which is in [MGBToKernel.cpp](compiler/lib/Conversion/MGBToKernel/MGBToKernel.cpp) is as follow:
+the pattern  which is in [MGBToKernel.cpp](../compiler/lib/Conversion/MGBToKernel/MGBToKernel.cpp) is as follow:
 
 ``` cpp
 template <class SrcOp, class DstOp>
@@ -332,7 +332,7 @@ public:
 
 ## register kernel in transform pass
 
- the kernel is only registed in [KernelRegister.h](compiler/lib/Dialect/Kernel/Transforms/KernelRegister.h) that can be generated actually. you need add two key objects, one is getkernel object , the other is buildintemplateOpr object, for example:
+ the kernel is only registed in [KernelRegister.h](../compiler/lib/Dialect/Kernel/Transforms/KernelRegister.h) that can be generated actually. you need add two key objects, one is getkernel object , the other is buildintemplateOpr object, for example:
 
 ```cpp
 

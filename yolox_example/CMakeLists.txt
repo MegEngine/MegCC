@@ -19,14 +19,14 @@ else()
 endif()
 
 add_library(TinyNN STATIC IMPORTED)
-set_target_properties(
-  TinyNN PROPERTIES IMPORTED_LOCATION
-                    "${RUNTIME_KERNEL_DIR}/runtime/install/lib/libTinyNN.a")
+set_target_properties(TinyNN PROPERTIES
+  IMPORTED_LOCATION "${RUNTIME_KERNEL_DIR}/runtime/install/lib/libTinyNN.a")
 
 add_executable(yolox_test main.cpp)
 
 target_include_directories(
-  yolox_test PUBLIC $<BUILD_INTERFACE:${RUNTIME_KERNEL_DIR}/runtime/install/include>)
+  yolox_test
+  PUBLIC $<BUILD_INTERFACE:${RUNTIME_KERNEL_DIR}/runtime/install/include>)
 
 target_link_libraries(yolox_test TinyNN m ${OpenCV_LIBS})
 install(TARGETS yolox_test LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX})
