@@ -13,6 +13,8 @@
 #include "compiler/Common/MlirUtils.h"
 #include "compiler/Dialect/MGB/IR/MGBDialect.h"
 #include "compiler/Dialect/MGB/Transforms/Passes.h"
+#include "llvm/Support/Casting.h"
+#include "megbrain/reflection.h"
 #include "mlir/IR/BuiltinAttributes.h"
 
 #include "llvm/Support/FormatVariadic.h"
@@ -32,6 +34,16 @@ namespace {
             return failure(); \
         }                     \
     } while (0)
+
+bool isDynamicShape(ValueRange operands) {
+    bool is_dynamic_shape = false;
+    for (size_t i = 0; i < operands.size(); i++) {
+        if (auto shapedType = operands[i].getType().dyn_cast<ShapedType>()) {
+            is_dynamic_shape |= shapedType.getNumDynamicDims() > 0;
+        }
+    }
+    return is_dynamic_shape;
+}
 
 class FuseTypeCvtPattern final : public OpRewritePattern<MGB::TypeCvt> {
 public:
@@ -98,10 +110,120 @@ public:
         return failure();
     }
 };
+
+class FuseElemwisePattern final : public OpRewritePattern<MGB::Elemwise> {
+public:
+    FuseElemwisePattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
+    LogicalResult matchAndRewrite(MGB::Elemwise op,
+                                  PatternRewriter& rewriter) const override {
+        //! find the last elemwise op
+        Operation* last_elemwise_op = op;
+        Operation* tmp_op = op;
+        if (isDynamicShape(op.getOperands())) {
+            return failure();
+        }
+        while (llvm::dyn_cast<MGB::Elemwise>(tmp_op)) {
+            last_elemwise_op = llvm::dyn_cast<MGB::Elemwise>(tmp_op);
+            auto output = last_elemwise_op->getResult(0);
+            if (!output.hasOneUse() || isDynamicShape(output)) {
+                break;
+            }
+            tmp_op = output.getUses().begin()->getOwner();
+        }
+        //! no other elemwise to be fused to the Operator
+        if (last_elemwise_op == op) {
+            return failure();
+        }
+        //! recursively find all inputs and the elemwise mode
+        //! record all the inputs and their mode to a vector of string, the
+        //! string consist of inputs, mode, outputs, stored in the format of
+        //! [I0, I1, Add, O0], the dst data is alias to "D"
+        //
+        //! for example: relu((a + b)*c -d) will record as
+        //! std::vector<llvm::StringRef>{"T0,T1,Add,O0", "O0,I2,Mul,O1",
+        //! "O1,I3,Sub,O2", "O2,Relu,D"};
+        //!
+        std::unordered_map<detail::ValueImpl*, std::string> var_alias;
+        std::vector<Value> in_values;
+        std::vector<Value> out_values;
+        std::vector<std::string> modes;
+        std::function<void(MGB::Elemwise op)>
+                find_all_elemwise_info;
+        auto dst = llvm::cast<MGB::Elemwise>(last_elemwise_op).getResult();
+        find_all_elemwise_info = [&](MGB::Elemwise op) {
+            auto all_input = op->getOperands();
+            if (isDynamicShape(all_input)) {
+                return;
+            }
+            std::string operator_mode;
+            for (auto input : all_input) {
+                auto owner_opr = input.getDefiningOp<MGB::Elemwise>();
+                //! when the op is elemwise and only have one user
+                if (owner_opr && input.hasOneUse()) {
+                    find_all_elemwise_info(owner_opr);
+                }
+                if (operator_mode.size() != 0) {
+                    operator_mode += ",";
+                }
+                if (var_alias.find(input.getImpl()) != var_alias.end()) {
+                    operator_mode += var_alias[input.getImpl()];
+                } else {
+                    size_t id = in_values.size();
+                    in_values.push_back(input);
+                    std::string name = "I" + std::to_string(id);
+                    operator_mode += name;
+                    var_alias[input.getImpl()] = name;
+                }
+            }
+            operator_mode += ",";
+            operator_mode += mgb::reflection::nameOfEnumValue(op.mode());
+            operator_mode += ",";
+            if (op.getResult() == dst) {
+                operator_mode += "D";
+            } else {
+                size_t id = out_values.size();
+                out_values.push_back(op.getResult());
+                std::string name = "O" + std::to_string(id);
+                operator_mode += name;
+                var_alias[op.getResult().getImpl()] = name;
+            }
+            modes.push_back(operator_mode);
+            LOG_DEBUG << "Fuse elemwise operator mode is : " << operator_mode
+                      << "\n";
+        };
+
+        //! the output var alias to "D", means dst
+        var_alias[llvm::cast<MGB::Elemwise>(last_elemwise_op)
+                          .getResult()
+                          .getImpl()] = "D";
+        find_all_elemwise_info(llvm::cast<MGB::Elemwise>(last_elemwise_op));
+        CC_ASSERT(out_values.size() > 0)
+                << "The fused elemwise with no output var.\n";
+        auto dst_var = out_values.back();
+        if (modes.size() <= 1) {
+            return failure();
+        }
+        auto ctx = op.getContext();
+        SmallVector<Attribute> attributs;
+        for (size_t i = 0; i < modes.size(); i++) {
+            attributs.push_back(StringAttr::get(ctx, modes[i]));
+        }
+        auto arry_attrs = mlir::ArrayAttr::get(ctx, attributs);
+        SmallVector<NamedAttribute, 4> attrs;
+        attrs.push_back({StringAttr::get(ctx, "modes"), arry_attrs});
+
+        auto new_elemwise = rewriter.create<MGB::FusedElemwise>(
+                op->getLoc(), dst_var.getType(), in_values, attrs);
+        rewriter.replaceOp(last_elemwise_op, new_elemwise.getResult());
+        return failure();
+    }
+};
+
 void populateFuseKernelPatterns(RewritePatternSet& patterns) {
     patterns.add(std::make_unique<FuseTypeCvtPattern>(patterns.getContext()));
     patterns.add(
             std::make_unique<FuseConvHswishPattern>(patterns.getContext()));
+    patterns.add(std::make_unique<FuseElemwisePattern>(patterns.getContext()));
 }
 
 class MGBFuseKernelPass final

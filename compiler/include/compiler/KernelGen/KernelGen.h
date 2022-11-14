@@ -207,6 +207,7 @@ struct KernelPack {
         ConcatKernel,
         InternelKernel,
         ConvBackDataKernel,
+        FusedElemwiseKernel,
     };
     static std::pair<std::vector<const KernelFunc*>, const DeduceFunc*>
     GetKernel(KernelPack::KernType kernel_type, Arch arch);
