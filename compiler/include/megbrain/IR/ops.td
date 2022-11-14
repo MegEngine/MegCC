@@ -420,4 +420,14 @@ def PowC: MgbHashableOp<"PowC", [PowCParam]> {
   let results = (outs AnyType);
 }
 
+def FusedElemwise: MgbHashableOp<"FusedElemwise"> {
+  let inputs = (ins
+    Variadic<AnyType>:$inputs
+  );
+  let results = (outs AnyType);
+  let extraArguments = (ins
+    MgbArrayAttr<MgbStringAttr>:$modes
+  );
+}
+
 #endif // MGB_OPS
