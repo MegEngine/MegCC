@@ -315,7 +315,7 @@ int LITE_destroy_network(LiteNetwork network) {
         Tensor* weight = cb_model->weights + i;
         FREE(weight->name);
         //! only the use count>0, the memory is not free
-        if (weight->use_count > 0 && !weight->is_weight) {
+        if (weight->use_count > 0 && !weight->is_shared) {
             cb_model->host_dev.free(weight->ptr);
         }
     }

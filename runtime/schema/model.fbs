@@ -89,6 +89,7 @@ table Weight {
     name: string;
 
     checksum: uint32 = 0;
+    compressed: bool = 0;
 }
 
 // Opr, the abstract opr of all the operators, in the runtime frame all opr only
