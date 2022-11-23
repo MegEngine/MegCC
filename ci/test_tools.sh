@@ -35,7 +35,7 @@ function compare_output_with_mgb(){
   mkdir -p "${TINYNN_OUTPUT_DIR}"
   TINYMODEL_PATH=`find  ${OUTPUT_DIR} -name "*.tiny"`
   TINYNN_SHAPE_STR=`echo $INPUT_DATA_SHAPE_STR | sed 's/[()]//g'`
-  $RUNTIME_BUILD_DIR/tinynn_test_lite ${TINYMODEL_PATH} "$TINYNN_OUTPUT_DIR" 0 $INPUT_DATA_STR ${TINYNN_SHAPE_STR}
+  $RUNTIME_BUILD_DIR/tinynn_test_lite -m ${TINYMODEL_PATH} -o "$TINYNN_OUTPUT_DIR" -l 0 -d $INPUT_DATA_STR -s ${TINYNN_SHAPE_STR}
   MGB_OUTPUT_DIR="$OUTPUT_DIR/mgb_out/"
   mkdir -p "${MGB_OUTPUT_DIR}"
   if [[ "$MODEL_PATH" == *".emod" ]];then
@@ -64,7 +64,7 @@ function check_mem_leak_with_asan(){
   cmake --build "$RUNTIME_BUILD_DIR_ASAN" --target tinynn_test_lite
   TINYNN_OUTPUT_ASAN_DIR="$OUTPUT_DIR/tinynn_out_asan"
   mkdir -p ${TINYNN_OUTPUT_ASAN_DIR}  
-  $RUNTIME_BUILD_DIR_ASAN/tinynn_test_lite ${TINYMODEL_PATH} "$TINYNN_OUTPUT_ASAN_DIR" 0 $INPUT_DATA_STR $TINYNN_SHAPE_STR
+  $RUNTIME_BUILD_DIR_ASAN/tinynn_test_lite -m ${TINYMODEL_PATH} -o "$TINYNN_OUTPUT_ASAN_DIR" -l 0 -d $INPUT_DATA_STR -s $TINYNN_SHAPE_STR
   python3 $PROJECT_PATH/ci/compare_output_bin.py $TINYNN_OUTPUT_ASAN_DIR $MGB_OUTPUT_DIR --eps="$EPS"
 }
 

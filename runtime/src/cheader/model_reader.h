@@ -71,6 +71,10 @@ typedef const struct MegCC_Reshape_table *MegCC_Reshape_table_t;
 typedef struct MegCC_Reshape_table *MegCC_Reshape_mutable_table_t;
 typedef const flatbuffers_uoffset_t *MegCC_Reshape_vec_t;
 typedef flatbuffers_uoffset_t *MegCC_Reshape_mutable_vec_t;
+typedef const struct MegCC_ExternOpr_table *MegCC_ExternOpr_table_t;
+typedef struct MegCC_ExternOpr_table *MegCC_ExternOpr_mutable_table_t;
+typedef const flatbuffers_uoffset_t *MegCC_ExternOpr_vec_t;
+typedef flatbuffers_uoffset_t *MegCC_ExternOpr_mutable_vec_t;
 typedef const struct MegCC_Arithmetic_table *MegCC_Arithmetic_table_t;
 typedef struct MegCC_Arithmetic_table *MegCC_Arithmetic_mutable_table_t;
 typedef const flatbuffers_uoffset_t *MegCC_Arithmetic_vec_t;
@@ -240,6 +244,15 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #endif
 #define MegCC_Reshape_type_hash ((flatbuffers_thash_t)0xe65906ba)
 #define MegCC_Reshape_type_identifier "\xba\x06\x59\xe6"
+#ifndef MegCC_ExternOpr_file_identifier
+#define MegCC_ExternOpr_file_identifier flatbuffers_identifier
+#endif
+/* deprecated, use MegCC_ExternOpr_file_identifier */
+#ifndef MegCC_ExternOpr_identifier
+#define MegCC_ExternOpr_identifier flatbuffers_identifier
+#endif
+#define MegCC_ExternOpr_type_hash ((flatbuffers_thash_t)0x6183fc9d)
+#define MegCC_ExternOpr_type_identifier "\x9d\xfc\x83\x61"
 #ifndef MegCC_Arithmetic_file_identifier
 #define MegCC_Arithmetic_file_identifier flatbuffers_identifier
 #endif
@@ -804,6 +817,20 @@ __flatbuffers_define_vector_field(0, MegCC_Reshape, inputs, flatbuffers_int32_ve
 __flatbuffers_define_vector_field(1, MegCC_Reshape, input_types, MegCC_TensorType_vec_t, 0)
 __flatbuffers_define_scalar_field(2, MegCC_Reshape, output, flatbuffers_int32, int32_t, INT32_C(0))
 
+struct MegCC_ExternOpr_table { uint8_t unused__; };
+
+static inline size_t MegCC_ExternOpr_vec_len(MegCC_ExternOpr_vec_t vec)
+__flatbuffers_vec_len(vec)
+static inline MegCC_ExternOpr_table_t MegCC_ExternOpr_vec_at(MegCC_ExternOpr_vec_t vec, size_t i)
+__flatbuffers_offset_vec_at(MegCC_ExternOpr_table_t, vec, i, 0)
+__flatbuffers_table_as_root(MegCC_ExternOpr)
+
+__flatbuffers_define_vector_field(0, MegCC_ExternOpr, input, flatbuffers_int32_vec_t, 0)
+__flatbuffers_define_string_field(1, MegCC_ExternOpr, name, 0)
+__flatbuffers_define_string_field(2, MegCC_ExternOpr, data, 0)
+__flatbuffers_define_scalar_field(3, MegCC_ExternOpr, data_len, flatbuffers_uint32, uint32_t, UINT32_C(0))
+__flatbuffers_define_vector_field(4, MegCC_ExternOpr, output, flatbuffers_int32_vec_t, 0)
+
 struct MegCC_Arithmetic_table { uint8_t unused__; };
 
 static inline size_t MegCC_Arithmetic_vec_len(MegCC_Arithmetic_vec_t vec)
@@ -991,7 +1018,8 @@ __flatbuffers_define_union(flatbuffers_, MegCC_Instruction)
 #define MegCC_Instruction_IndexingMultiAxis ((MegCC_Instruction_union_type_t)UINT8_C(14))
 #define MegCC_Instruction_ArgSort ((MegCC_Instruction_union_type_t)UINT8_C(15))
 #define MegCC_Instruction_Reshape ((MegCC_Instruction_union_type_t)UINT8_C(16))
-#define MegCC_Instruction_INSTRUCTION_TABLE_END ((MegCC_Instruction_union_type_t)UINT8_C(17))
+#define MegCC_Instruction_ExternOpr ((MegCC_Instruction_union_type_t)UINT8_C(17))
+#define MegCC_Instruction_INSTRUCTION_TABLE_END ((MegCC_Instruction_union_type_t)UINT8_C(18))
 
 static inline const char *MegCC_Instruction_type_name(MegCC_Instruction_union_type_t type)
 {
@@ -1013,6 +1041,7 @@ static inline const char *MegCC_Instruction_type_name(MegCC_Instruction_union_ty
     case MegCC_Instruction_IndexingMultiAxis: return "IndexingMultiAxis";
     case MegCC_Instruction_ArgSort: return "ArgSort";
     case MegCC_Instruction_Reshape: return "Reshape";
+    case MegCC_Instruction_ExternOpr: return "ExternOpr";
     case MegCC_Instruction_INSTRUCTION_TABLE_END: return "INSTRUCTION_TABLE_END";
     default: return "";
     }
@@ -1038,6 +1067,7 @@ static inline int MegCC_Instruction_is_known_type(MegCC_Instruction_union_type_t
     case MegCC_Instruction_IndexingMultiAxis: return 1;
     case MegCC_Instruction_ArgSort: return 1;
     case MegCC_Instruction_Reshape: return 1;
+    case MegCC_Instruction_ExternOpr: return 1;
     case MegCC_Instruction_INSTRUCTION_TABLE_END: return 1;
     default: return 0;
     }

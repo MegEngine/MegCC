@@ -268,6 +268,41 @@ public:
                                         MegCC::TensorType_WEIGHT,
                                         symbol2weight_id[op.name().str()]));
                     })
+                    .Case([&](Kernel::ExternOpr op) {
+                        kernel_exporter.addInst("EXTERN_OPR");
+
+                        std::vector<int32_t> input_tensors, output_tensors;
+                        for (auto&& i : op.operands()) {
+                            auto&& tensor = value2typed_tensor.at(
+                                    i.getAsOpaquePointer());
+                            input_tensors.push_back(tensor.second);
+                        }
+
+                        for (auto&& i : op.results()) {
+                            auto&& tensor = value2typed_tensor.at(
+                                    i.getAsOpaquePointer());
+                            output_tensors.push_back(tensor.second);
+                        }
+
+                        std::string name(op.name().data(), op.name().size());
+                        std::string data(op.data().data(), op.data().size());
+                        uint32_t data_len = data.size();
+
+                        LOG_DEBUG << "Add ExternOpr instruction.\n";
+                        instructions_type.push_back(
+                                MegCC::Instruction_ExternOpr);
+                        instructions.push_back(
+                                MegCC::CreateExternOpr(
+                                        m_fbs_builder,
+                                        m_fbs_builder.CreateVector(
+                                                input_tensors),
+                                        m_fbs_builder.CreateString(name),
+                                        m_fbs_builder.CreateString(data),
+                                        data_len,
+                                        m_fbs_builder.CreateVector(
+                                                output_tensors))
+                                        .Union());
+                    })
                     .Case([&](Kernel::MemPlan op) {
                         createTensor(op->getResult(0));
                     })
