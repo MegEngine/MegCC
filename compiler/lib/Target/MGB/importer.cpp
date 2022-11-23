@@ -19,6 +19,7 @@
 #include "compiler/Common/MemoryStatus.h"
 #include "compiler/Dialect/MGB/IR/MGBDialect.h"
 #include "compiler/Target/Hako/hako_parse.h"
+#include "compiler/Target/MGB/dummy_loader.h"
 #include "compiler/Target/MGB/helper.h"
 #include "compiler/Target/MGB/import.h"
 
@@ -35,11 +36,31 @@
 #include "megbrain/opr/misc.h"
 #include "megbrain/opr/nn_int.h"
 #include "megbrain/opr/tensor_manip.h"
+#include "megbrain/serialization/extern_c_opr.h"
+#include "megbrain/serialization/extern_c_opr_io.h"
 #include "megbrain/serialization/serializer.h"
 
 llvm::cl::opt<int> hako_version(
         "hako", llvm::cl::desc("specific version used for encrypt"),
         llvm::cl::init(2));
+llvm::cl::opt<std::string> ExternOprOutputShape(
+        "extern-opr-output-shapes", llvm::cl::Optional,
+        llvm::cl::desc("specific extern opr output shapes"),
+        llvm::cl::value_desc(
+                "loader_name_1=output_shape_1;output_shape_2;...:"
+                "loader_name_2=output_shape_1;output_shape_2;... "
+                "If only one loader, \"loader_name=\" can be omitted."
+                "e.g., "
+                "\"loader_1=(1,3,5,5);(1,1);(3,3):loader_2=(2,2);(1,1,3,3)\""));
+llvm::cl::opt<std::string> ExternOprOutputDType(
+        "extern-opr-output-dtypes", llvm::cl::Optional,
+        llvm::cl::desc("specific extern opr output dtypes"),
+        llvm::cl::value_desc(
+                "Similar to --extern-opr-output-shapes but without "
+                "\"loader_name\"."
+                "The available values are float32, int32, uint8, float16, "
+                "int16. e.g., \"float32;int32;uint8:float16;int16\". Default "
+                "value is float32."));
 
 using namespace mgb;
 using namespace llvm;
@@ -139,6 +160,142 @@ std::vector<uint8_t> read_file(std::string path) {
     return res;
 }
 
+inline std::vector<std::string> split(std::string str,
+                                      const std::string& delimiter) {
+    std::vector<std::string> res;
+    size_t pos = 0;
+    while ((pos = str.find(delimiter)) != std::string::npos) {
+        res.emplace_back(std::move(str.substr(0, pos)));
+        str.erase(0, pos + delimiter.size());
+    }
+    res.emplace_back(std::move(str));
+    return res;
+}
+
+inline void parse_extern_output_info() {
+    std::map<std::string, std::pair<std::vector<std::vector<uint32_t>>,
+                                    std::vector<uint32_t>>>
+            name2outputinfo;
+
+    std::string extern_opr_output_shapes = ExternOprOutputShape;
+    if (extern_opr_output_shapes.size()) {
+        auto&& output_shapes_loaders = split(extern_opr_output_shapes, ":");
+        size_t nr_loader = output_shapes_loaders.size();
+
+        std::string extern_opr_output_dtypes = ExternOprOutputDType;
+        bool specify_dtype = (extern_opr_output_dtypes.size() != 0);
+        auto&& output_dtypes_loaders = split(extern_opr_output_dtypes, ":");
+        if (specify_dtype)
+            CC_ASSERT(nr_loader == output_dtypes_loaders.size());
+
+        auto skip_whitespace = [](const std::string& str) {
+            int left = 0, right = str.size() - 1;
+            while (str[left] == ' ' || str[left] == '\t')
+                ++left;
+            while (str[right] == ' ' || str[right] == '\t')
+                --right;
+            return str.substr(left, right - left + 1);
+        };
+
+        auto parse_output_info = [=, &name2outputinfo](
+                                         const std::string& output_shapes_str,
+                                         const std::string& output_dtypes_str,
+                                         const std::string& loader_name) {
+            auto&& output_shapes = split(output_shapes_str, ";");
+
+            std::vector<uint32_t> uint_output_dtypes(output_shapes.size(), 0);
+            if (specify_dtype) {
+                auto&& output_dtypes = split(output_dtypes_str, ";");
+                CC_ASSERT((output_shapes.size() == output_dtypes.size()))
+                        << "Number of extern opr output shapes("
+                        << output_shapes.size()
+                        << ") should equal to "
+                           "number "
+                           "of extern opr output dtypes("
+                        << output_dtypes.size() << ").\n";
+                std::unordered_map<std::string, uint32_t> dtype_str2uint{
+                        {"float32", 0},
+                        {"int32", 1},
+                        {"uint8", 2},
+                        {"float16", 3},
+                        {"int16", 4}};
+                for (size_t i = 0; i < output_dtypes.size(); ++i) {
+                    auto&& tmp_str = skip_whitespace(output_dtypes[i]);
+                    if (dtype_str2uint.find(tmp_str) != dtype_str2uint.end())
+                        uint_output_dtypes[i] = dtype_str2uint.at(tmp_str);
+                    else
+                        CC_ASSERT(0)
+                                << tmp_str
+                                << " is invalid extern opr output dtype! Dtype "
+                                   "should be float32, int32, uint8, float16 "
+                                   "or "
+                                   "int16.\n";
+                }
+            }
+
+            std::vector<std::vector<uint32_t>> uint_output_shapes(
+                    output_shapes.size());
+            for (size_t i = 0; i < output_shapes.size(); ++i) {
+                auto&& tmp_str = skip_whitespace(output_shapes[i]);
+                CC_ASSERT((tmp_str[0] == '(' &&
+                           tmp_str[tmp_str.size() - 1] == ')'))
+                        << "The output shape needs to be surrounded by "
+                           "parentheses.\n";
+                tmp_str = tmp_str.substr(1, tmp_str.size() - 2);
+                auto&& tmp_shape = split(tmp_str, ",");
+                CC_ASSERT((tmp_shape.size() <= MGB_TENSOR_MAX_NDIM))
+                        << "Maximum dimension of single output shape of extern "
+                           "opr "
+                           "is "
+                        << MGB_TENSOR_MAX_NDIM << ".\n";
+                uint_output_shapes[i].resize(tmp_shape.size());
+                std::transform(tmp_shape.begin(), tmp_shape.end(),
+                               uint_output_shapes[i].begin(),
+                               [](const std::string& s) {
+                                   return static_cast<uint32_t>(std::stoul(s));
+                               });
+            }
+
+            name2outputinfo[loader_name] =
+                    std::make_pair(std::move(uint_output_shapes),
+                                   std::move(uint_output_dtypes));
+        };
+
+        if (nr_loader == 1) {
+            auto&& name_and_shapes = split(output_shapes_loaders[0], "=");
+            bool specify_name = (name_and_shapes.size() == 2);
+            std::string&& loader_name =
+                    (specify_name ? skip_whitespace(name_and_shapes[0]) : "_");
+            const std::string& shapes =
+                    specify_name ? name_and_shapes[1] : name_and_shapes[0];
+            if (specify_dtype) {
+                parse_output_info(shapes, output_dtypes_loaders[0],
+                                  loader_name);
+            } else {
+                parse_output_info(shapes, "", loader_name);
+            }
+        } else if (nr_loader > 1) {
+            for (size_t i = 0; i < nr_loader; ++i) {
+                auto&& name_and_shapes = split(output_shapes_loaders[i], "=");
+                CC_ASSERT((name_and_shapes.size() == 2))
+                        << "When there are more than one loader, loader name "
+                           "must be specified.\n";
+                std::string&& loader_name = skip_whitespace(name_and_shapes[0]);
+                const std::string& shapes = name_and_shapes[1];
+                if (specify_dtype) {
+                    parse_output_info(shapes, output_dtypes_loaders[i],
+                                      loader_name);
+                } else {
+                    parse_output_info(shapes, "", loader_name);
+                }
+            }
+        }
+
+        mgb_c_opr_init_output_info(mgb_get_extern_c_opr_api_versioned,
+                                   name2outputinfo);
+    }
+}
+
 class Importer {
     using LoadResult = serialization::GraphLoader::LoadResult;
     using Options = MGBImporterOptions;
@@ -152,8 +309,8 @@ public:
         m_context->loadDialect<mlir::StandardOpsDialect>();
     }
 
-    mlir::LogicalResult import_mgb(std::string model_path, Options options
-                                   , int hako_ver = 0) {
+    mlir::LogicalResult import_mgb(std::string model_path, Options options,
+                                   int hako_ver = 0) {
         std::vector<uint8_t> mdl_model_buffer;
         std::unique_ptr<serialization::InputFile> inp_file;
         hako_ver = hako_ver == 0 ? hako_version.getValue() : hako_ver;
@@ -174,6 +331,9 @@ public:
         CC_ASSERT(format.valid()) << "invalid model: unknown model format.\n";
         m_loader = serialization::GraphLoader::make(std::move(inp_file),
                                                     format.val());
+
+        parse_extern_output_info();
+
         LOG_DEBUG << "Process mgb graph\n";
         process_graph(options);
         return mlir::verify(m_module);
@@ -814,6 +974,35 @@ private:
                     std::vector<Value>{elemwise_exp, reduce_sum},
                     opr::Elemwise::Mode::TRUE_DIV);
             m_var2value.emplace(out, out_value);
+        } else if (auto extern_opr =
+                           opr->try_cast_final<opr::ExternCOprRunner>()) {
+            auto user_datas = MGBOprLoaderImpl::get_user_datas();
+
+            void* _data = nullptr;
+            if (user_datas.find(opr->name()) != user_datas.end()) {
+                _data = user_datas[opr->name()];
+            }
+            CC_ASSERT(_data) << "No data related to " << opr->name() << ".\n";
+            std::string data(
+                    reinterpret_cast<const char*>(_data + sizeof(size_t)),
+                    *(size_t*)(_data));
+            free(_data);
+
+            std::vector<mlir::Type> v_resultTypes(opr->output().size());
+            for (int i = 0; i < opr->output().size(); ++i) {
+                v_resultTypes[i] = var_to_shaped_type(opr->output(i));
+            }
+
+            uint32_t nr_input = static_cast<uint32_t>(opr->input().size());
+            uint32_t nr_output = static_cast<uint32_t>(opr->output().size());
+
+            auto values = m_builder.create<mlir::MGB::ExternOpr>(
+                    m_builder.getUnknownLoc(), v_resultTypes,
+                    var_array_to_value_array(opr->input()), opr->name(), data,
+                    static_cast<uint32_t>(data.size()), nr_input, nr_output);
+            for (int i = 0; i < opr->output().size(); ++i) {
+                m_var2value.emplace(opr->output(i), values.getResult(i));
+            }
         } else {
             CC_ABORT << "unsupported mgb operator type "
                      << opr->dyn_typeinfo()->name << "\n";
@@ -1200,7 +1389,7 @@ mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
     LOG_DEBUG << "\n\t\t\t Begin Import MBG \t\t\t\n";
     LOG_DEBUG << "load model from " << model_path
               << " with Options:\n\tuse_static_memory_plan="
-              << options.use_naive_memory_plan
+              << options.use_static_memory_plan
               << "\n\toptimize_for_inference=" << options.optimize_for_inference
               << "\n\tuse_naive_memory_plan=" << options.use_naive_memory_plan
               << "\n\tgraph_opt_level="

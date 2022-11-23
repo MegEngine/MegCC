@@ -12,6 +12,7 @@
 #include "data_struct.h"
 #include "model_reader.h"
 #include "runtime_inst_switch.h"
+#include "extern_c_opr.h"
 
 // clang-format off
 #define FOR_EACH_INSTRUCTION_TYPE(cb) \
@@ -30,7 +31,8 @@
     cb(TinyNN_INST_TYPECVT)\
     cb(TinyNN_INST_INDEXING_MULTI_AXIS)\
     cb(TinyNN_INST_ARGSORT)\
-    cb(TinyNN_INST_RESHAPE)
+    cb(TinyNN_INST_RESHAPE)\
+    cb(TinyNN_INST_EXTERN_OPR)
 
 typedef enum {
     TinyNN_INST_NONE = 0,
@@ -202,6 +204,16 @@ typedef struct {
     Tensor* output;
 } Reshape;
 
+typedef struct {
+    int32_t nr_input;
+    int32_t nr_output;
+    Tensor** inputs;
+    MGBTensor* mgb_inputs;
+    MGBTensor* mgb_outputs;
+    Tensor** outputs;
+    MGBOprDesc* desc;
+} ExternOpr;
+
 typedef struct Instruction {
     InstructionType tag;
     union {
@@ -221,6 +233,7 @@ typedef struct Instruction {
         IndexingMultiAxis indexing_multi_axis;
         ArgSort argsort;
         Reshape reshape;
+        ExternOpr extern_opr;
     } workload;
 #if TINYNN_PROFILE_KERNEL
     float time_ms;
