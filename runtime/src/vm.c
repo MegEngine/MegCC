@@ -18,6 +18,7 @@ void register_all(VM* vm) {
     register_dimshuffle(vm);
     register_broadcast_shape_of(vm);
     register_reshape(vm);
+    register_extern_opr(vm);
 }
 
 VM* vm_global_inst() {

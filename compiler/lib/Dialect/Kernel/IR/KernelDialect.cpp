@@ -60,6 +60,11 @@ LogicalResult KernelCall::verifySymbolUses(SymbolTableCollection& symbolTable) {
     return success();
 }
 
+LogicalResult ExternOpr::verifySymbolUses(SymbolTableCollection& symbolTable) {
+    // TODO
+    return success();
+}
+
 MemRefType Reshape::memoryForward(MemRefType inpType) {
     auto oupType = getResult().getType().dyn_cast<ShapedType>();
     if (!oupType) {

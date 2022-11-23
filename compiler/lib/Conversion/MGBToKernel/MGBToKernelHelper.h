@@ -142,6 +142,17 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Pooling>(
 }
 
 template <>
+SmallVector<NamedAttribute, 4> ConvertAttr<MGB::ExternOpr>(
+        DictionaryAttr direct_attr, MLIRContext* context) {
+    SmallVector<NamedAttribute, 4> attrs;
+    GetParam("name");
+    GetParam("data");
+    GetParam("data_len");
+
+    return attrs;
+}
+
+template <>
 SmallVector<NamedAttribute, 4> ConvertAttr<MGB::MatrixInverse>(
         DictionaryAttr direct_attr, MLIRContext* context) {
     SmallVector<NamedAttribute, 4> attrs;

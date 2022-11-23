@@ -175,6 +175,18 @@ table Reshape {
     output: int;
 }
 
+table ExternOpr {
+    // the input tensor idx
+    input: [int];
+    // opr name
+    name: string;
+    // opr user data
+    data: string;
+    data_len: uint32;
+    // the output tensor idx
+    output: [int];
+}
+
 enum ArithMode : byte {
     ROUND = 0,
     NEGATE,
@@ -347,9 +359,10 @@ union Instruction {
     IndexingMultiAxis = 14,
     ArgSort = 15,
     Reshape = 16,
+    ExternOpr = 17,
     // terminator to mark the end of instruction definitions
     // all instruction types should be placed before here
-    INSTRUCTION_TABLE_END = 17
+    INSTRUCTION_TABLE_END = 18
 }
 
 // device base data for a Model
