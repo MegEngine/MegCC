@@ -103,21 +103,30 @@ std::unordered_map<std::string, CCAttr> convertAttrToKernelAttr(
             auto attr_list = attribute.dyn_cast<ArrayAttr>();
             int cnt = 0;
             for (auto attr_iter : attr_list) {
-                auto value = attr_iter.dyn_cast<IntegerAttr>().getValue();
-                auto type = attr_iter.dyn_cast<IntegerAttr>().getType();
-                CC_ASSERT(type.getIntOrFloatBitWidth() <= 32)
-                        << "is sign " << type.isSignedInteger() << ", bitwise "
-                        << type.getIntOrFloatBitWidth() << "\n";
-                if (type.isSignedInteger()) {
+                if (attr_iter.dyn_cast_or_null<IntegerAttr>()) {
+                    auto value = attr_iter.dyn_cast<IntegerAttr>().getValue();
+                    auto type = attr_iter.dyn_cast<IntegerAttr>().getType();
+                    CC_ASSERT(type.getIntOrFloatBitWidth() <= 32)
+                            << "is sign " << type.isSignedInteger()
+                            << ", bitwise " << type.getIntOrFloatBitWidth()
+                            << "\n";
+                    if (type.isSignedInteger()) {
+                        attr_map[attr.getName().str() + ":" +
+                                 std::to_string(cnt++)] =
+                                (int32_t)(value.getSExtValue());
+                    } else {
+                        attr_map[attr.getName().str() + ":" +
+                                 std::to_string(cnt++)] =
+                                (int32_t)(value.getZExtValue());
+                    }
+                } else if (attr_iter.dyn_cast<StringAttr>()) {
+                    auto value =
+                            attr_iter.dyn_cast<StringAttr>().getValue().str();
                     attr_map[attr.getName().str() + ":" +
-                             std::to_string(cnt++)] =
-                            (int32_t)(value.getSExtValue());
-                } else {
-                    attr_map[attr.getName().str() + ":" +
-                             std::to_string(cnt++)] =
-                            (int32_t)(value.getZExtValue());
+                             std::to_string(cnt++)] = value;
                 }
             }
+            attr_map[attr.getName().str() + ":size"] = cnt;
         }
     }
     return attr_map;
