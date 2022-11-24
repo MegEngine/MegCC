@@ -20,6 +20,7 @@
 #include "Flip.h"
 #include "Fp32Gemv.h"
 #include "Fp32Gevm.h"
+#include "FusedElemwiseKernel.h"
 #include "IndexingMultiAxisVec.h"
 #include "IndexingOneHot.h"
 #include "KernelPack.h"
@@ -97,6 +98,8 @@ struct AllBareKernel {
                 std::make_shared<BareMetal::ArgmaxKernel>()};
         inner_map[KernelPack::KernType::ConvBackDataKernel] = {
                 std::make_shared<BareMetal::ConvBackDataGeneral>()};
+        inner_map[KernelPack::KernType::FusedElemwiseKernel] = {
+                std::make_shared<BareMetal::FusedElmwiseKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType,

@@ -78,7 +78,6 @@ struct KernelObj {
 };
 
 struct KernelFunc {
-    virtual ~KernelFunc(){};
     virtual bool IsAvailable(TContext* context) const = 0;
     virtual KernelPriority GetPriority() const {
         return KernelPriority::NORMAL;

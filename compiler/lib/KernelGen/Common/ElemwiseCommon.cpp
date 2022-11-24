@@ -11,6 +11,47 @@
 
 namespace megcc {
 namespace KernelGen {
+
+TensorType GetOperandTensorType(const CCOperand& dst,
+                                const CCOperand& operand) {
+    auto dst_shape = dst.shape;
+    auto operand_shape = operand.shape;
+    CC_ASSERT(!Utils::is_shape_dynamic(dst_shape) &&
+              !Utils::is_shape_dynamic(operand_shape))
+            << "Fused Elemwise don't support dynamic shape.\n";
+    size_t nr_elem = 1;
+    for (size_t i = 0; i < dst_shape.size(); i++) {
+        nr_elem *= dst_shape[i];
+    }
+    size_t nr_elem_operand = 1;
+    for (size_t i = 0; i < operand_shape.size(); i++) {
+        nr_elem_operand *= operand_shape[i];
+    }
+    if (nr_elem == nr_elem_operand) {
+        return TensorType::VECTOR;
+    } else if (nr_elem_operand == 1 && nr_elem != 1) {
+        return TensorType::SCALAR;
+    } else if (dst.shape.size() >= 4) {
+        CC_ASSERT(dst_shape.size() == operand_shape.size())
+                << dst_shape.size() << "==" << operand_shape.size() << "\n";
+        auto small_shape = operand_shape;
+        auto big_shape = dst_shape;
+        if (small_shape.size() == 4 && small_shape[0] == 1 &&
+            small_shape[2] == 1 && small_shape[3] == 1) {
+            return TensorType::BCAST101;
+
+        } else if (small_shape.size() == 5 && small_shape[0] == 1 &&
+                   small_shape[2] == 1 && small_shape[3] == 1 &&
+                   small_shape[4] == 4) {
+            return TensorType::BCAST101x4;
+        } else {
+            return TensorType::UNKNOWN_TENSOR_TYPE;
+        }
+    } else {
+        return TensorType::UNKNOWN_TENSOR_TYPE;
+    }
+}
+
 BcastType GetBinaryBcastType(const CCOperand& operand0,
                              const CCOperand& operand1) {
     auto shape0 = operand0.shape;
