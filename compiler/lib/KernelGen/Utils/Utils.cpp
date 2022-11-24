@@ -139,3 +139,14 @@ static inline int min(int a, int b){
     }
     return "";
 }
+
+std::vector<std::string> Utils::split_string(const std::string& s,
+                                             const char delim) {
+    std::istringstream iss(s);
+    std::string item;
+    std::vector<std::string> result;
+    while (std::getline(iss, item, delim)) {
+        result.push_back(item);
+    }
+    return result;
+}

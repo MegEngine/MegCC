@@ -230,6 +230,8 @@ static inline std::string gen_operande_string(TContext* ctx) {
     return ss.str();
 }
 
+std::vector<std::string> split_string(const std::string& s, const char delim);
+
 }  // namespace Utils
 }  // namespace KernelGen
 }  // namespace megcc
