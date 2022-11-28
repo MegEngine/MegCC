@@ -308,7 +308,7 @@ std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
     auto dst_operand = context->getAttrOprand("operand:" +
                                               std::to_string(nr_operands - 1));
     std::stringstream ss;
-    ss << "kernel_fused_elementwise";
+    ss << "kernel_naive_fused_elementwise";
     auto mode_size = context->getAttrInt("modes:size");
     for (int i = 0; i < mode_size; i++) {
         auto modes = Utils::split_string(
