@@ -504,8 +504,6 @@ std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
     auto src_dtype = op0.dtype;
     auto specifier = Utils::cvt_dtype_specifier(src_dtype);
 
-    auto dtype = Utils::get_dtype_enum(context->getAttrOprand("operand:0").dtype);
-
     std::vector<TensorType> tensor_types;
     for (size_t i = 0; i < nr_operands - 1; i++) {
         auto operand = context->getAttrOprand("operand:" + std::to_string(i));
@@ -724,7 +722,7 @@ std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
     auto dst_operand = context->getAttrOprand("operand:" +
                                               std::to_string(nr_operands - 1));
     std::stringstream ss;
-    ss << "kernel_fused_elementwise";
+    ss << "kernel_gi_fused_elementwise";
     auto mode_size = context->getAttrInt("modes:size");
     for (int i = 0; i < mode_size; i++) {
         auto modes = Utils::split_string(

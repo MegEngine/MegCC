@@ -62,7 +62,7 @@ public:
                 op->getLoc(), next_typecvt.getResult().getType(), in_tensor,
                 in_type, out_type);
         rewriter.replaceOp(next_typecvt, new_typecvt.getResult());
-        return failure();
+        return success();
     }
 };
 
@@ -107,7 +107,7 @@ public:
                 op.sparse(), op.format(), op.pad_h(), op.pad_w(), op.stride_h(),
                 op.stride_w(), op.dilate_h(), op.dilate_w(), op.compute_mode());
         rewriter.replaceOp(typecvt2, new_conv.getResult());
-        return failure();
+        return success();
     }
 };
 
@@ -140,7 +140,7 @@ public:
         //! [I0, I1, Add, O0], the dst data is alias to "D"
         //
         //! for example: relu((a + b)*c -d) will record as
-        //! std::vector<llvm::StringRef>{"T0,T1,Add,O0", "O0,I2,Mul,O1",
+        //! std::vector<llvm::StringRef>{"I0,I1,Add,O0", "O0,I2,Mul,O1",
         //! "O1,I3,Sub,O2", "O2,Relu,D"};
         //!
         std::unordered_map<detail::ValueImpl*, std::string> var_alias;
@@ -215,7 +215,7 @@ public:
         auto new_elemwise = rewriter.create<MGB::FusedElemwise>(
                 op->getLoc(), dst_var.getType(), in_values, attrs);
         rewriter.replaceOp(last_elemwise_op, new_elemwise.getResult());
-        return failure();
+        return success();
     }
 };
 
