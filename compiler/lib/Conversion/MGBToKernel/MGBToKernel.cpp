@@ -293,6 +293,26 @@ public:
     }
 };
 
+class ConvertFusedElemwise final
+        : public OpConversionPattern<MGB::FusedElemwise> {
+public:
+    using OpConversionPattern::OpConversionPattern;
+    LogicalResult matchAndRewrite(
+            MGB::FusedElemwise op, MGB::FusedElemwise::Adaptor adaptor,
+            ConversionPatternRewriter& rewriter) const override {
+        LOG_DEBUG << "Convert FusedElemwise MGB dialect to Abstract kernel of "
+                     "opr name: "
+                  << op.getOperationName().str() << "\n";
+        auto operands = adaptor.getOperands();
+        CC_ASSERT(!isDynamicShape(operands))
+                << "FusedElemwise operands shape should not be dynamic.\n";
+
+        auto attrs = op->getAttrs();
+        return createOp<Kernel::FusedElemwiseKernel>(op, adaptor.getOperands(),
+                                                     rewriter, attrs);
+    }
+};
+
 class ConvertReduce final : public OpConversionPattern<MGB::Reduce> {
 public:
     using OpConversionPattern::OpConversionPattern;
@@ -536,8 +556,9 @@ void populateMGBToKernelConversionPatterns(TypeConverter& typeConverter,
                                            RewritePatternSet& patterns) {
     patterns.add<
             ConvertParamStorage, ConvertParamProvider, ConvertElemwise,
-            ConvertConvLike, ConvertReduce, ConvertReshape, ConvertSubtensor,
-            ConvertSetSubtensor, ConvertConcat,
+            ConvertFusedElemwise, ConvertConvLike, ConvertReduce,
+            ConvertReshape, ConvertSubtensor, ConvertSetSubtensor,
+            ConvertConcat,
             GenericConverter<MGB::WarpPerspective,
                              Kernel::WarpPerspectiveKernel>,
             GenericConverter<MGB::IndexingMultiAxisVec,

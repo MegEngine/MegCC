@@ -11,8 +11,10 @@
 #include <memory>
 #include "CVTranspose.h"
 #include "ConvKernel/ConvKernel.h"
+#include "CvtColor.h"
 #include "Elemwise/Elemwise.h"
 #include "Flip.h"
+#include "FusedElemwiseKernel.h"
 #include "InternalKernel/InternalKernel.h"
 #include "MatMulKernel/Fp32MatMul.h"
 #include "PoolingKernel/Pooling.h"
@@ -22,7 +24,7 @@
 #include "Rotate.h"
 #include "Typecvt.h"
 #include "WarpAffine.h"
-#include "CvtColor.h"
+
 using namespace megcc;
 using namespace KernelGen;
 using namespace GeneralIntrinsic;
@@ -80,6 +82,9 @@ struct AllGICommonKernel {
 
         inner_map[KernelPack::KernType::WarpAffineKernel] = {
                 std::make_shared<GeneralIntrinsic::WarpAffineKernel>()};
+
+        inner_map[KernelPack::KernType::FusedElemwiseKernel] = {
+                std::make_shared<GeneralIntrinsic::FusedElmwiseKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType,

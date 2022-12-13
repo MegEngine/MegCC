@@ -78,7 +78,6 @@ struct KernelObj {
 };
 
 struct KernelFunc {
-    virtual ~KernelFunc(){};
     virtual bool IsAvailable(TContext* context) const = 0;
     virtual KernelPriority GetPriority() const {
         return KernelPriority::NORMAL;
@@ -207,6 +206,7 @@ struct KernelPack {
         ConcatKernel,
         InternelKernel,
         ConvBackDataKernel,
+        FusedElemwiseKernel,
     };
     static std::pair<std::vector<const KernelFunc*>, const DeduceFunc*>
     GetKernel(KernelPack::KernType kernel_type, Arch arch);
