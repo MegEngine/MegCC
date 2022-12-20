@@ -49,6 +49,8 @@ bool ConvFloatNCHWNCHW44::IsAvailable(TContext* ctx) const {
 }
 std::string ConvFloatNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
     auto src_tensor = ctx->getAttrOprand("operand:0");
+    CC_ASSERT(src_tensor.shape.size() > 0)
+            << "src_tensor size should > 0, now" << src_tensor.shape.size();
     uint32_t ic = src_tensor.shape[1];
     auto dst_tensor = ctx->getAttrOprand(
             "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
@@ -241,7 +243,7 @@ std::string render_kernel(TContext* ctx) {
     std::string mode = ctx->haveAttr("nonlineMode")
                                ? ctx->getAttrStr("nonlineMode")
                                : "IDENTITY";
-                               
+
     auto activate_gen = create_activation_gener_instrinsic(mode);
 
     auto src_tensor = ctx->getAttrOprand("operand:0");
