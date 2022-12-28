@@ -35,7 +35,14 @@ std::string gen_dep(std::string mode) {
 
 std::string gen_binary(std::string mode) {
     if (mode == "QADD") {
-        return "fp32_to_int8((scale_0 * val_0 + scale_1 * val_1) * scale_div)";
+        return "float out_val = fp32_to_int8((scale_0 * val_0 + scale_1 * "
+               "val_1) * scale_div);";
+    } else if (mode == "QFUSE_ADD_RELU") {
+        return R"(
+        float val0 = scale_0 * val_0;
+        float val1 = scale_1 * val_1;     
+        float out_val  = fp32_to_int8( ((val0 + val1) > 0? (val0 + val1):0) * scale_div);
+        )";
     } else {
         CC_ABORT << "not support mode " << mode.c_str() << "\n";
     }
@@ -48,7 +55,7 @@ bool ElemwiseMultiTypeKernel::IsAvailable(TContext* context) const {
     auto mode = context->getAttrStr("mode");
     auto nr_operands = context->getAttrInt("nr_operands");
     bool nr_operands_ok = nr_operands == 3;
-    bool mode_ok_binary = mode == "QADD";
+    bool mode_ok_binary = mode == "QADD" || mode == "QFUSE_ADD_RELU";
     return nr_operands_ok && (mode_ok_binary);
 }
 
@@ -99,7 +106,8 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
                 for(size_t i = 0; i < nr_elem; ++i){
                     ${op0_specifier} val_0 = input_0[i];
                     ${op1_specifier} val_1 = input_1[i];
-                    output_data[i] = ${act};
+                    ${act};
+                    output_data[i] = out_val;
                 }
                 return TinyNN_SUCCESS;
                 }
