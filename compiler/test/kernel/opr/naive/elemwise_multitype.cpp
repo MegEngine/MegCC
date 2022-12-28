@@ -20,7 +20,8 @@ TEST(NAIVE, ElementwiseMultitypeBinary) {
     checker.set_dtype(1, dtype::QuantizedS8(2.f));
     checker.set_dtype(2, dtype::QuantizedS8(3.f));
     ElemwiseMultiType::Param param;
-    for (auto mode : {MODE::QADD}) {
+
+    for (auto mode : {MODE::QADD, MODE::QFUSE_ADD_RELU}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {1}, {}});
