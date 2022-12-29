@@ -115,7 +115,7 @@ set(TCC_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../third_party/tcc/include)
 set(RUNTIME_SRC_DIR ${PROJECT_SOURCE_DIR}/../runtime/src)
 set(RUNTIME_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../runtime/include)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -g")
 
 include(cmake/GenLiteSchema.cmake)
 gen_lite_schema()

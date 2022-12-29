@@ -201,7 +201,7 @@ int LITE_forward(const LiteNetwork network) {
             Layout in_layout = opr->inputs[0]->layout;
             Layout out_layout = opr->outputs[0]->layout;
             LOG_ERROR(
-                    " instruction %s \n%f \t"
+                    " instruction: %s \nuse %fms \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)] \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)]\n",
                     opr->type, inst->time_ms / inst->time_count,
@@ -335,7 +335,7 @@ int LITE_destroy_network(LiteNetwork network) {
         //! preprocessed weight
         for (int i = 0; i < model->nr_processed_weight; i++) {
             Tensor* weight = model->processed_weights + i;
-            if(!weight->is_shared)
+            if (!weight->is_shared)
                 model->device.free(weight->ptr);
         }
         FREE(model->processed_weights);
