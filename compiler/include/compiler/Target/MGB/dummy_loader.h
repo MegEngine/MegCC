@@ -8,22 +8,28 @@
 
 #include <malloc.h>
 #include <cassert>
-#include <map>
 #include <memory>
 #include <queue>
+#include <unordered_map>
 #include <vector>
 #include "megbrain/serialization/extern_c_opr.h"
 
 namespace {
-std::map<std::string,
-         std::pair<std::vector<std::vector<uint32_t>>, std::vector<uint32_t>>>
-        name2outputinfo;
-class MGBOprDescImpl {
-    static std::string loader_name;
+struct LoaderInfo {
+    std::unordered_map<std::string,
+                       std::pair<std::vector<std::vector<uint32_t>>,
+                                 std::vector<uint32_t>>>
+            m_name_2_outputinfo;
+    std::unordered_map<std::string, std::string> m_envs;
+    std::pair<std::string, std::string> m_loader_path_with_interface;
+};
+static LoaderInfo loaderInfo;
 
+class MGBOprDescImpl {
     static inline const std::pair<std::vector<std::vector<uint32_t>>,
                                   std::vector<uint32_t>>&
     get_output_info(const std::string& loader_name) {
+        const auto& name2outputinfo = loaderInfo.m_name_2_outputinfo;
         auto&& iter = name2outputinfo.find(loader_name);
         if (iter != name2outputinfo.end())
             return iter->second;
@@ -99,6 +105,58 @@ public:
 
 class MGBOprLoaderImpl {
     static std::map<std::string, void*> user_datas;
+    // extra_data format:
+    // total_len
+    // nr_env
+    //     ENV_len_1:ENV_1:VALUE_len_1:VALUE_1
+    //     ENV_len_2....
+    // loader_path_len:loader_path:interface_len:interface
+    static std::shared_ptr<void> extra_data;
+
+    static void make_extra_data() {
+        // calculate len
+        size_t len = 0;
+        size_t nr_env = loaderInfo.m_envs.size();
+        len += sizeof(nr_env);  // nr_env
+        for (const auto& env : loaderInfo.m_envs) {
+            size_t env_len = env.first.size(), value_len = env.second.size();
+            len += sizeof(env_len) + env_len + sizeof(value_len) +
+                   value_len;  // ENV_len_x + ENV_x + VALUE_len_x + VALUE_x
+        }
+        len += sizeof(size_t) +
+               loaderInfo.m_loader_path_with_interface.first.size() +
+               sizeof(size_t) +
+               loaderInfo.m_loader_path_with_interface.second
+                       .size();  // loader_path_len + loader_path +
+                                 // interface_len + interface
+
+        extra_data = std::shared_ptr<void>(malloc(sizeof(size_t) + len), free);
+        // fill memory
+        void* tmp_p = extra_data.get();
+        *(size_t*)(tmp_p) = len;
+        tmp_p += sizeof(size_t);
+        *(size_t*)tmp_p = nr_env;
+        tmp_p += sizeof(size_t);
+        for (const auto& env : loaderInfo.m_envs) {
+            *(size_t*)tmp_p = env.first.size();
+            tmp_p += sizeof(size_t);
+            memmove(tmp_p, env.first.c_str(), env.first.size());
+            tmp_p += env.first.size();
+            *(size_t*)tmp_p = env.second.size();
+            tmp_p += sizeof(size_t);
+            memmove(tmp_p, env.second.c_str(), env.second.size());
+            tmp_p += env.second.size();
+        }
+        *(size_t*)tmp_p = loaderInfo.m_loader_path_with_interface.first.size();
+        tmp_p += sizeof(size_t);
+        memmove(tmp_p, loaderInfo.m_loader_path_with_interface.first.c_str(),
+                loaderInfo.m_loader_path_with_interface.first.size());
+        tmp_p += loaderInfo.m_loader_path_with_interface.first.size();
+        *(size_t*)tmp_p = loaderInfo.m_loader_path_with_interface.second.size();
+        tmp_p += sizeof(size_t);
+        memmove(tmp_p, loaderInfo.m_loader_path_with_interface.second.c_str(),
+                loaderInfo.m_loader_path_with_interface.second.size());
+    }
 
     static MGBOprDesc* create_desc(size_t nr_input, const void* buf,
                                    size_t buf_len) {
@@ -116,16 +174,16 @@ class MGBOprLoaderImpl {
 
 public:
     static std::map<std::string, void*>& get_user_datas() { return user_datas; }
-    static MGBOprLoader make() { return {"extern_opr_dummy", &create_desc}; }
+    static void* get_extra_data() { return extra_data.get(); }
+    static MGBOprLoader make() {
+        make_extra_data();
+        return {"extern_opr_dummy", &create_desc};
+    }
 };
 std::map<std::string, void*> MGBOprLoaderImpl::user_datas = {};
+std::shared_ptr<void> MGBOprLoaderImpl::extra_data = {};
 
-void mgb_c_opr_init_output_info(
-        const MGBExternCOprApi* (*get_api)(int),
-        const std::map<std::string,
-                       std::pair<std::vector<std::vector<uint32_t>>,
-                                 std::vector<uint32_t>>>& output_info) {
-    name2outputinfo = std::move(output_info);
+static void dummy_mgb_c_opr_init(const MGBExternCOprApi* (*get_api)(int)) {
     const MGBExternCOprApi* api = get_api(MGB_EXTERN_C_OPR_VERSION);
     assert(api);
     MGBOprLoader loader = MGBOprLoaderImpl::make();

@@ -16,23 +16,25 @@ RUNTIME_PATH=${PROJECT_PATH}/runtime
 mkdir -p ${OUT_DIR}
 KERN_DIR="${OUT_DIR}/kern/"
 rm -fr ${OUT_DIR}/*
+mkdir -p "${OUT_DIR}/runtime"
 mkdir -p "${OUT_DIR}/model"
 mkdir -p "${OUT_DIR}/model_info"
-mkdir -p "${OUT_DIR}/script"
+mkdir -p "${OUT_DIR}/runtime/script"
 mkdir -p "${KERN_DIR}"
 ${DUMP_APP} --json="${JSON_PATH}" "${ARCH_SPECIFIC}" --dump="${KERN_DIR}" ${EXTRA_DUMP_CMD}
-cp -r "${RUNTIME_PATH}/flatcc" "${OUT_DIR}/flatcc"
-cp -r "${RUNTIME_PATH}/include" "${OUT_DIR}/include"
-cp -r "${RUNTIME_PATH}/schema" "${OUT_DIR}/schema"
-cp -r "${RUNTIME_PATH}/example" "${OUT_DIR}/example"
-cp -r "${RUNTIME_PATH}/src" "${OUT_DIR}/src"
-cp "${RUNTIME_PATH}/CMakeLists.txt" "${OUT_DIR}/CMakeLists.txt"
+cp -r "${RUNTIME_PATH}/flatcc" "${OUT_DIR}/runtime/flatcc"
+cp -r "${RUNTIME_PATH}/include" "${OUT_DIR}/runtime/include"
+cp -r "${RUNTIME_PATH}/schema" "${OUT_DIR}/runtime/schema"
+cp -r "${RUNTIME_PATH}/example" "${OUT_DIR}/runtime/example"
+cp -r "${RUNTIME_PATH}/src" "${OUT_DIR}/runtime/src"
+cp -r "${PROJECT_PATH}/immigration" "${OUT_DIR}/immigration"
+cp "${RUNTIME_PATH}/CMakeLists.txt" "${OUT_DIR}/runtime/CMakeLists.txt"
 MODEL_FILE=`find ${OUT_DIR}/kern/ -name "*.tiny"`
 if [ ! -z "${MODEL_FILE}" ];then
   mv ${OUT_DIR}/kern/*.tiny "${OUT_DIR}/model"
   mv ${OUT_DIR}/kern/*.tiny.txt "${OUT_DIR}/model_info"
 fi
 cp -a "${PROJECT_PATH}"/script/{ppl_build.sh,test_model.py} "${OUT_DIR}/"
-cp "${PROJECT_PATH}/runtime/scripts/runtime_build.py" "${OUT_DIR}/script/"
+cp "${RUNTIME_PATH}/scripts/runtime_build.py" "${OUT_DIR}/runtime/script/"
 cp "${JSON_PATH}" "${OUT_DIR}/"
 tar -czf megcc_ppl_gen.tar.gz "${OUT_DIR}"
