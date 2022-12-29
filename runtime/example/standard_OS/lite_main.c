@@ -196,6 +196,8 @@ static void* dlsym(void* handle, const char* name) {
 #include <dlfcn.h>
 #endif
 
+const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int version);
+
 int main(int argc, char** argv) {
     LITE_set_log_level(WARN);
 #if TINYNN_CALLBACK_ENABLE
@@ -279,7 +281,7 @@ int main(int argc, char** argv) {
         void (*func)(const MGBExternCOprApi* (*)(int)) = NULL;
         *(void**)&func = dlsym(handle, c_opr_lib_interface);
         EXAMPLE_ASSERT(func, "load init interface of loader failed.\n");
-        func(mgb_get_extern_c_opr_api_versioned);
+        func(megcc_get_extern_c_opr_api_versioned);
     }
 
     LiteNetwork model;

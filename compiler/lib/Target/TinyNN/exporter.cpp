@@ -40,8 +40,8 @@ public:
         for (auto&& _ : *m_root.getBody()) {
             llvm::TypeSwitch<Operation*>(&_)
                     .Case([&](Kernel::WeightStorage op) {
-                        weights.push_back(
-                                attr_to_weight(op.value(), op.sym_name(), op.user_count()));
+                        weights.push_back(attr_to_weight(
+                                op.value(), op.sym_name(), op.user_count()));
                         symbol2weight_id[op.sym_name().str()] =
                                 weights.size() - 1;
                     })
@@ -286,7 +286,7 @@ public:
 
                         std::string name(op.name().data(), op.name().size());
                         std::string data(op.data().data(), op.data().size());
-                        uint32_t data_len = data.size();
+                        uint32_t data_len = op.data_len();
 
                         LOG_DEBUG << "Add ExternOpr instruction.\n";
                         instructions_type.push_back(
@@ -436,7 +436,7 @@ public:
                         output_tensor = tensor.second;
                         auto descs = llvm::to_vector<4>(
                                 op.descs().getAsRange<ArrayAttr>());
-                        auto flags= llvm::to_vector<4>(
+                        auto flags = llvm::to_vector<4>(
                                 op.flags().getAsRange<ArrayAttr>());
                         std::vector<Offset<MegCC::IndexDesc>> descs_;
                         std::vector<Offset<MegCC::IndexDesc>> flags_;
@@ -452,7 +452,8 @@ public:
                         auto descs_fbs = m_fbs_builder.CreateVector(descs_);
                         auto flags_fbs = m_fbs_builder.CreateVector(flags_);
 
-                        MegCC::SubTensorBuilder subtensor_builder(m_fbs_builder);
+                        MegCC::SubTensorBuilder subtensor_builder(
+                                m_fbs_builder);
                         subtensor_builder.add_inputs(input_tensors_);
                         subtensor_builder.add_input_types(input_types_);
                         subtensor_builder.add_output(output_tensor);
@@ -460,8 +461,10 @@ public:
                         subtensor_builder.add_flags(flags_fbs);
 
                         LOG_DEBUG << "Add subtensor instruction.\n";
-                        instructions_type.push_back(MegCC::Instruction_SubTensor);
-                        instructions.push_back(subtensor_builder.Finish().Union());
+                        instructions_type.push_back(
+                                MegCC::Instruction_SubTensor);
+                        instructions.push_back(
+                                subtensor_builder.Finish().Union());
                     })
                     .Case([&](Kernel::SetSubtensorIns op) {
                         kernel_exporter.addInst("SETSUBTENSOR");
@@ -567,7 +570,8 @@ public:
                         auto&& out_tensor = value2typed_tensor.at(
                                 op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Broadcast instruction.\n";
-                        instructions_type.push_back(MegCC::Instruction_BroadCast);
+                        instructions_type.push_back(
+                                MegCC::Instruction_BroadCast);
                         instructions.push_back(
                                 MegCC::CreateBroadCast(
                                         m_fbs_builder, input_tensors_,
@@ -725,7 +729,7 @@ public:
                         auto&& out_tensor = value2typed_tensor.at(
                                 op.result().getAsOpaquePointer());
 
-                        auto mat_id= op.mat_idx();
+                        auto mat_id = op.mat_idx();
                         auto member = llvm::to_vector<4>(
                                 mat_id.getAsRange<IntegerAttr>());
                         std::vector<int32_t> mat_id_v;
@@ -982,15 +986,16 @@ private:
                                    m_fbs_builder.CreateString(name));
     }
 
-    Offset<MegCC::IndexDesc> indexdesc_to_fbs(ArrayAttr desc){
-        CC_ASSERT(desc.size()==5);
+    Offset<MegCC::IndexDesc> indexdesc_to_fbs(ArrayAttr desc) {
+        CC_ASSERT(desc.size() == 5);
         auto member = llvm::to_vector<5>(desc.getAsRange<IntegerAttr>());
         return MegCC::CreateIndexDesc(m_fbs_builder, member[0].getInt(),
                                       member[1].getInt(), member[2].getInt(),
                                       member[3].getInt(), member[4].getInt());
     }
 
-    Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name, int32_t user_count) {
+    Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name,
+                                         int32_t user_count) {
         auto dense = attr.cast<DenseElementsAttr>();
         auto size_in_bits = dense.getType().getSizeInBits();
         if (size_in_bits & 0x7) {
