@@ -32,15 +32,29 @@ KernelPack::GetKernel(KernelPack::KernType kernel_type, Arch arch) {
     //! arm64v7 is used by tinycv, nn opr should be armv64 or armv7, not arm64v7
     auto deduce_func = GetDeduceLayout(kernel_type);
     if (arch == Arch::ARM64 || arch == Arch::ARM64V7) {
-        auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
-        auto armcommon_kerns =
-                ArmCommon::ArchKernelPack::GetKernel(kernel_type);
-        auto gi_kerns =
-                GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
-        a64_kerns.insert(a64_kerns.end(), armcommon_kerns.begin(),
-                         armcommon_kerns.end());
-        a64_kerns.insert(a64_kerns.end(), gi_kerns.begin(), gi_kerns.end());
-        return {a64_kerns, deduce_func};
+        if (kernel_type == KernelPack::KernType::MatrixMulKernel) {
+            auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
+            auto armcommon_kerns =
+                    ArmCommon::ArchKernelPack::GetKernel(kernel_type);
+            auto gi_kerns =
+                    GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
+            armcommon_kerns.insert(armcommon_kerns.end(), a64_kerns.begin(),
+                                   a64_kerns.end());
+            armcommon_kerns.insert(armcommon_kerns.end(), gi_kerns.begin(),
+                                   gi_kerns.end());
+            return {armcommon_kerns, deduce_func};
+        } else {
+            auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
+            auto armcommon_kerns =
+                    ArmCommon::ArchKernelPack::GetKernel(kernel_type);
+            auto gi_kerns =
+                    GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
+            a64_kerns.insert(a64_kerns.end(), armcommon_kerns.begin(),
+                             armcommon_kerns.end());
+            a64_kerns.insert(a64_kerns.end(), gi_kerns.begin(), gi_kerns.end());
+            return {a64_kerns, deduce_func};
+        }
+
     } else if (arch == Arch::ARMV7) {
         auto a32_kerns = Armv7::ArchKernelPack::GetKernel(kernel_type);
 
