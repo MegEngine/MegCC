@@ -61,6 +61,17 @@ llvm::cl::opt<std::string> ExternOprOutputDType(
                 "The available values are float32, int32, uint8, float16, "
                 "int16. e.g., \"float32;int32;uint8:float16;int16\". Default "
                 "value is float32."));
+llvm::cl::opt<std::string> ExternOprLoaderPathWithInterface(
+        "loader-path-with-interface", llvm::cl::Optional,
+        llvm::cl::desc("specific extern opr loader path with interface. If "
+                       "\"interface\" "
+                       "is not provided, using \"mgb_c_opr_init\" default."),
+        llvm::cl::value_desc("loader_path:interface"));
+llvm::cl::opt<std::string> ExternOprLoaderEnv(
+        "set-extern-opr-env", llvm::cl::Optional,
+        llvm::cl::desc("set ENV for all extern opr loader, must surrounded by "
+                       "\" if set multiple ENV."),
+        llvm::cl::value_desc("\"ENV_1=VALUE_1;ENV_2=VALUE_2...\""));
 
 using namespace mgb;
 using namespace llvm;
@@ -172,10 +183,8 @@ inline std::vector<std::string> split(std::string str,
     return res;
 }
 
-inline void parse_extern_output_info() {
-    std::map<std::string, std::pair<std::vector<std::vector<uint32_t>>,
-                                    std::vector<uint32_t>>>
-            name2outputinfo;
+inline void parse_extern_loader_info() {
+    auto& name2outputinfo = loaderInfo.m_name_2_outputinfo;
 
     std::string extern_opr_output_shapes = ExternOprOutputShape;
     if (extern_opr_output_shapes.size()) {
@@ -290,9 +299,34 @@ inline void parse_extern_output_info() {
                 }
             }
         }
+    }
 
-        mgb_c_opr_init_output_info(mgb_get_extern_c_opr_api_versioned,
-                                   name2outputinfo);
+    // parse ENV
+    std::string env = ExternOprLoaderEnv;
+    if (env.size()) {
+        auto&& env_values = split(env, ";");
+        for (auto&& env_value : env_values) {
+            auto&& env_value_vec = split(env_value, "=");
+            CC_ASSERT((env_value_vec.size() == 2))
+                    << "Wrong format. Set ENV using \"ENV=VALUE\"";
+            loaderInfo.m_envs[env_value_vec[0]] = env_value_vec[1];
+        }
+    }
+
+    // parse loader path and interface
+    std::string loaderPathWithInterface = ExternOprLoaderPathWithInterface;
+    if (loaderPathWithInterface.size()) {
+        auto&& loaderPath_interface = split(loaderPathWithInterface, ":");
+        CC_ASSERT((loaderPath_interface.size() <= 2))
+                << "Wrong format. Specify loader path and interface using "
+                   "loader_path[:interface]";
+        loaderInfo.m_loader_path_with_interface.first = loaderPath_interface[0];
+        if (loaderPath_interface.size() == 1 || loaderPath_interface[1] == "") {
+            loaderInfo.m_loader_path_with_interface.second = "mgb_c_opr_init";
+        } else {
+            loaderInfo.m_loader_path_with_interface.second =
+                    loaderPath_interface[1];
+        }
     }
 }
 
@@ -332,7 +366,8 @@ public:
         m_loader = serialization::GraphLoader::make(std::move(inp_file),
                                                     format.val());
 
-        parse_extern_output_info();
+        parse_extern_loader_info();
+        dummy_mgb_c_opr_init(mgb_get_extern_c_opr_api_versioned);
 
         LOG_DEBUG << "Process mgb graph\n";
         process_graph(options);
@@ -977,6 +1012,7 @@ private:
         } else if (auto extern_opr =
                            opr->try_cast_final<opr::ExternCOprRunner>()) {
             auto user_datas = MGBOprLoaderImpl::get_user_datas();
+            void* extra_data = MGBOprLoaderImpl::get_extra_data();
 
             void* _data = nullptr;
             if (user_datas.find(opr->name()) != user_datas.end()) {
@@ -986,6 +1022,11 @@ private:
             std::string data(
                     reinterpret_cast<const char*>(_data + sizeof(size_t)),
                     *(size_t*)(_data));
+            uint32_t data_len = static_cast<uint32_t>(data.size());
+            if (extra_data)
+                data += std::string(reinterpret_cast<const char*>(
+                                            extra_data + sizeof(size_t)),
+                                    *(size_t*)(extra_data));
             free(_data);
 
             std::vector<mlir::Type> v_resultTypes(opr->output().size());
@@ -999,7 +1040,7 @@ private:
             auto values = m_builder.create<mlir::MGB::ExternOpr>(
                     m_builder.getUnknownLoc(), v_resultTypes,
                     var_array_to_value_array(opr->input()), opr->name(), data,
-                    static_cast<uint32_t>(data.size()), nr_input, nr_output);
+                    data_len, nr_input, nr_output);
             for (int i = 0; i < opr->output().size(); ++i) {
                 m_var2value.emplace(opr->output(i), values.getResult(i));
             }
