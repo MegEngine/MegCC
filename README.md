@@ -37,7 +37,7 @@ MegCC supports Arm64/ArmV7/X86/BareMatal backend. You may want to check [support
 
 #### How to use MegCC
 
-* Read [how-to-use](doc/how-to-use.md) to see how to compile your models and deploy them，also there is a Engilish doc [how to use](doc/how-to-use.md).
+* Read [how-to-use](doc/how-to-use.md) to see how to compile your models and deploy them，also there is a English doc [how to use](doc/how-to-use.md).
 * MegCC runtime is easy to run in standard OS, even no OS([example](runtime/example/README.md)).  
  
 **Thanks a lot, please enjoy it**
