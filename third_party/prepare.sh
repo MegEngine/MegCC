@@ -78,7 +78,7 @@ function build_flatcc() {
         -DFLATCC_TEST=OFF \
         $SOURCE_DIR
 
-    make -j$(nproc)
+    make -j`expr $(nproc) - 2`
 }
 
 if [ ! -e $SRC_DIR/flatcc/bin/flatcc ];then
