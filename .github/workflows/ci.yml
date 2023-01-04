@@ -31,6 +31,8 @@ jobs:
 
   test_kernel:
     runs-on: self-hosted
+    environment:
+      name: ci
     timeout-minutes: 240
     container:
       image: mcd.io/mcd-apps/megcc-ci:v1
