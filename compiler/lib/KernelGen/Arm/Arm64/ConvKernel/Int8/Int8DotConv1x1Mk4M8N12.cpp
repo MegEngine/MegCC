@@ -40,7 +40,7 @@ bool Conv1x1DotMk4::IsAvailable(TContext* ctx) const {
                      ctx->getAttrStr("nonlineMode") == "RELU" ||
                      ctx->getAttrStr("nonlineMode") == "H_SWISH";
 
-    bool type_ok = is_qint8_conv_dtype(ctx);
+    bool type_ok = is_qint8_conv_dtype(ctx, true);
 
     bool layout_ok = ctx->getAttrOprand("operand:0").shape.size() == 5 &&
                      ctx->getAttrOprand("operand:0").shape[4] == 4;
@@ -186,6 +186,9 @@ std::shared_ptr<TContext> Conv1x1DotMk4::GetInnerCtx(TContext* ctx) const {
     inner_ctx->setAttr("transposeB", false);
     inner_ctx->setAttr("format", "MK4_DOT");
     inner_ctx->setAttr("dtype", ctx->getAttrOprand("operand:0").dtype);
+    auto last_dtype = Utils::get_last_operand(ctx).dtype;
+    auto last_dtype_str = SymbolHelper::gen_valid_dtype(last_dtype);
+    inner_ctx->setAttr("last_dtype", last_dtype_str);
     return inner_ctx;
 }
 
@@ -202,6 +205,9 @@ std::string Conv1x1DotMk4::GetKernelBody(TContext* ctx) const {
         gen_temp_dst =
                 "void* temp_dst = (int8_t*) workspace_ptr + pack_b_align;";
     }
+    auto last_dtype = Utils::get_last_operand(ctx).dtype;
+    auto last_dtype_str = SymbolHelper::gen_valid_dtype(last_dtype);
+    std::string dst_specifier = Utils::cvt_dtype_specifier(last_dtype_str);
     writer << StringTemplate::StringTemplateArgs()
                       .add("bias_ptr_str", bias_ptr_str)
                       .add("packb_size_sym",
@@ -212,9 +218,10 @@ std::string Conv1x1DotMk4::GetKernelBody(TContext* ctx) const {
                       .add("naked_kern_sym",
                            m_inner_gemm.GetNakedKernelSymbol(inner_ctx.get()))
                       .add("gen_temp_dst", gen_temp_dst)
+                      .add("dst_specifier", dst_specifier)
                       .render(R"({
     int8_t* input_data = inputs[0]->ptr;
-    int8_t* output_data = outputs[0]->ptr;
+    ${dst_specifier}* output_data = outputs[0]->ptr;
 
     Layout in_layout = inputs[0]->layout;
     Layout out_layout = outputs[0]->layout;

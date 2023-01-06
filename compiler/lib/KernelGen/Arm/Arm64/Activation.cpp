@@ -191,7 +191,7 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
         }
         ss << gener.render(temp_ss.str());
     } else {
-        CC_ASSERT(dst_specifier == "int32_t");
+        CC_ASSERT(dst_specifier == "int32_t" || dst_specifier == "int");
         if (!with_store) {
             return "";
         }

@@ -29,6 +29,8 @@ void register_broadcast_shape_of(VM* vm);
 
 void register_reshape(VM* vm);
 
+void register_extern_opr(VM* vm);
+
 #endif  // VM_REGISTRY_H
 
 // vim: syntax=cpp.doxygen

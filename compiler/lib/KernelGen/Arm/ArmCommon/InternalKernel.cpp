@@ -25,8 +25,17 @@ std::string MatmulInternal::GenNakedKernelCall(TContext* ctx) {
         return R"((const float* pack_a, const float* pack_b, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr))";
     } else if (Utils::is_quant_dtype(dtype, 8)) {
-        return R"((const int8_t* pack_a, const int8_t* pack_b, int8_t* C,
+        std::string last_dtype = "si8";
+        if (ctx->haveAttr("last_dtype")) {
+            last_dtype = ctx->getAttrStr("last_dtype");
+        }
+        if (Utils::is_int_dtype(last_dtype, 32)) {
+            return R"((const int8_t* pack_a, const int8_t* pack_b, int* C,
             size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale, float temp_scale, float dst_scale_inv))";
+        } else {
+            return R"((const int8_t* pack_a, const int8_t* pack_b, int8_t* C,
+            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale, float temp_scale, float dst_scale_inv))";
+        }
     } else if (dtype == "8832") {
         return R"((const int8_t* pack_a, const int8_t* pack_b, int32_t* C,
             size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, float scale))";
@@ -42,8 +51,17 @@ std::string MatmulInternal::GenKernelCall(TContext* ctx) {
         return R"((const float* A, size_t LDA, const float* B, size_t LDB, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr, void* workspace))";
     } else if (Utils::is_quant_dtype(dtype, 8)) {
-        return R"((const int8_t* A, size_t LDA, const int8_t* B, size_t LDB, int8_t* C,
+        std::string last_dtype = "si8";
+        if (ctx->haveAttr("last_dtype")) {
+            last_dtype = ctx->getAttrStr("last_dtype");
+        }
+        if (Utils::is_int_dtype(last_dtype, 32)) {
+            return R"((const int8_t* A, size_t LDA, const int8_t* B, size_t LDB, int* C,
             size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale, float temp_scale, float dst_scale_inv))";
+        } else {
+            return R"((const int8_t* A, size_t LDA, const int8_t* B, size_t LDB, int8_t* C,
+            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale, float temp_scale, float dst_scale_inv))";
+        }
     } else if (dtype == "8832") {
         return R"((const int8_t* A, size_t LDA, const int8_t* B, size_t LDB, int32_t* C,
             size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale))";
