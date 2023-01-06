@@ -195,6 +195,7 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     std::string dst_specifier = Utils::cvt_dtype_specifier(dst_dtype_str);
     ss << R"(
     #include <arm_neon.h>
+    #include <math.h>
     )";
     ss << gen_neon_intrin_compat();
     ss << init_declare(src_dtype_str, dst_dtype_str);

@@ -63,7 +63,8 @@ static inline bool is_float_dtype(const std::string& dtype,
 static inline bool is_int_dtype(const std::string& dtype, int bit_width = -1) {
     if (bit_width == 8 && (dtype == "i8" || dtype == "si8" || dtype == "ui8")) {
         return true;
-    } else if (bit_width == 32 && (dtype == "i32" || dtype == "si32")) {
+    } else if (bit_width == 32 &&
+               (dtype == "i32" || dtype == "si32" || dtype == "qsi32")) {
         return true;
     } else if (bit_width == 16 && (dtype == "i16" || dtype == "ui16")) {
         return true;
