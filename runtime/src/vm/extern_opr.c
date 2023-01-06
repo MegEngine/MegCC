@@ -217,6 +217,12 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
 
     if (!has_set_env_and_loader) {
         const void* extra_data = data + data_len;
+        // extra_data format:
+        // nr_env(size_t)
+        //     ENV_len_1(size_t):ENV_1(char[ENV_len_1]):VALUE_len_1(size_t):VALUE_1(char[VALUE_len_1])
+        //     ENV_len_2....
+        // loader_path_len(size_t):loader_path(char[loader_path_len]):interface_len(size_t):interface(char[interface_len])
+
         // parse and set ENV
         size_t nr_env = *(size_t*)extra_data;
         extra_data += sizeof(size_t);

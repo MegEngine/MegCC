@@ -106,11 +106,11 @@ public:
 class MGBOprLoaderImpl {
     static std::map<std::string, void*> user_datas;
     // extra_data format:
-    // total_len
-    // nr_env
-    //     ENV_len_1:ENV_1:VALUE_len_1:VALUE_1
+    // total_len(size_t)
+    // nr_env(size_t)
+    //     ENV_len_1(size_t):ENV_1(char[ENV_len_1]):VALUE_len_1(size_t):VALUE_1(char[VALUE_len_1])
     //     ENV_len_2....
-    // loader_path_len:loader_path:interface_len:interface
+    // loader_path_len(size_t):loader_path(char[loader_path_len]):interface_len(size_t):interface(char[interface_len])
     static std::shared_ptr<void> extra_data;
 
     static void make_extra_data() {
