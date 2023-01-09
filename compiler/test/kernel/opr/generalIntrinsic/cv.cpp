@@ -9,6 +9,7 @@
 
 #include "test/kernel/common/checker.h"
 #include "test/kernel/common/cv_opr.h"
+#include "megbrain/reflection.h"
 using namespace megcc::test;
 using namespace megdnn;
 using namespace megcc::KernelGen;
@@ -134,13 +135,13 @@ TEST(GI, CVcvtcolor) {
     checker.set_dtype(1, dtype::Uint8());
 
     for (auto mode : {CvtMode::RGB2YUV, CvtMode::RGB2BGR}) {
-        printf("mode=%d\n", mode);
+        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<CvtMode>(mode).c_str());
         param.mode = mode;
         checker.set_param(param);
         checker.exec({{1, 17, 31, 3}, {}});
     }
     for (auto mode : {CvtMode::YUV2BGR_NV21}) {
-        printf("mode=%d\n", mode);
+        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<CvtMode>(mode).c_str());
         param.mode = mode;
         checker.set_param(param);
         checker.exec({{1, 3, 18, 1}, {}});
