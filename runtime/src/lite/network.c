@@ -200,7 +200,7 @@ int LITE_forward(const LiteNetwork network) {
 
             Layout in_layout = opr->inputs[0]->layout;
             Layout out_layout = opr->outputs[0]->layout;
-            LOG_ERROR(
+            LOG_INFO(
                     " instruction: %s \nuse %fms \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)] \t"
                     "[%d(%d), %d(%d), %d(%d), %d(%d), %d(%d)]\n",
@@ -216,9 +216,9 @@ int LITE_forward(const LiteNetwork network) {
                     out_layout.stride[4]);
 
         } else {
-            LOG_ERROR("execute used time %f ms of instruction %s.\n",
-                      inst->time_ms / inst->time_count,
-                      instruction_type_name(inst->tag));
+            LOG_INFO("execute used time %f ms of instruction %s.\n",
+                     inst->time_ms / inst->time_count,
+                     instruction_type_name(inst->tag));
         }
 #endif
     }
@@ -361,7 +361,7 @@ int LITE_destroy_network(LiteNetwork network) {
     }
     FREE(cb_model->device_models);
 
-    //! free combine model struce
+    //! free combine model struct
     FREE(cb_model);
     return TinyNN_SUCCESS;
 }

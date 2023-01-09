@@ -28,7 +28,8 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
     bool mode_ok = mode == "RELU" || mode == "EXP" || mode == "SIGMOID" ||
                    mode == "H_SWISH" || mode == "ADD" || mode == "SUB" ||
                    mode == "MUL" || mode == "TRUE_DIV" ||
-                   mode == "FUSE_ADD_RELU" || mode == "FUSE_MUL_ADD3";
+                   mode == "FUSE_ADD_RELU" || mode == "FUSE_MUL_ADD3" ||
+                   mode == "MAX" || mode == "MIN";
     if (mode == "FUSE_MUL_ADD3") {
         auto bcast_type = ElemwiseGenTernary::GetBcastType(
                 ctx->getAttrOprand("operand:0"),

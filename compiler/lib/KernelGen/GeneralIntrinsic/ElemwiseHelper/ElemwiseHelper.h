@@ -157,6 +157,8 @@ DEFINE_BINARY_OP(ElemwiseGenBinarySub)
 DEFINE_BINARY_OP(ElemwiseGenBinaryMul)
 DEFINE_BINARY_OP(ElemwiseGenBinaryTrueDiv)
 DEFINE_BINARY_OP(ElemwiseGenBinaryFuseAddRelu)
+DEFINE_BINARY_OP(ElemwiseGenBinaryMax)
+DEFINE_BINARY_OP(ElemwiseGenBinaryMin)
 #undef DEFINE_BINARY_OP
 //! TODO: add more binary elemwise here
 /************************************Ternary***********************************/
