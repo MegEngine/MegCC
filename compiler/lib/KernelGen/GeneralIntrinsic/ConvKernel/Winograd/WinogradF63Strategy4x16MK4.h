@@ -20,6 +20,7 @@ class WinogradF63Strategy4x16MK4 : public WinogradStrategyBase {
 public:
     uint32_t GetKernelSize() override { return 3; }
     uint32_t GetOutputBlockSize() override { return 6; }
+    uint32_t GetTileSize() override { return 16; };
     std::string DependMatmulSymbol() override;
     std::string WeightTrans(const std::vector<std::string>& strs) override;
     std::string InputFeatureTrans(

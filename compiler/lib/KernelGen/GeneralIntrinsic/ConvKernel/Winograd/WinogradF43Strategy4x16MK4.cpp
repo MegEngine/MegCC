@@ -970,15 +970,14 @@ std::string WinogradF43Strategy4x16MK4::OutputFeatureTrans(
         if (bias) {
             vbias = GiLoadFloat32(bias + oc);
         }
-# define BIAS_LINE(i, j, k) \
+# define BIAS_LINE(j, k) \
     v##j##k = GiAddFloat32(v##j##k, vbias); 
 
 #define BIAS(m) \
-    BIAS_LINE(3, m, 5) \
-    BIAS_LINE(2, m, 4) \
-    BIAS_LINE(1, m, 3) \
-    BIAS_LINE(0, m, 2) 
-
+    BIAS_LINE(m, 5) \
+    BIAS_LINE(m, 4) \
+    BIAS_LINE(m, 3) \
+    BIAS_LINE(m, 2)
 
 // add_bias
 if(bias){
