@@ -22,7 +22,8 @@ using namespace GeneralIntrinsic;
 std::string WinogradFrameNchw44::GenGetWorkSpaceCode(
         TContext* context, WinogradStrategyBase* strategy) {
     CC_ASSERT(context->getAttrStr("format") == "NCHW44")
-            << "format mismatch  now: "<< context->getAttrStr("format") << ", expect: NCHW44\n";
+            << "format mismatch  now: " << context->getAttrStr("format")
+            << ", expect: NCHW44\n";
     auto WeightShape = context->getAttrOprand("operand:1").shape;
     std::stringstream ss;
     std::string workspace_temp = R"({
@@ -55,7 +56,12 @@ std::string WinogradFrameNchw44::GenGetWorkSpaceCode(
                 Alpha * Alpha * OC * ${tile_per_loop} * sizeof(float);
         output_transform_buf_size = 
                 (output_transform_buf_size + Align -1) / Align * Align;
-        *workspace = input_transform_buf_size + output_transform_buf_size;
+
+        size_t transform_mid_buf_size = 2 * Alpha * Alpha * sizeof(float) *
+                PACK_C_SIZE;
+        transform_mid_buf_size = (transform_mid_buf_size + Align -1) / Align * Align; 
+        *workspace = input_transform_buf_size + output_transform_buf_size
+        + transform_mid_buf_size;
         return TinyNN_SUCCESS;
     })";
     ss << StringTemplate::StringTemplateArgs()
@@ -177,10 +183,18 @@ std::string WinogradFrameNchw44::GenKernelBodyCode(
                 Alpha * Alpha * IC * nr_tiles_per_loop * sizeof(float);
     input_transform_buf_size = 
                 (input_transform_buf_size + Align -1) / Align * Align;
+    
+    size_t output_transform_buf_size =
+                Alpha * Alpha * OC * nr_tiles_per_loop * sizeof(float);
+    output_transform_buf_size = 
+                (output_transform_buf_size + Align -1) / Align * Align;
 
     float* transform_input_ptr = workspace->ptr;
     float* transform_output_ptr = transform_input_ptr +
                         input_transform_buf_size / sizeof(float);
+    
+    float* transform_mid_ptr = transform_output_ptr +
+                        output_transform_buf_size / sizeof(float);
 
     const float* input_ptr = input->ptr;
     const float* weight_ptr = weight->ptr;
