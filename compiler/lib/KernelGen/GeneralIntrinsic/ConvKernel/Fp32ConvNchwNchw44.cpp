@@ -46,19 +46,25 @@ bool ConvFloatNCHWNCHW44::IsAvailable(TContext* ctx) const {
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
 std::string ConvFloatNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
-    auto src_tensor = ctx->getAttrOprand("operand:0");
-    CC_ASSERT(src_tensor.shape.size() > 0)
-            << "src_tensor size should > 0, now" << src_tensor.shape.size();
-    uint32_t ic = src_tensor.shape[1];
-    auto dst_tensor = ctx->getAttrOprand(
-            "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
-    uint32_t oc = dst_tensor.shape[1] * 4;
-    std::string name_temp = "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
-    return StringTemplate::StringTemplateArgs(ctx)
-            .add("base_kernel_sym", GIConvImpl::GetKernelSymbol(ctx))
-            .add("oc", oc)
-            .add("ic", ic)
-            .render(name_temp);
+    if (ctx) {
+        auto src_tensor = ctx->getAttrOprand("operand:0");
+        CC_ASSERT(src_tensor.shape.size() > 0)
+                << "src_tensor size should > 0, now" << src_tensor.shape.size();
+        uint32_t ic = src_tensor.shape[1];
+        auto dst_tensor = ctx->getAttrOprand(
+                "operand:" +
+                std::to_string(ctx->getAttrInt("nr_operands") - 1));
+        uint32_t oc = dst_tensor.shape[1] * 4;
+        std::string name_temp =
+                "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
+        return StringTemplate::StringTemplateArgs(ctx)
+                .add("base_kernel_sym", GIConvImpl::GetKernelSymbol(ctx))
+                .add("oc", oc)
+                .add("ic", ic)
+                .render(name_temp);
+    } else {
+        return "GI_kernel_conv2d_nchw_nchw44";
+    }
 }
 
 std::string ConvFloatNCHWNCHW44::GetInitBody(TContext* ctx) const {

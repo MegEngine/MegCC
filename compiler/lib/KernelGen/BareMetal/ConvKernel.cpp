@@ -129,31 +129,36 @@ std::string get_dst_foramt(const std::string& filter_format) {
 }  // namespace
 std::string ConvImpl::GetKernelSymbol(TContext* ctx) const {
     std::stringstream extra_ss;
-    extra_ss << "_" << SymbolHelper::gen_io_str(ctx);
-    if (is_bias(ctx)) {
-        extra_ss << "_bias";
+    if (ctx) {
+        extra_ss << "_" << SymbolHelper::gen_io_str(ctx);
+        if (is_bias(ctx)) {
+            extra_ss << "_bias";
+        }
+        if (ctx->haveAttr("nonlineMode") &&
+            ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+            extra_ss << "_" << ctx->getAttrStr("nonlineMode");
+        }
+        std::string name_temp =
+                "kernel_conv2d_${kernel_h}x${kernel_w}_${format}_${sparse}_p$"
+                "{pad_h}x${pad_w}_s${stride_h}x${stride_w}_d${dilate_h}x${"
+                "dilate_w}"
+                "${extra}";
+        return StringTemplate::StringTemplateArgs(ctx)
+                .add_ctx_int("kernel_h")
+                .add_ctx_int("kernel_w")
+                .add("format", get_format(ctx))
+                .add_ctx_str("sparse")
+                .add_ctx_int("pad_h")
+                .add_ctx_int("pad_w")
+                .add_ctx_int("stride_h")
+                .add_ctx_int("stride_w")
+                .add_ctx_int("dilate_h")
+                .add_ctx_int("dilate_w")
+                .add("extra", extra_ss.str())
+                .render(name_temp);
+    } else {
+        return "kernel_conv2d";
     }
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
-        extra_ss << "_" << ctx->getAttrStr("nonlineMode");
-    }
-    std::string name_temp =
-            "kernel_conv2d_${kernel_h}x${kernel_w}_${format}_${sparse}_p$"
-            "{pad_h}x${pad_w}_s${stride_h}x${stride_w}_d${dilate_h}x${dilate_w}"
-            "${extra}";
-    return StringTemplate::StringTemplateArgs(ctx)
-            .add_ctx_int("kernel_h")
-            .add_ctx_int("kernel_w")
-            .add("format", get_format(ctx))
-            .add_ctx_str("sparse")
-            .add_ctx_int("pad_h")
-            .add_ctx_int("pad_w")
-            .add_ctx_int("stride_h")
-            .add_ctx_int("stride_w")
-            .add_ctx_int("dilate_h")
-            .add_ctx_int("dilate_w")
-            .add("extra", extra_ss.str())
-            .render(name_temp);
 }
 
 std::string ConvGeneral::GetKernelBody(TContext* context) const {
