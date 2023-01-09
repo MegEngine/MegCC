@@ -63,7 +63,7 @@ public:
 };
 
 class WinogradFrameNchw44 {
-    uint32_t m_tile_per_loop = 24;
+    uint32_t m_tile_per_loop = 32;
 
 public:
     //! gen init code

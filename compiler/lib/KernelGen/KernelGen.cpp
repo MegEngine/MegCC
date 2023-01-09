@@ -6,7 +6,7 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
-
+#include <regex>
 #include "Arm/Arm64/KernelPack.h"
 #include "Arm/ArmCommon/KernelPack.h"
 #include "Arm/Armv7/KernelPack.h"
@@ -32,28 +32,50 @@ KernelPack::GetKernel(KernelPack::KernType kernel_type, Arch arch) {
     //! arm64v7 is used by tinycv, nn opr should be armv64 or armv7, not arm64v7
     auto deduce_func = GetDeduceLayout(kernel_type);
     if (arch == Arch::ARM64 || arch == Arch::ARM64V7) {
+        auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
+        auto armcommon_kerns =
+                ArmCommon::ArchKernelPack::GetKernel(kernel_type);
+        auto gi_kerns =
+                GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
         if (kernel_type == KernelPack::KernType::MatrixMulKernel) {
-            auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
-            auto armcommon_kerns =
-                    ArmCommon::ArchKernelPack::GetKernel(kernel_type);
-            auto gi_kerns =
-                    GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
             armcommon_kerns.insert(armcommon_kerns.end(), a64_kerns.begin(),
                                    a64_kerns.end());
             armcommon_kerns.insert(armcommon_kerns.end(), gi_kerns.begin(),
                                    gi_kerns.end());
             return {armcommon_kerns, deduce_func};
-        } else {
-            auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
-            auto armcommon_kerns =
-                    ArmCommon::ArchKernelPack::GetKernel(kernel_type);
-            auto gi_kerns =
-                    GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
-            a64_kerns.insert(a64_kerns.end(), armcommon_kerns.begin(),
-                             armcommon_kerns.end());
-            a64_kerns.insert(a64_kerns.end(), gi_kerns.begin(), gi_kerns.end());
-            return {a64_kerns, deduce_func};
         }
+
+        std::vector<const KernelFunc*> valid_kern;
+        if (kernel_type == KernelPack::KernType::ConvKernel) {
+            std::vector<const KernelFunc*> sorted_kern(2);
+            for (auto&& kern : gi_kerns) {
+                auto kern_sym = kern->GetKernelSymbol(nullptr);
+                auto is_f63 = std::regex_match(
+                        kern_sym, std::regex("^GI.*_winograd_f63.*"));
+                auto is_f43 = std::regex_match(
+                        kern_sym, std::regex("^GI.*_winograd_f43.*"));
+                auto if_match = is_f63 || is_f43;
+                if (!if_match) {
+                    valid_kern.push_back(kern);
+                } else {
+                    if (is_f43) {
+                        sorted_kern[0] = kern;
+                    } else {
+                        sorted_kern[1] = kern;
+                    }
+                }
+            }
+            //! WARNING: the f63 and f43 must exist in GI kernel
+            a64_kerns.insert(a64_kerns.begin(), sorted_kern.begin(),
+                             sorted_kern.end());
+        } else {
+            valid_kern = gi_kerns;
+        }
+
+        a64_kerns.insert(a64_kerns.end(), armcommon_kerns.begin(),
+                         armcommon_kerns.end());
+        a64_kerns.insert(a64_kerns.end(), valid_kern.begin(), valid_kern.end());
+        return {a64_kerns, deduce_func};
 
     } else if (arch == Arch::ARMV7) {
         auto a32_kerns = Armv7::ArchKernelPack::GetKernel(kernel_type);
@@ -77,10 +99,30 @@ KernelPack::GetKernel(KernelPack::KernType kernel_type, Arch arch) {
 #endif
     else {
         CC_ASSERT(arch == Arch::BAREMETAL);
+        //! FIXME: the f43 f63 winograd matmul is using arm64 asm kernel, it is
+        //! invalid for barmetal
         auto gi_kerns =
                 GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
+        std::vector<const KernelFunc*> valid_kern;
+        if (kernel_type == KernelPack::KernType::ConvKernel) {
+            for (auto&& kern : gi_kerns) {
+                auto kern_sym = kern->GetKernelSymbol(nullptr);
+                auto if_match =
+                        std::regex_match(kern_sym,
+                                         std::regex("^GI.*_winograd_f63.*")) ||
+                        std::regex_match(kern_sym,
+                                         std::regex("^GI.*_winograd_f43.*"));
+                if (!if_match) {
+                    valid_kern.push_back(kern);
+                }
+            }
+        } else {
+            valid_kern = gi_kerns;
+        }
+
         auto naive_impl = BareMetal::ArchKernelPack::GetKernel(kernel_type);
-        naive_impl.insert(naive_impl.begin(), gi_kerns.begin(), gi_kerns.end());
+        naive_impl.insert(naive_impl.begin(), valid_kern.begin(),
+                          valid_kern.end());
         return {naive_impl, deduce_func};
     }
 }
