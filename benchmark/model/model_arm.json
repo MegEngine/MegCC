@@ -1,0 +1,47 @@
+{
+    "dump_dir": "./benchmark_kernel_arm/",
+    "models": [
+        {
+            "model_name": "mobilenetv2",
+            "model_path": "./generated_models/mobilenetv2.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "resnet18",
+            "model_path": "./generated_models/resnet18.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "resnet50",
+            "model_path": "./generated_models/resnet50.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "efficientnetb0",
+            "model_path": "./generated_models/efficientnetb0.mge",
+            "input_shape_str": "data=(1,3,256,256)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "shufflenetv2",
+            "model_path": "./generated_models/shufflenetv2.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "vgg11",
+            "model_path": "./generated_models/vgg11.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        },
+        {
+            "model_name": "vgg16",
+            "model_path": "./generated_models/vgg16.mge",
+            "input_shape_str": "data=(1,3,224,224)",
+            "enable_nchw44": true
+        }
+    ]
+}

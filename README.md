@@ -33,6 +33,7 @@ MegCC supports Arm64/ArmV7/X86/BareMatal backend. You may want to check [support
 * Download release compiler suit from [release page](https://github.com/MegEngine/MegCC/releases)
 * Compiler from source, please fellow the [compiler doc](compiler/README.md)
 * Build the release tar, please fellow the [release doc](doc/how-to-release.md)
+* Get benchmark of different model please reference [benchmark](benchmark/README.md)
 
 #### How to use MegCC
 
