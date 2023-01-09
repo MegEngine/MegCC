@@ -132,7 +132,7 @@ std::string WinogradF63Strategy4x16MK4::WeightTrans(
 
 std::string WinogradF63Strategy4x16MK4::InputFeatureTrans(
         const std::vector<std::string>& strs) {
-    auto InputPrepareF43NCHW44 = [](std::vector<std::string>) {
+    auto InputPrepareF63NCHW44 = [](std::vector<std::string>) {
         std::stringstream ss;
         std::string kernel = R"(
         size_t IW4 = IW_ * PACK_C_SIZE;
@@ -173,7 +173,7 @@ std::string WinogradF63Strategy4x16MK4::InputFeatureTrans(
 )";
         return kernel;
     };
-    auto InputTransformF43NCHW44 = [](std::vector<std::string>) {
+    auto InputTransformF63NCHW44 = [](std::vector<std::string>) {
         std::stringstream ss;
         std::string kernel = R"(
          // BT * d * B
@@ -395,8 +395,8 @@ std::string WinogradF63Strategy4x16MK4::InputFeatureTrans(
                         iw_start + Alpha <= (int)IW_)?1:0;
 
             
-            ${InputPrepareF43NCHW44()}
-            ${InputTransformF43NCHW44()}
+            ${InputPrepareF63NCHW44()}
+            ${InputTransformF63NCHW44()}
         }
     })";
 
@@ -411,8 +411,8 @@ std::string WinogradF63Strategy4x16MK4::InputFeatureTrans(
                     .add("PW", strs[6])
                     .add("tile_id", strs[7])
                     .add("nr_tiles_in_loop", strs[8])
-                    .add("InputTransformF43NCHW44", InputTransformF43NCHW44)
-                    .add("InputPrepareF43NCHW44", InputPrepareF43NCHW44)
+                    .add("InputTransformF63NCHW44", InputTransformF63NCHW44)
+                    .add("InputPrepareF63NCHW44", InputPrepareF63NCHW44)
                     .render(input_process);
     return ss.str();
 }

@@ -66,8 +66,10 @@ KernelPack::GetKernel(KernelPack::KernType kernel_type, Arch arch) {
                 }
             }
             //! WARNING: the f63 and f43 must exist in GI kernel
-            a64_kerns.insert(a64_kerns.begin(), sorted_kern.begin(),
-                             sorted_kern.end());
+            if (arch == Arch::ARM64) {
+                a64_kerns.insert(a64_kerns.begin(), sorted_kern.begin(),
+                                 sorted_kern.end());
+            }
         } else {
             valid_kern = gi_kerns;
         }

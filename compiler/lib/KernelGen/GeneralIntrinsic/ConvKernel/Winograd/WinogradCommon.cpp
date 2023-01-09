@@ -65,7 +65,7 @@ std::string WinogradFrameNchw44::GenGetWorkSpaceCode(
         return TinyNN_SUCCESS;
     })";
     ss << StringTemplate::StringTemplateArgs()
-                    .add("tile_per_loop", m_tile_per_loop)
+                    .add("tile_per_loop", strategy->GetTileSize())
                     .add("KernelSize", strategy->GetKernelSize())
                     .add("OutputBlockSize", strategy->GetOutputBlockSize())
                     .render(workspace_temp);
@@ -246,7 +246,7 @@ std::string WinogradFrameNchw44::GenKernelBodyCode(
     writer << StringTemplate::StringTemplateArgs(ctx)
                       .add("KernelSize", strategy->GetKernelSize())
                       .add("OutputBlockSize", strategy->GetOutputBlockSize())
-                      .add("nr_tiles_per_loop", m_tile_per_loop)
+                      .add("nr_tiles_per_loop", strategy->GetTileSize())
                       .add("BiasPtr", bias_ptr)
                       .add_ctx_int("pad_h")
                       .add_ctx_int("pad_w")
