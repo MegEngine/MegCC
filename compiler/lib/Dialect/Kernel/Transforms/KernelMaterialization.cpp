@@ -291,7 +291,7 @@ private:
 void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
     if (target_arch == megcc::KernelGen::ARM64V7) {
         auto a64_registry = std::make_unique<Kernel::KernelTemplateRegistry>();
-        Kernel::addBuiltinTemplates(*a64_registry, megcc::KernelGen::ARM64);
+        Kernel::addBuiltinTemplates(*a64_registry, megcc::KernelGen::ARM64V7);
         //! a32_registry and a64_registry shared the same map to avoid
         //! generating redundant armcommon kernel
         auto a32_registry = std::make_unique<Kernel::KernelTemplateRegistry>(

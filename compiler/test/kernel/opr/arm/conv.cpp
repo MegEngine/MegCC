@@ -343,53 +343,55 @@ TEST(AARCH64, ConvBiasNCHWNCHW44) {
 
 TEST(AARCH64, ConvWinogradNCHW44) {
     Checker<ConvBiasForward> checker(Arch::ARM64);
-    checker.set_kernel_symbol(".*_winograd_f23");
-    checker.set_epsilon(1e-3);
+    checker.set_epsilon(1e-2);
     ConvBiasForward::Param param;
     param.stride_h = 1;
     param.stride_w = 1;
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = ConvBiasForward::Param::Format::NCHW44;
     param.sparse = ConvBiasForward::Param::Sparse::DENSE;
-
-    for (size_t Channel : {32, 64, 256}) {
-        for (size_t HW : {28, 14}) {
-            param.pad_h = 1;
-            param.pad_w = 1;
-            checker.set_param(param);
-            checker.execs({{1, Channel / 4, HW, HW, 4},
-                           {Channel / 4, Channel / 4, 3, 3, 4, 4},
-                           {1, Channel / 4, 1, 1, 4},
-                           {},
-                           {}});
+    for (auto name :
+         {".*_winograd_f23", "^GI.*_winograd_f43.*", "^GI.*_winograd_f63.*"}) {
+        checker.set_kernel_symbol(name);
+        for (size_t Channel : {32, 64, 256}) {
+            for (size_t HW : {28, 14}) {
+                param.pad_h = 1;
+                param.pad_w = 1;
+                checker.set_param(param);
+                checker.execs({{1, Channel / 4, HW, HW, 4},
+                               {Channel / 4, Channel / 4, 3, 3, 4, 4},
+                               {1, Channel / 4, 1, 1, 4},
+                               {},
+                               {}});
+            }
         }
+        // clang-format off
+        for(size_t P:{0, 1})
+        for(size_t IC : {1, 3, 8})
+        for(size_t OC : {1, 4})
+        for(size_t IH: {3, 5, 22, 32})
+        for(size_t IW : {22, 56})
+        for(auto mode : {ConvBiasForward::Param::NonlineMode::IDENTITY,
+                        ConvBiasForward::Param::NonlineMode::RELU,
+                        ConvBiasForward::Param::NonlineMode::H_SWISH})
+                            // clang-format on
+                            {
+                                param.pad_h = P;
+                                param.pad_w = P;
+                                param.nonlineMode = mode;
+                                checker.set_param(param);
+                                checker.execs({{1, IC, IH, IW, 4},
+                                               {OC, IC, 3, 3, 4, 4},
+                                               {},
+                                               {},
+                                               {}});
+                                checker.execs({{2, IC, IH, IW, 4},
+                                               {OC, IC, 3, 3, 4, 4},
+                                               {1, OC, 1, 1, 4},
+                                               {},
+                                               {}});
+                            }
     }
-
-    // clang-format off
-    for(size_t P:{0, 1})
-    for(size_t IC : {1, 3, 8})
-    for(size_t OC : {1, 4})
-    for(size_t IH: {3, 5, 22, 32})
-    for(size_t IW : {22, 56})
-    for(auto mode : {ConvBiasForward::Param::NonlineMode::IDENTITY,
-                      ConvBiasForward::Param::NonlineMode::RELU})
-                        // clang-format on
-                        {
-                            param.pad_h = P;
-                            param.pad_w = P;
-                            param.nonlineMode = mode;
-                            checker.set_param(param);
-                            checker.execs({{1, IC, IH, IW, 4},
-                                           {OC, IC, 3, 3, 4, 4},
-                                           {},
-                                           {},
-                                           {}});
-                            checker.execs({{2, IC, IH, IW, 4},
-                                           {OC, IC, 3, 3, 4, 4},
-                                           {1, OC, 1, 1, 4},
-                                           {},
-                                           {}});
-                        }
 }
 
 TEST(AARCH64, ConvBiasIm2col) {
