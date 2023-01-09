@@ -573,6 +573,76 @@ std::string ElemwiseGenBinaryFuseAddRelu::GenKernelNaiveUnroll(
     return writer.str();
 }
 
+std::string ElemwiseGenBinaryMax::GenKernelSimdInit(
+        std::vector<std::string>) const {
+    return "";
+}
+
+std::string ElemwiseGenBinaryMax::GenKernelSimdUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto dst = strs[1];
+    std::stringstream writer;
+    int str_id = 2;
+    for (int i = 0; i < unroll; i++) {
+        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+               << ", GiMaximumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+               << "));";
+        str_id += 2;
+    }
+    return writer.str();
+}
+
+std::string ElemwiseGenBinaryMax::GenKernelNaiveUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto dst = strs[1];
+    std::stringstream writer;
+    int str_id = 2;
+    for (int i = 0; i < unroll; i++) {
+        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")["
+               << i << "] > (" << strs[str_id + 1] << ")[" << i << "] ?(" << strs[str_id] << ")[" << i <<"]:(" << strs[str_id + 1] << ")["
+               << i << "] ;";
+        str_id += 2;
+    }
+    return writer.str();
+}
+
+std::string ElemwiseGenBinaryMin::GenKernelSimdInit(
+        std::vector<std::string>) const {
+    return "";
+}
+
+std::string ElemwiseGenBinaryMin::GenKernelSimdUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto dst = strs[1];
+    std::stringstream writer;
+    int str_id = 2;
+    for (int i = 0; i < unroll; i++) {
+        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+               << ", GiMinimumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+               << "));";
+        str_id += 2;
+    }
+    return writer.str();
+}
+
+std::string ElemwiseGenBinaryMin::GenKernelNaiveUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto dst = strs[1];
+    std::stringstream writer;
+    int str_id = 2;
+   for (int i = 0; i < unroll; i++) {
+        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")["
+               << i << "] < (" << strs[str_id + 1] << ")[" << i << "] ?(" << strs[str_id] << ")[" << i <<"]:(" << strs[str_id + 1] << ")["
+               << i << "] ;";
+        str_id += 2;
+    }
+    return writer.str();
+}
+
 std::string ElemwiseGenBinary::GenCodeBody(
         std::vector<std::string> strs) const {
     auto input0 = strs[0];

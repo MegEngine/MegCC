@@ -8,6 +8,7 @@
  */
 
 #include "test/kernel/common/benchmark.h"
+#include "megbrain/reflection.h"
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
@@ -18,7 +19,7 @@ TEST(GI, ElementwiseUnique_BMK) {
     benchmarker.set_kernel_symbol("GI_kernel_elementwise.+");
     ElemwiseForward::Param param;
     for (auto mode : {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::H_SWISH}) {
-        printf("mode=%d\n", mode);
+        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         benchmarker.execs({{10000}, {}}).print();
@@ -36,7 +37,7 @@ TEST(GI, ElementwiseBinary_BMK) {
     ElemwiseForward::Param param;
     for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
                       MODE::TRUE_DIV}) {
-        printf("mode=%d\n", mode);
+        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         benchmarker.execs({{10000}, {10000}, {}}).print();
@@ -53,7 +54,7 @@ TEST(GI, ElementwiseTernary_BMK) {
     ElemwiseForward::Param param;
     benchmarker.set_kernel_symbol("GI_kernel_elementwise.+");
     for (auto mode : {MODE::FUSE_MUL_ADD3}) {
-        printf("mode=%d\n", mode);
+        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         //! vec_vec
