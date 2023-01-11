@@ -44,6 +44,10 @@ std::shared_ptr<ElemwiseGenBase> ElemwiseHelperFunc::CreateGenHelper(
                           operands[1]);
         CASE_DISPATCH_ARG("FUSE_ADD_RELU", ElemwiseGenBinaryFuseAddRelu,
                           operands[0], operands[1]);
+        CASE_DISPATCH_ARG("MAX", ElemwiseGenBinaryMax,
+                          operands[0], operands[1]);
+        CASE_DISPATCH_ARG("MIN", ElemwiseGenBinaryMin,
+                          operands[0], operands[1]);
         CC_ABORT << "Binary mode: " << mode << " not Implement now\n";
     } else if (nr_operands == 4) {
         CASE_DISPATCH_ARG("FUSE_MUL_ADD3", ElemwiseGenTernaryFuseMulAdd3,

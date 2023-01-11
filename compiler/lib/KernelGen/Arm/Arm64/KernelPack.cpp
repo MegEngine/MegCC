@@ -10,10 +10,10 @@
 #include <memory>
 
 #include "ConvKernel.h"
+#include "Elemwise/Elemwise.h"
 #include "InternalKernel/InternalKernel.h"
 #include "KernelPack.h"
 #include "MatMulKernel/Fp32MatMul.h"
-
 using namespace megcc;
 using namespace KernelGen;
 using namespace Arm64;
@@ -40,6 +40,9 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::MatmulM8N12Kernel>(),
                 std::make_shared<Arm64::MatmulM8N12MK4Kernel>(),
                 std::make_shared<Arm64::MatmulInt8DotM8N12MK4Kernel>()};
+
+        inner_map[KernelPack::KernType::ElemwiseKernel] = {
+                std::make_shared<Arm64::ElemwiseKernel>()};
     }
     std::unordered_map<KernelPack::KernType,
                        std::vector<std::shared_ptr<KernelFunc>>>

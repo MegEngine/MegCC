@@ -17,7 +17,7 @@
  */
 typedef enum LiteLogLevel {
     DEBUG = 0, /*!< The lowest level and most verbose */
-    INFO = 1,  /*!< The lowest level and most verbose */
+    INFO = 1,  /*!< print infos, warns and errors message */
     WARN = 2,  /*!< Print only warning and errors */
     ERROR = 3, /*!< Print only errors */
 } LiteLogLevel;

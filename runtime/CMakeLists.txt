@@ -183,7 +183,7 @@ target_include_directories(
 
 if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
   add_executable(tinynn_test_lite example/standard_OS/lite_main.c)
-  target_link_libraries(tinynn_test_lite TinyNN m)
+  target_link_libraries(tinynn_test_lite TinyNN m dl)
 endif()
 
 if(TINYNN_ACHIEVE_ALL AND NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)

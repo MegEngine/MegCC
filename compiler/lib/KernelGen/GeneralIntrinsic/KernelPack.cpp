@@ -46,11 +46,15 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::MatmulM4N12Kernel>(),
                 std::make_shared<GeneralIntrinsic::MatmulM4N12MK4Kernel>()};
         inner_map[KernelPack::KernType::ConvKernel] = {
+                std::make_shared<GeneralIntrinsic::Conv1x1FloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ChannelWiseFloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ConvFloatNCHWNCHW44>(),
-                std::make_shared<GeneralIntrinsic::ConvIm2colFloat>(),
+                std::make_shared<GeneralIntrinsic::WinogradFloatF63Nchw44>(),
+                std::make_shared<GeneralIntrinsic::WinogradFloatF43Nchw44>(),
                 std::make_shared<GeneralIntrinsic::WinogradFloatF23NCHW44>(),
-                std::make_shared<GeneralIntrinsic::Conv1x1FloatMk4>()};
+                std::make_shared<GeneralIntrinsic::ConvIm2colFloat>(),
+
+        };
 
         inner_map[KernelPack::KernType::PoolingKernel] = {
                 std::make_shared<GeneralIntrinsic::PoolingNchw44Fp32>(),

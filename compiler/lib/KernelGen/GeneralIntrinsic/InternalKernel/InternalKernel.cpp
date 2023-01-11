@@ -20,7 +20,7 @@ const std::string MatmulInternal::m_workspace_call =
         "(int y0, int ymax, int x0, int xmax, int k0, int kmax)";
 
 std::string MatmulInternal::GenNakedKernelCall(TContext* ctx) {
-    auto dtype = ctx->getAttrStr("dtype");
+    auto dtype = ctx ? ctx->getAttrStr("dtype") : "f32";
     if (Utils::is_float_dtype(dtype)) {
         return R"((const float* pack_a, const float* pack_b, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr))";
@@ -37,7 +37,7 @@ std::string MatmulInternal::GenNakedKernelCall(TContext* ctx) {
 }
 
 std::string MatmulInternal::GenKernelCall(TContext* ctx) {
-    auto dtype = ctx->getAttrStr("dtype");
+    auto dtype = ctx ? ctx->getAttrStr("dtype") : "f32";
     if (Utils::is_float_dtype(dtype)) {
         return R"((const float* A, size_t LDA, const float* B, size_t LDB, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr, void* workspace))";
@@ -54,7 +54,7 @@ std::string MatmulInternal::GenKernelCall(TContext* ctx) {
 }
 
 std::string MatmulInternal::GenPackACall(TContext* ctx) {
-    auto dtype = ctx->getAttrStr("dtype");
+    auto dtype = ctx ? ctx->getAttrStr("dtype") : "f32";
     if (Utils::is_float_dtype(dtype)) {
         return "(float* outptr, const float* inptr, int ldin, int y0, int "
                "ymax, int k0, int kmax)";
@@ -68,7 +68,7 @@ std::string MatmulInternal::GenPackACall(TContext* ctx) {
 }
 
 std::string MatmulInternal::GenPackBCall(TContext* ctx) {
-    auto dtype = ctx->getAttrStr("dtype");
+    auto dtype = ctx ? ctx->getAttrStr("dtype") : "f32";
     if (Utils::is_float_dtype(dtype)) {
         return "(float* outptr, const float* inptr, int ldin, int x0, int "
                "xmax, int k0, int kmax)";

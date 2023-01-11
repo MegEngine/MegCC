@@ -68,7 +68,8 @@ target_include_directories(
          ./runtime/
          ${SCHEMA_OUTPUT}
          ${PROJECT_SOURCE_DIR}/../../third_party/flatcc/include
-         ${PROJECT_SOURCE_DIR}/../../third_part/gtest/include)
+         ${PROJECT_SOURCE_DIR}/../../third_part/gtest/include
+         ${PROJECT_SOURCE_DIR}/../../immigration/include)
 
 target_link_libraries(TinyNNTest gtest)
 

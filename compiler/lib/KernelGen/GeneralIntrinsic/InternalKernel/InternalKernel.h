@@ -22,12 +22,12 @@ public:
         return "void " + GetKernelSymbol(ctx) + GenKernelCall(ctx);
     }
     virtual std::string GetPackASymbol(TContext* ctx) const {
-        bool trans_a = ctx->getAttrBool("transposeA");
+        bool trans_a = ctx && ctx->getAttrBool("transposeA") ? true : false;
         std::string suffix = trans_a ? "t" : "n";
         return GetKernelSymbol(ctx) + "_packa_" + suffix;
     }
     virtual std::string GetPackBSymbol(TContext* ctx) const {
-        bool trans_b = ctx->getAttrBool("transposeB");
+        bool trans_b = ctx && ctx->getAttrBool("transposeB") ? true : false;
         std::string suffix = trans_b ? "t" : "n";
         return GetKernelSymbol(ctx) + "_packb_" + suffix;
     }
