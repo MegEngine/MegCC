@@ -32,15 +32,11 @@ pushd ${OUT_DIR}/build_host
     cmake ${COMPILER_PATH} -G Ninja
     ninja
     cp tools/mgb-to-tinynn/mgb-to-tinynn ${OUT_DIR}/bin/
-    strip mgb-to-tinynn
     cp tools/mgb-runner/mgb-runner ${OUT_DIR}/bin/
-    strip mgb-runner
     cp tools/mgb-importer/mgb-importer ${OUT_DIR}/bin/
-    strip mgb-importer
     cp tools/kernel_exporter/kernel_exporter ${OUT_DIR}/bin/
-    strip kernel_exporter
+    cp tools/hako-to-mgb/hako-to-mgb ${OUT_DIR}/bin/
     cp tools/megcc-opt/megcc-opt ${OUT_DIR}/bin/
-    strip megcc-opt
 popd
 pushd ${PROJECT_PATH}/compiler
     GIT_ID=`git rev-parse --short HEAD`
