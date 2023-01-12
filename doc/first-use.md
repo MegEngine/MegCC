@@ -61,14 +61,14 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 * 编译模型
   
   ```
-    /path/to/mgb-to-tinynn path/to/shufflenetv2.mge path/to/shufflenetv2_generate --input-shapes="data=(1,3,224,224)  --arm64
-
+    /path/to/mgb-to-tinynn path/to/shufflenetv2.mge path/to/shufflenetv2_generate --input-shapes="data=(1,3,224,224)"  --arm64
+  
   ```
-编译模型时候需要指定需要编译的模型，生成目录以及模型的输入 shape等，最重要的需要指明目标平台，这里是 arm64，目标是运行在手机中。
-输出一堆 log 之后，将完成编译，编译完成之后会在 shufflenetv2_generate 中生成新的模型，结尾为 shufflenetv2.tiny，另外会生成一堆 Kernels。
+  编译模型时候需要指定需要编译的模型，生成目录以及模型的输入 shape 等，最重要的需要指明目标平台，这里是 arm64，目标是运行在手机中。
+  输出一堆 log 之后，将完成编译，编译完成之后会在 shufflenetv2_generate 中生成新的模型，结尾为 shufflenetv2.tiny，另外会生成一堆 Kernels。
 
 ## 编译runtime + kernel为可执行文件
-上面生成的 kernel 的目标平台是 Arm，因此可以运行在 Linux arm中，也可以运行在 android Arm手机中，这里以 android Arm 手机作为展示。
+上面生成的 kernel 的目标平台是 Arm，因此可以运行在 Linux arm 中，也可以运行在 android Arm 手机中，这里以 android Arm 手机作为展示。
 编译 android 平台需要下载 NDK，并设置环境变量 NDK_ROOT。如：
 
 ```
@@ -78,7 +78,7 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 目前在下载的预编译包中已经包含了 runtime 编译的脚本，runtime/script/runtime_build.py，运行：
 
 ```
-   python3 runtime/script/runtime_build.py --cross_build --kernel_dir path/to/shufflenetv2_generate
+   python3 runtime/scripts/runtime_build.py --cross_build --kernel_dir path/to/shufflenetv2_generate
 ```
 
 编译完成之后会在打印：
