@@ -26,7 +26,7 @@ bin
 ## 模型编译
 模型编译阶段主要使用 mgb-to-tinynn 工具，编译完成之后，会在用户给定的目录下面，生成对应的纯 C 代码的 Kernel 以及对应的模型。为了编译模型，mgb-to-tinynn 工具需要用户提供一个 [Json](https://en.wikipedia.org/wiki/JSON) 文件来描述编译的具体细节。
 
-> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型格式转换。
+> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转换到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型格式转换。
 
 ### 编写 Json 文件
 先看一下具体示例吧：
@@ -91,7 +91,7 @@ Release 包中的 script 目录下面有一个 `ppl_gen.sh` 的文件，直接�
 ├── model：编译之后生成的模型，用于部署
 ├── model_info
 ├── schema
-├── script：各种帮助脚本
+├── script：各种辅助脚本
 └── src：runtime 的源文件
     ├── cheader
     ├── lite
