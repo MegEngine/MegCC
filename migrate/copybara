@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# If we are running on Windows, convert the windows style path
+# to unix style for detecting runfiles path.
+self="$0"
+if [[ "$self" != /* ]]; then
+  self="$PWD/$self"
+fi
+
+BASEDIR=$(dirname $self)
+export XDG_CONFIG_HOME=${BASEDIR}
+export GIT_CONFIG_NOSYSTEM=1
+export GIT_COMMITTER_NAME="Megvii Engine Team"
+export GIT_COMMITTER_EMAIL="megengine@megvii.com"
+
+if [[ -f "${self}_deploy.jar" ]]; then
+  exec java -classpath ${self}_deploy.jar -Dsun.jnu.encoding=UTF-8 -Dfile.encoding=UTF-8 com.google.copybara.Main $@
+fi
