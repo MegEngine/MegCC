@@ -245,16 +245,14 @@ class Build:
                 OS_PLATFORM = "OS"
                 XCODE_IOS_PLATFORM = "iphoneos"
 
-                toolchains_config = "-DCMAKE_TOOLCHAIN_FILE={} -DIOS_TOOLCHAIN_ROOT={} -DOS_PLATFORM={} -DXCODE_IOS_PLATFORM={} -DIOS_ARCH={}".format(
+                toolchains_config = "-DCMAKE_TOOLCHAIN_FILE={} -DIOS_TOOLCHAIN_ROOT={} -DOS_PLATFORM={} -DXCODE_IOS_PLATFORM={} -DIOS_ARCH={} -DCMAKE_ASM_COMPILER={} -DCMAKE_MAKE_PROGRAM=ninja".format(
                     ios_toolchains,
                     ios_toolchains,
                     OS_PLATFORM,
                     XCODE_IOS_PLATFORM,
                     IOS_ARCH_MAPS[args.cross_build_target_arch],
+                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
                 )
-                # TODO: add MACOS cross build for IOS
-                logging.error("do not imp host build Windows now")
-                code_not_imp()
             elif args.cross_build_target_os == "LINUX":
                 rv64gcv0p7_toolchains = os.path.join(
                     os.path.dirname(os.path.abspath(__file__)),
@@ -332,9 +330,7 @@ class Build:
             elif self.BUILD_ENV == "Darwin":
                 toolchains_config = "-DCMAKE_C_COMPILER=clang"
                 logging.debug("host build for MACOS")
-                # TODO: add host build for MACOS
-                logging.error("do not imp host build MACOS now")
-                code_not_imp()
+                toolchains_config = "-DCMAKE_C_COMPILER=clang"
             else:
                 logging.error(
                     "code issue happened for: {} please FIXME!!!".format(self.BUILD_ENV)
