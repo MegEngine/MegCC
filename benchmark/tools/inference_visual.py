@@ -14,6 +14,7 @@ def main(passed_args=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("data")
+    parser.add_argument("--no_figure", "-f", action="store_true")
     parser.add_argument("--output", "-o", default=".", type=str)
     args = parser.parse_args(passed_args)
     files0 = set()
@@ -63,28 +64,29 @@ def main(passed_args=None):
             data_map[k][k0] = v1_val
     for i in data_info:
         print(i[0], i[1], i[2], i[3], i[4])
-    print(model_list)
-    print(data_map)
-    # generate figure
-    barWidth = 0.5
-    br1 = np.arange(len(model_list))
-    br2 = [x + barWidth for x in br1]
-    for k, v in data_map.items():
-        plt.figure(figsize=(10, 6))
-        plt.title(k)
-        # Make the plot
-        plt.bar(br1, v["megcc"], width=barWidth, edgecolor="grey", label="megcc")
+    if not args.no_figure:
+        print(model_list)
+        print(data_map)
+        # generate figure
+        barWidth = 0.5
+        br1 = np.arange(len(model_list))
+        br2 = [x + barWidth for x in br1]
+        for k, v in data_map.items():
+            plt.figure(figsize=(10, 6))
+            plt.title(k)
+            # Make the plot
+            plt.bar(br1, v["megcc"], width=barWidth, edgecolor="grey", label="megcc")
 
-        # Adding Xticks
-        plt.xlabel("model", fontweight="bold", fontsize=15)
-        plt.ylabel("inference(ms)", fontweight="bold", fontsize=15)
-        plt.xticks([r + barWidth for r in range(len(model_list))], model_list)
-        plt.grid(axis="y")
-        for a, b in zip(br1, v["megcc"]):
-            plt.text(a, b + 0.05, "%.2f" % b, ha="center", va="bottom")
+            # Adding Xticks
+            plt.xlabel("model", fontweight="bold", fontsize=15)
+            plt.ylabel("inference(ms)", fontweight="bold", fontsize=15)
+            plt.xticks([r + barWidth for r in range(len(model_list))], model_list)
+            plt.grid(axis="y")
+            for a, b in zip(br1, v["megcc"]):
+                plt.text(a, b + 0.05, "%.2f" % b, ha="center", va="bottom")
 
-        plt.legend()
-        plt.savefig("{}/{}.png".format(args.output, k))
+            plt.legend()
+            plt.savefig("{}/{}.png".format(args.output, k))
 
 
 if __name__ == "__main__":

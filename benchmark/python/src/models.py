@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 import logging
 import os
 import subprocess
@@ -97,67 +97,3 @@ class AllModel:
         else:
             self.get_all_onnx_models()
             self.convert_to_mge()
-
-
-def prepare_megcc():
-    # build prepare
-    MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
-    assert (
-        len(MEGCC_MGB_TO_TINYNN_PATH) != 0
-    ), "MEGCC_MGB_TO_TINYNN_PATH is not valid, please export MEGCC_MGB_TO_TINYNN_PATH to your path of mgb_to_tinynn"
-
-
-def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
-    MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
-    # build prepare
-    change_dir = ""
-    if model_config_json == "":
-        arch_ = arch_desc
-        if arch_desc == "arm64" or arch_desc == "armv7":
-            arch_ = "arm"
-        model_config_json = "{}/benchmark/model/model_{}.json".format(megcc_path, arch_)
-    if kernel_build_dir == "":
-        # WARNING: the dir path should be the same with path set in model_config_json file
-        kernel_build_dir = "{}/benchmark/model/benchmark_kernel_{}".format(
-            megcc_path, arch_desc
-        )
-        change_dir = "cd {}/benchmark/model".format(megcc_path)
-    if not os.path.exists(kernel_build_dir) or os.path.isfile(kernel_build_dir):
-        os.makedirs(kernel_build_dir)
-    # set runtime build options
-    if arch_desc == "x86":
-        arch = "--baremetal"
-        runtime_flag = ""
-    elif arch_desc == "arm64":
-        arch = "--arm64"
-        runtime_flag = "--cross_build --cross_build_target_arch aarch64 --cross_build_target_os ANDROID"
-    elif arch_desc == "armv7":
-        arch = "--armv7"
-        runtime_flag = "--cross_build --cross_build_target_arch armv7-a --cross_build_target_os ANDROID "
-    elif arch_desc == "riscv":
-        arch = "--baremetal"
-        runtime_flag = "--cross_build --cross_build_target_arch rv64gcv0p7 --cross_build_target_os LINUX"
-
-    # convert model
-    if len(change_dir) != 0:
-        cmd = "{} && {}/mgb-to-tinynn -json={} {} --dump {}".format(
-            change_dir,
-            MEGCC_MGB_TO_TINYNN_PATH,
-            model_config_json,
-            arch,
-            kernel_build_dir,
-        )
-    else:
-        cmd = "{}/mgb-to-tinynn -json={} {} --dump {}".format(
-            change_dir,
-            MEGCC_MGB_TO_TINYNN_PATH,
-            model_config_json,
-            arch,
-            kernel_build_dir,
-        )
-    subprocess.check_call(cmd, shell=True)
-    # build runtime
-    cmd = "python3 {}/runtime/scripts/runtime_build.py --build_with_profile --kernel_dir {}/ --remove_old_build {}".format(
-        megcc_path, kernel_build_dir, runtime_flag
-    )
-    subprocess.check_call(cmd, shell=True)

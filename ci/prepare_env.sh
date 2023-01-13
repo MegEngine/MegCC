@@ -15,3 +15,4 @@ EOF
 
 python3 -m pip install boto3
 python3 -m pip install redis
+aws --version || python3 -m pip install awscli
