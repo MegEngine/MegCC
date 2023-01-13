@@ -184,12 +184,14 @@ public:
     LogicalResult matchAndRewrite(FuncOp op,
                                   PatternRewriter& rewriter) const override {
         auto op_name = op.getName();
-        auto is_modi = op_name.contains(KernelGen::ARM64V7_COMMON_POSTFIX);
+        auto is_modi =
+                op_name.contains(KernelGen::DumpHelper::ARM64V7_COMMON_POSTFIX);
         if (llvm::isa<FuncOp>(op) && !is_modi) {
             auto clone_op = op.clone();
             clone_op.setName(op.getName().str() +
-                             KernelGen::ARM64V7_ARMV7_POSTFIX);
-            op.setName(op.getName().str() + KernelGen::ARM64V7_ARM64_POSTFIX);
+                             KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX);
+            op.setName(op.getName().str() +
+                       KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX);
             rewriter.insert(clone_op);
             return success();
         }
@@ -306,10 +308,10 @@ void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
         //! postfix
         patterns.add(std::make_unique<KernelMaterialization>(
                 patterns.getContext(), std::move(a32_registry),
-                KernelGen::ARM64V7_ARMV7_POSTFIX));
+                KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX));
         patterns.add(std::make_unique<KernelMaterialization>(
                 patterns.getContext(), std::move(a64_registry),
-                KernelGen::ARM64V7_ARM64_POSTFIX));
+                KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX));
     } else {
         auto registry = std::make_unique<Kernel::KernelTemplateRegistry>();
         Kernel::addBuiltinTemplates(*registry, target_arch);

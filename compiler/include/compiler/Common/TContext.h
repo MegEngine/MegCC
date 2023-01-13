@@ -12,6 +12,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "utils.h"
+
 namespace megcc {
 struct CCOperand {
     std::vector<size_t> shape;
@@ -255,4 +257,4 @@ private:
 
 #undef DefineFunction
 }  // namespace megcc
-// vim: syntax=cpp.doxygen
+   // vim: syntax=cpp.doxygen

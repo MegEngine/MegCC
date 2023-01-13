@@ -22,6 +22,13 @@
 using namespace megcc;
 using namespace KernelGen;
 
+//! DumpHelper
+std::string DumpHelper::ARM64V7_COMMON_POSTFIX = "#x#";
+std::string DumpHelper::ARM64V7_ARM64_POSTFIX =
+        ARM64V7_COMMON_POSTFIX + "_arm64";
+std::string DumpHelper::ARM64V7_ARMV7_POSTFIX =
+        ARM64V7_COMMON_POSTFIX + "_armv7";
+
 DeduceFunc* GetDeduceLayout(KernelPack::KernType kernel_type) {
     static DeduceLayoutMap deduce_map;
     return deduce_map.map[kernel_type].get();
