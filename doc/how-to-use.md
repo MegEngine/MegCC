@@ -17,7 +17,7 @@ bin
 ```
 
 ## Use Example In Android
-- Download the precompiled megcc from [barin++ oss web](https://oss.iap.hh-b.brainpp.cn/megengine-built/megcc)
+- Download the precompiled megcc from [github](https://github.com/MegEngine/MegCC/releases)
 - Extract the download tar file. `tar -xvf megcc_release_*.tar.gz`
 ### Fast Try
 > warning: **You should make sure a ndk is install in your computer，and set env NDK_ROOT to its direction** 
