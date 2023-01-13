@@ -3,9 +3,13 @@ macro(gen_lite_schema)
       OFF
       CACHE BOOL "" FORCE)
   set(CMAKE_CXX_FLAGS_ "${CMAKE_CXX_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-suggest-override")
-  add_subdirectory(${PROJECT_SOURCE_DIR}/../third_party/MegEngine/third_party/flatbuffers
-                   ${CMAKE_BINARY_DIR}/third_party/MegEngine/third_party/flatbuffers)
+  check_cxx_compiler_flag("-Wno-suggest-override" CHECK_NO-SUGGEST-OVERRIDE)
+  if(CHECK_NO-SUGGEST-OVERRIDE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-suggest-override")
+  endif()
+  add_subdirectory(
+    ${PROJECT_SOURCE_DIR}/../third_party/MegEngine/third_party/flatbuffers
+    ${CMAKE_BINARY_DIR}/third_party/MegEngine/third_party/flatbuffers)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_}")
 
   set(LITE_SCHEMA_DIR ${PROJECT_SOURCE_DIR}/../runtime/schema)

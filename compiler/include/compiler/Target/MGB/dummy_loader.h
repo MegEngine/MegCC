@@ -169,8 +169,7 @@ class MGBOprLoaderImpl {
         void* user_data = malloc(sizeof(size_t) + data_len);
         *(size_t*)(user_data) = data_len;
         memmove(static_cast<char*>(user_data) + sizeof(size_t),
-                const_cast<char*>(static_cast<const char*>(buf)) +
-                        sizeof(size_t) + *(size_t*)buf,
+                static_cast<const char*>(buf) + sizeof(size_t) + *(size_t*)buf,
                 data_len);
 
         user_datas[name] = user_data;
