@@ -27,9 +27,6 @@ namespace {
 uint as_uint(const float x) {
     return *(uint*)&x;
 }
-float as_float(const uint x) {
-    return *(float*)&x;
-}
 
 //! From:
 //! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
@@ -227,7 +224,7 @@ public:
         {
             //! hack: ignore armv7 in arm64v7 mode
             if (!func.getName().endswith(
-                        megcc::KernelGen::ARM64V7_ARMV7_POSTFIX)) {
+                        megcc::KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX)) {
                 std::stringstream ss;
                 ss << "[";
                 for (size_t i = 0; i < model_info_vec.size(); ++i) {
@@ -1181,12 +1178,13 @@ private:
                 return MegCC::Device_ARM32;
             case megcc::KernelGen::ARM64V7: {
                 //! magic str
-                if (func_name.endswith(
-                            megcc::KernelGen::ARM64V7_ARM64_POSTFIX)) {
+                if (func_name.endswith(megcc::KernelGen::DumpHelper::
+                                               ARM64V7_ARM64_POSTFIX)) {
                     return MegCC::Device_ARM64;
                 } else {
-                    CC_ASSERT(func_name.endswith(
-                            megcc::KernelGen::ARM64V7_ARMV7_POSTFIX));
+                    CC_ASSERT(
+                            func_name.endswith(megcc::KernelGen::DumpHelper::
+                                                       ARM64V7_ARMV7_POSTFIX));
                     return MegCC::Device_ARM32;
                 }
             }

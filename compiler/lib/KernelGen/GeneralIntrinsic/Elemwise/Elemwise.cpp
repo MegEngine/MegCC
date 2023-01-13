@@ -120,7 +120,7 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     if ("SIGMOID" == mode) {
         writer << gi_math.GiSigmoidPsFloat32() << "\n";
     }
-    if ("H_SWISH") {
+    if ("H_SWISH" == mode) {
         writer << gi_math.GiHSwishFloat32() << "\n";
     }
     writer << "\n\n";

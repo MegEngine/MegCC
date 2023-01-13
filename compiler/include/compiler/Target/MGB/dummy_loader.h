@@ -6,7 +6,11 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#if __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 #include <cassert>
 #include <memory>
 #include <queue>
@@ -132,7 +136,7 @@ class MGBOprLoaderImpl {
 
         extra_data = std::shared_ptr<void>(malloc(sizeof(size_t) + len), free);
         // fill memory
-        void* tmp_p = extra_data.get();
+        char* tmp_p = static_cast<char*>(extra_data.get());
         *(size_t*)(tmp_p) = len;
         tmp_p += sizeof(size_t);
         *(size_t*)tmp_p = nr_env;
@@ -164,8 +168,10 @@ class MGBOprLoaderImpl {
         size_t data_len = buf_len - sizeof(size_t) - *(size_t*)buf;
         void* user_data = malloc(sizeof(size_t) + data_len);
         *(size_t*)(user_data) = data_len;
-        memmove(user_data + sizeof(size_t),
-                buf + sizeof(size_t) + *(size_t*)buf, data_len);
+        memmove(static_cast<char*>(user_data) + sizeof(size_t),
+                const_cast<char*>(static_cast<const char*>(buf)) +
+                        sizeof(size_t) + *(size_t*)buf,
+                data_len);
 
         user_datas[name] = user_data;
 

@@ -566,7 +566,8 @@ public:
         auto attrs = ConvertAttr<MGB::ExternOpr>(op->getAttrDictionary(),
                                                  op->getContext());
         setOperandSegmentAttr(op->getContext(), attrs,
-                              {op.nr_input(), op.nr_output()});
+                              {static_cast<int>(op.nr_input()),
+                               static_cast<int>(op.nr_output())});
         return createOp<Kernel::ExternOpr>(op, operands, rewriter, attrs);
     }
 };

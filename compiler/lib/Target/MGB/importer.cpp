@@ -1020,12 +1020,14 @@ private:
             }
             CC_ASSERT(_data) << "No data related to " << opr->name() << ".\n";
             std::string data(
-                    reinterpret_cast<const char*>(_data + sizeof(size_t)),
+                    reinterpret_cast<const char*>(static_cast<char*>(_data) +
+                                                  sizeof(size_t)),
                     *(size_t*)(_data));
             uint32_t data_len = static_cast<uint32_t>(data.size());
             if (extra_data)
                 data += std::string(reinterpret_cast<const char*>(
-                                            extra_data + sizeof(size_t)),
+                                            static_cast<char*>(extra_data) +
+                                            sizeof(size_t)),
                                     *(size_t*)(extra_data));
             free(_data);
 

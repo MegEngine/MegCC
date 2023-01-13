@@ -150,7 +150,8 @@ add_subdirectory(${MEGCC_COMPILER_DIR}/../third_party/googletest
                  ${CMAKE_CURRENT_BINARY_DIR}/gtest EXCLUDE_FROM_ALL)
 set(MEGCC_TESTGEN_FLAG_DIR ${CMAKE_CURRENT_BINARY_DIR}/genflag/megcc_test_gen/)
 set(MEGCC_TESTRUN_FLAG_DIR ${CMAKE_CURRENT_BINARY_DIR}/genflag/megcc_test_run/)
-file(GLOB_RECURSE TEST_COMMON_SRC ./common/*.cpp ./test_main.cpp ./tools/*.cpp ./opr/common/*.cpp)
+file(GLOB_RECURSE TEST_COMMON_SRC ./common/*.cpp ./test_main.cpp ./tools/*.cpp
+     ./opr/common/*.cpp)
 file(GLOB_RECURSE TEST_NAIVE_SRC ./opr/naive/*.cpp)
 file(GLOB_RECURSE TEST_AUTO_NAIVE_SRC ./opr/auto_naive/*.cpp)
 file(GLOB_RECURSE TEST_ARM64_SRC ./opr/arm/*.cpp)
@@ -201,8 +202,14 @@ if(NOT MEGCC_CROSS_COMPILE)
                                 ${MEGCC_TESTGEN_FLAG_DIR}/megcc_test_config.h)
   target_link_libraries(megcc_test_gen PUBLIC ${MEGCC_TEST_COMMON_LINKED}
                                               ${MEGCC_LINK_FLAG})
-  target_link_libraries(megcc_test_gen
-                        PUBLIC ${MEGCC_COMPILER_DIR}/../third_party/tcc/lib/libtcc.a dl)
+  if(APPLE)
+    target_link_libraries(
+      megcc_test_gen
+      PUBLIC ${MEGCC_COMPILER_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a dl)
+  else()
+    target_link_libraries(
+      megcc_test_gen PUBLIC ${MEGCC_COMPILER_DIR}/../third_party/tcc/lib/libtcc.a dl)
+  endif()
   target_include_directories(megcc_test_gen PRIVATE ${MEGCC_TEST_COMMON_INCLUDE}
                                                     ${MEGCC_TESTGEN_FLAG_DIR})
   target_compile_options(megcc_test_gen PRIVATE ${MEGCC_COMPILE_FLAG})
