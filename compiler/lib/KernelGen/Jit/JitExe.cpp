@@ -55,8 +55,6 @@ static void compiler_error(void*, const char* msg) {
     LOG_ERROR << error << "\n";
 }
 
-static std::once_flag lib_flag;
-
 struct AutoFile {
     std::string file_path = "/tmp/libtcc1.a";
     AutoFile() {
@@ -83,6 +81,7 @@ size_t JitExec::jit_exec_and_get_workspace(const KernelFn* func,
     tcc_set_lib_path(state, "/tmp");
     tcc_add_library_path(state, "/usr/lib64");
     tcc_add_library_path(state, "/usr/lib/x86_64-linux-gnu/");
+    tcc_add_library_path(state, "/usr/lib");
 
     tcc_set_output_type(state, TCC_OUTPUT_MEMORY);
     tcc_set_error_func(state, nullptr, compiler_error);
