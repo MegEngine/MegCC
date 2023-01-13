@@ -1,0 +1,47 @@
+diff --git a/libtcc.c b/libtcc.c
+index 1e9dd97..071ea16 100644
+--- a/libtcc.c
++++ b/libtcc.c
+@@ -1158,6 +1158,12 @@ PUB_FUNC int tcc_add_library_err(TCCState *s, const char *libname)
+     return ret;
+ }
+ 
++PUB_FUNC int tcc_add_library_ignore_err(TCCState *s, const char *libname)
++{
++    int ret = tcc_add_library(s, libname);
++    return ret;
++}
++
+ /* handle #pragma comment(lib,) */
+ ST_FUNC void tcc_add_pragma_libs(TCCState *s1)
+ {
+diff --git a/tcc.h b/tcc.h
+index cd67973..42c9e3c 100644
+--- a/tcc.h
++++ b/tcc.h
+@@ -1167,6 +1167,7 @@ ST_FUNC int tcc_add_crt(TCCState *s, const char *filename);
+ ST_FUNC int tcc_add_dll(TCCState *s, const char *filename, int flags);
+ ST_FUNC void tcc_add_pragma_libs(TCCState *s1);
+ PUB_FUNC int tcc_add_library_err(TCCState *s, const char *f);
++PUB_FUNC int tcc_add_library_ignore_err(TCCState *s, const char *f);
+ PUB_FUNC void tcc_print_stats(TCCState *s, unsigned total_time);
+ PUB_FUNC int tcc_parse_args(TCCState *s, int *argc, char ***argv, int optind);
+ #ifdef _WIN32
+diff --git a/tccelf.c b/tccelf.c
+index 70d47e1..01f0023 100644
+--- a/tccelf.c
++++ b/tccelf.c
+@@ -1191,7 +1191,13 @@ ST_FUNC void tcc_add_runtime(TCCState *s1)
+     tcc_add_pragma_libs(s1);
+     /* add libc */
+     if (!s1->nostdlib) {
++#if defined(__APPLE__)
++//! new macos do not have libc.dylib or libc.a
++//! compat it.
++        tcc_add_library_ignore_err(s1, "c");
++#else
+         tcc_add_library_err(s1, "c");
++#endif
+ #ifdef TCC_LIBGCC
+         if (!s1->static_link) {
+             if (TCC_LIBGCC[0] == '/')

@@ -11,22 +11,23 @@
 #include <stdlib.h>
 #include "device.h"
 #include "init.h"
-#include "vm.h"
 #include "kernels.h"
+#include "vm.h"
 
-static uint as_uint(const float x) {
-    return *(uint*)&x;
+typedef unsigned int ccuint;
+static ccuint as_uint(const float x) {
+    return *(ccuint*)&x;
 }
-static float as_float(const uint x) {
+static float as_float(const ccuint x) {
     return *(float*)&x;
 }
 
 //! From:
 //! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
 static float half_to_float(const uint16_t x) {
-    const uint e = (x & 0x7C00) >> 10;  // exponent
-    const uint m = (x & 0x03FF) << 13;  // mantissa
-    const uint v =
+    const ccuint e = (x & 0x7C00) >> 10;  // exponent
+    const ccuint m = (x & 0x03FF) << 13;  // mantissa
+    const ccuint v =
             as_uint((float)m) >> 23;  // evil log2 bit hack to count leading
                                       // zeros in denormalized format
     return as_float(
