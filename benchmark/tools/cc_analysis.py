@@ -14,6 +14,7 @@ def main(passed_args=None):
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument("data")
+    parser.add_argument("--no_figure", "-f", action="store_true")
     parser.add_argument("--output", "-o", default=".", type=str)
     args = parser.parse_args(passed_args)
     if not os.path.exists(args.output) or os.path.isfile(args.output):
@@ -75,14 +76,17 @@ def main(passed_args=None):
             kernel_name = kernel_name[0:topK]
             kernel_rate = kernel_rate[0:topK]
             br1 = np.arange(len(kernel_name))
-            plt.figure(figsize=(25, 6))
-            plt.title("{}-{}-{}".format(info[1], info[5], info[2]), fontsize=30)
-            plt.pie(kernel_rate, labels=kernel_name, autopct="%0.1f%%")
-            plt.savefig(
-                "{}/{}-{}-{}-profile-top{}.png".format(
-                    args.output, info[1], info[5], info[2], topK
+            for i, j in zip(kernel_name, kernel_rate):
+                print("{} {}%".format(i, j))
+            if not args.no_figure:
+                plt.figure(figsize=(25, 6))
+                plt.title("{}-{}-{}".format(info[1], info[5], info[2]), fontsize=30)
+                plt.pie(kernel_rate, labels=kernel_name, autopct="%0.1f%%")
+                plt.savefig(
+                    "{}/{}-{}-{}-profile-top{}.png".format(
+                        args.output, info[1], info[5], info[2], topK
+                    )
                 )
-            )
 
 
 if __name__ == "__main__":
