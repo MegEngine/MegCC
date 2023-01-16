@@ -60,7 +60,6 @@ public:
     CCAttr() = default;
 
     CCAttr(const char* value) {
-        //! TODO: new unique_ptr may be not efficient
         std::string value_str = std::string(value);
         mHolder = std::make_unique<AnyHolder<std::string>>(value_str);
         mType = Type::STRING;
