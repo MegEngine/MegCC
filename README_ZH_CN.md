@@ -44,7 +44,7 @@ MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 
 
 ##### 如何使用 MegCC
 
-目前 MegCC 只支持 MegEngine 模型作为输入，其他模型格式可以考虑转到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 转换到 MegEngine。
+目前 MegCC 只支持 MegEngine 模型作为输入，其他模型格式可以考虑转到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert#13-sparkles-onnx%E6%A8%A1%E5%9E%8B%E4%BA%92%E8%BD%AC) 转换到 MegEngine。
 
 * 首次尝鲜，参考 [初次使用](doc/first-use.md)。
 * 模型的编译，运行时库编译以及推理执行相关的详细文档，请参考 [使用文档](doc/how-to-use-chinese.md)。
