@@ -107,7 +107,7 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 
 ## 如果用于编译的模型是 ONNX 模型
 
-如果是输入模型是 ONNX 模型，则需要先将 ONNX 模型转换为 mge 模型，可以使用 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型转换。具体使用可以参考 mgeconvert。
+如果是输入模型是 ONNX 模型，则需要先将 ONNX 模型转换为 mge 模型，可以使用 [mgeconvert](https://github.com/MegEngine/mgeconvert#13-sparkles-onnx%E6%A8%A1%E5%9E%8B%E4%BA%92%E8%BD%AC) 进行模型转换。具体使用可以参考 mgeconvert。
 
 
 

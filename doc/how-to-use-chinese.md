@@ -26,7 +26,7 @@ bin
 ## 模型编译
 模型编译阶段主要使用 mgb-to-tinynn 工具，编译完成之后，会在用户给定的目录下面，生成对应的纯 C 代码的 Kernel 以及对应的模型。为了编译模型，mgb-to-tinynn 工具需要用户提供一个 [Json](https://en.wikipedia.org/wiki/JSON) 文件来描述编译的具体细节。
 
-> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert) 进行模型格式转换。
+> 目前 MegCC 只支持 mge 模型作为输入，其他模型格式可以考虑转行到 ONNX，然后通过 [mgeconvert](https://github.com/MegEngine/mgeconvert#13-sparkles-onnx%E6%A8%A1%E5%9E%8B%E4%BA%92%E8%BD%AC) 进行模型格式转换。
 
 ### 编写 Json 文件
 先看一下具体示例吧：
