@@ -7,7 +7,7 @@ MEGCC_WORKSPACE_DIR=${PROJECT_DIR}/ci/workdir
 megcc_export_copybara_branch='copybara'
 
 readonly MEGCC_URL="git@git-core.megvii-inc.com:brain-sdk/megcc.git"
-readonly MEGCC_EXPORT_URL="git@github.com:MegEngine/MegCC.git"
+readonly MEGCC_EXPORT_URL="https://github.com/MegEngine/MegCC.git"
 readonly MEGCC_LOCAL_URL="file://${MEGCC_WORKSPACE_DIR}"
 readonly COPYBARA_CONFIG="./migrate/copy.bara.sky"
 
