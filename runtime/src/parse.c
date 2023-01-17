@@ -300,7 +300,7 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus parse_device_model(DeviceModel* model,
+TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
                                 ns(DeviceModel_table_t) fbs_device_model) {
     //! parse tensor
     ns(Tensor_vec_t) fbs_tensors =
@@ -333,7 +333,7 @@ TinyNNStatus parse_device_model(DeviceModel* model,
         ns(Instruction_union_t) fbs_instruction_union =
                 ns(Instruction_union_vec_at(fbs_instructions_union, i));
         Instruction* inst = model->instructions + i;
-        if (vm_instruction_load(vm_global_inst(), fbs_instruction_union,
+        if (vm_instruction_load((VM*)(c_model->vm), fbs_instruction_union,
                                 inst) != TinyNN_SUCCESS) {
             goto exit;
         }
@@ -503,7 +503,8 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
             goto exit;
         }
         dev_model->opt = create_runtime_opt(&dev_model->device);
-        if (parse_device_model(dev_model, fbs_device_model) != TinyNN_SUCCESS) {
+        if (parse_device_model(dev_model, model, fbs_device_model) !=
+            TinyNN_SUCCESS) {
             LOG_ERROR("parse device model error!\n");
             goto exit;
         }
