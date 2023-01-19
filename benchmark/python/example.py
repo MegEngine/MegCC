@@ -26,8 +26,7 @@ class BenchmarkRunner(BenchMarkRunnerBase):
 
     def run_ssh_device(self, ssh_name, ssh_host, ssh_workdir):
         if not os.path.exists(self.output_dir.local_path) or os.path.isfile(
-            self.output_dir.local_path
-        ):
+                self.output_dir.local_path):
             os.makedirs(self.output_dir.local_path)
         logfile = open(
             "{}/{}-{}-{}-{}-log-{}.txt".format(
@@ -45,16 +44,19 @@ class BenchmarkRunner(BenchMarkRunnerBase):
             run_options += " --profile"
         if self.benchmark_framework == "mge":
             run_options += " --mge"
-        config_name = "benchmark-{}-{}-{}".format(
-            self.benchmark_framework, self.benchmark_arch, self.model.name
-        )
+        config_name = "benchmark-{}-{}-{}".format(self.benchmark_framework,
+                                                  self.benchmark_arch,
+                                                  self.model.name)
         for file_ in [self.benchmark_exec_func, self.model.path]:
             cmd = "rsync -aP -zz {} {}:{}/".format(file_, ssh_host, ssh_workdir)
             subprocess.check_call(cmd, shell=True)
         cmd = ' ssh -t {} "unset LD_PRELOAD && cd {} && LD_LIBRARY_PATH=./ && chmod +x ./benchmarker && ./benchmarker {}.{} {}" '.format(
-            ssh_host, ssh_workdir, self.model.name, self.model.exten, run_options
-        )
-        subprocess.check_call(cmd, shell=True, stdout=logfile, stderr=subprocess.STDOUT)
+            ssh_host, ssh_workdir, self.model.name, self.model.exten,
+            run_options)
+        subprocess.check_call(cmd,
+                              shell=True,
+                              stdout=logfile,
+                              stderr=subprocess.STDOUT)
 
 
 # build benchmarker

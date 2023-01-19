@@ -2,7 +2,7 @@
 
 ## add kernel IR
 
-kernel IR is used to transform your target framework model which can be discribed with MLIR  into megcc model.
+kernel IR is used to transform your target framework model which can be described with MLIR  into megcc model.
 The kernel IR is defined in [AbstractKernels.td](../compiler/include/compiler/Dialect/Kernel/IR/AbstractKernels.td) with pattern as follow:
 
 ``` mlir
@@ -23,19 +23,19 @@ def Pooling2DKernel: AbstractKernelBase<"Pool2d"> {
 }
 ```
 
-it declare the parameters, inputs and outputs for the kernel used, with this defination the kernel MLIR module will be auto genrated
+it declare the parameters, inputs and outputs for the kernel used, with this definition the kernel MLIR module will be auto generated
 
 ## add kernel generate template
 
-#### registe kernel type in kernel generate template
+#### register kernel type in kernel generate template
 
-the kernel type is registe in [KernelGen.h](../compiler/include/compiler/KernelGen/KernelGen.h), which is as follow:
+the kernel type is register in [KernelGen.h](../compiler/include/compiler/KernelGen/KernelGen.h), which is as follow:
 
 ``` cpp
 
 struct KernelPack {
     enum class KernType {
-        Unknow = 0,
+        Unknown = 0,
         ConvKernel,
         ElemwiseKernel,
         ElemwiseMultiKernel,
@@ -155,7 +155,7 @@ you need to inherit this class and implement the pure virtual function:
     virtual bool IsAvailable(TContext* context) const = 0;
     // the kernel call name without argument
     virtual std::string GetKernelSymbol(TContext* context) const = 0;
-    // the kernel implement body which is wirte with string
+    // the kernel implement body which is write with string
     virtual std::string GetKernelBody(TContext* context) const = 0;
 ```
 
@@ -276,11 +276,11 @@ size_t WorkloadOprProxy<megdnn::PoolingForward>::get_compute_workload(
 
 ## modify the convert pass
 
-the convert pass is used to convert your target framework IR into megcc IR, this include attribute and kernel convertion
+the convert pass is used to convert your target framework IR into megcc IR, this include attribute and kernel conversion
 
-#### add attirbute convert function
+#### add attribute convert function
 
-for example, when you need to convert megengine model into megcc, and there is a new kernel need added in megcc, the attribute convertion is with pattern as follow:
+for example, when you need to convert megengine model into megcc, and there is a new kernel need added in megcc, the attribute conversion is with pattern as follow:
 
 ``` cpp
 template <>
@@ -306,7 +306,7 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Pooling>(
 
 this is added in [MGBToKernelHelper.h](../compiler/lib/Conversion/MGBToKernel/MGBToKernelHelper.h)
 
-#### add kernel convert funtion
+#### add kernel convert function
 
 the pattern  which is in [MGBToKernel.cpp](../compiler/lib/Conversion/MGBToKernel/MGBToKernel.cpp) is as follow:
 
@@ -332,7 +332,7 @@ public:
 
 ## register kernel in transform pass
 
- the kernel is only registed in [KernelRegister.h](../compiler/lib/Dialect/Kernel/Transforms/KernelRegister.h) that can be generated actually. you need add two key objects, one is getkernel object , the other is buildintemplateOpr object, for example:
+ the kernel is only registered in [KernelRegister.h](../compiler/lib/Dialect/Kernel/Transforms/KernelRegister.h) that can be generated actually. you need add two key objects, one is getkernel object , the other is buildintemplateOpr object, for example:
 
 ```cpp
 

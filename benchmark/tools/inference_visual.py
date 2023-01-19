@@ -46,8 +46,7 @@ def main(passed_args=None):
             #  for excel
             data_info.append([info[1], info[5], info[0], info[2], result])
             data_map["{}-{}".format(info[1], info[5])][info[0]].append(
-                [info[2], result]
-            )
+                [info[2], result])
             model_set.add(info[2])
 
     model_list = []

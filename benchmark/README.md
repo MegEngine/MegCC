@@ -2,7 +2,7 @@
 
 ## introduction
 megcc benchmark is a easy tool to get the benchmark result of different model in megcc
-the file struction  is shown bellow:
+the file struction  is shown below:
 ```
 ├── clean.sh
 ├── CMakeLists.txt
@@ -32,7 +32,7 @@ the file struction  is shown bellow:
 ```
 
 in src, it is a c++ application to run benchmark result on different platform.
-in python, the model convertion, other related preparing work and the benchmarker example is given
+in python, the model conversion, other related preparing work and the benchmarker example is given
 the tools contains some usable scripts to analysis benchmark results
 ## supported model
 mobilenetv2,  resnet18, efficientnetb0 shufflenetv2 vgg16
