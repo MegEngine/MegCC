@@ -65,9 +65,9 @@ def main(passed_args=None):
                     diff_kernel_data[i[0]][1] += i[1] / total
             kernel_name = []
             kernel_rate = []
-            for k, v in sorted(
-                diff_kernel_data.items(), key=lambda item: item[1][1], reverse=True
-            ):
+            for k, v in sorted(diff_kernel_data.items(),
+                               key=lambda item: item[1][1],
+                               reverse=True):
                 kernel_name.append(k)
                 kernel_rate.append(v[1] * 100)
 

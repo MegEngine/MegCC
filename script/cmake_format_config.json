@@ -146,7 +146,7 @@
     "_help_require_valid_layout": [
       "By default, if cmake-format cannot successfully fit",
       "everything into the desired linewidth it will apply the",
-      "last, most agressive attempt that it made. If this flag is",
+      "last, most aggressive attempt that it made. If this flag is",
       "True, however, cmake-format will print error, exit with non-",
       "zero status code, and write-out nothing"
     ],
@@ -192,7 +192,7 @@
     "ruler_pattern": "^\\s*[^\\w\\s]{3}.*[^\\w\\s]{3}$",
     "_help_explicit_trailing_pattern": [
       "If a comment line matches starts with this pattern then it",
-      "is explicitly a trailing comment for the preceeding",
+      "is explicitly a trailing comment for the preceding",
       "argument. Default is '#<'"
     ],
     "explicit_trailing_pattern": "#<",

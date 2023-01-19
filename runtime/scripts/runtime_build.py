@@ -51,9 +51,9 @@ class Build:
 
     def detect_build_env(self):
         self.BUILD_ENV = platform.system()
-        assert (
-            self.BUILD_ENV in self.SUPPORT_BUILD_ENV
-        ), "now only support build env at: {}".format(self.SUPPORT_BUILD_ENV)
+        assert (self.BUILD_ENV in self.SUPPORT_BUILD_ENV
+                ), "now only support build env at: {}".format(
+                    self.SUPPORT_BUILD_ENV)
         if self.BUILD_ENV == "Darwin":
             READLINK = "greadlink"
         elif self.BUILD_ENV == "Windows":
@@ -62,11 +62,13 @@ class Build:
 
     def build(self):
         self.detect_build_env()
-        parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
+        parser = argparse.ArgumentParser(
+            formatter_class=argparse.RawTextHelpFormatter)
         parser.add_argument(
             "--cross_build",
             action="store_true",
-            help="args for indicates cross build, when without this flags, means host build",
+            help=
+            "args for indicates cross build, when without this flags, means host build",
         )
         parser.add_argument(
             "--host_build_for_32bit",
@@ -86,11 +88,12 @@ class Build:
         parser.add_argument(
             "--build_achieve_all",
             action="store_true",
-            help="static link libc and libm, just for example executable, not for library",
+            help=
+            "static link libc and libm, just for example executable, not for library",
         )
-        parser.add_argument(
-            "--build_with_asan", action="store_true", help="Build with asan check"
-        )
+        parser.add_argument("--build_with_asan",
+                            action="store_true",
+                            help="Build with asan check")
         parser.add_argument(
             "--remove_old_build",
             action="store_true",
@@ -104,7 +107,8 @@ class Build:
         parser.add_argument(
             "--build_with_callback_register",
             action="store_true",
-            help="build with callback register for api malloc/free/log/time/file",
+            help=
+            "build with callback register for api malloc/free/log/time/file",
         )
         parser.add_argument(
             "--build_tensor_alloc_sanity",
@@ -131,28 +135,30 @@ class Build:
             "--cross_build_target_arch",
             type=str,
             default="aarch64",
-            help="cross build target arch, only take effect when --cross_build, now support: {}".format(
-                self.CROSS_BUILD_TARGET_ARCH_LIST
-            ),
+            help=
+            "cross build target arch, only take effect when --cross_build, now support: {}"
+            .format(self.CROSS_BUILD_TARGET_ARCH_LIST),
         )
         parser.add_argument(
             "--cross_build_target_os",
             type=str,
             default="ANDROID",
-            help="cross build target os, only take effect when --cross_build, now support: {}".format(
-                self.CROSS_BUILD_TARGET_OS_LIST
-            ),
+            help=
+            "cross build target os, only take effect when --cross_build, now support: {}"
+            .format(self.CROSS_BUILD_TARGET_OS_LIST),
         )
         parser.add_argument(
             "--specify_build_dir",
             default=None,
-            help='specify build dir, if not config, default will be os.path.join(args.kernel_dir, "runtime")',
+            help=
+            'specify build dir, if not config, default will be os.path.join(args.kernel_dir, "runtime")',
         )
         args = parser.parse_args()
         args.kernel_dir = os.path.realpath(args.kernel_dir)
         assert os.path.isdir(
             args.kernel_dir
-        ), "error config --kernel_dir {} is not a valid dir".format(args.kernel_dir)
+        ), "error config --kernel_dir {} is not a valid dir".format(
+            args.kernel_dir)
         args.kernel_dir = os.path.abspath(args.kernel_dir)
 
         toolchains_config = ""
@@ -162,18 +168,19 @@ class Build:
             ), "error config: please remove --host_build_for_32bit when when --cross_build"
             logging.debug("we are in cross build now")
             assert (
-                args.cross_build_target_arch in self.CROSS_BUILD_TARGET_ARCH_LIST
+                args.cross_build_target_arch
+                in self.CROSS_BUILD_TARGET_ARCH_LIST
             ), "error config: not support --cross_build_target_arch {} now support one of: {}".format(
-                args.cross_build_target_arch, self.CROSS_BUILD_TARGET_ARCH_LIST
-            )
+                args.cross_build_target_arch,
+                self.CROSS_BUILD_TARGET_ARCH_LIST)
             assert (
                 args.cross_build_target_os in self.CROSS_BUILD_TARGET_OS_LIST
             ), "error config: not support --cross_build_target_os {} now support one of: {}".format(
-                args.cross_build_target_os, self.CROSS_BUILD_TARGET_OS_LIST
-            )
+                args.cross_build_target_os, self.CROSS_BUILD_TARGET_OS_LIST)
             assert (
                 args.cross_build_target_arch
-                in self.CROSS_BUILD_TARGET_ARCH_OS_LIMIT[args.cross_build_target_os]
+                in self.CROSS_BUILD_TARGET_ARCH_OS_LIMIT[
+                    args.cross_build_target_os]
             ), "error config: not support --cross_build_target_os {} with --cross_build_target_arch {} now support {}".format(
                 args.cross_build_target_arch,
                 args.cross_build_target_os,
@@ -194,29 +201,24 @@ class Build:
                 assert (
                     args.cross_build_target_arch in ABI_NATIVE_LEVEL_MAPS
                 ), "codeissue happened, please fix add {} to ABI_NATIVE_LEVEL_MAPS".format(
-                    args.cross_build_target_arch
-                )
+                    args.cross_build_target_arch)
                 an = ABI_NATIVE_LEVEL_MAPS[args.cross_build_target_arch]
                 toolchains_config = '-DCMAKE_TOOLCHAIN_FILE={}/build/cmake/android.toolchain.cmake -DANDROID_ABI=\\"{}\\" -DANDROID_NATIVE_API_LEVEL={}'.format(
-                    ndk_path, an[0], an[1]
-                )
+                    ndk_path, an[0], an[1])
             elif args.cross_build_target_os == "NOT_STANDARD_OS":
                 assert (
                     self.BUILD_ENV == "Linux"
                 ), "error: do not support build cross_build_target_os:NOT_STANDARD_OS at host env: {}, only support Linux, caused by we will use standard LLVM-clang to build for NOT_STANDARD_OS".format(
-                    self.BUILD_ENV
-                )
+                    self.BUILD_ENV)
                 toolchains_config = "-DCMAKE_C_COMPILER=clang -DTINYNN_BUILD_FOR_NOT_STANDARD_OS=ON -DMEGCC_ARCH={}".format(
-                    args.cross_build_target_arch
-                )
+                    args.cross_build_target_arch)
             elif args.cross_build_target_os == "IOS":
                 # cross-build for IOS no need strip target
                 self.NINJA_INSTALL_STR = "install"
                 assert (
                     self.BUILD_ENV == "Darwin"
                 ), "error: do not support build for IOS at: {}, only support at MACOS host".format(
-                    self.BUILD_ENV
-                )
+                    self.BUILD_ENV)
                 IOS_ARCH_MAPS = {
                     "aarch64": "arm64",
                     "armv7-a": "armv7",
@@ -224,13 +226,12 @@ class Build:
                 assert (
                     args.cross_build_target_arch in IOS_ARCH_MAPS
                 ), "codeissue happened, do not support arch {} for IOS".format(
-                    args.cross_build_target_arch
-                )
+                    args.cross_build_target_arch)
                 """to config this, if u want to build other, like simulator or for iwatch,
                 please do manually modify
                 OS_PLATFORM=("OS" "OS64" "SIMULATOR" "SIMULATOR64" "TVOS" "WATCHOS" "SIMULATOR_TVOS")
                 XCODE_IOS_PLATFORM=("iphoneos" "iphonesimulator" "appletvos" "appletvsimulator" "watchos", "watchsimulator")
-                IOS_ARCHS=("arm64" "armv7" "armv7k" "arm64e" "armv7s"). by defaut we only triger build arm64/armv7 for iphoneos
+                IOS_ARCHS=("arm64" "armv7" "armv7k" "arm64e" "armv7s"). by defaut we only trigger build arm64/armv7 for iphoneos
                 """
                 ios_toolchains = os.path.join(
                     os.path.dirname(os.path.abspath(__file__)),
@@ -240,8 +241,7 @@ class Build:
                 assert os.path.isfile(
                     ios_toolchains
                 ), "code issue happened, can not find ios toolchains: {}".format(
-                    ios_toolchains
-                )
+                    ios_toolchains)
                 OS_PLATFORM = "OS"
                 XCODE_IOS_PLATFORM = "iphoneos"
 
@@ -262,8 +262,7 @@ class Build:
                 assert os.path.isfile(
                     rv64gcv0p7_toolchains
                 ), "code issue happened, can not find rv64gcv0p7 toolchains: {}".format(
-                    rv64gcv0p7_toolchains
-                )
+                    rv64gcv0p7_toolchains)
                 rv64norvv_toolchains = os.path.join(
                     os.path.dirname(os.path.abspath(__file__)),
                     "..",
@@ -272,47 +271,42 @@ class Build:
                 assert os.path.isfile(
                     rv64norvv_toolchains
                 ), "code issue happened, can not find rv64norvv toolchains: {}".format(
-                    rv64norvv_toolchains
-                )
-                logging.debug(
-                    "config for cross build LINUX-{}".format(
-                        args.cross_build_target_arch
-                    )
-                )
+                    rv64norvv_toolchains)
+                logging.debug("config for cross build LINUX-{}".format(
+                    args.cross_build_target_arch))
                 if args.cross_build_target_arch in ["rv64gcv0p7", "rv64norvv"]:
                     assert (
                         "RISCV_TOOLCHAIN_ROOT" in os.environ
                     ), "can not find RISCV_TOOLCHAIN_ROOT env, please download from https://github.com/riscv-collab/riscv-gnu-toolchain then export it path to RISCV_TOOLCHAIN_ROOT"
-                    riscv_toolchain_root = os.environ.get("RISCV_TOOLCHAIN_ROOT")
-                    logging.debug(
-                        "use RISCV toolchains: {}".format(riscv_toolchain_root)
-                    )
+                    riscv_toolchain_root = os.environ.get(
+                        "RISCV_TOOLCHAIN_ROOT")
+                    logging.debug("use RISCV toolchains: {}".format(
+                        riscv_toolchain_root))
                 toolchains_maps = {
-                    "aarch64": "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_STRIP=aarch64-linux-gnu-strip",
-                    "armv7-a": '-DCMAKE_C_COMPILER=arm-linux-gnueabi-gcc -DCMAKE_STRIP=arm-linux-gnueabi-strip -DCMAKE_C_FLAGS=\\"-mfloat-abi=softfp -mfpu=neon-vfpv4 -Wno-psabi\\" ',
-                    "rv64gcv0p7": "-DCMAKE_TOOLCHAIN_FILE={}".format(
-                        rv64gcv0p7_toolchains
-                    ),
-                    "rv64norvv": "-DCMAKE_TOOLCHAIN_FILE={}".format(
-                        rv64norvv_toolchains
-                    ),
+                    "aarch64":
+                    "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_STRIP=aarch64-linux-gnu-strip",
+                    "armv7-a":
+                    '-DCMAKE_C_COMPILER=arm-linux-gnueabi-gcc -DCMAKE_STRIP=arm-linux-gnueabi-strip -DCMAKE_C_FLAGS=\\"-mfloat-abi=softfp -mfpu=neon-vfpv4 -Wno-psabi\\" ',
+                    "rv64gcv0p7":
+                    "-DCMAKE_TOOLCHAIN_FILE={}".format(rv64gcv0p7_toolchains),
+                    "rv64norvv":
+                    "-DCMAKE_TOOLCHAIN_FILE={}".format(rv64norvv_toolchains),
                 }
                 assert (
                     args.cross_build_target_arch in toolchains_maps
                 ), "code issue happened, please add {} to toolchains_maps if support".format(
-                    args.cross_build_target_arch
-                )
-                toolchains_config = toolchains_maps[args.cross_build_target_arch]
+                    args.cross_build_target_arch)
+                toolchains_config = toolchains_maps[
+                    args.cross_build_target_arch]
             else:
                 logging.error(
                     "code issue happened for: {} please FIXME!!!".format(
-                        args.cross_build_target_os
-                    )
-                )
+                        args.cross_build_target_os))
                 code_not_imp()
 
         else:
-            logging.debug("we are in host build now, mark all cross build args to None")
+            logging.debug(
+                "we are in host build now, mark all cross build args to None")
             # mark cross build args to None when host build
             args.cross_build_target_os = None
             args.cross_build_target_arch = None
@@ -333,8 +327,8 @@ class Build:
                 toolchains_config = "-DCMAKE_C_COMPILER=clang"
             else:
                 logging.error(
-                    "code issue happened for: {} please FIXME!!!".format(self.BUILD_ENV)
-                )
+                    "code issue happened for: {} please FIXME!!!".format(
+                        self.BUILD_ENV))
                 code_not_imp()
 
         if args.build_with_ninja_verbose:
@@ -344,7 +338,8 @@ class Build:
         if args.specify_build_dir:
             build_dir = args.specify_build_dir
             install_dir = os.path.join(args.specify_build_dir, "install")
-        logging.debug("build_dir: {} install_dir: {}".format(build_dir, install_dir))
+        logging.debug("build_dir: {} install_dir: {}".format(
+            build_dir, install_dir))
         if args.remove_old_build:
             logging.debug("force remove old build dir")
             subprocess.check_call("rm -rf {}".format(build_dir), shell=True)
@@ -359,52 +354,42 @@ class Build:
         assert (
             self.BUILD_ENV in host_32bit_args
         ), "code issue happened!!, please add 32bit build flags for: {} in host_32bit_args".format(
-            self.NINJA_BASE
-        )
+            self.NINJA_BASE)
         if args.host_build_for_32bit:
             assert (
                 toolchains_config.find("CMAKE_C_FLAGS") < 0
             ), "code issue happened: double config CMAKE_C_FLAGS please FIXME!!"
             toolchains_config = toolchains_config + ' -DCMAKE_C_FLAGS=\\"{}\\"'.format(
-                host_32bit_args[self.BUILD_ENV]
-            )
+                host_32bit_args[self.BUILD_ENV])
 
         src_dir = str(Path(__file__).resolve().parent.parent)
         cmake_config = 'cmake -G Ninja -H\\"{}\\" -B\\"{}\\" {} -DCMAKE_INSTALL_PREFIX=\\"{}\\" -DRUNTIME_KERNEL_DIR=\\"{}\\"'.format(
-            src_dir, build_dir, toolchains_config, install_dir, args.kernel_dir
-        )
+            src_dir, build_dir, toolchains_config, install_dir,
+            args.kernel_dir)
         cmake_config = cmake_config + " -DCMAKE_BUILD_TYPE={}".format(
-            "Debug" if args.build_for_debug else "Release"
-        )
+            "Debug" if args.build_for_debug else "Release")
         cmake_config = cmake_config + " -DTINYNN_SHARED_ENABLE={}".format(
-            "ON" if args.build_shared_library else "OFF"
-        )
+            "ON" if args.build_shared_library else "OFF")
         cmake_config = cmake_config + " -DTINYNN_SANITY_ALLOC={}".format(
-            "ON" if args.build_tensor_alloc_sanity else "OFF"
-        )
+            "ON" if args.build_tensor_alloc_sanity else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ACHIEVE_ALL={}".format(
-            "ON" if args.build_achieve_all else "OFF"
-        )
+            "ON" if args.build_achieve_all else "OFF")
         cmake_config = cmake_config + " -DTINYNN_DUMP_TENSOR={}".format(
-            "ON" if args.build_with_dump_tensor else "OFF"
-        )
+            "ON" if args.build_with_dump_tensor else "OFF")
         cmake_config = cmake_config + " -DTINYNN_CALLBACK_ENABLE={}".format(
-            "ON" if args.build_with_callback_register else "OFF"
-        )
+            "ON" if args.build_with_callback_register else "OFF")
         cmake_config = cmake_config + " -DTINYNN_PROFILE_KERNEL={}".format(
-            "ON" if args.build_with_profile else "OFF"
-        )
+            "ON" if args.build_with_profile else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_ASAN={}".format(
-            "ON" if args.build_with_asan else "OFF"
-        )
+            "ON" if args.build_with_asan else "OFF")
 
         logging.debug("python3 args: {}".format(args))
         config_cmd = "{}".format(cmake_config)
         logging.debug("cmake config: {}".format(config_cmd))
         subprocess.check_call('bash -c "{}"'.format(config_cmd), shell=True)
-        build_cmd = "cd {} && {} {} {}".format(
-            build_dir, self.NINJA_BASE, self.NINJA_INSTALL_STR, self.NINJA_VERBOSE
-        )
+        build_cmd = "cd {} && {} {} {}".format(build_dir, self.NINJA_BASE,
+                                               self.NINJA_INSTALL_STR,
+                                               self.NINJA_VERBOSE)
         logging.debug("cmake build: {}".format(build_cmd))
         subprocess.check_call('bash -c "{}"'.format(build_cmd), shell=True)
 
@@ -412,7 +397,9 @@ class Build:
 if __name__ == "__main__":
     LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
     DATE_FORMAT = "%Y/%m/%d %H:%M:%S"
-    logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
+    logging.basicConfig(level=logging.DEBUG,
+                        format=LOG_FORMAT,
+                        datefmt=DATE_FORMAT)
 
     b = Build()
     b.build()

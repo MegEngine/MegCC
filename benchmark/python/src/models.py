@@ -9,9 +9,8 @@ import torch.onnx
 import torchvision
 from mgeconvert.converters.onnx_to_mge import *
 
-megcc_path = Path(
-    os.path.split(os.path.realpath(__file__))[0]
-).parent.parent.parent.absolute()
+megcc_path = Path(os.path.split(
+    os.path.realpath(__file__))[0]).parent.parent.parent.absolute()
 default_gen_path = "{}/benchmark/model/generated_models".format(megcc_path)
 
 
@@ -28,6 +27,7 @@ class Model:
 
 class AllModel:
     models = []
+
     # model src from onnx
     def __init__(self):
         # pytorch model
@@ -36,41 +36,37 @@ class AllModel:
                 "mobilenetv2",
                 torchvision.models.mobilenetv2.mobilenet_v2(),
                 [1, 3, 224, 224],
-            )
-        )
+            ))
         self.models.append(
             Model(
                 "efficientnetb0",
                 torchvision.models.efficientnet.efficientnet_b0(),
                 [1, 3, 256, 256],
-            )
-        )
+            ))
         self.models.append(
             Model(
                 "shufflenetv2",
                 torchvision.models.shufflenetv2.shufflenet_v2_x0_5(),
                 [1, 3, 224, 224],
-            )
-        )
+            ))
         self.models.append(
-            Model("resnet18", torchvision.models.resnet.resnet18(), [1, 3, 224, 224])
-        )
+            Model("resnet18", torchvision.models.resnet.resnet18(),
+                  [1, 3, 224, 224]))
         self.models.append(
-            Model("resnet50", torchvision.models.resnet.resnet50(), [1, 3, 224, 224])
-        )
+            Model("resnet50", torchvision.models.resnet.resnet50(),
+                  [1, 3, 224, 224]))
         self.models.append(
-            Model("vgg11", torchvision.models.vgg.vgg11(), [1, 3, 224, 224])
-        )
+            Model("vgg11", torchvision.models.vgg.vgg11(), [1, 3, 224, 224]))
         self.models.append(
-            Model("vgg16", torchvision.models.vgg.vgg16(), [1, 3, 224, 224])
-        )
+            Model("vgg16", torchvision.models.vgg.vgg16(), [1, 3, 224, 224]))
 
     def get_all_onnx_models(self, output_dir=default_gen_path):
         if not os.path.exists(output_dir) or os.path.isfile(output_dir):
             os.makedirs(output_dir)
         for model in self.models:
             output = "{}/{}.onnx".format(output_dir, model.name)
-            logging.debug("get model file from torchvision to: {}".format(output))
+            logging.debug(
+                "get model file from torchvision to: {}".format(output))
             net = model.torch_model
             net.eval()
             input_data = torch.randn(model.input_shape)
