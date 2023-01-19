@@ -14,5 +14,13 @@ jobs:
       - name: Check doc link
         run: |
           python .github/scripts/doc_link_checker.py --target doc
-          python .github/scripts/doc_link_checker.py --target README.md 
+          python .github/scripts/doc_link_checker.py --target README.md
           python .github/scripts/doc_link_checker.py --target README_ENGLISH.md
+      - name: Install pre-commit hook
+        run: |
+          # markdownlint requires ruby >= 2.7
+          sudo apt-add-repository ppa:brightbox/ruby-ng -y
+          sudo apt-get update
+          sudo apt-get install -y ruby2.7
+          pip install pre-commit
+          pre-commit install

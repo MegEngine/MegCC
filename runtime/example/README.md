@@ -24,7 +24,7 @@
       * you can refs this example to deploy megcc runtime to others [RTOS](https://en.wikipedia.org/wiki/Real-time_operating_system)
   
   * `bare_board` directory for no operating system env , test use [QEMU](https://en.wikipedia.org/wiki/QEMU)
-    * now only example for arm and aarch64, for aarch64 exmaple by cmd:
+    * now only example for arm and aarch64, for aarch64 example by cmd:
       * python3 runtime/scripts/runtime_build.py --kernel_dir YOUR_BUILD/kernel_dir/ --cross_build --cross_build_target_arch aarch64 --cross_build_target_os NOT_STANDARD_OS --remove_old_build
       * run example: python3 bare_board/test_bare_board_qemu.py --tinynn_lib_install_dir YOUR_BUILD/kernel_dir/install --test_arch aarch64
     * also, the examples code can be use at standard operating system

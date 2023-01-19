@@ -64,9 +64,9 @@ def main(passed_args=None):
                     diff_kernel_data[i[0]][1] += i[1] / total
             kernel_name = []
             kernel_rate = []
-            for k, v in sorted(
-                diff_kernel_data.items(), key=lambda item: item[1][1], reverse=True
-            ):
+            for k, v in sorted(diff_kernel_data.items(),
+                               key=lambda item: item[1][1],
+                               reverse=True):
                 kernel_name.append(k)
                 kernel_rate.append(v[1] * 100)
 
@@ -76,13 +76,11 @@ def main(passed_args=None):
             kernel_rate = kernel_rate[0:topK]
             br1 = np.arange(len(kernel_name))
             plt.figure(figsize=(25, 6))
-            plt.title("{}-{}-{}".format(info[1], info[5], info[2]), fontsize=30)
+            plt.title("{}-{}-{}".format(info[1], info[5], info[2]),
+                      fontsize=30)
             plt.pie(kernel_rate, labels=kernel_name, autopct="%0.1f%%")
-            plt.savefig(
-                "{}/{}-{}-{}-profile-top{}.png".format(
-                    args.output, info[1], info[5], info[2], topK
-                )
-            )
+            plt.savefig("{}/{}-{}-{}-profile-top{}.png".format(
+                args.output, info[1], info[5], info[2], topK))
 
 
 if __name__ == "__main__":

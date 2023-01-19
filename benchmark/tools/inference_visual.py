@@ -45,8 +45,7 @@ def main(passed_args=None):
             #  for excel
             data_info.append([info[1], info[5], info[0], info[2], result])
             data_map["{}-{}".format(info[1], info[5])][info[0]].append(
-                [info[2], result]
-            )
+                [info[2], result])
             model_set.add(info[2])
 
     model_list = []
@@ -73,7 +72,11 @@ def main(passed_args=None):
         plt.figure(figsize=(10, 6))
         plt.title(k)
         # Make the plot
-        plt.bar(br1, v["megcc"], width=barWidth, edgecolor="grey", label="megcc")
+        plt.bar(br1,
+                v["megcc"],
+                width=barWidth,
+                edgecolor="grey",
+                label="megcc")
 
         # Adding Xticks
         plt.xlabel("model", fontweight="bold", fontsize=15)
