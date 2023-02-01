@@ -120,11 +120,10 @@ def main():
     need_version = "12.0.1"
     if version.find(need_version) < 0:
         print(
-            "We only support {} now, please install {} version, find version: {}".format(
-                need_version, need_version, version
-            )
-        )
-        raise RuntimeError("clang-format version not equal {}".format(need_version))
+            "We only support {} now, please install {} version, find version: {}"
+            .format(need_version, need_version, version))
+        raise RuntimeError(
+            "clang-format version not equal {}".format(need_version))
 
     process_map(
         partial(
