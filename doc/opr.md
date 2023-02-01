@@ -13,7 +13,7 @@
 |---|---|---|---|
 | conv  | nchw44-dot, nchw44-f32, nchw-f32  | nchw44-f32, nchw-f32  |  nchw44-f32, nchw-f32 |
 | elemwise |  RELU,EXP,ADD,H_SWISH,SIGMOID,SUB,MUL,TRUE_DIV,FUSE_ADD_RELU,FUSE_MUL_ADD3| same with Arm64 | RELU,EXP,NEGATE,ROUND,ABS,H_SWISH,LOG,ADD,SUB,MUL,MAX,MIN,LEQ,LT,FLOOR_DIV,TRUE_DIV,FUSE_ADD_RELU,FUSE_ADD_SIGMOID,FUSE_ADD_TANH,FUSE_MUL_ADD3,FUSE_MUL_ADD4 |
-| elemwise_multi |  |  | qadd |
+| elemwise_multi |  |  | QADD QRELU QADD_AND_RELU|
 | pool | nchw44-f32,nchw44-int8 | same with Arm64 | nchw-f32-int8 |
 | reduce | f32 | same with Arm64 | f32 |
 | relayout | all | same with Arm64 | all |

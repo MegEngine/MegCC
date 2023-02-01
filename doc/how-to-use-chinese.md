@@ -10,15 +10,16 @@
 ## bin文件细节
 ```
 bin
-├── mgb-importer  : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
-├── megcc-opt     : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
-├── mgb-runner    : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
-├── hako-to-mgb   : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
-└── mgb-to-tinynn : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
+├── mgb-importer    : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
+├── megcc-opt       : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
+├── mgb-runner      : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
+├── hako-to-mgb     : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
+├── mgb-to-tinynn   : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
+└── kernel_exporter : 辅助工具，用于指定 kernel C 代码的导出。
 ```
 
 # 使用 MegCC 完成模型部署
-首先需要从 [github](https://github.com/MegEngine/MegCC/releases/download/v0.1.2/megcc_release_0.1.2.tar.gz) 上下载需要的 MegCC 发版包，然后解压这个压缩包：`tar -xvf megcc_release_*.tar.gz`。使用 MegCC 完成模型部署主要步骤有三个步：
+首先需要从 [github](https://github.com/MegEngine/MegCC/releases) 上下载需要的 MegCC 发版包，然后解压这个压缩包：`tar -xvf megcc_release_*.tar.gz`。使用 MegCC 完成模型部署主要步骤有三个步：
 - 模型编译：编译 MegEngine 模型，生成运行这个模型对应的 Kernel 以及和这些 Kernel 绑定的模型。
 - Runtime编译：这个阶段会将 Runtime 和上一步中生成的 Kernel 一起编译成一个静态库。
 - 集成到应用中：调用上一步编译的静态库的接口进行推理。
@@ -91,7 +92,7 @@ Release 包中的 script 目录下面有一个 `ppl_gen.sh` 的文件，直接�
 ├── model：编译之后生成的模型，用于部署
 ├── model_info
 ├── schema
-├── script：各种辅助脚本
+├── script：各种帮助脚本
 └── src：runtime 的源文件
     ├── cheader
     ├── lite
@@ -212,7 +213,7 @@ MegCC 是在 MLIR 的基础组件上开发的，你可以通过下面的工具�
 用于直接使用 MegEngine 运行模型，可以和 MegCC Runtime 的计算结果进行对比，用于验证正确性等。 执行示例：
 ```bash
  ./bin/mgb-runner ./example/mobilenet.mdl ./mgb_out --input-shapes="data=(1,3,224,224)" --input-data="data=input_1_3_224_224_fp32.bin"
- ```
+```
 其中`./example/mobilenet.mdl` 为原始的 MegEngine 模型，输入 Tensor 的名字为 `data`，数据为 `input_1_3_224_224_fp32.bin`。
 
 ### hako-to-mgb
@@ -220,3 +221,27 @@ MegCC 是在 MLIR 的基础组件上开发的，你可以通过下面的工具�
 
 ### megcc-opt
 将编译 MegEngine 模型，并输出运行指定 Pass 之后的模型 IR 表示。通过这个工具你可以一步一步的探索 MegCC 的编译细节，以及每一个 Pass 完成之后，mlir IR 发生的变化。MegCC 中使用到的主要 Pass 有：`--MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning` 等。
+
+### kernel_exporter
+导出指定 kernel 的 C代码，获取 kernel 对于不同后端的具体实现。使用方法如下：
+##### 使用默认 kernel 属性
+
+```bash
+./kernel_exporter --arch <arch_type> --kernel <kernel_type> --use_default_attr
+```
+##### 交互式用户指定 kernel 属性
+```bash
+./kernel_exporter --arch <arch_type> --kernel <kernel_type>
+```
+
+具体 arch_type 和 kenrel_type 可以通过 `--help` 查看。目前支持的 kenrel type有：
+```bash
+ArgSortKernel           ArgmaxKernel                BatchMatmulKernel       CVTransposeKernel
+ConcatKernel            ConvBackDataKernel          ConvKernel              CvtColorKernel
+ElemwiseKernel          ElemwiseMultiKernel         FlipKernel              IndexingMultiAxisKernel
+IndexingOneHotKernel    MatrixInvKernel             MatrixMulKernel         PoolingKernel
+PowCKernel              ReduceKernel                RelayoutKernel          ResizeKernel
+RoiCopyKernel           RotateKernel                TopK                    TypeCvtKernel
+WarpAffineKernel        WarpPerspectiveKernel
+```
+
