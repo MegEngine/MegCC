@@ -240,7 +240,7 @@ table IndexDesc {
 }
 
 table SubTensor {
-    //! descs is the arrary of subtensor param start, end, step, index
+    //! descs is the array of subtensor param start, end, step, index
     descs: [IndexDesc];
     //! flags the corresponding of subtensor param start, end, step, index
     //! if -1, mean it is not exist
@@ -268,7 +268,7 @@ table IndexingMultiAxis {
 }
 
 table SetSubTensor {
-    //! iterms is the arrary of subtensor param start, end, step, index
+    //! iterms is the array of subtensor param start, end, step, index
     descs: [IndexDesc];
     //! flags the corresponding of subtensor param start, end, step, index
     //! if -1, mean it is not exist
@@ -331,7 +331,7 @@ table TypeCvt{
 }
 
 table ArgSort{
-    // ascend or decend
+    // ascend or descend
     order: string;
     // the input tensor idx
     input: int;

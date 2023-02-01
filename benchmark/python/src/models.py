@@ -9,9 +9,8 @@ import torch.onnx
 import torchvision
 from mgeconvert.converters.onnx_to_mge import *
 
-megcc_path = Path(
-    os.path.split(os.path.realpath(__file__))[0]
-).parent.parent.parent.absolute()
+megcc_path = Path(os.path.split(
+    os.path.realpath(__file__))[0]).parent.parent.parent.absolute()
 default_gen_path = "{}/benchmark/model/generated_models".format(megcc_path)
 
 
@@ -28,6 +27,7 @@ class Model:
 
 class AllModel:
     models = []
+
     # model src from onnx
     def __init__(self):
         # pytorch model
@@ -36,41 +36,37 @@ class AllModel:
                 "mobilenetv2",
                 torchvision.models.mobilenetv2.mobilenet_v2(),
                 [1, 3, 224, 224],
-            )
-        )
+            ))
         self.models.append(
             Model(
                 "efficientnetb0",
                 torchvision.models.efficientnet.efficientnet_b0(),
                 [1, 3, 256, 256],
-            )
-        )
+            ))
         self.models.append(
             Model(
                 "shufflenetv2",
                 torchvision.models.shufflenetv2.shufflenet_v2_x0_5(),
                 [1, 3, 224, 224],
-            )
-        )
+            ))
         self.models.append(
-            Model("resnet18", torchvision.models.resnet.resnet18(), [1, 3, 224, 224])
-        )
+            Model("resnet18", torchvision.models.resnet.resnet18(),
+                  [1, 3, 224, 224]))
         self.models.append(
-            Model("resnet50", torchvision.models.resnet.resnet50(), [1, 3, 224, 224])
-        )
+            Model("resnet50", torchvision.models.resnet.resnet50(),
+                  [1, 3, 224, 224]))
         self.models.append(
-            Model("vgg11", torchvision.models.vgg.vgg11(), [1, 3, 224, 224])
-        )
+            Model("vgg11", torchvision.models.vgg.vgg11(), [1, 3, 224, 224]))
         self.models.append(
-            Model("vgg16", torchvision.models.vgg.vgg16(), [1, 3, 224, 224])
-        )
+            Model("vgg16", torchvision.models.vgg.vgg16(), [1, 3, 224, 224]))
 
     def get_all_onnx_models(self, output_dir=default_gen_path):
         if not os.path.exists(output_dir) or os.path.isfile(output_dir):
             os.makedirs(output_dir)
         for model in self.models:
             output = "{}/{}.onnx".format(output_dir, model.name)
-            logging.debug("get model file from torchvision to: {}".format(output))
+            logging.debug(
+                "get model file from torchvision to: {}".format(output))
             net = model.torch_model
             net.eval()
             input_data = torch.randn(model.input_shape)
@@ -107,7 +103,9 @@ def prepare_megcc():
     ), "MEGCC_MGB_TO_TINYNN_PATH is not valid, please export MEGCC_MGB_TO_TINYNN_PATH to your path of mgb_to_tinynn"
 
 
-def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
+def build_megcc_lib(arch_desc="x86",
+                    model_config_json="",
+                    kernel_build_dir=""):
     MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
     # build prepare
     change_dir = ""
@@ -115,14 +113,15 @@ def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
         arch_ = arch_desc
         if arch_desc == "arm64" or arch_desc == "armv7":
             arch_ = "arm"
-        model_config_json = "{}/benchmark/model/model_{}.json".format(megcc_path, arch_)
+        model_config_json = "{}/benchmark/model/model_{}.json".format(
+            megcc_path, arch_)
     if kernel_build_dir == "":
         # WARNING: the dir path should be the same with path set in model_config_json file
         kernel_build_dir = "{}/benchmark/model/benchmark_kernel_{}".format(
-            megcc_path, arch_desc
-        )
+            megcc_path, arch_desc)
         change_dir = "cd {}/benchmark/model".format(megcc_path)
-    if not os.path.exists(kernel_build_dir) or os.path.isfile(kernel_build_dir):
+    if not os.path.exists(kernel_build_dir) or os.path.isfile(
+            kernel_build_dir):
         os.makedirs(kernel_build_dir)
     # set runtime build options
     if arch_desc == "x86":
@@ -158,6 +157,5 @@ def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
     subprocess.check_call(cmd, shell=True)
     # build runtime
     cmd = "python3 {}/runtime/scripts/runtime_build.py --build_with_profile --kernel_dir {}/ --remove_old_build {}".format(
-        megcc_path, kernel_build_dir, runtime_flag
-    )
+        megcc_path, kernel_build_dir, runtime_flag)
     subprocess.check_call(cmd, shell=True)

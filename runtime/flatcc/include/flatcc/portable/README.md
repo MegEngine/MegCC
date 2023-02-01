@@ -38,7 +38,7 @@ compiler and standard library  may support `_Static_assert` without
 `static_assert`. For compilers without `_Static_assert`, a unique
 identifier is needed for each assertion. This is done non-standard with
 the `__COUNTER__` macro, but has a fallback to `pstatic_assert_scope.h`
-for systems witout the `__COUNTER__` macro. Because of this fallback,
+for systems without the `__COUNTER__` macro. Because of this fallback,
 `pstatic_assert.h` needs to be included in every file using
 `static_assert` in order to increment a scope counter, otherwise there
 is a risk of assert identifier conflicts when `static_assert` happen on
