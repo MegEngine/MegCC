@@ -571,6 +571,11 @@ private:
                   << ", with name: " << opr->name() << ", output size "
                   << opr->output().size() << ", input size "
                   << opr->input().size() << "\n";
+        //! make the var name unique for MLIR symboltable
+        for (auto& var : opr->output()) {
+            auto new_name = var->name() + "_" + var->id_str();
+            var->name(new_name);
+        }
         if (opr->same_type<opr::Host2DeviceCopy>()) {
             auto&& iter = m_var2value.find(opr->output(0));
             CC_ASSERT(iter != m_var2value.end());
