@@ -96,28 +96,28 @@ private:
     static uint64_t key_gen_hash_mul0() {
         uint64_t rst;
         uint8_t volatile* buf = reinterpret_cast<uint8_t*>(&rst);
-        buf[2] = 10;
-        buf[3] = 11;
-        buf[6] = 12;
-        buf[1] = 13;
-        buf[5] = 14;
-        buf[4] = 15;
-        buf[0] = 16;
-        buf[7] = 17;
+        buf[2] = 2;
+        buf[3] = 3;
+        buf[6] = 6;
+        buf[1] = 1;
+        buf[5] = 5;
+        buf[4] = 4;
+        buf[0] = 0;
+        buf[7] = 7;
         return rst;
     }
 
     static uint64_t key_gen_hash_mul1() {
         uint64_t rst;
         uint8_t volatile* buf = reinterpret_cast<uint8_t*>(&rst);
-        buf[6] = 17;
-        buf[2] = 16;
-        buf[7] = 15;
-        buf[1] = 14;
-        buf[5] = 13;
-        buf[0] = 12;
-        buf[4] = 11;
-        buf[3] = 10;
+        buf[6] = 6;
+        buf[2] = 2;
+        buf[7] = 7;
+        buf[1] = 1;
+        buf[5] = 5;
+        buf[0] = 0;
+        buf[4] = 4;
+        buf[3] = 3;
         return rst;
     }
 };
@@ -127,14 +127,14 @@ static inline uint64_t key_gen_enc_key() {
     uint64_t rst;
     uint8_t volatile* buf = reinterpret_cast<uint8_t*>(&rst);
 
-    buf[4] = 0;
-    buf[3] = 1;
-    buf[7] = 2;
-    buf[6] = 3;
-    buf[0] = 4;
+    buf[4] = 4;
+    buf[3] = 3;
+    buf[7] = 7;
+    buf[6] = 6;
+    buf[0] = 0;
     buf[5] = 5;
-    buf[2] = 6;
-    buf[1] = 7;
+    buf[2] = 2;
+    buf[1] = 1;
 
     return rst;
 }
@@ -143,18 +143,17 @@ static inline uint64_t key_gen_hash_key() {
     uint64_t rst;
     uint8_t volatile* buf = reinterpret_cast<uint8_t*>(&rst);
 
-    buf[2] = 7;
-    buf[5] = 6;
-    buf[4] = 5;
-    buf[7] = 4;
-    buf[1] = 3;
-    buf[3] = 2;
-    buf[6] = 1;
+    buf[2] = 2;
+    buf[5] = 5;
+    buf[4] = 4;
+    buf[7] = 7;
+    buf[1] = 1;
+    buf[3] = 3;
+    buf[6] = 6;
     buf[0] = 0;
 
     return rst;
 }
-
 }  // namespace rc4
 }  // namespace megcc
 
