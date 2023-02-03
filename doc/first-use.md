@@ -14,10 +14,12 @@
 ## bin文件细节
 ```
 bin
-├── mgb-importer  : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
-├── megcc-opt     : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
-├── mgb-runner    : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
-└── mgb-to-tinynn : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
+├── mgb-importer    : 辅助工具，主要将解析 MegEngine 模型，然后转化为使用 MLIR 定义的对应的 MGB IR 以及输出。 
+├── megcc-opt       : 辅助工具，主要展示 MegCC 定义的 Pass 或者 MLIR 中预定义的 Pass 的具体细节，以及用于 Debug。
+├── mgb-runner      : 辅助工具，用于直接使用 MegEngine 运行模型，用于和 MegCC Runtime 的计算结果进行对比，验证正确性。
+├── hako-to-mgb     : 辅助工具，用于将使用 hako 打包之后的模型转换为 MegEngine 对应的模型。
+├── mgb-to-tinynn   : 主要的 MegCC 编译工具，将编译 MegEngine 模型，并输出运行这个模型需要的 Kernel，以及对应优化之后的模型。
+└── kernel_exporter : 辅助工具，用于指定 kernel C 代码的导出。
 ```
 
 ## 获取模型
