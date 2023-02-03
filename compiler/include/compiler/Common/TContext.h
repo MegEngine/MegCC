@@ -66,21 +66,18 @@ public:
     }
 
     CCAttr(std::string value) {
-        //! TODO(performance): new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<std::string>>(value);
         mType = Type::STRING;
         mLength = value.size();
     }
 
     CCAttr(bool value) {
-        //! TODO(performance): new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<bool>>(value);
         mType = Type::BOOL;
         mLength = sizeof(bool);
     }
 
     CCAttr(const CCOperand& value) {
-        //! TODO(performance): new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<CCOperand>>(value);
         mType = Type::OPERAND;
         mLength = sizeof(CCOperand);
@@ -89,7 +86,6 @@ public:
     template <typename T,
               std::enable_if_t<std::is_integral<T>::value, bool> = true>
     CCAttr(T value) {
-        //! TODO(performance): new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::INT;
         mLength = sizeof(T);
@@ -98,7 +94,6 @@ public:
     template <typename T,
               std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
     CCAttr(T value) {
-        //! TODO(performance): new unique_ptr may be not efficient
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::FLOAT;
         mLength = sizeof(T);
