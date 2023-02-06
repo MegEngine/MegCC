@@ -2309,8 +2309,8 @@ GI_UINT8_t GiCvtFromInt32V4ToUint8(
         GI_INT32_t Vector3) {
 #if defined(GI_NEON_INTRINSICS)
     return vcombine_u8(
-        vqmovun_s16(vcombine_s16(vqmovn_s32(Vector0), vqmovn_s32(Vector1))),
-        vqmovun_s16(vcombine_s16(vqmovn_s32(Vector2), vqmovn_s32(Vector3))));
+            vqmovun_s16(vcombine_s16(vqmovn_s32(Vector0), vqmovn_s32(Vector1))),
+            vqmovun_s16(vcombine_s16(vqmovn_s32(Vector2), vqmovn_s32(Vector3))));
 #elif defined(GI_SSE2_INTRINSICS)
     __m128i vepi16_0 = _mm_packs_epi32(Vector0, Vector1);
     __m128i vepi16_1 = _mm_packs_epi32(Vector2, Vector3);
