@@ -44,6 +44,8 @@ static inline TinyNNDType get_dtype_enum(const std::string& dtype) {
         return TinyNNDType::TinyNN_QINT8;
     } else if (Utils::is_quant_dtype(dtype, 32)) {
         return TinyNNDType::TinyNN_QINT32;
+    } else if (dtype == "f16") {
+        return TinyNNDType::TinyNN_FLOAT16;
     } else {
         CC_ASSERT(dtype == "si8" || dtype == "i8") << "not support " << dtype;
         return TinyNNDType::TinyNN_INT8;

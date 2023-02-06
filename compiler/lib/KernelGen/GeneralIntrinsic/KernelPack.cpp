@@ -17,6 +17,7 @@
 #include "FusedElemwiseKernel.h"
 #include "InternalKernel/InternalKernel.h"
 #include "MatMulKernel/Fp32MatMul.h"
+#include "MatMulKernel/fp16/Fp16MatMul.h"
 #include "PoolingKernel/Pooling.h"
 #include "Reduce.h"
 #include "Relayout.h"
@@ -34,6 +35,7 @@ struct AllGICommonKernel {
         inner_map[KernelPack::KernType::ElemwiseKernel] = {
                 std::make_shared<GeneralIntrinsic::ElemwiseKernel>()};
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
+                std::make_shared<GeneralIntrinsic::Fp16MatMulM8N8K8>(),
                 std::make_shared<GeneralIntrinsic::Fp32MatMulM4N8K4>(),
                 std::make_shared<GeneralIntrinsic::Fp32GevmKernel>(),
                 std::make_shared<GeneralIntrinsic::Fp32GemvKernel>(),

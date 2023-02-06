@@ -35,7 +35,7 @@ Mode string_to_mode(std::string mode_str) {
         return Mode::RELU;
     } else if ("EXP" == mode_str) {
         return Mode::EXP;
-    }  else if ("ABS" == mode_str) {
+    } else if ("ABS" == mode_str) {
         return Mode::ABS;
     } else if ("NEGATE" == mode_str) {
         return Mode::NEGATE;
@@ -114,7 +114,6 @@ std::shared_ptr<TensorNDArray> fused_elemwise_compute_cc(
         std::shared_ptr<TensorNDArray> inputs, TensorLayout out_layout,
         std::vector<std::string> modes, megcc::KernelGen::Arch arch,
         megdnn::Handle* dnn_handle, const std::string& symbol) {
-    CCOprProxy<ElemwiseForward> cc_proxy;
     std::unordered_map<std::string, megcc::CCAttr> proxy_attr;
     int id = 0;
     std::string key = "modes:";

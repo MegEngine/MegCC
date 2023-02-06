@@ -8,10 +8,10 @@
 #if defined(GI_NEON_INTRINSICS)
 #if defined(__ARM_FEATURE_FMA)
 #define v_fma_ps_f16(c, b, a) vfmaq_f16((c), (b), (a))
-#define v_fma_n_f16(c, b, a)  vfmaq_n_f16((c), (b), (a))
+#define v_fma_n_f16(c, b, a) vfmaq_n_f16((c), (b), (a))
 #else
 #define v_fma_ps_f16(c, b, a) vaddq_f16((c), vmulq_f16((b), (a)))
-#define v_fma_n_f16(c, b, a)  vaddq_f16((c), vmulq_f16((b), vdupq_n_f16(a)))
+#define v_fma_n_f16(c, b, a) vaddq_f16((c), vmulq_f16((b), vdupq_n_f16(a)))
 #endif
 #endif
 
@@ -34,7 +34,7 @@ GI_FLOAT16_t GiLoadBroadcastFloat16(const gi_float16_t* Value) {
 }
 
 GI_FORCEINLINE
-GI_FLOAT32_V2_t GiCastFloat16ToFloat32(const GI_FLOAT16_t& fp16) {
+GI_FLOAT32_V2_t GiCastFloat16ToFloat32(const GI_FLOAT16_t fp16) {
 #if defined(GI_NEON_INTRINSICS)
     GI_FLOAT32_V2_t ret;
     GiSetSubVectorFloat32V2(ret, 0, vcvt_f32_f16(vget_low_f16(fp16)));
@@ -51,11 +51,13 @@ GI_FLOAT32_V2_t GiCastFloat16ToFloat32(const GI_FLOAT16_t& fp16) {
 }
 
 GI_FORCEINLINE
-GI_FLOAT16_t GiCastFloat32ToFloat16(const GI_FLOAT32_t& low, const GI_FLOAT32_t& high) {
+GI_FLOAT16_t GiCastFloat32ToFloat16(const GI_FLOAT32_t low,
+                                    const GI_FLOAT32_t high) {
 #if defined(GI_NEON_INTRINSICS)
     return vcombine_f16(vcvt_f16_f32(low), vcvt_f16_f32(high));
 #elif defined(GI_RVV_INTRINSICS)
-    vfloat32m2_t tmp = vfmv_v_f_f32m2(0.0, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    vfloat32m2_t tmp =
+            vfmv_v_f_f32m2(0.0, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
     tmp = vset_v_f32m1_f32m2(tmp, 0, low);
     tmp = vset_v_f32m1_f32m2(tmp, 1, high);
     return vfncvt_f_f_w_f16m1(tmp, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
@@ -104,7 +106,8 @@ GI_FLOAT16_t GiAddFloat16(GI_FLOAT16_t Vector1, GI_FLOAT16_t Vector2) {
 #if defined(GI_NEON_INTRINSICS)
     return vaddq_f16(Vector1, Vector2);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfadd_vv_f16m1(Vector1, Vector2, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfadd_vv_f16m1(Vector1, Vector2,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
@@ -113,7 +116,8 @@ GI_FLOAT16_t GiSubtractFloat16(GI_FLOAT16_t Vector1, GI_FLOAT16_t Vector2) {
 #if defined(GI_NEON_INTRINSICS)
     return vsubq_f16(Vector1, Vector2);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfsub_vv_f16m1(Vector1, Vector2, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfsub_vv_f16m1(Vector1, Vector2,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
@@ -122,38 +126,43 @@ GI_FLOAT16_t GiMultiplyFloat16(GI_FLOAT16_t Vector1, GI_FLOAT16_t Vector2) {
 #if defined(GI_NEON_INTRINSICS)
     return vmulq_f16(Vector1, Vector2);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfmul_vv_f16m1(Vector1, Vector2, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfmul_vv_f16m1(Vector1, Vector2,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
 GI_FORCEINLINE
-GI_FLOAT16_t GiMultiplyScalerFloat16(GI_FLOAT16_t Vector1, gi_float16_t Scaler) {
+GI_FLOAT16_t GiMultiplyScalerFloat16(GI_FLOAT16_t Vector1,
+                                     gi_float16_t Scaler) {
 #if defined(GI_NEON_INTRINSICS)
     return vmulq_n_f16(Vector1, Scaler);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfmul_vf_f16m1(Vector1, Scaler, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfmul_vf_f16m1(Vector1, Scaler,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
 GI_FORCEINLINE
-GI_FLOAT16_t GiMultiplyAddScalarFloat16(
-        GI_FLOAT16_t VectorSum, GI_FLOAT16_t Vector, gi_float16_t Scalar) {
+GI_FLOAT16_t GiMultiplyAddScalarFloat16(GI_FLOAT16_t VectorSum,
+                                        GI_FLOAT16_t Vector,
+                                        gi_float16_t Scalar) {
 #if defined(GI_NEON_INTRINSICS)
     return v_fma_n_f16(VectorSum, Vector, Scalar);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfmadd_vf_f16m1(
-            Vector, Scalar, VectorSum, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfmadd_vf_f16m1(Vector, Scalar, VectorSum,
+                           GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
 GI_FORCEINLINE
-GI_FLOAT16_t GiMultiplySubScalarFloat16(
-        GI_FLOAT16_t VectorSub, GI_FLOAT16_t Vector, gi_float16_t Scalar) {
+GI_FLOAT16_t GiMultiplySubScalarFloat16(GI_FLOAT16_t VectorSub,
+                                        GI_FLOAT16_t Vector,
+                                        gi_float16_t Scalar) {
 #if defined(GI_NEON_INTRINSICS)
     return vsubq_f16(VectorSub, vmulq_n_f16(Vector, Scalar));
 #elif defined(GI_RVV_INTRINSICS)
-    return vfnmsub_vf_f16m1(
-            Vector, Scalar, VectorSub, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfnmsub_vf_f16m1(Vector, Scalar, VectorSub,
+                            GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
@@ -162,7 +171,8 @@ GI_FLOAT16_t GiMaximumFloat16(GI_FLOAT16_t Vector1, GI_FLOAT16_t Vector2) {
 #if defined(GI_NEON_INTRINSICS)
     return vmaxq_f16(Vector1, Vector2);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfmax_vv_f16m1(Vector1, Vector2, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfmax_vv_f16m1(Vector1, Vector2,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 
@@ -171,7 +181,8 @@ GI_FLOAT16_t GiMinimumFloat16(GI_FLOAT16_t Vector1, GI_FLOAT16_t Vector2) {
 #if defined(GI_NEON_INTRINSICS)
     return vminq_f16(Vector1, Vector2);
 #elif defined(GI_RVV_INTRINSICS)
-    return vfmin_vv_f16m1(Vector1, Vector2, GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
+    return vfmin_vv_f16m1(Vector1, Vector2,
+                          GI_SIMD_LEN_BYTE / sizeof(gi_float16_t));
 #endif
 }
 

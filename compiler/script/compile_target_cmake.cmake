@@ -10,6 +10,9 @@ target_compile_options(
   compile_target
   PRIVATE -DENABLE_ASSERT=1 -DENABLE_LOG=1 -Werror -Wno-format-zero-length
           $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>)
+if(MEGCC_COMPILER_KERNEL_ARMV8_2_FP16)
+target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16) 
+endif()         
 if(MEGCC_COMPILER_KERNEL_WITH_ASAN)
   target_compile_options(compile_target PRIVATE -g -O0 -fsanitize=address)
   target_link_libraries(compile_target PRIVATE -fsanitize=address)

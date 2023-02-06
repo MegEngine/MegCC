@@ -63,6 +63,9 @@ DType dnndtype_2_ccdtype(megdnn::DType dtype) {
             res.type_enum = TinyNNDType::TinyNN_QINT32;
             res.param.scale = dtype.param<megdnn::dtype::QuantizedS32>().scale;
             break;
+        case megdnn::DTypeEnum::Float16:
+            res.type_enum = TinyNNDType::TinyNN_FLOAT16;
+            break;
         default:
             mgb_assert(0, "no support dtype %s", dtype.name());
             break;
@@ -272,6 +275,7 @@ void gen_kernel(KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
             usable_kern_cnt++;
             TargetModule& g_module = TargetModule::get_global_target_module();
             auto kern_sym = kernel->GetKernelSymbol(ctx);
+            printf("%s\n", kern_sym.c_str());
             auto if_match =
                     std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)

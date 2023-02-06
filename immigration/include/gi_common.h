@@ -21,7 +21,8 @@
 #include <riscv_vector.h>
 #endif
 
-#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || defined(_M_X64)
+#if defined(__x86_64__) || defined(__i386__) || defined(_M_IX86) || \
+        defined(_M_X64)
 #define GI_TARGET_X86
 #endif
 
@@ -31,8 +32,9 @@
 
 #ifdef _WIN32
 //! GI stand for general intrinsic
-#define _GI_ALIGN_16                           __declspec(align(16))
-#define GI_DECLSPEC_ALIGN(variable, alignment) DECLSPEC_ALIGN(alignment) variable
+#define _GI_ALIGN_16 __declspec(align(16))
+#define GI_DECLSPEC_ALIGN(variable, alignment) \
+    DECLSPEC_ALIGN(alignment) variable
 #else
 #define _GI_ALIGN_16 __attribute__((aligned(16)))
 #define GI_DECLSPEC_ALIGN(variable, alignment) \
@@ -60,15 +62,15 @@
 #define GI_NEON32_INTRINSICS
 #endif
 #elif defined(GI_TARGET_X86)
-//#if defined(__FMA__)
-//#define GI_FMA_INTRINSICS
-//#define GI_AVX2_INTRINSICS
-//#define GI_AVX_INTRINSICS
-//#elif defined(__AVX2__)
-//#define GI_AVX2_INTRINSICS
-//#define GI_AVX_INTRINSICS
-//#elif defined(__AVX__)
-//#define GI_AVX_INTRINSICS
+// #if defined(__FMA__)
+// #define GI_FMA_INTRINSICS
+// #define GI_AVX2_INTRINSICS
+// #define GI_AVX_INTRINSICS
+// #elif defined(__AVX2__)
+// #define GI_AVX2_INTRINSICS
+// #define GI_AVX_INTRINSICS
+// #elif defined(__AVX__)
+// #define GI_AVX_INTRINSICS
 #if defined(__SSE4_2__)
 #define GI_SSE42_INTRINSICS
 #define GI_SSE2_INTRINSICS
@@ -94,9 +96,9 @@
 
 //! Gi fp16 only support arm64 neon and rvv
 #if (defined(GI_NEON_INTRINSICS) && __ARM_FEATURE_FP16_VECTOR_ARITHMETIC && \
-     MEGDNN_AARCH64) ||                                                     \
+     defined(__aarch64__)) ||                                               \
         defined(GI_RVV_INTRINSICS)
-#define GI_SUPPORT_F16
+#define GI_SUPPORT_F16 1
 #endif
 
 //! general intrinsic support dynamic length simd, if avx or avx2 the simd
@@ -104,20 +106,20 @@
 #if defined(GI_AVX_INTRINSICS) || defined(GI_AVX2_INTRINSICS) || \
         defined(GI_FMA_INTRINSICS)
 //! if neon and sse the simd lenght is 128
-#define GI_SIMD_LEN      256
+#define GI_SIMD_LEN 256
 #define GI_SIMD_LEN_BYTE 32
 #elif defined(GI_NEON_INTRINSICS) || defined(GI_SSE2_INTRINSICS) || \
         defined(GI_SSE42_INTRINSICS)
-#define GI_SIMD_LEN      128
+#define GI_SIMD_LEN 128
 #define GI_SIMD_LEN_BYTE 16
 #elif defined(GI_RVV_INTRINSICS)
 //! TODO: make gi algo usable for other GI_SIMD_LEN/GI_SIMD_LEN_BYTE
-#define GI_SIMD_LEN      128
+#define GI_SIMD_LEN 128
 #define GI_SIMD_LEN_BYTE 16
 #else
 //! if no simd hardware support, the simd is implemented by C, default set to
 //! 128
-#define GI_SIMD_LEN      128
+#define GI_SIMD_LEN 128
 #define GI_SIMD_LEN_BYTE 16
 #endif
 
@@ -189,13 +191,14 @@ typedef __m128i GI_INT16_t;
 typedef __m128i GI_INT32_t;
 typedef __m128i GI_UINT32_t;
 typedef __m128i GI_INT64_t;
-#define _SWAP_HI_LOW32                    (2 | (3 << 2) | (0 << 4) | (1 << 6))
-#define _INSERTPS_NDX(srcField, dstField) (((srcField) << 6) | ((dstField) << 4))
-#define _M64(out, inp)                    _mm_storel_epi64((__m128i*)&(out), inp)
-#define _pM128i(a)                        _mm_loadl_epi64((__m128i*)&(a))
-#define _pM128(a)                         _mm_castsi128_ps(_pM128i(a))
-#define _M128i(a)                         _mm_castps_si128(a)
-#define _M128(a)                          _mm_castsi128_ps(a)
+#define _SWAP_HI_LOW32 (2 | (3 << 2) | (0 << 4) | (1 << 6))
+#define _INSERTPS_NDX(srcField, dstField) \
+    (((srcField) << 6) | ((dstField) << 4))
+#define _M64(out, inp) _mm_storel_epi64((__m128i*)&(out), inp)
+#define _pM128i(a) _mm_loadl_epi64((__m128i*)&(a))
+#define _pM128(a) _mm_castsi128_ps(_pM128i(a))
+#define _M128i(a) _mm_castps_si128(a)
+#define _M128(a) _mm_castsi128_ps(a)
 #if defined(__x86_64__)
 #define _M64f(out, inp) out.m64_i64[0] = _mm_cvtsi128_si64(_M128i(inp));
 #else
@@ -299,7 +302,7 @@ typedef __m64_128 float32x2_t;
 #define return64f(a) \
     _M64f(res64, a); \
     return res64;
-#define _sse_vextq_s32(a, b, c)       _MM_ALIGNR_EPI8(b, a, c * 4)
+#define _sse_vextq_s32(a, b, c) _MM_ALIGNR_EPI8(b, a, c * 4)
 #define _sse_vget_lane_f32(vec, lane) vec.m64_f32[lane]
 #elif defined(GI_RVV_INTRINSICS)
 #define __gi_simd_type GI_RVV
@@ -353,9 +356,11 @@ typedef uint8_t GI_UINT8_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
 typedef int8_t GI_INT8_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
 typedef int16_t GI_INT16_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
 typedef int32_t GI_INT32_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
-typedef uint32_t GI_UINT32_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
+typedef uint32_t GI_UINT32_NAIVE_t
+        __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
 typedef int64_t GI_INT64_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
-typedef float float32x2_NAIVE_t __attribute__((vector_size(GI_SIMD_LEN_BYTE / 2)));
+typedef float float32x2_NAIVE_t
+        __attribute__((vector_size(GI_SIMD_LEN_BYTE / 2)));
 typedef struct {
     GI_INT32_NAIVE_t val[2];
 } GI_INT32_V2_NAIVE_t;
@@ -575,26 +580,26 @@ typedef GI_INT8_t GI_INT8_FIXLEN_t;
 typedef GI_INT16_t GI_INT16_FIXLEN_t;
 typedef GI_INT32_t GI_INT32_FIXLEN_t;
 typedef GI_UINT32_t GI_UINT32_FIXLEN_t;
-#define GiFloat32Type2FixLenType(s)   s
+#define GiFloat32Type2FixLenType(s) s
 #define GiFixLenType2GiFloat32Type(s) s
 
-#define GiFloat32Type2FixLenV2Type(s)   s
+#define GiFloat32Type2FixLenV2Type(s) s
 #define GiFixLenType2GiFloat32V2Type(s) s
 
-#define GiUint8Type2FixLenType(s)   s
+#define GiUint8Type2FixLenType(s) s
 #define GiFixLenType2GiUint8Type(s) s
 
-#define GiInt8Type2FixLenType(s)   s
+#define GiInt8Type2FixLenType(s) s
 #define GiFixLenType2GiInt8Type(s) s
 
-#define GiInt16Type2FixLenType(s)   s
+#define GiInt16Type2FixLenType(s) s
 #define GiFixLenType2GiInt16Type(s) s
 
-#define GiInt32Type2FixLenType(s)   s
+#define GiInt32Type2FixLenType(s) s
 #define GiFixLenType2GiInt32Type(s) s
 
-#define GiUint32Type2FixLenType(s)        s
-#define GiFixLenType2GiUint32Type(s)      s
+#define GiUint32Type2FixLenType(s) s
+#define GiFixLenType2GiUint32Type(s) s
 
 //! get subvector
 #define GiGetSubVectorFloat32V2(s, index) s.val[index]
@@ -610,9 +615,9 @@ typedef GI_UINT32_t GI_UINT32_FIXLEN_t;
 
 #define GiGetSubVectorInt16V2(s, index) s.val[index]
 
-#define GiGetSubVectorInt8V2(s, index)       s.val[index]
-#define GiGetSubVectorInt8V3(s, index)       s.val[index]
-#define GiGetSubVectorInt8V4(s, index)       s.val[index]
+#define GiGetSubVectorInt8V2(s, index) s.val[index]
+#define GiGetSubVectorInt8V3(s, index) s.val[index]
+#define GiGetSubVectorInt8V4(s, index) s.val[index]
 
 //! insert subvector
 #define GiSetSubVectorFloat32V2(d, index, s) d.val[index] = s
@@ -636,12 +641,12 @@ typedef GI_UINT32_t GI_UINT32_FIXLEN_t;
 
 #if defined(GI_NEON_INTRINSICS)
 #if defined(__ARM_FEATURE_FMA) && defined(GI_NEON64_INTRINSICS)
-#define v_fma_ps_f32(c, b, a)         vfmaq_f32((c), (b), (a))
-#define v_fma_n_f32(c, b, a)          vfmaq_n_f32((c), (b), (a))
+#define v_fma_ps_f32(c, b, a) vfmaq_f32((c), (b), (a))
+#define v_fma_n_f32(c, b, a) vfmaq_n_f32((c), (b), (a))
 #define v_fma_lane_f32(c, b, a, lane) vfmaq_lane_f32((c), (b), (a), (lane))
 #else
-#define v_fma_ps_f32(c, b, a)         vmlaq_f32((c), (b), (a))
-#define v_fma_n_f32(c, b, a)          vmlaq_n_f32((c), (b), (a))
+#define v_fma_ps_f32(c, b, a) vmlaq_f32((c), (b), (a))
+#define v_fma_n_f32(c, b, a) vmlaq_n_f32((c), (b), (a))
 #define v_fma_lane_f32(c, b, a, lane) vmlaq_lane_f32((c), (b), (a), (lane))
 #endif
 #endif
@@ -661,8 +666,8 @@ enum GiSimdType GiGetSimdType() {
     //! --copt -march=core2 --copt -mno-sse4.2
     //! --copt -mno-sse3 --copt -mno-sse2
     //! --copt -DGI_TEST_NAIVE
-    //! about CMake, can override build flags to CMAKE_CXX_FLAGS/CMAKE_C_FLAGS by
-    //! EXTRA_CMAKE_ARGS when use scripts/cmake-build/*.sh
+    //! about CMake, can override build flags to CMAKE_CXX_FLAGS/CMAKE_C_FLAGS
+    //! by EXTRA_CMAKE_ARGS when use scripts/cmake-build/*.sh
 #if defined(GI_TEST_NAIVE)
 #undef __gi_simd_type
 #define __gi_simd_type GI_NAIVE
@@ -758,7 +763,8 @@ GI_INT32_t GiAndNotInt32(GI_INT32_t VectorNot, GI_INT32_t Vector) {
 #elif defined(GI_SSE2_INTRINSICS)
     return _mm_andnot_si128(VectorNot, Vector);
 #elif defined(GI_RVV_INTRINSICS)
-    GI_INT32_t not_v = vnot_v_i32m1(VectorNot, GI_SIMD_LEN_BYTE / sizeof(int32_t));
+    GI_INT32_t not_v =
+            vnot_v_i32m1(VectorNot, GI_SIMD_LEN_BYTE / sizeof(int32_t));
     return vand_vv_i32m1(not_v, Vector, GI_SIMD_LEN_BYTE / sizeof(int32_t));
 #else
     return (~VectorNot) & Vector;

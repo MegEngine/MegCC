@@ -6,9 +6,9 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
+#include "test/kernel/common/rng.h"
 #include <random>
 #include "megdnn/tensor_iter.h"
-#include "test/kernel/common/rng.h"
 using namespace megdnn;
 using TensorNDArray = SmallVector<TensorND>;
 using TensorLayoutArray = SmallVector<TensorLayout>;
@@ -147,6 +147,12 @@ static void write_helper(const TensorND& tensor, std::function<float()> gen) {
             *iter = gen();
             ++iter;
         }
+    } else if (t_dtype.enumv() == DTypeEnum::Float16) {
+        FastIter<dt_float16> iter(tensor, tensor.layout.is_contiguous());
+        for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
+            *iter = gen();
+            ++iter;
+        }
     } else {
         mgb_assert(0, "write_helper not support dtype %s", t_dtype.name());
     }
@@ -182,12 +188,22 @@ void megcc::test::WarpPerspectiveMatRNG::gen(const TensorND& tensor) {
 }
 
 void megcc::test::UniformRNG::gen(const TensorND& tensor) {
-    mgb_assert(tensor.layout.dtype.enumv() == DTypeEnum::Float32);
     mgb_assert(tensor.layout.is_contiguous());
-    RNGxorshf gen{RandomState::generator()};
-    float* ptr = tensor.ptr<float>();
-    for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
-        ptr[i] = m_dist(gen);
+    if (tensor.layout.dtype.enumv() == DTypeEnum::Float32) {
+        RNGxorshf gen{RandomState::generator()};
+        float* ptr = tensor.ptr<float>();
+        for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
+            ptr[i] = m_dist(gen);
+        }
+    } else if (tensor.layout.dtype.enumv() == DTypeEnum::Float16) {
+        RNGxorshf gen{RandomState::generator()};
+        dt_float16* ptr = tensor.ptr<dt_float16>();
+        for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
+            ptr[i] = m_dist(gen);
+        }
+    } else {
+        mgb_assert(0, "UniformRNG not support dtype %s",
+                   tensor.layout.dtype.name());
     }
 }
 

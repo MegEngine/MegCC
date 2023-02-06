@@ -7,21 +7,11 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 #pragma once
-#include <sstream>
-#include <string>
-#include "compiler/KernelGen/KernelGen.h"
+#include "MatMulCommon.h"
 namespace megcc {
 namespace KernelGen {
 namespace GeneralIntrinsic {
-#define FIX_BODY_GUARD                                                         \
-    std::string GetBodyGuardBegin(TContext* ctx) const override { return ""; } \
-    std::string GetBodyGuardEnd(TContext* ctx) const override { return ""; }
-class GIKernelFunc : public KernelFunc {
-public:
-    FIX_BODY_GUARD
-};
 
-#undef FIX_BODY_GUARD
 class Fp32MatMulM4N12 : public GIKernelFunc {
 public:
     bool IsAvailable(TContext* context) const override;

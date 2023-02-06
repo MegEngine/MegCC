@@ -64,6 +64,10 @@ std::string dnndtype_2_str(megdnn::DType dtype, float scale) {
             ss << "qsi32<" << bit_cast(scale) << ":" << scale << ">";
             return ss.str();
         }
+#if !MEGDNN_DISABLE_FLOAT16
+        case megdnn::DTypeEnum::Float16:
+            return "f16";
+#endif
         default:
             mgb_assert(0, "no support dtype %s", dtype.name());
             break;
