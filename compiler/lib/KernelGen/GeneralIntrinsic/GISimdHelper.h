@@ -30,6 +30,8 @@ public:
             case Enum::qsi8:
             case Enum::int8:
                 return "Int8";
+            case Enum::float16:
+                return "Float16";
             default:
                 CC_ABORT << "not support dtype enum " << m_dtype_enum << "\n";
         }
@@ -45,6 +47,8 @@ public:
                 return 4;
             case Enum::int8:
                 return 16;
+            case Enum::float16:
+                return 8;
             default:
                 CC_ABORT << "not support dtype enum " << m_dtype_enum << "\n";
         }
@@ -60,6 +64,8 @@ public:
             case Enum::int8:
             case Enum::qsi8:
                 return "GI_INT8_t";
+            case Enum::float16:
+                return "GI_FLOAT16_t";
             default:
                 CC_ABORT << "not support dtype enum " << m_dtype_enum << "\n";
         }

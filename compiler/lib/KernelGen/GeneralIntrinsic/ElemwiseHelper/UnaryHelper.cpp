@@ -40,21 +40,22 @@ std::string ElemwiseGenUnary::GenCodeBody(std::vector<std::string> strs) const {
         ${kernel_init()}
 
         size_t index = 0;
-        for(; index + 7 < nr_elem; index += 8) {
+        for(; index + 2*${simd_len}-1 < nr_elem; index += 2*${simd_len}) {
             ${src_simd_specifier} vsrc0 = ${src_ld1q}(src);
-            ${src_simd_specifier} vsrc1 = ${src_ld1q}(src + 4);
+            ${src_simd_specifier} vsrc1 = ${src_ld1q}(src + ${simd_len});
             ${kernel_simd_unroll(2, vsrc0, vdst0, vsrc1, vdst1)}
             ${dst_store(dst, vdst0)};
-            ${dst_store(dst + 4, vdst1)};
-            src += 8;
-            dst += 8;
+            dst += ${simd_len};
+            ${dst_store(dst, vdst1)};
+            src += 2*${simd_len};
+            dst += ${simd_len};
         }
-        for(; index + 3 < nr_elem; index += 4) {
+        for(; index + ${simd_len}-1 < nr_elem; index += ${simd_len}) {
             ${src_simd_specifier} vsrc0 = ${src_ld1q}(src);
             ${kernel_simd_unroll(1, vsrc0, vdst0)}
             ${dst_store(dst, vdst0)};
-            src += 4;
-            dst += 4;
+            src += ${simd_len};
+            dst += ${simd_len};
         }
         for(; index < nr_elem; index++) {
             ${kernel_naive_unroll(1, src, dst)}
@@ -96,7 +97,8 @@ std::string ElemwiseGenUnary::GenCodeBody(std::vector<std::string> strs) const {
                          })
                     .add("dst_st1q", m_dst_simd->get_st1q_symbol())
                     .add("src_simd_specifier",
-                         m_src_simd->get_specifier_q_symbol());
+                         m_src_simd->get_specifier_q_symbol())
+                    .add("simd_len", m_src_simd->get_nr_elem_q());
 
     if (m_inline_mode) {
         body_render.add("inline_func_name", GenInlineName());
@@ -116,7 +118,15 @@ std::string ElemwiseGenUnaryRelu::GenInlineName() const {
 }
 std::string ElemwiseGenUnaryRelu::GenKernelSimdInit(
         std::vector<std::string>) const {
-    return "GI_FLOAT32_t vzero = GiBroadcastFloat32(0.0f);";
+    if (m_src_dtype == "f32") {
+        return "GI_FLOAT32_t vzero = GiBroadcastFloat32(0.0f);";
+    } else if (m_src_dtype == "f16") {
+        return "GI_FLOAT16_t vzero = GiZeroFloat16();";
+    } else {
+        CC_ABORT << " ElemwiseGenUnaryRelu is not supported  dtype: "
+                 << m_src_dtype << "\n";
+        return "";
+    }
 }
 
 std::string ElemwiseGenUnaryRelu::GenKernelSimdUnroll(
@@ -124,8 +134,18 @@ std::string ElemwiseGenUnaryRelu::GenKernelSimdUnroll(
     int unroll = std::stoi(strs[0]);
     std::stringstream writer;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GI_FLOAT32_t " << strs[2 * i + 2]
-               << " = GiMaximumFloat32((" << strs[2 * i + 1] << "), vzero);";
+        if (m_src_dtype == "f32") {
+            writer << "\n GI_FLOAT32_t " << strs[2 * i + 2]
+                   << " = GiMaximumFloat32((" << strs[2 * i + 1]
+                   << "), vzero);";
+        } else if (m_src_dtype == "f16") {
+            writer << "\n GI_FLOAT16_t " << strs[2 * i + 2]
+                   << " = GiMaximumFloat16((" << strs[2 * i + 1]
+                   << "), vzero);";
+        } else {
+            CC_ABORT << " ElemwiseGenUnaryRelu is not supported  dtype: "
+                     << m_src_dtype << "\n";
+        }
     }
     return writer.str();
 }
@@ -137,8 +157,17 @@ std::string ElemwiseGenUnaryRelu::GenKernelNaiveUnroll(
     auto output_ptr = strs[2];
     std::stringstream writer;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n(" << output_ptr << ")[" << i << "] =  fmax((" << input_ptr
-               << ")[" << i << "], 0.0f);";
+        if (m_src_dtype == "f32") {
+            writer << "\n(" << output_ptr << ")[" << i << "] =  fmax(("
+                   << input_ptr << ")[" << i << "], 0.0f);";
+        } else if (m_src_dtype == "f16") {
+            writer << "\n(" << output_ptr << ")[" << i << "] =  (" << input_ptr
+                   << ")[" << i << "] > 0.0 ? (" << input_ptr << ")[" << i
+                   << "] : 0.0;";
+        } else {
+            CC_ABORT << " ElemwiseGenUnaryRelu is not supported  dtype: "
+                     << m_src_dtype << "\n";
+        }
     }
     return writer.str();
 }

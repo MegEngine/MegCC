@@ -497,6 +497,7 @@ private:
         FOR_EACH_DTYPE_CTYPE(::megdnn::DTypeEnum::Uint8, uint8_t)
         FOR_EACH_DTYPE_CTYPE(::megdnn::DTypeEnum::QuantizedS8, int8_t)
         FOR_EACH_DTYPE_CTYPE(::megdnn::DTypeEnum::QuantizedS32, int)
+        FOR_EACH_DTYPE_CTYPE(::megdnn::DTypeEnum::Float16, int16_t)
 
         CC_ABORT << "unsupported data type " << dv.dtype().name() << '\n';
         return {};

@@ -153,6 +153,11 @@ class Build:
             help=
             'specify build dir, if not config, default will be os.path.join(args.kernel_dir, "runtime")',
         )
+        parser.add_argument(
+            "--enable_fp16",
+            action="store_true",
+            help="enable float16 compile flag, default is disable",
+        )
         args = parser.parse_args()
         args.kernel_dir = os.path.realpath(args.kernel_dir)
         assert os.path.isdir(
@@ -381,7 +386,11 @@ class Build:
         cmake_config = cmake_config + " -DTINYNN_PROFILE_KERNEL={}".format(
             "ON" if args.build_with_profile else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_ASAN={}".format(
-            "ON" if args.build_with_asan else "OFF")
+            "ON" if args.build_with_asan else "OFF"
+        )
+        cmake_config = cmake_config + " -DTINYNN_ENABLE_FP16={}".format(
+            "ON" if args.enable_fp16 else "OFF"
+        )
 
         logging.debug("python3 args: {}".format(args))
         config_cmd = "{}".format(cmake_config)

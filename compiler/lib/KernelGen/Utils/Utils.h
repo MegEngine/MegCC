@@ -23,6 +23,7 @@ enum DtypeEnum {
     uint8 = 4,
     qsi8 = 5,
     qsi32 = 6,
+    float16 = 7,
 };
 
 static inline bool is_shape_dynamic(const std::vector<size_t>& shape) {
@@ -48,6 +49,8 @@ static inline bool is_any_op_dynamic(TContext* ctx) {
 static inline bool is_float_dtype(const std::string& dtype,
                                   int bit_width = -1) {
     if (bit_width == 32 && dtype == "f32") {
+        return true;
+    } else if (bit_width == 16 && dtype == "f16") {
         return true;
     } else if (bit_width != -1) {
         return false;
@@ -105,6 +108,8 @@ static inline DtypeEnum get_dtype_enum(const std::string& dtype) {
         return DtypeEnum::qsi8;
     } else if (is_quant_dtype(dtype, 32)) {
         return DtypeEnum::qsi32;
+    } else if (is_float_dtype(dtype, 16)) {
+        return DtypeEnum::float16;
     } else {
         CC_ASSERT(is_int_dtype(dtype, 8) || is_quant_dtype(dtype, 8))
                 << "not support " << dtype;
@@ -116,7 +121,7 @@ static inline size_t get_dtype_size(const std::string& dtype) {
     if (is_float_dtype(dtype, 32) || is_int_dtype(dtype, 32) ||
         is_quant_dtype(dtype, 32)) {
         return 4;
-    } else if (is_int_dtype(dtype, 16)) {
+    } else if (is_int_dtype(dtype, 16) || is_float_dtype(dtype, 16)) {
         return 2;
     } else {
         CC_ASSERT(is_int_dtype(dtype, 8) || is_quant_dtype(dtype, 8))
@@ -151,6 +156,8 @@ static inline std::string cvt_dtype_specifier(const std::string& dtype_str) {
         dtype_c_str = "int8_t";
     } else if (dtype_str.substr(0, 5) == "qsi32") {
         dtype_c_str = "int";
+    } else if (dtype_str == "f16") {
+        dtype_c_str = "gi_float16_t";
     } else {
         CC_ABORT << "not support dtype " << dtype_str << "\n";
     }

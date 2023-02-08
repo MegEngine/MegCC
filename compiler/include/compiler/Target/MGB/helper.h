@@ -87,6 +87,9 @@ static inline Type dtype_to_type(MLIRContext* context,
                                           IntegerType::Signed, scale);
             return dtype;
         };
+        case ::megdnn::DTypeEnum::Float16:
+            return FloatType::getF16(context);
+
         default:
             CC_ABORT << "Unsupport dtype " << dtype.name() << "\n";
             break;

@@ -16,8 +16,8 @@ using namespace megcc::KernelGen;
 using MODE = ElemwiseForward::Param::Mode;
 TEST(GI, ElementwiseUnique) {
     Checker<ElemwiseForward> checker(Arch::BAREMETAL);
-    checker.set_kernel_symbol("GI_kernel_elementwise.+");
     ElemwiseForward::Param param;
+    checker.set_kernel_symbol("GI_kernel_elementwise.+");
     for (auto mode : {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::H_SWISH}) {
         param.mode = mode;
         checker.set_param(param);
@@ -25,6 +25,19 @@ TEST(GI, ElementwiseUnique) {
         checker.execs({{1, 10}, {}});
         checker.execs({{1, 10, 12, 13}, {}});
     }
+#if ENABLE_KERNEL_FP16
+    megcc::test::UniformRNG rng(-1.0, 1.0);
+    checker.set_rng(0, &rng);
+    checker.set_epsilon(1e-2);
+    checker.set_dtype(0, dtype::Float16());
+    for (auto mode : {MODE::RELU}) {
+        param.mode = mode;
+        checker.set_param(param);
+        checker.execs({{1}, {}});
+        checker.execs({{1, 10}, {}});
+        checker.execs({{1, 10, 12, 13}, {}});
+    }
+#endif
 }
 
 TEST(GI, ElementwiseBinary) {
@@ -33,7 +46,8 @@ TEST(GI, ElementwiseBinary) {
     checker.set_kernel_symbol("GI_kernel_elementwise.+");
 
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::MAX, MODE::MIN}) {
+    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
+                      MODE::MAX, MODE::MIN}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {1}, {}});

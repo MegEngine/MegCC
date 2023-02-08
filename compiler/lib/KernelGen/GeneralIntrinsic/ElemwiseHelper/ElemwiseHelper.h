@@ -122,7 +122,9 @@ struct ElemwiseHelperFunc {
               bool inline_mode = false)                                      \
                 : ElemwiseGenUnary(SymbolHelper::gen_valid_dtype(src_dtype), \
                                    SymbolHelper::gen_valid_dtype(dst_dtype), \
-                                   inline_mode) {}                           \
+                                   inline_mode),                             \
+                  m_src_dtype(src_dtype),                                    \
+                  m_dst_dtype(dst_dtype) {}                                  \
         std::string GenKernelSimdInit(                                       \
                 std::vector<std::string>) const override;                    \
         std::string GenKernelSimdUnroll(                                     \
@@ -130,6 +132,10 @@ struct ElemwiseHelperFunc {
         std::string GenKernelNaiveUnroll(                                    \
                 std::vector<std::string>) const override;                    \
         std::string GenInlineName() const override;                          \
+                                                                             \
+    private:                                                                 \
+        std::string m_src_dtype;                                             \
+        std::string m_dst_dtype;                                             \
     };
 
 DEFINE_UNARY_OP(ElemwiseGenUnaryRelu)

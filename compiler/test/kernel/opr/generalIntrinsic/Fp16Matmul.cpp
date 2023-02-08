@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/test/kernel/opr/generalIntrinsic/Fp32MatMul.cpp
+ * compiler/test/kernel/opr/generalIntrinsic/Fp16MatMul.cpp
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *
@@ -11,7 +11,7 @@
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
-
+#if ENABLE_KERNEL_FP16
 TEST(GI, Fp16MatMulM8N8K8) {
     Checker<MatrixMulForward> checker(Arch::BAREMETAL);
     checker.set_kernel_symbol("GI_kernel_fp16_matmul_8x8mk8_.*");
@@ -34,5 +34,5 @@ TEST(GI, Fp16MatMulM8N8K8) {
                 checker.execs({{m / 8, k / 8, 8, 8}, {k / 8, n, 8}, {}});
             }
 }
-
+#endif
 // vim: syntax=cpp.doxygen

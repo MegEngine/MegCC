@@ -275,7 +275,6 @@ void gen_kernel(KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
             usable_kern_cnt++;
             TargetModule& g_module = TargetModule::get_global_target_module();
             auto kern_sym = kernel->GetKernelSymbol(ctx);
-            printf("%s\n", kern_sym.c_str());
             auto if_match =
                     std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)

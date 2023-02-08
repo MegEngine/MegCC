@@ -22,8 +22,11 @@ using namespace KernelGen;
 using namespace ArmCommon;
 
 bool RelayoutKernel::IsAvailable(TContext* context) const {
-    bool ok_dtype = context->getAttrOprand("operand:0").dtype ==
-                    context->getAttrOprand("operand:1").dtype;
+    auto src_dtype_str = context->getAttrOprand("operand:0").dtype;
+    int type_size = Utils::get_dtype_size(src_dtype_str);
+    bool ok_dtype =
+            (src_dtype_str == context->getAttrOprand("operand:1").dtype) &&
+            (type_size == 1 || type_size == 4);
     std::vector<size_t> shape_in = context->getAttrOprand("operand:0").shape;
     std::vector<size_t> shape_out = context->getAttrOprand("operand:0").shape;
     bool ok_shape = shape_in.size() == shape_out.size();

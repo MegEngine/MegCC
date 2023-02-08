@@ -33,8 +33,6 @@ TinyNNStatus init_model_weights(CombineModel* model);
 
 TinyNNStatus init_model_memory(CombineModel* model);
 
-
-
 static inline int dtype_length(TinyNNDType dtype, TinyNNStatus* error) {
     switch (dtype) {
         case TinyNN_FLOAT:

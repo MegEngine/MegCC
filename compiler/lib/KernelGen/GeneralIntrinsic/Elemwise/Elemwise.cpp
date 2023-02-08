@@ -38,7 +38,14 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
         mode_ok = mode_ok && ElemwiseGenTernary::is_available(bcast_type);
     }
     bool ok_input = nr_operands == 4 || nr_operands == 3 || nr_operands == 2;
-    bool usable = type_ok && mode_ok && ok_input;
+    bool is_fp16_ok = true;
+    for (int i = 0; i < nr_operands; i++) {
+        is_fp16_ok &=
+                (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype ==
+                 "f16");
+    }
+    is_fp16_ok &= mode == "RELU";
+    bool usable = (type_ok && mode_ok && ok_input) || is_fp16_ok;
     return usable;
 }
 
@@ -46,6 +53,7 @@ std::string ElemwiseKernel::GetKernelSymbol(TContext* context) const {
     std::stringstream ss;
     ss << "GI_kernel_elementwise";
     ss << "_" << context->getAttrStr("mode");
+    ss << "_" << context->getAttrOprand("operand:0").dtype;
     int nr_operands = context->getAttrInt("nr_operands");
     if (nr_operands == 2) {
         ss << "_unary_vec_vec";
@@ -81,6 +89,9 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     auto dtype = Utils::get_dtype_enum(ctx->getAttrOprand("operand:0").dtype);
 
     auto ElemwiseImpl = ElemwiseHelperFunc::CreateGenHelper(mode, operands);
+    auto src_specificer = Utils::cvt_dtype_specifier(operands[0].dtype);
+    auto dst_specificer =
+            Utils::cvt_dtype_specifier(operands[operands.size() - 1].dtype);
     GIMathHelper gi_math;
     CC_ASSERT(ElemwiseImpl) << "ElemwiseHelper Create error!\n";
     switch (dtype) {
@@ -100,6 +111,11 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
             writer << R"(
 #include "gi_float.h"
 #include "gi_int.h"
+            )";
+            break;
+        case Utils::DtypeEnum::float16:
+            writer << R"(
+#include "gi_float16.h"
             )";
             break;
         default:
@@ -128,9 +144,9 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     //! input + output = 2, unary case
     if (nr_operands == 2) {
         writer << R"(
-        float* input_data0 = inputs[0]->ptr;
+        ${src_specificer}* input_data0 = inputs[0]->ptr;
         TINYNN_ASSERT(input_data0);
-        float* output_data = outputs[0]->ptr;
+        ${dst_specificer}* output_data = outputs[0]->ptr;
         ${ElemwiseImpl(input_data0, output_data)};
         )";
     } else if (nr_operands == 3) {
@@ -164,6 +180,8 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     };
     ss << StringTemplate::StringTemplateArgs()
                     .add("ElemwiseImpl", ImpleGen)
+                    .add("src_specificer", src_specificer)
+                    .add("dst_specificer", dst_specificer)
                     .render(writer.str());
     return ss.str();
 }

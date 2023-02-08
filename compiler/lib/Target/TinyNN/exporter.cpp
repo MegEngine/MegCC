@@ -882,6 +882,8 @@ private:
     Offset<MegCC::DType> type_to_dtype(mlir::Type type) {
         if (type.isF32()) {
             return MegCC::CreateDType(m_fbs_builder, MegCC::DTypeEnum_Float32);
+        } else if (type.isF16()) {
+            return MegCC::CreateDType(m_fbs_builder, MegCC::DTypeEnum_Float16);
         } else if (auto inttype = type.dyn_cast_or_null<IntegerType>()) {
             if (inttype.isQuant()) {
                 float scale = inttype.getScale();

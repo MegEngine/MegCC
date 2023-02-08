@@ -29,10 +29,17 @@ std::shared_ptr<ElemwiseGenBase> ElemwiseHelperFunc::CreateGenHelper(
         std::string mode, std::vector<CCOperand> operands) {
     size_t nr_operands = operands.size();
     if (nr_operands == 2) {
-        CASE_DISPATCH("RELU", ElemwiseGenUnaryRelu);
-        CASE_DISPATCH("EXP", ElemwiseGenUnaryExp);
-        CASE_DISPATCH("SIGMOID", ElemwiseGenUnarySigmoid);
-        CASE_DISPATCH("H_SWISH", ElemwiseGenUnaryHswish);
+        if (operands[0].dtype == "f32") {
+            CASE_DISPATCH("RELU", ElemwiseGenUnaryRelu);
+            CASE_DISPATCH("EXP", ElemwiseGenUnaryExp);
+            CASE_DISPATCH("SIGMOID", ElemwiseGenUnarySigmoid);
+            CASE_DISPATCH("H_SWISH", ElemwiseGenUnaryHswish);
+        } else if (operands[0].dtype == "f16") {
+            CASE_DISPATCH_ARG("RELU", ElemwiseGenUnaryRelu, "f16", "f16");
+        } else {
+            CC_ABORT << " ElemwiseGenBase is not supported  dtype: "
+                     << operands[0].dtype << "\n";
+        }
     } else if (nr_operands == 3) {
         CASE_DISPATCH_ARG("ADD", ElemwiseGenBinaryAdd, operands[0],
                           operands[1]);
@@ -44,10 +51,10 @@ std::shared_ptr<ElemwiseGenBase> ElemwiseHelperFunc::CreateGenHelper(
                           operands[1]);
         CASE_DISPATCH_ARG("FUSE_ADD_RELU", ElemwiseGenBinaryFuseAddRelu,
                           operands[0], operands[1]);
-        CASE_DISPATCH_ARG("MAX", ElemwiseGenBinaryMax,
-                          operands[0], operands[1]);
-        CASE_DISPATCH_ARG("MIN", ElemwiseGenBinaryMin,
-                          operands[0], operands[1]);
+        CASE_DISPATCH_ARG("MAX", ElemwiseGenBinaryMax, operands[0],
+                          operands[1]);
+        CASE_DISPATCH_ARG("MIN", ElemwiseGenBinaryMin, operands[0],
+                          operands[1]);
         CC_ABORT << "Binary mode: " << mode << " not Implement now\n";
     } else if (nr_operands == 4) {
         CASE_DISPATCH_ARG("FUSE_MUL_ADD3", ElemwiseGenTernaryFuseMulAdd3,
