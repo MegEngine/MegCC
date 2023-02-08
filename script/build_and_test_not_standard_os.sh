@@ -28,7 +28,7 @@ cmake --build "$MEGCC_BUILD_DIR" -j$(nproc) --target mgb-to-tinynn --target mgb-
 
 function check_key_words() {
     #elf self mangle words, we do not care!!
-    white_list="@MEGW mgb1 5Mbg6 MGBi O:MgBnWk <mbG =MEG>Yr]< 4emUi0B >HMgE kMEG RmEg MbGV4 MEgIy @MEg mGe#S BMgb MGB( mBg: MBgr8C A&mGB mEg; mGb>/ mEg= .strtab .shstrtab A=MgE= mgb=g MGe= g=MgE <mgE= =Mgb> MGE<"
+    white_list="@MEGW mgb1 5Mbg6 MGBi O:MgBnWk <mbG =MEG>Yr]< 4emUi0B >HMgE kMEG RmEg MbGV4 MEgIy @MEg mGe#S BMgb MGB( mBg: MBgr8C A&mGB mEg; mGb>/ mEg= .strtab .shstrtab A=MgE= mgb=g MGe= g=MgE <mgE= =Mgb> MGE< 8<MGE="
     elf_file=$1
     if [ ! -f ${elf_file} ];then
         echo "ERR: can not find ${elf_file}"
