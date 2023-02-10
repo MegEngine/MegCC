@@ -1,5 +1,10 @@
 #!/bin/bash -e
-SRC_DIR=$(dirname $(readlink -f $0))
+READLINK=readlink
+OS=$(uname -s)
+if [ $OS = "Darwin" ];then
+    READLINK=greadlink
+fi
+SRC_DIR=$(dirname $(${READLINK} -f $0))
 cd $SRC_DIR
 git submodule sync
 git submodule update -f --init flatcc
@@ -38,6 +43,7 @@ function mge_git_submodule_update() {
 mge_git_submodule_update
 
 function build_mge() {
+    rm -rf $2
     mkdir -p $2
     cd $2
     cmake -DBUILD_SHARED_LIBS=OFF\

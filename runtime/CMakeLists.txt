@@ -133,10 +133,20 @@ endif()
 
 message(STATUS "Gen flatcc header.")
 set(FLATCC_DIR ${PROJECT_SOURCE_DIR}/flatcc)
-set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc)
+if(APPLE)
+  set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc_macos_x86)
+else()
+  set(FLATCC_EXECUTABLE ${FLATCC_DIR}/bin/flatcc)
+endif()
 set(SCHEMA_SOURCE ${PROJECT_SOURCE_DIR}/schema/model.fbs)
 set(SCHEMA_OUTPUT ${PROJECT_SOURCE_DIR}/src/cheader)
 set(CMAKE_C_FLAGS "-fPIC -fpie ${CMAKE_C_FLAGS}")
+include(CheckCCompilerFlag)
+check_c_compiler_flag("-Wno-error=implicit-function-declaration"
+                      CHECK_IMPLICIT-FUNCTION-DECLARATION)
+if(CHECK_IMPLICIT-FUNCTION-DECLARATION)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error=implicit-function-declaration")
+endif()
 
 add_custom_command(
   OUTPUT ${SCHEMA_OUTPUT}

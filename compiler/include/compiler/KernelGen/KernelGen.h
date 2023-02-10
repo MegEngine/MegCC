@@ -14,12 +14,12 @@
 
 namespace megcc {
 namespace KernelGen {
-namespace {
-//! used for ARM64V7 in dump stage
-const std::string ARM64V7_COMMON_POSTFIX = "#x#";
-const std::string ARM64V7_ARM64_POSTFIX = ARM64V7_COMMON_POSTFIX + "_arm64";
-const std::string ARM64V7_ARMV7_POSTFIX = ARM64V7_COMMON_POSTFIX + "_armv7";
-}  // namespace
+struct DumpHelper {
+    //! used for ARM64V7 in dump stage
+    static std::string ARM64V7_COMMON_POSTFIX;
+    static std::string ARM64V7_ARM64_POSTFIX;
+    static std::string ARM64V7_ARMV7_POSTFIX;
+};
 
 //! Flag the platform
 enum Arch {
@@ -89,14 +89,10 @@ struct KernelFunc {
     };
     virtual std::string GetKernelBody(TContext* context) const = 0;
     //! cv gen
-    virtual bool IsCVAvailable(TContext* context) const { return false; };
-    virtual std::string GetCVKernelSymbol(TContext* context) const {
-        return "";
-    };
-    virtual std::string GetCVKernelSignature(TContext* context) const {
-        return "";
-    };
-    virtual std::string GetCVKernelBody(TContext* context) const { return ""; };
+    virtual bool IsCVAvailable(TContext*) const { return false; };
+    virtual std::string GetCVKernelSymbol(TContext*) const { return ""; };
+    virtual std::string GetCVKernelSignature(TContext*) const { return ""; };
+    virtual std::string GetCVKernelBody(TContext*) const { return ""; };
 
     //! init gen
     virtual std::string GetInitSymbol(TContext* context) const {
@@ -136,11 +132,9 @@ struct KernelFunc {
         return GetWorkspaceBody(context);
     };
     //! All body will be warp by guard begin, guard end
-    virtual std::string GetBodyGuardBegin(TContext* context) const {
-        return "";
-    }
+    virtual std::string GetBodyGuardBegin(TContext*) const { return ""; }
 
-    virtual std::string GetBodyGuardEnd(TContext* context) const { return ""; }
+    virtual std::string GetBodyGuardEnd(TContext*) const { return ""; }
 
     //! The internal kernel used by the kernel function
     virtual std::vector<KernelObj> GetDependInternalSymbol(TContext*) const {
@@ -214,4 +208,4 @@ struct KernelPack {
 
 }  // namespace KernelGen
 }  // namespace megcc
-// vim: syntax=cpp.doxygen
+   // vim: syntax=cpp.doxygen

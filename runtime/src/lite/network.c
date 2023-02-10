@@ -56,7 +56,7 @@ int LITE_make_network(LiteNetwork* network, const LiteConfig config,
                       const LiteNetworkIO network_io) {
     CombineModel* model = tinynn_malloc(sizeof(CombineModel));
     memset(model, 0, sizeof(CombineModel));
-    vm_attach(vm_global_inst(), model);
+    vm_attach(model);
     *network = model;
     LOG_DEBUG("create model and ignore all config\n");
     return TinyNN_SUCCESS;
@@ -185,7 +185,7 @@ int LITE_forward(const LiteNetwork network) {
         int32_t start_tv_sec, start_tv_usec, end_tv_sec, end_tv_usec;
         tinynn_gettime(&start_tv_sec, &start_tv_usec);
 #endif
-        TinyNNStatus error = vm_instruction_call(vm_global_inst(), inst);
+        TinyNNStatus error = vm_instruction_call((VM*)(cb_model->vm), inst);
         if (error != TinyNN_SUCCESS) {
             return error;
         }
@@ -343,7 +343,7 @@ int LITE_destroy_network(LiteNetwork network) {
         //! instruction
         for (int i = 0; i < model->nr_instruction; i++) {
             Instruction* inst = model->instructions + i;
-            vm_instruction_destruct(vm_global_inst(), inst);
+            vm_instruction_destruct((VM*)(cb_model->vm), inst);
         }
         FREE(model->instructions);
 
@@ -362,6 +362,7 @@ int LITE_destroy_network(LiteNetwork network) {
     FREE(cb_model->device_models);
 
     //! free combine model struct
+    vm_detach(cb_model);
     FREE(cb_model);
     return TinyNN_SUCCESS;
 }

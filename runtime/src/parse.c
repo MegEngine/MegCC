@@ -11,22 +11,23 @@
 #include <stdlib.h>
 #include "device.h"
 #include "init.h"
-#include "vm.h"
 #include "kernels.h"
+#include "vm.h"
 
-static uint as_uint(const float x) {
-    return *(uint*)&x;
+typedef unsigned int ccuint;
+static ccuint as_uint(const float x) {
+    return *(ccuint*)&x;
 }
-static float as_float(const uint x) {
+static float as_float(const ccuint x) {
     return *(float*)&x;
 }
 
 //! From:
 //! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
 static float half_to_float(const uint16_t x) {
-    const uint e = (x & 0x7C00) >> 10;  // exponent
-    const uint m = (x & 0x03FF) << 13;  // mantissa
-    const uint v =
+    const ccuint e = (x & 0x7C00) >> 10;  // exponent
+    const ccuint m = (x & 0x03FF) << 13;  // mantissa
+    const ccuint v =
             as_uint((float)m) >> 23;  // evil log2 bit hack to count leading
                                       // zeros in denormalized format
     return as_float(
@@ -299,7 +300,7 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus parse_device_model(DeviceModel* model,
+TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
                                 ns(DeviceModel_table_t) fbs_device_model) {
     //! parse tensor
     ns(Tensor_vec_t) fbs_tensors =
@@ -332,7 +333,7 @@ TinyNNStatus parse_device_model(DeviceModel* model,
         ns(Instruction_union_t) fbs_instruction_union =
                 ns(Instruction_union_vec_at(fbs_instructions_union, i));
         Instruction* inst = model->instructions + i;
-        if (vm_instruction_load(vm_global_inst(), fbs_instruction_union,
+        if (vm_instruction_load((VM*)(c_model->vm), fbs_instruction_union,
                                 inst) != TinyNN_SUCCESS) {
             goto exit;
         }
@@ -502,7 +503,8 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
             goto exit;
         }
         dev_model->opt = create_runtime_opt(&dev_model->device);
-        if (parse_device_model(dev_model, fbs_device_model) != TinyNN_SUCCESS) {
+        if (parse_device_model(dev_model, model, fbs_device_model) !=
+            TinyNN_SUCCESS) {
             LOG_ERROR("parse device model error!\n");
             goto exit;
         }

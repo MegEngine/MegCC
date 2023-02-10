@@ -571,6 +571,11 @@ private:
                   << ", with name: " << opr->name() << ", output size "
                   << opr->output().size() << ", input size "
                   << opr->input().size() << "\n";
+        //! make the var name unique for MLIR symboltable
+        for (auto& var : opr->output()) {
+            auto new_name = var->name() + "_" + var->id_str();
+            var->name(new_name);
+        }
         if (opr->same_type<opr::Host2DeviceCopy>()) {
             auto&& iter = m_var2value.find(opr->output(0));
             CC_ASSERT(iter != m_var2value.end());
@@ -1020,12 +1025,14 @@ private:
             }
             CC_ASSERT(_data) << "No data related to " << opr->name() << ".\n";
             std::string data(
-                    reinterpret_cast<const char*>(_data + sizeof(size_t)),
+                    reinterpret_cast<const char*>(static_cast<char*>(_data) +
+                                                  sizeof(size_t)),
                     *(size_t*)(_data));
             uint32_t data_len = static_cast<uint32_t>(data.size());
             if (extra_data)
                 data += std::string(reinterpret_cast<const char*>(
-                                            extra_data + sizeof(size_t)),
+                                            static_cast<char*>(extra_data) +
+                                            sizeof(size_t)),
                                     *(size_t*)(extra_data));
             free(_data);
 
