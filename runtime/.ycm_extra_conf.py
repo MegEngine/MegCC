@@ -25,30 +25,30 @@ import ycm_core
 # compilation database set (by default, one is not set).
 # CHANGE THIS LIST OF FLAGS. YES, THIS IS THE DROID YOU HAVE BEEN LOOKING FOR.
 flags = [
-    '-Wall',
-    '-Wextra',
-    '-x',
-    'c',
-    '-I/usr/include',
-    '-I/usr/local/include',
-    '-I',
-    '.',
-    '-I',
-    '../models/mobilenetv1/kernels/',
-    '-I',
-    '../third_party/flatcc/include',
-    '-I',
-    '../third_party/flatbuffers/include',
-    '-I',
-    './',
-    '-I',
-    './include',
-    '-I',
-    './src',
-    '-I',
-    '../schema/cheader',
-    '-I',
-    '../models/mobilenetv1/kernels',
+    "-Wall",
+    "-Wextra",
+    "-x",
+    "c",
+    "-I/usr/include",
+    "-I/usr/local/include",
+    "-I",
+    ".",
+    "-I",
+    "../models/mobilenetv1/kernels/",
+    "-I",
+    "../third_party/flatcc/include",
+    "-I",
+    "../third_party/flatbuffers/include",
+    "-I",
+    "./",
+    "-I",
+    "./include",
+    "-I",
+    "./src",
+    "-I",
+    "../schema/cheader",
+    "-I",
+    "../models/mobilenetv1/kernels",
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the
@@ -66,7 +66,7 @@ if "true" != os.environ.get("IN_CI"):
     else:
         database = None
 
-SOURCE_EXTENSIONS = ['.cpp', '.cxx', '.cc', '.c', '.m', '.mm']
+SOURCE_EXTENSIONS = [".cpp", ".cxx", ".cc", ".c", ".m", ".mm"]
 
 
 def MakeRelativePathsInFlagsAbsolute(flags, working_directory=None):
@@ -74,13 +74,13 @@ def MakeRelativePathsInFlagsAbsolute(flags, working_directory=None):
         return list(flags)
     new_flags = []
     make_next_absolute = False
-    path_flags = ['-isystem', '-I', '-iquote', '--sysroot=']
+    path_flags = ["-isystem", "-I", "-iquote", "--sysroot="]
     for flag in flags:
         new_flag = flag
 
         if make_next_absolute:
             make_next_absolute = False
-            if not flag.startswith('/'):
+            if not flag.startswith("/"):
                 new_flag = os.path.join(working_directory, flag)
 
         for path_flag in path_flags:
@@ -100,7 +100,7 @@ def MakeRelativePathsInFlagsAbsolute(flags, working_directory=None):
 
 def IsHeaderFile(filename):
     extension = os.path.splitext(filename)[1]
-    return extension in ['.h', '.hxx', '.hpp', '.hh']
+    return extension in [".h", ".hxx", ".hpp", ".hh"]
 
 
 def GetCompilationInfoForFile(filename):
@@ -144,10 +144,10 @@ def FlagsForFile(filename, **kwargs):
     final_flags = final_flags + MakeRelativePathsInFlagsAbsolute(flags)
     # caused by database do not generate database for cuh or h file, which may include file abspath files
     final_flags = final_flags + [
-        '-I{}'.format(os.path.dirname(os.path.abspath(filename)))
+        "-I{}".format(os.path.dirname(os.path.abspath(filename)))
     ]
 
-    return {'flags': final_flags, 'do_cache': True}
+    return {"flags": final_flags, "do_cache": True}
 
 
 def Settings(filename, **kwargs):

@@ -16,7 +16,8 @@ def main():
     parser.add_argument(
         "--tinynn_lib",
         help="tinynn lib, check it can deploy at NONE STANDARD OS or not",
-        required=True)
+        required=True,
+    )
     args = parser.parse_args()
 
     assert os.path.isfile(

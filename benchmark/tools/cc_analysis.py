@@ -80,13 +80,11 @@ def main(passed_args=None):
                 print("{} {}%".format(i, j))
             if not args.no_figure:
                 plt.figure(figsize=(25, 6))
-                plt.title("{}-{}-{}".format(info[1], info[5], info[2]), fontsize=30)
+                plt.title("{}-{}-{}".format(info[1], info[5], info[2]),
+                          fontsize=30)
                 plt.pie(kernel_rate, labels=kernel_name, autopct="%0.1f%%")
-                plt.savefig(
-                    "{}/{}-{}-{}-profile-top{}.png".format(
-                        args.output, info[1], info[5], info[2], topK
-                    )
-                )
+                plt.savefig("{}/{}-{}-{}-profile-top{}.png".format(
+                    args.output, info[1], info[5], info[2], topK))
 
 
 if __name__ == "__main__":
