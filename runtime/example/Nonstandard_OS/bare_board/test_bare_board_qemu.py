@@ -34,8 +34,8 @@ def main():
     lib_path = os.path.join(args.tinynn_lib_install_dir, "lib/libTinyNN.a")
     assert os.path.isfile(lib_path), "can not find tinynn lib at: {}".format(
         lib_path)
-    assert args.test_arch in test_aarchs, "invalid --test_arch, only support: {}".format(
-        test_aarchs)
+    assert (args.test_arch in test_aarchs
+            ), "invalid --test_arch, only support: {}".format(test_aarchs)
 
     gnu_toolchain_link = "https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads"
     env_help_msg = {

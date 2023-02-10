@@ -64,19 +64,19 @@ def find_file_name(dir_path, varid):
 dir_path = "/home/liujunjie/gitlab/megcc/compiler/build_host/bin_dump/"
 megcc_dir_path = "/home/liujunjie/gitlab/megcc/compiler/build_host/dump/"
 
-varid = '19615'
-megcc_tensor_name = '176__tensor:228_kernel_typecvt_qsi8qsi8_1_256_16_16'
+varid = "19615"
+megcc_tensor_name = "176__tensor:228_kernel_typecvt_qsi8qsi8_1_256_16_16"
 dtype = np.int8
 
-varid = '19623'
-megcc_tensor_name = '178__tensor:230_kernel_conv2d_1x1_NCHW_DENSE_p0x0_s1x1_d1x1_qsi8qsi8qsi32qsi8_bias_1_256_16_16'
+varid = "19623"
+megcc_tensor_name = "178__tensor:230_kernel_conv2d_1x1_NCHW_DENSE_p0x0_s1x1_d1x1_qsi8qsi8qsi32qsi8_bias_1_256_16_16"
 dtype = np.int8
 
 file_name = find_file_name(dir_path, varid)
 tensor, tensor_name = load_tensor_binary(dir_path + file_name)
-np.save('./mgb_npy/' + varid + '.npy', tensor)
+np.save("./mgb_npy/" + varid + ".npy", tensor)
 file_b_path = megcc_dir_path + megcc_tensor_name
-with open(file_b_path, 'rb') as f:
+with open(file_b_path, "rb") as f:
     tensor_b = np.frombuffer(f.read(), dtype=dtype)
     tensor_b.reshape(tensor.shape)
 

@@ -12,12 +12,12 @@ megcc_path = Path(os.path.split(
 class ValidModel:
     path = ""
     name = ""
-    exten = ""
+    extension = ""
 
-    def __init__(self, model_path="", model_name="", exten=""):
+    def __init__(self, model_path="", model_name="", extension=""):
         self.path = model_path
         self.name = model_name
-        self.exten = exten
+        self.extension = extension
 
 
 class ValidOutputDir:

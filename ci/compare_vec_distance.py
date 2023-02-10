@@ -13,8 +13,8 @@ def get_cos_similar(v1, v2):
 
 def water(m_seed_in, str, n):
     str = str.tobytes()
-    str = np.frombuffer(str, 'uint8').copy()
-    m_seed = np.array([m_seed_in]).astype('uint32')
+    str = np.frombuffer(str, "uint8").copy()
+    m_seed = np.array([m_seed_in]).astype("uint32")
 
     def get_seed():
         m_seed[0] ^= m_seed[0] << 13
@@ -22,7 +22,7 @@ def water(m_seed_in, str, n):
         m_seed[0] ^= m_seed[0] << 5
         return m_seed[0]
 
-    s = np.zeros(0x100).astype('uint8')
+    s = np.zeros(0x100).astype("uint8")
     m_seed[0] ^= n
     for i in range(0xFF):
         s[i] = i
@@ -46,7 +46,7 @@ def water(m_seed_in, str, n):
         j = (j + s[i]) & 0xFF
         s[i], s[j] = s[j], s[i]
         str[k] ^= s[(np.uint16(s[i]) + np.uint16(s[j])) & 0xFF]
-    return np.frombuffer(str, 'float32')
+    return np.frombuffer(str, "float32")
 
 
 def piecewise_normalize(score, left, right, threshold, new_left, new_right,
@@ -56,15 +56,15 @@ def piecewise_normalize(score, left, right, threshold, new_left, new_right,
 
     ret = 0
     if score < threshold:
-        ret = ((score - left) / (threshold - left) *
-               (new_threshold - new_left) + new_left)
+        ret = (score - left) / (threshold - left) * (new_threshold -
+                                                     new_left) + new_left
         if ret < new_left:
             ret = new_left
         if ret >= new_threshold:
             ret = new_threshold - 1
     else:
-        ret = ((score - threshold) / (right - threshold) *
-               (new_right - new_threshold) + new_threshold)
+        ret = (score - threshold) / (right - threshold) * (
+            new_right - new_threshold) + new_threshold
         if ret <= new_threshold:
             ret = new_threshold + 1
         if ret > new_right:
@@ -77,15 +77,15 @@ def get_spy_similar(v1, v2):
     alpha = 2.297190
     beta = -2.659770
     threshold = 55.3
-    score_full = (100.0 / (1.0 + np.exp(alpha * num + beta)))
+    score_full = 100.0 / (1.0 + np.exp(alpha * num + beta))
     final_score = piecewise_normalize(score_full, 0.0, 100.0, threshold, 0,
                                       100, 80)
-    print('spy ', num, score_full, score_full, final_score)
+    print("spy ", num, score_full, score_full, final_score)
     return score_full
 
 
 def compare_file(file_path_0, file_path_1, score_limit):
-    print('compare ', os.path.abspath(file_path_0),
+    print("compare ", os.path.abspath(file_path_0),
           os.path.abspath(file_path_1))
     with open(file_path_0, "rb") as f:
         d0 = np.frombuffer(f.read(), dtype=np.float32)
@@ -111,9 +111,9 @@ if __name__ == "__main__":
         for file_name in file_names:
             file_path_0 = os.path.join(args.file_or_dir[0], file_name)
             file_path_1 = os.path.join(args.file_or_dir[1], file_name)
-            assert os.path.exists(file_path_0), 'can not find {}'.format(
+            assert os.path.exists(file_path_0), "can not find {}".format(
                 file_path_0)
-            assert os.path.exists(file_path_1), 'can not find {}'.format(
+            assert os.path.exists(file_path_1), "can not find {}".format(
                 file_path_1)
             compare_file(file_path_0, file_path_1, score)
             compare_file_cnt += 1
@@ -131,14 +131,14 @@ if __name__ == "__main__":
                 compare_file_cnt += 1
 
     else:
-        assert os.path.isfile(args.file_or_dir[0]), 'can not find {}'.format(
+        assert os.path.isfile(args.file_or_dir[0]), "can not find {}".format(
             args.file_or_dir[0])
-        assert os.path.isfile(args.file_or_dir[1]), 'can not find {}'.format(
+        assert os.path.isfile(args.file_or_dir[1]), "can not find {}".format(
             args.file_or_dir[1])
         compare_file(args.file_or_dir[0], args.file_or_dir[1], score)
         compare_file_cnt += 1
     if compare_file_cnt > 0:
-        print('compare pass!!')
+        print("compare pass!!")
     else:
-        print('no file compared!!')
+        print("no file compared!!")
         exit(-1)

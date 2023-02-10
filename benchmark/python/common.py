@@ -4,10 +4,11 @@ import os
 import subprocess
 from pathlib import Path
 
-megcc_path = Path(
-    os.path.split(os.path.realpath(__file__))[0]
-).parent.parent.absolute()
+megcc_path = Path(os.path.split(
+    os.path.realpath(__file__))[0]).parent.parent.absolute()
 kernel_build_dirs = {}
+
+
 def prepare_megcc():
     # build prepare
     MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
@@ -16,7 +17,9 @@ def prepare_megcc():
     ), "MEGCC_MGB_TO_TINYNN_PATH is not valid, please export MEGCC_MGB_TO_TINYNN_PATH to your path of mgb_to_tinynn"
 
 
-def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
+def build_megcc_lib(arch_desc="x86",
+                    model_config_json="",
+                    kernel_build_dir=""):
     MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
     # build prepare
     change_dir = ""
@@ -24,16 +27,18 @@ def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
         arch_ = arch_desc
         if arch_desc == "arm64" or arch_desc == "armv7":
             arch_ = "arm"
-        model_config_json = "{}/benchmark/model/model_{}.json".format(megcc_path, arch_)
+        model_config_json = "{}/benchmark/model/model_{}.json".format(
+            megcc_path, arch_)
         change_dir = "cd {}/benchmark/model".format(megcc_path)
     else:
-        change_dir = "cd {}".format(Path(model_config_json).parent().absolute())
+        change_dir = "cd {}".format(
+            Path(model_config_json).parent().absolute())
     if kernel_build_dir == "":
         # WARNING: the dir path should be the same with path set in model_config_json file
         kernel_build_dir = "{}/benchmark/model/benchmark_kernel_{}".format(
-            megcc_path, arch_desc
-        )
-    if not os.path.exists(kernel_build_dir) or os.path.isfile(kernel_build_dir):
+            megcc_path, arch_desc)
+    if not os.path.exists(kernel_build_dir) or os.path.isfile(
+            kernel_build_dir):
         os.makedirs(kernel_build_dir)
     # set runtime build options
     if arch_desc == "x86":
@@ -69,8 +74,7 @@ def build_megcc_lib(arch_desc="x86", model_config_json="", kernel_build_dir=""):
     subprocess.check_call(cmd, shell=True)
     # build runtime
     cmd = "python3 {}/runtime/scripts/runtime_build.py --build_with_profile --kernel_dir {}/ --remove_old_build {}".format(
-        megcc_path, kernel_build_dir, runtime_flag
-    )
+        megcc_path, kernel_build_dir, runtime_flag)
     subprocess.check_call(cmd, shell=True)
 
 
@@ -81,20 +85,25 @@ def build_model_and_megcc_lib(models, models_dir, arch_str):
     prepare_megcc()
     # build megcc model lib
     for arch_desc in arch_str:
-        kernel_build_dirs[arch_desc] = "{}/benchmark/model/benchmark_kernel_{}".format(
-            megcc_path, arch_desc
+        kernel_build_dirs[
+            arch_desc] = "{}/benchmark/model/benchmark_kernel_{}".format(
+                megcc_path, arch_desc)
+        build_megcc_lib(
+            arch_desc,
+            model_config_json="",
+            kernel_build_dir=kernel_build_dirs[arch_desc],
         )
-        build_megcc_lib(arch_desc, model_config_json="", kernel_build_dir=kernel_build_dirs[arch_desc])
 
 
 def build_benchmarker(x86_target="fallback", arch_str=None, benchmarkers=None):
     for arch_desc in arch_str:
-        benchmark_build_dir = "{}/benchmark/build/{}".format(megcc_path, arch_desc)
-        subprocess.check_call("rm -rf {}".format(benchmark_build_dir), shell=True)
+        benchmark_build_dir = "{}/benchmark/build/{}".format(
+            megcc_path, arch_desc)
+        subprocess.check_call("rm -rf {}".format(benchmark_build_dir),
+                              shell=True)
         if arch_desc == "x86":
             build_option = "-DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install -DRUNTIME_KERNEL_DIR={}".format(
-                kernel_build_dirs[arch_desc]
-            )
+                kernel_build_dirs[arch_desc])
         else:
             if arch_desc == "arm64":
                 TOOLCHAIN_OPTION = '-DCMAKE_TOOLCHAIN_FILE="$NDK_ROOT/build/cmake/android.toolchain.cmake"  -DANDROID_NDK="$NDK_ROOT" -DANDROID_ABI=arm64-v8a  -DANDROID_NATIVE_API_LEVEL=21'
@@ -102,9 +111,7 @@ def build_benchmarker(x86_target="fallback", arch_str=None, benchmarkers=None):
                 TOOLCHAIN_OPTION = '-DCMAKE_TOOLCHAIN_FILE="$NDK_ROOT/build/cmake/android.toolchain.cmake"  -DANDROID_NDK="$NDK_ROOT" -DANDROID_ABI=armeabi-v7a  -DANDROID_NATIVE_API_LEVEL=21'
             elif arch_desc == "riscv":
                 TOOLCHAIN_OPTION = '-DCMAKE_TOOLCHAIN_FILE="{}/runtime/toolchains/riscv64-linux-gnu.toolchain.cmake"'.format(
-                    megcc_path
-                )
+                    megcc_path)
             build_option = "{} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install -DRUNTIME_KERNEL_DIR={}".format(
-                TOOLCHAIN_OPTION, kernel_build_dirs[arch_desc]
-            )
+                TOOLCHAIN_OPTION, kernel_build_dirs[arch_desc])
         benchmarkers[arch_desc].build(build_options=build_option)

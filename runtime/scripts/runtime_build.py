@@ -231,7 +231,7 @@ class Build:
                 please do manually modify
                 OS_PLATFORM=("OS" "OS64" "SIMULATOR" "SIMULATOR64" "TVOS" "WATCHOS" "SIMULATOR_TVOS")
                 XCODE_IOS_PLATFORM=("iphoneos" "iphonesimulator" "appletvos" "appletvsimulator" "watchos", "watchsimulator")
-                IOS_ARCHS=("arm64" "armv7" "armv7k" "arm64e" "armv7s"). by defaut we only trigger build arm64/armv7 for iphoneos
+                IOS_ARCHS=("arm64" "armv7" "armv7k" "arm64e" "armv7s"). by default we only trigger build arm64/armv7 for iphoneos
                 """
                 ios_toolchains = os.path.join(
                     os.path.dirname(os.path.abspath(__file__)),

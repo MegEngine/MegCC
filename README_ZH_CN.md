@@ -32,7 +32,7 @@ MegCC 现在支持的平台处理器平台有 Arm64/ArmV7/X86/risc-v/单片机, 
 
 ## 文档
 
-##### 获取 MegCC 编译器
+#### 获取 MegCC 编译器
 * 下载提预编译好的 MegCC 模型编译器 [下载 MegCC 编译器](https://github.com/MegEngine/MegCC/releases)
 
 #### 从源码获取 MegCC 编译器

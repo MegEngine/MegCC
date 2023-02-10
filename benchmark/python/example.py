@@ -3,9 +3,9 @@ import os
 
 import numpy as np
 import yaml
+from common import *
 from src.benchmark import BenchMarkRunnerBase, ValidModel, ValidOutputDir
 from src.models import *
-from common import *
 
 all_models = AllModel()
 # available arch_str = ["x86", "arm64", "armv7", "riscv"]
@@ -42,16 +42,15 @@ class BenchmarkRunner(BenchMarkRunnerBase):
         run_options = ""
         if self.log_level == 0:
             run_options += " --profile"
-        if self.benchmark_framework == "mge":
-            run_options += " --mge"
         config_name = "benchmark-{}-{}-{}".format(self.benchmark_framework,
                                                   self.benchmark_arch,
                                                   self.model.name)
         for file_ in [self.benchmark_exec_func, self.model.path]:
-            cmd = "rsync -aP -zz {} {}:{}/".format(file_, ssh_host, ssh_workdir)
+            cmd = "rsync -aP -zz {} {}:{}/".format(file_, ssh_host,
+                                                   ssh_workdir)
             subprocess.check_call(cmd, shell=True)
         cmd = ' ssh -t {} "unset LD_PRELOAD && cd {} && LD_LIBRARY_PATH=./ && chmod +x ./benchmarker && ./benchmarker {}.{} {}" '.format(
-            ssh_host, ssh_workdir, self.model.name, self.model.exten,
+            ssh_host, ssh_workdir, self.model.name, self.model.extension,
             run_options)
         subprocess.check_call(cmd,
                               shell=True,
@@ -62,10 +61,10 @@ class BenchmarkRunner(BenchMarkRunnerBase):
 # build benchmarker
 def gen_benchmarker(arch_str):
     for arch_desc in arch_str:
-        benchmark_build_dir = "{}/benchmark/build/{}".format(megcc_path, arch_desc)
-        benchmarker = BenchmarkRunner(
-            benchmark_build_dir=benchmark_build_dir, benchmark_arch=arch_desc
-        )
+        benchmark_build_dir = "{}/benchmark/build/{}".format(
+            megcc_path, arch_desc)
+        benchmarker = BenchmarkRunner(benchmark_build_dir=benchmark_build_dir,
+                                      benchmark_arch=arch_desc)
         benchmarker_list[arch_desc] = benchmarker
 
 
@@ -77,12 +76,12 @@ def set_config_and_run(arch_str):
             for framework in framework_str:
                 for log_level in [False, True]:
                     if framework == "megcc":
-                        exten = "tiny"
-                        model_path = "{}/{}.tiny".format(kernel_build_dir, model.name)
-                    model_ = ValidModel(model_path, model.name, exten)
+                        extension = "tiny"
+                        model_path = "{}/{}.tiny".format(
+                            kernel_build_dir, model.name)
+                    model_ = ValidModel(model_path, model.name, extension)
                     output_dir_ = ValidOutputDir(
-                        "{}/benchmark/output".format(megcc_path), "output"
-                    )
+                        "{}/benchmark/output".format(megcc_path), "output")
                     benchmarker_list[arch_desc].set_config(
                         profile_kernel=log_level,
                         benchmark_framework=framework,
@@ -91,29 +90,29 @@ def set_config_and_run(arch_str):
                     )
                     if arch_desc == "x86":
                         benchmarker_list[arch_desc].run_local()
-                    elif (
-                        arch_desc == "riscv"
-                        or arch_desc == "armv7"
-                        or arch_desc == "arm64"
-                    ):
+                    elif (arch_desc == "riscv" or arch_desc == "armv7"
+                          or arch_desc == "arm64"):
                         # run for different device may avoid the effection of device heat radiation
                         for ssh_device in ssh_device_info:
                             ssh_name = ssh_device["name"]
                             ssh_host = ssh_device["host"]
                             ssh_workdir = ssh_device["workdir"]
                             benchmarker_list[arch_desc].run_ssh_device(
-                                ssh_name, ssh_host, ssh_workdir
-                            )
+                                ssh_name, ssh_host, ssh_workdir)
                     else:
-                        print("unsupported arch type: {} in megcc".format(arch_desc))
+                        print("unsupported arch type: {} in megcc".format(
+                            arch_desc))
                         return
 
 
 def main():
     build_model_and_megcc_lib(all_models, models_dir, arch_list)
     gen_benchmarker(arch_list)
-    build_benchmarker(x86_target="fallback", arch_str=arch_list, benchmarkers=benchmarker_list)
+    build_benchmarker(x86_target="fallback",
+                      arch_str=arch_list,
+                      benchmarkers=benchmarker_list)
     set_config_and_run(arch_list)
+
 
 if __name__ == "__main__":
     main()

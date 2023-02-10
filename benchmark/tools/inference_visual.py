@@ -74,12 +74,17 @@ def main(passed_args=None):
             plt.figure(figsize=(10, 6))
             plt.title(k)
             # Make the plot
-            plt.bar(br1, v["megcc"], width=barWidth, edgecolor="grey", label="megcc")
+            plt.bar(br1,
+                    v["megcc"],
+                    width=barWidth,
+                    edgecolor="grey",
+                    label="megcc")
 
             # Adding Xticks
             plt.xlabel("model", fontweight="bold", fontsize=15)
             plt.ylabel("inference(ms)", fontweight="bold", fontsize=15)
-            plt.xticks([r + barWidth for r in range(len(model_list))], model_list)
+            plt.xticks([r + barWidth for r in range(len(model_list))],
+                       model_list)
             plt.grid(axis="y")
             for a, b in zip(br1, v["megcc"]):
                 plt.text(a, b + 0.05, "%.2f" % b, ha="center", va="bottom")
