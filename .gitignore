@@ -1,3 +1,4 @@
 .vscode/*
 build*
 release_megcc/*
+.DS_Store
