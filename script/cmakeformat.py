@@ -16,6 +16,8 @@ from pathlib import Path
 CMAKE_FILS_DIRS = [
     "runtime",
     "compiler",
+    "benchmark",
+    "yolox_example",
 ]
 
 
