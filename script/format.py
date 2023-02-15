@@ -11,11 +11,12 @@ from multiprocessing import Manager
 
 from tqdm.contrib.concurrent import process_map
 
-# change workspace to MegEngine root dir
+# change workspace to MegCC root dir
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 failed_files = Manager().list()
 
+exclude_dir=["runtime/flatcc"]
 
 def process_file(file, clang_format, write):
     original_source = open(file, "r").read()
@@ -73,7 +74,7 @@ def main():
 
     parser.add_argument("path",
                         nargs="+",
-                        help="file name or path based on MegEngine root dir.")
+                        help="file name or path based on MegCC root dir.")
     parser.add_argument(
         "-w",
         "--write",
@@ -95,6 +96,8 @@ def main():
         for p in os.listdir(path):
             p = os.path.join(path, p)
             if os.path.isdir(p):
+                if exclude_dir.count(p) == 1:
+                    continue; 
                 rst += getfiles(p)
             elif (os.path.isfile(p) and not os.path.islink(p)
                   and os.path.splitext(p)[1] in format_type):

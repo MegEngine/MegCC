@@ -105,7 +105,8 @@ message(
 message(
   STATUS "\tBuild with Auto:                        ${MEGCC_COMPILER_KERNEL_MLIR_AUTO}")
 message(
-  STATUS "\tBuild with Float16:                     ${MEGCC_COMPILER_KERNEL_ENABLE_FP16}")
+  STATUS
+    "\tBuild with Float16:                     ${MEGCC_COMPILER_KERNEL_ENABLE_FP16}")
 
 add_library(mgb_imported STATIC ${MGB_INSTALL_LIBS})
 target_link_libraries(mgb_imported PUBLIC ${MGB_INSTALL_LIBS})
@@ -218,7 +219,8 @@ if(NOT MEGCC_CROSS_COMPILE)
   endif()
   target_include_directories(megcc_test_gen PRIVATE ${MEGCC_TEST_COMMON_INCLUDE}
                                                     ${MEGCC_TESTGEN_FLAG_DIR})
-  target_compile_options(megcc_test_gen PRIVATE ${MEGCC_COMPILE_FLAG} -Wno-class-memaccess)
+  target_compile_options(megcc_test_gen PRIVATE ${MEGCC_COMPILE_FLAG}
+                                                -Wno-class-memaccess)
   target_link_options(megcc_test_gen PRIVATE "-fuse-ld=gold")
   install(
     TARGETS megcc_test_gen
@@ -265,7 +267,9 @@ else()
         "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=${ANDROID_ABI}  -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL} -DMEGCC_COMPILER_DIR=${MEGCC_COMPILER_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DMEGCC_COMPILER_KERNEL_WITH_ASAN=${MEGCC_COMPILER_KERNEL_WITH_ASAN}"
     )
     if("${MEGCC_COMPILER_KERNEL_TEST_ARCH}" STREQUAL ${MEGCC_CONST_ARMV8_ABI})
-    set(GEN_CROSS_SRC_EXTRA_FLAG "${GEN_CROSS_SRC_EXTRA_FLAG} -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=${MEGCC_COMPILER_KERNEL_ENABLE_FP16}") 
+      set(GEN_CROSS_SRC_EXTRA_FLAG
+          "${GEN_CROSS_SRC_EXTRA_FLAG} -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=${MEGCC_COMPILER_KERNEL_ENABLE_FP16}"
+      )
     endif()
   elseif("${MEGCC_COMPILER_KERNEL_TEST_ARCH}" STREQUAL ${MEGCC_CONST_RISCV_RVV})
     set(GEN_CROSS_SRC_EXTRA_FLAG

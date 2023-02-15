@@ -12,9 +12,9 @@ target_compile_options(
           $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>)
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL aarch64)
   if(MEGCC_COMPILER_KERNEL_ENABLE_FP16)
-  target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16+dotprod) 
-  endif()  
-endif()       
+    target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16+dotprod)
+  endif()
+endif()
 if(MEGCC_COMPILER_KERNEL_WITH_ASAN)
   target_compile_options(compile_target PRIVATE -g -O0 -fsanitize=address)
   target_link_libraries(compile_target PRIVATE -fsanitize=address)
@@ -22,17 +22,21 @@ else()
   if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     target_compile_options(compile_target PRIVATE -g -O0)
   else()
-    if (ANDROID OR IOS OR RISCV_CROSS_BUILD_ARCH STREQUAL "riscv64")
+    if(ANDROID
+       OR IOS
+       OR RISCV_CROSS_BUILD_ARCH STREQUAL "riscv64")
       target_compile_options(compile_target PRIVATE -Ofast)
     else()
-    target_compile_options(compile_target PRIVATE -O3) 
+      target_compile_options(compile_target PRIVATE -O3)
     endif()
   endif()
 endif()
 
 target_include_directories(
-  compile_target PRIVATE ${MEGCC_COMPILER_DIR} ${MEGCC_COMPILER_DIR}/../runtime/src/
-                         ${MEGCC_COMPILER_DIR}/../runtime/include ${MEGCC_COMPILER_DIR}/../immigration/include)
+  compile_target
+  PRIVATE ${MEGCC_COMPILER_DIR} ${MEGCC_COMPILER_DIR}/../runtime/src/
+          ${MEGCC_COMPILER_DIR}/../runtime/include
+          ${MEGCC_COMPILER_DIR}/../immigration/include)
 install(
   TARGETS compile_target
   EXPORT compile_target

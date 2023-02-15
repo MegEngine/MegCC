@@ -111,9 +111,10 @@ target_include_directories(mgb_imported INTERFACE ${MGB_INCLUDE_DIR})
 
 if(APPLE)
   if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES arm64)
-     set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_arrch64.a)
+    set(TCC_INSTALL_LIB
+        ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_arrch64.a)
   else()
-     set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a)
+    set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a)
   endif()
 else()
   set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc.a)
