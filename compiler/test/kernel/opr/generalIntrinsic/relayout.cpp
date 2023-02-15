@@ -32,7 +32,6 @@ TEST(GI, Relayout) {
         }
     }
 #ifdef ENABLE_KERNEL_FP16
-    printf("float16\n");
     for (DType dtype : {static_cast<DType>(dtype::Float16())}) {
         auto check_args = get_relyout_common_case(dtype);
         checker.set_dtype(0, dtype);

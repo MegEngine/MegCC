@@ -36,6 +36,9 @@ std::shared_ptr<ElemwiseGenBase> ElemwiseHelperFunc::CreateGenHelper(
             CASE_DISPATCH("H_SWISH", ElemwiseGenUnaryHswish);
         } else if (operands[0].dtype == "f16") {
             CASE_DISPATCH_ARG("RELU", ElemwiseGenUnaryRelu, "f16", "f16");
+            CASE_DISPATCH_ARG("EXP", ElemwiseGenUnaryExp, "f16", "f16");
+            CASE_DISPATCH_ARG("SIGMOID", ElemwiseGenUnarySigmoid, "f16", "f16");
+            CASE_DISPATCH_ARG("H_SWISH", ElemwiseGenUnaryHswish, "f16", "f16");
         } else {
             CC_ABORT << " ElemwiseGenBase is not supported  dtype: "
                      << operands[0].dtype << "\n";

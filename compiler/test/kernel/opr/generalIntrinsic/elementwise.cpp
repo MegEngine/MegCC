@@ -9,7 +9,6 @@
 
 #include "test/kernel/common/checker.h"
 #include "test/kernel/opr/common/elemwise.h"
-
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
@@ -25,12 +24,12 @@ TEST(GI, ElementwiseUnique) {
         checker.execs({{1, 10}, {}});
         checker.execs({{1, 10, 12, 13}, {}});
     }
-#if ENABLE_KERNEL_FP16
+#ifdef ENABLE_KERNEL_FP16
     megcc::test::UniformRNG rng(-1.0, 1.0);
     checker.set_rng(0, &rng);
     checker.set_epsilon(1e-2);
     checker.set_dtype(0, dtype::Float16());
-    for (auto mode : {MODE::RELU}) {
+    for (auto mode : {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::H_SWISH}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {}});

@@ -40,7 +40,8 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
         is_fp16_ok &=
                 (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype == "f16");
     }
-    is_fp16_ok &= mode == "RELU";
+    is_fp16_ok &=
+            (mode == "RELU" || mode == "EXP" || mode == "SIGMOID" || mode == "H_SWISH");
     bool usable = (type_ok && mode_ok && ok_input) || is_fp16_ok;
     return usable;
 }
@@ -109,6 +110,7 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
             break;
         case Utils::DtypeEnum::float16:
             writer << R"(
+#include "gi_float.h"
 #include "gi_float16.h"
             )";
             break;
@@ -120,7 +122,10 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
 #include <stdbool.h>
 #include "tensor_util.h"
     )";
-
+    if (dtype == Utils::DtypeEnum::float16) {
+        writer << gi_math.FastFp16toFp32() << "\n";
+        writer << gi_math.FastFp32toFp16() << "\n";
+    }
     if ("EXP" == mode || "SIGMOID" == mode) {
         writer << R"(
 #include "gi_int.h"
@@ -129,6 +134,9 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     }
     if ("SIGMOID" == mode) {
         writer << gi_math.GiSigmoidPsFloat32() << "\n";
+        if (dtype == Utils::DtypeEnum::float16) {
+            writer << gi_math.GiSigmoidPsFloat16() << "\n";
+        }
     }
     if ("H_SWISH" == mode) {
         writer << gi_math.GiHSwishFloat32() << "\n";

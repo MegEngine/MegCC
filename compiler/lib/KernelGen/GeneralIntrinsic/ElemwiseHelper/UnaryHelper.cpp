@@ -178,8 +178,32 @@ std::string ElemwiseGenUnaryExp::GenKernelSimdUnroll(
     int unroll = std::stoi(strs[0]);
     std::stringstream writer;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GI_FLOAT32_t " << strs[2 * i + 2] << " = GiExpPsFloat32("
-               << strs[2 * i + 1] << ");";
+        if (m_src_dtype == "f16") {
+            auto input_render = StringTemplate::StringTemplateArgs()
+                                        .add("idx", i)
+                                        .add("input_reg", strs[2 * i + 1])
+                                        .add("dst_reg", strs[2 * i + 2]);
+
+            writer << input_render.render(R"(
+                GI_FLOAT16_t input_reg_${idx} = ${input_reg};
+                GI_FLOAT16_t dst_reg_${idx}; 
+                {
+                    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(input_reg_${idx});
+                    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+                    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+                    low = GiExpPsFloat32(low);
+                    high = GiExpPsFloat32(high);
+                    dst_reg_${idx} = GiCastFloat32ToFloat16(low, high);
+                }
+
+            )");
+            writer << "\n GI_FLOAT16_t " << strs[2 * i + 2] << " = dst_reg_" << i
+                   << ";";
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << "\n GI_FLOAT32_t " << strs[2 * i + 2] << " = GiExpPsFloat32("
+                   << strs[2 * i + 1] << ");";
+        }
     }
     return writer.str();
 }
@@ -191,8 +215,21 @@ std::string ElemwiseGenUnaryExp::GenKernelNaiveUnroll(
     auto output_ptr = strs[2];
     std::stringstream writer;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n(" << output_ptr << ")[" << i << "] =  exp((" << input_ptr << ")["
-               << i << "]);";
+        if (m_src_dtype == "f16") {
+            auto body_render = StringTemplate::StringTemplateArgs()
+                                       .add("idx", i)
+                                       .add("src", input_ptr)
+                                       .add("dst", output_ptr);
+            writer << body_render.render(R"(
+                float src_${idx} = FastFp16toFp32(${src}[${idx}]);
+                float dst_${idx} = exp(src_${idx});
+                (${dst})[${idx}] = FastFp32toFp16(dst_${idx}); 
+            )");
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << "\n(" << output_ptr << ")[" << i << "] =  exp((" << input_ptr
+                   << ")[" << i << "]);";
+        }
     }
     return writer.str();
 }
@@ -201,9 +238,18 @@ std::string ElemwiseGenUnaryExp::GenKernelNaiveUnroll(
 std::string ElemwiseGenUnarySigmoid::GenInlineName() const {
     return "ElemwiseGenUnarySigmoid";
 }
+
 std::string ElemwiseGenUnarySigmoid::GenKernelSimdInit(std::vector<std::string>) const {
     std::stringstream writer;
-    writer << "\nGI_FLOAT32_t ones = GiBroadcastFloat32(1.f);";
+    if (m_src_dtype == "f32") {
+        return "GI_FLOAT32_t ones = GiBroadcastFloat32(1.0f);";
+    } else if (m_src_dtype == "f16") {
+        return "GI_FLOAT16_t ones = GiBroadcastFloat16(1.0f);";
+    } else {
+        CC_ABORT << " ElemwiseGenUnaryRelu is not supported  dtype: " << m_src_dtype
+                 << "\n";
+        return "";
+    }
     return writer.str();
 }
 
@@ -221,6 +267,10 @@ std::string ElemwiseGenUnarySigmoid::GenKernelSimdUnroll(
             input_reg_str = input_render.render(R"(
                 GI_FLOAT32_t input_reg_${idx} = GiMultiplyScalerFloat32(GiCastToFloat32(${input_reg}), src_scale);
             )");
+        } else if (m_src_dtype == "f16") {
+            input_reg_str = input_render.render(R"(
+                GI_FLOAT16_t input_reg_${idx} = ${input_reg};
+            )");
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32))
                     << "not support dst_type " << m_dst_dtype;
@@ -229,8 +279,13 @@ std::string ElemwiseGenUnarySigmoid::GenKernelSimdUnroll(
             )");
         }
         writer << input_reg_str;
-        writer << "\n GI_FLOAT32_t dst_temp_" << i << " = GiSigmoidPsFloat32(input_reg_"
-               << i << ");";
+        if (m_src_dtype == "f16") {
+            writer << "\n GI_FLOAT16_t dst_temp_" << i
+                   << " = GiSigmoidPsFloat16(input_reg_" << i << ");";
+        } else {
+            writer << "\n GI_FLOAT32_t dst_temp_" << i
+                   << " = GiSigmoidPsFloat32(input_reg_" << i << ");";
+        }
         if (m_i32_to_qs8) {
             std::string quant_temp = R"(
                 GI_INT8_t ${dst_reg_name} = GiCvtFromFloat32ToInt8(GiMultiplyScalerFloat32(dst_temp_${idx}, dst_scale));
@@ -239,6 +294,9 @@ std::string ElemwiseGenUnarySigmoid::GenKernelSimdUnroll(
                               .add("dst_reg_name", strs[2 * i + 2])
                               .add("idx", i)
                               .render(quant_temp);
+        } else if (m_src_dtype == "f16") {
+            writer << "\n GI_FLOAT16_t " << strs[2 * i + 2] << " = dst_temp_" << i
+                   << ";";
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
             writer << "\n GI_FLOAT32_t " << strs[2 * i + 2] << " = dst_temp_" << i
@@ -265,6 +323,12 @@ std::string ElemwiseGenUnarySigmoid::GenKernelNaiveUnroll(
                 res_i32 = res_i32 > 127 ? 127 : res_i32;
                 res_i32 = res_i32 < -128 ? -128 : res_i32;
                 (${dst_ptr})[0] = res_i32;
+            )");
+        } else if (m_src_dtype == "f16") {
+            writer << body_render.render(R"(
+                float input = FastFp16toFp32((${src_ptr})[0]);
+                float output = 1.f / ( 1.f + expf(-input));
+                (${dst_ptr})[0] = FastFp32toFp16(output);
             )");
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
@@ -298,6 +362,10 @@ std::string ElemwiseGenUnaryHswish::GenKernelSimdUnroll(
             input_reg_str = input_render.render(R"(
                 GI_FLOAT32_t input_reg_${idx} = GiMultiplyScalerFloat32(GiCastToFloat32(${input_reg}), src_scale);
             )");
+        } else if (m_src_dtype == "f16") {
+            input_reg_str = input_render.render(R"(
+                GI_FLOAT16_t input_reg_${idx} = ${input_reg};
+            )");
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32))
                     << "not support dst_type " << m_dst_dtype;
@@ -306,9 +374,25 @@ std::string ElemwiseGenUnaryHswish::GenKernelSimdUnroll(
             )");
         }
         writer << input_reg_str;
-        std::string input_temp = R"(
+        std::string input_temp;
+        if (m_src_dtype == "f16") {
+            input_temp = R"(
+                 GI_FLOAT16_t dst_temp_${idx}; 
+                {
+                    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(input_reg_${idx});
+                    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+                    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+                    low = GiHSwishFloat32(low);
+                    high = GiHSwishFloat32(high);
+                    dst_temp_${idx} = GiCastFloat32ToFloat16(low, high);
+                } 
+            )";
+
+        } else {
+            input_temp = R"(
                 GI_FLOAT32_t dst_temp_${idx} = GiHSwishFloat32(input_reg_${idx});
             )";
+        }
         writer << input_render.render(input_temp);
 
         if (m_i32_to_qs8) {
@@ -319,6 +403,9 @@ std::string ElemwiseGenUnaryHswish::GenKernelSimdUnroll(
                               .add("dst_reg_name", strs[2 * i + 2])
                               .add("idx", i)
                               .render(quant_temp);
+        } else if (m_src_dtype == "f16") {
+            writer << "\n GI_FLOAT16_t " << strs[2 * i + 2] << " = dst_temp_" << i
+                   << ";";
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
             writer << "\n GI_FLOAT32_t " << strs[2 * i + 2] << " = dst_temp_" << i
@@ -349,6 +436,15 @@ std::string ElemwiseGenUnaryHswish::GenKernelNaiveUnroll(
                 res_i32 = res_i32 < -128 ? -128 : res_i32;
                 (${dst_ptr})[0] = res_i32;
             )");
+        } else if (m_src_dtype == "f16") {
+            writer << body_render.render(R"(
+
+                float temp = FastFp16toFp32(${src_ptr}[0]) + 3;
+                temp = temp > 6? 6 : temp;
+                temp = temp < 0? 0 : temp;
+                (${dst_ptr})[0] =  FastFp32toFp16((temp-3) * temp / 6.f);
+            )");
+
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
             writer << body_render.render(R"(
