@@ -34,8 +34,11 @@ std::vector<KernelObj> RelayoutKernel::GetDependInternalSymbol(
 }
 
 bool RelayoutKernel::IsAvailable(TContext* context) const {
-    bool ok_dtype = context->getAttrOprand("operand:0").dtype ==
-                    context->getAttrOprand("operand:1").dtype;
+    auto dtype_str = context->getAttrOprand("operand:0").dtype;
+    int32_t type_size = Utils::get_dtype_size(dtype_str);
+    bool ok_dtype = (context->getAttrOprand("operand:0").dtype ==
+                     context->getAttrOprand("operand:1").dtype) &&
+                    (type_size == 1 || type_size == 2 || type_size == 4);
     std::vector<size_t> shape_in = context->getAttrOprand("operand:0").shape;
     std::vector<size_t> shape_out = context->getAttrOprand("operand:0").shape;
     bool ok_shape = shape_in.size() == shape_out.size();
@@ -60,10 +63,19 @@ std::string RelayoutKernel::GetKernelBody(TContext* context) const {
     ss << R"(
         #include <stdbool.h>
         #include <string.h>
+    )";
+    if (src_dtype_str == "f16") {
+        ss << R"(
+        #include "gi_float16.h"
+
+    )";
+    } else {
+        ss << R"( 
         #include "gi_float.h"
         #include "gi_int.h"
 
     )";
+    }
     GeneralIntrinsic::CommonTransposeKernel common_tran;
     std::shared_ptr<TContext> tran_ctx = std::make_shared<CodeGenContext>();
     int32_t type_size = Utils::get_dtype_size(src_dtype_str);

@@ -11,7 +11,7 @@
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
-#if ENABLE_KERNEL_FP16
+#ifdef ENABLE_KERNEL_FP16
 TEST(GI, Fp16MatMulM8N8K8) {
     Checker<MatrixMulForward> checker(Arch::BAREMETAL);
     checker.set_kernel_symbol("GI_kernel_fp16_matmul_8x8mk8_.*");

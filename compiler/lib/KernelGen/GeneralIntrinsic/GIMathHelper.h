@@ -389,6 +389,50 @@ static GI_FLOAT32_t GiHSwishFloat32(GI_FLOAT32_t src) {
 }
     )";
     }
+    std::string GiSigmoidPsFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static GI_FLOAT16_t GiSigmoidPsFloat16(GI_FLOAT16_t x) {
+    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+    low = GiSigmoidPsFloat32(low);
+    high = GiSigmoidPsFloat32(high);
+    return GiCastFloat32ToFloat16(low, high);
+}
+#endif
+        )";
+    }
+    //! REFERENCE:
+    //! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
+    std::string FastFp16toFp32() {
+        return R"(
+static float FastFp16toFp32(const gi_float16_t data) { 
+    const unsigned short x =*(unsigned short*)&data; 
+    const unsigned int e = (x&0x7C00)>>10; 
+    const unsigned int m = (x&0x03FF)<<13; 
+    float m_ = (float)m;
+    const unsigned int m_0 = *(unsigned int*)&m_;
+    const unsigned int v = m_0 >>23;
+    const unsigned int ans = (x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000)); 
+    return *(float*)&ans; 
+}
+
+    )";
+    }
+    std::string FastFp32toFp16() {
+        return R"(
+static gi_float16_t FastFp32toFp16(const float x) { 
+    const unsigned int b = (*(unsigned int*)&x)+0x00001000; 
+    const unsigned int e = (b&0x7F800000)>>23;
+    const unsigned int m = b&0x007FFFFF;
+    unsigned short ans = (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; 
+    return *(gi_float16_t*)&ans; 
+}   
+        )";
+    }
 };
 
 }  // namespace GeneralIntrinsic

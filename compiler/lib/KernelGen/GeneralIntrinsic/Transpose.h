@@ -317,9 +317,9 @@ static inline void trans_4x16_i8_contig_src(const void* src, void* dst,
     )";
 }
 
-std::string trans_8x8_i16() {
+std::string trans_8x8_i16i8() {
     return R"(
-static inline void trans_8x8_i16(
+static inline void trans_8x8_i16i8(
         const void* src, void* dst, const size_t src_step, const size_t dst_step) {
     int16_t* src_ptr = (int16_t*)src;
     int8_t* dst_ptr = (int8_t*)dst;
@@ -377,6 +377,70 @@ static inline void trans_8x8_i16(
     GiStoreInt8(dst_ptr + 5 * i16_dst_step, GiReinterInt32ToInt8(row_5));
     GiStoreInt8(dst_ptr + 6 * i16_dst_step, GiReinterInt32ToInt8(row_6));
     GiStoreInt8(dst_ptr + 7 * i16_dst_step, GiReinterInt32ToInt8(row_7));
+}
+
+    )";
+}
+
+std::string trans_8x8_i16() {
+    return R"(
+static inline void trans_8x8_i16(
+        const void* src, void* dst, const size_t src_step, const size_t dst_step) {
+    int16_t* src_ptr = (int16_t*)src;
+    int16_t* dst_ptr = (int16_t*)dst;
+    GI_INT16_t src0 = GiLoadInt16(src_ptr + 0 * src_step);  // A0A1A2A3A4A5A6A7
+    GI_INT16_t src1 = GiLoadInt16(src_ptr + 1 * src_step);  // B0B1B2B3B4B5B6B7
+    GI_INT16_t src2 = GiLoadInt16(src_ptr + 2 * src_step);  // C0C1C2C3C4C5C6C7
+    GI_INT16_t src3 = GiLoadInt16(src_ptr + 3 * src_step);  // D0D1D2D3D4D5D6D7
+    GI_INT16_t src4 = GiLoadInt16(src_ptr + 4 * src_step);  // E0E1E2E3E4E5E6E7
+    GI_INT16_t src5 = GiLoadInt16(src_ptr + 5 * src_step);  // F0F1F2F3F4F5F6F7
+    GI_INT16_t src6 = GiLoadInt16(src_ptr + 6 * src_step);  // G0G1G2G3G4G5G6G7
+    GI_INT16_t src7 = GiLoadInt16(src_ptr + 7 * src_step);  // H0H1H2H3H4H5H6H7
+
+    GI_INT16_t ab_low = GiZipV0Int16(src0, src1);   // A0B0A1B1A2B2A3B3
+    GI_INT16_t ab_high = GiZipV1Int16(src0, src1);  // A4B4A5B5A6B6A7B7
+    GI_INT16_t cd_low = GiZipV0Int16(src2, src3);   // C0D0C1D1C2D2C3D3
+    GI_INT16_t cd_high = GiZipV1Int16(src2, src3);  // C4D4C5D5C6D6C7D7
+    GI_INT16_t ef_low = GiZipV0Int16(src4, src5);   // E0F0E1F1E2F2E3F3
+    GI_INT16_t ef_high = GiZipV1Int16(src4, src5);  // E4F4E5F5E6F6E7F7
+    GI_INT16_t gh_low = GiZipV0Int16(src6, src7);   // G0H0G1H1G2H2G3H3
+    GI_INT16_t gh_high = GiZipV1Int16(src6, src7);  // G4H4G5H5G6H6G7H7
+
+    GI_INT32_t abcd_0 = GiZipV0Int32(GiReinterpretInt16AsInt32(ab_low),
+            GiReinterpretInt16AsInt32(cd_low));  // A0B0C0D0A1B1C1D1
+    GI_INT32_t abcd_2 = GiZipV1Int32(GiReinterpretInt16AsInt32(ab_low),
+            GiReinterpretInt16AsInt32(cd_low));  // A2B2C2D2A3B3C3D3
+    GI_INT32_t abcd_4 =GiZipV0Int32(GiReinterpretInt16AsInt32(ab_high),
+            GiReinterpretInt16AsInt32(cd_high));  // A4B4C4D4A5B5C5D5
+    GI_INT32_t abcd_6 = GiZipV1Int32(GiReinterpretInt16AsInt32(ab_high),
+            GiReinterpretInt16AsInt32(cd_high));  // A6B6C6D6A7B7C7D7
+    GI_INT32_t efgh_0 = GiZipV0Int32(GiReinterpretInt16AsInt32(ef_low),
+            GiReinterpretInt16AsInt32(gh_low));  // E0F0G0H0E1F1G1H1
+    GI_INT32_t efgh_2 = GiZipV1Int32(GiReinterpretInt16AsInt32(ef_low),
+            GiReinterpretInt16AsInt32(gh_low));  // E2F2G2H2E3F3G3H3
+    GI_INT32_t efgh_4 = GiZipV0Int32(GiReinterpretInt16AsInt32(ef_high),
+            GiReinterpretInt16AsInt32(gh_high));  // E4F4G4H4E5F5G5H5
+    GI_INT32_t efgh_6 = GiZipV1Int32(GiReinterpretInt16AsInt32(ef_high),
+            GiReinterpretInt16AsInt32(gh_high));  // E6F6G6H6E7F7G7H7
+
+    GI_INT32_t row_0 = GiCombineInt32Low(abcd_0, efgh_0);
+    GI_INT32_t row_1 = GiCombineInt32High(abcd_0, efgh_0);
+    GI_INT32_t row_2 = GiCombineInt32Low(abcd_2, efgh_2);
+    GI_INT32_t row_3 = GiCombineInt32High(abcd_2, efgh_2);
+    GI_INT32_t row_4 = GiCombineInt32Low(abcd_4, efgh_4);
+    GI_INT32_t row_5 = GiCombineInt32High(abcd_4, efgh_4);
+    GI_INT32_t row_6 = GiCombineInt32Low(abcd_6, efgh_6);
+    GI_INT32_t row_7 = GiCombineInt32High(abcd_6, efgh_6);
+
+    // int32 store may cause bus error for unaligned dst address
+    GiStoreInt16(dst_ptr + 0 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_0)));
+    GiStoreInt16(dst_ptr + 1 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_1)));
+    GiStoreInt16(dst_ptr + 2 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_2)));
+    GiStoreInt16(dst_ptr + 3 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_3)));
+    GiStoreInt16(dst_ptr + 4 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_4)));
+    GiStoreInt16(dst_ptr + 5 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_5)));
+    GiStoreInt16(dst_ptr + 6 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_6)));
+    GiStoreInt16(dst_ptr + 7 * dst_step, GiReinterpretInt8AsInt16(GiReinterInt32ToInt8(row_7)));
 }
 
     )";
@@ -978,13 +1042,46 @@ static inline void transpose_c1(uint32_t* src, uint32_t* dst, int m, int n, int 
     }
 }
     )";
+    } else if (spec == "uint16_t") {
+        ss << trans_8x8_i16();
+        ss << R"(
+static inline void transpose_c1(uint16_t* src, uint16_t* dst, int m, int n, int c, int src_step, int dst_step){
+    const int block_m = 8;
+    const int block_n = 8;
+    int m_end = m / block_m * block_m;
+    int m_remain = m - m_end;
+    int n_end = n / block_n * block_n;
+    int n_remain = n - n_end;
+    
+    for(int n_idx = 0; n_idx < n_end; n_idx += block_n){
+        for(int m_idx = 0; m_idx < m_end; m_idx += block_m){
+            uint16_t* dst_ptr = dst + m_idx * dst_step + n_idx;
+            uint16_t* src_ptr = src + n_idx * src_step + m_idx;
+            trans_8x8_i16(src_ptr, dst_ptr, src_step, dst_step);
+        }
+        if(m_remain > 0){
+            uint16_t* dst_ptr = dst + m_end * dst_step + n_idx;
+            uint16_t* src_ptr = src + n_idx * src_step + m_end;
+            transpose_naive(src_ptr, dst_ptr, m_remain, block_n, 1, src_step, dst_step);
+        }
+    }
+    if(n_remain > 0){
+        uint16_t* dst_ptr = dst + 0 * dst_step + n_end;
+        uint16_t* src_ptr = src + n_end * src_step + 0;
+        transpose_naive(src_ptr, dst_ptr, m, n_remain, 1, src_step, dst_step);
+    }
+    })";
+
+    } else {
+        CC_ABORT << "unsupported dtype " << spec << " for transpose"
+                 << "\n";
     }
     return ss.str();
 }
 
 std::string transpose_c2() {
     std::stringstream ss;
-    ss << trans_8x8_i16();
+    ss << trans_8x8_i16i8();
     ss << R"(
 static inline void transpose_c2(uint8_t* src, uint8_t* dst, int m, int n, int c, int src_step, int dst_step){
     const int block = 8;
@@ -997,7 +1094,7 @@ static inline void transpose_c2(uint8_t* src, uint8_t* dst, int m, int n, int c,
         for(int m_idx = 0; m_idx < m_end; m_idx += block){
             uint8_t* dst_ptr = dst + m_idx * dst_step + n_idx * c;
             uint8_t* src_ptr = src + n_idx * src_step + m_idx * c;
-            trans_8x8_i16(src_ptr, dst_ptr, i16_src_step , dst_step / 2);
+            trans_8x8_i16i8(src_ptr, dst_ptr, i16_src_step , dst_step / 2);
         }
         if(m_remain > 0){
             uint8_t* dst_ptr = dst + m_end * dst_step + n_idx * c;
@@ -1097,6 +1194,24 @@ void fast_transpose_impl_32(void* src, void* dst, int m, int n, int c, int src_s
     return ss.str();
 }
 
+std::string gen_transpose_u16() {
+    std::stringstream ss;
+    ss << transpose_c1("uint16_t");
+    ss << R"(
+void fast_transpose_impl_16(void* src, void* dst, int m, int n, int c, int src_step, int dst_step){
+    uint16_t* src_base_ptr = src;
+    uint16_t* dst_base_ptr = dst;
+    if(c == 1) {
+        transpose_c1(src_base_ptr, dst_base_ptr, m, n, c, src_step, dst_step);
+        return ;
+    }else{
+        transpose_naive(src_base_ptr, dst_base_ptr, m, n, c, src_step, dst_step);
+    }
+    return ;
+})";
+    return ss.str();
+}
+
 std::string gen_transpose(int type_size) {
     std::stringstream ss;
     if (type_size == 1) {
@@ -1107,6 +1222,10 @@ std::string gen_transpose(int type_size) {
     } else if (type_size == 4) {
         ss << transpose_naive("uint32_t");
         ss << gen_transpose_u32();
+        return ss.str();
+    } else if (type_size == 2) {
+        ss << transpose_naive("uint16_t");
+        ss << gen_transpose_u16();
         return ss.str();
     } else {
         CC_ABORT << "not support type size " << type_size << "\n";

@@ -31,6 +31,19 @@ TEST(GI, Relayout) {
             checker.execl({item.first, item.second});
         }
     }
+#ifdef ENABLE_KERNEL_FP16
+    printf("float16\n");
+    for (DType dtype : {static_cast<DType>(dtype::Float16())}) {
+        auto check_args = get_relyout_common_case(dtype);
+        checker.set_dtype(0, dtype);
+        checker.set_dtype(1, dtype);
+        for (auto&& item : check_args) {
+            printf("src=%s, dst=%s\n", item.first.to_string().c_str(),
+                   item.second.to_string().c_str());
+            checker.execl({item.first, item.second});
+        }
+    }
+#endif
 }
 
 TEST(GI, Relayout44) {
