@@ -4,7 +4,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
     CACHE INTERNAL "")
 
 project(MegCC)
-
 option(MEGCC_FRIENDLY_TO_DEBUGGER "make MegCC friendly to debugger." OFF)
 
 # set llvm build options
@@ -18,7 +17,7 @@ set(LLVM_ENABLE_PROJECTS
     "mlir"
     CACHE STRING "" FORCE)
 set(LLVM_TARGETS_TO_BUILD
-    "X86"
+    "host"
     CACHE STRING "" FORCE)
 set(LLVM_INCLUDE_TOOLS
     ON
@@ -111,7 +110,11 @@ target_link_libraries(mgb_imported INTERFACE ${MGB_INSTALL_LIB})
 target_include_directories(mgb_imported INTERFACE ${MGB_INCLUDE_DIR})
 
 if(APPLE)
-  set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a)
+  if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES arm64)
+     set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_arrch64.a)
+  else()
+     set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc_apple_x86.a)
+  endif()
 else()
   set(TCC_INSTALL_LIB ${PROJECT_SOURCE_DIR}/../third_party/tcc/lib/libtcc.a)
 endif()
