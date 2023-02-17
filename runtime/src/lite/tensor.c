@@ -15,8 +15,8 @@
 static inline ComboIOTensor* to_inner_tensor(LiteTensor tensor) {
     return (ComboIOTensor*)tensor;
 }
-static inline TinyNNStatus tinynn_to_lite_dtype(TinyNNDType dtype_enum,
-                                                LiteCDataType* target_dtype) {
+static inline TinyNNStatus tinynn_to_lite_dtype(
+        TinyNNDType dtype_enum, LiteCDataType* target_dtype) {
     if (!target_dtype) {
         return TinyNN_ERROR_NULL_PTR;
     }
@@ -88,19 +88,21 @@ int LITE_set_tensor_layout(LiteTensor tensor_, const LiteLayout layout) {
     return TinyNN_ERROR_INVALID_LAYOUT;
 }
 
-int LITE_reset_tensor_memory(LiteTensor tensor_, void* prepared_data,
-                             size_t data_length_in_byte) {
+int LITE_reset_tensor_memory(
+        LiteTensor tensor_, void* prepared_data, size_t data_length_in_byte) {
     if (!tensor_ || !prepared_data) {
         LOG_ERROR("input pointer is NULL\n");
         return TinyNN_ERROR_NULL_PTR;
     }
     Tensor* tensor = get_active_tensor(to_inner_tensor(tensor_));
     size_t tensor_len = tensor_length_in_byte(tensor);
-    LOG_DEBUG("active %d model\n",
-              to_inner_tensor(tensor_)->model->active_device_model_idx);
+    LOG_DEBUG(
+            "active %d model\n",
+            to_inner_tensor(tensor_)->model->active_device_model_idx);
     if (data_length_in_byte != tensor_len) {
-        LOG_ERROR("reset tensor memory with not equal size %zu != %zu\n",
-                  data_length_in_byte, tensor_len);
+        LOG_ERROR(
+                "reset tensor memory with not equal size %zu != %zu\n",
+                data_length_in_byte, tensor_len);
         return TinyNN_ERROR;
     }
     tensor->ptr = prepared_data;

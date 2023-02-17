@@ -43,8 +43,9 @@ int ta_init_megcc_deamo() {
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
     TEE_Time t;
     TEE_GetSystemTime(&t);
-    logger_imp("into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__,
-               t.seconds, t.millis);
+    logger_imp(
+            "into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__, t.seconds,
+            t.millis);
     init_megcc_test("data", &g_cb);
     return 0;
 }
@@ -52,8 +53,9 @@ int ta_init_megcc_deamo() {
 int ta_free_megcc_deamo() {
     TEE_Time t;
     TEE_GetSystemTime(&t);
-    logger_imp("into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__,
-               t.seconds, t.millis);
+    logger_imp(
+            "into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__, t.seconds,
+            t.millis);
     free_megcc_test();
     return 0;
 }
@@ -61,7 +63,8 @@ int ta_free_megcc_deamo() {
 float ta_run_megcc_deamo(int iter) {
     TEE_Time t;
     TEE_GetSystemTime(&t);
-    logger_imp("into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__,
-               t.seconds, t.millis);
+    logger_imp(
+            "into %s: %d at: (sec: %u millis:%u)\n", __FUNCTION__, __LINE__, t.seconds,
+            t.millis);
     return run_megcc_test(iter);
 }

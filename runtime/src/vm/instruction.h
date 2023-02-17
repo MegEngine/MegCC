@@ -10,9 +10,9 @@
 #define VM_INSTRUCTION_H
 
 #include "data_struct.h"
+#include "extern_c_opr.h"
 #include "model_reader.h"
 #include "runtime_inst_switch.h"
-#include "extern_c_opr.h"
 
 // clang-format off
 #define FOR_EACH_INSTRUCTION_TYPE(cb) \
@@ -60,7 +60,7 @@ static inline const char* instruction_type_name(InstructionType type) {
 // clang-format on
 
 typedef struct {
-   int32_t axis, start, end, step, index;
+    int32_t axis, start, end, step, index;
 } IndexDesc;
 
 //! all opr is of the same behave, use the assigned input, weights to compute
@@ -92,8 +92,8 @@ typedef struct {
 } DevMemFree;
 
 typedef enum {
-    TinyNN_MemForward_Reshape=0,
-    TinyNN_MemForward_Subtensor=1,
+    TinyNN_MemForward_Reshape = 0,
+    TinyNN_MemForward_Subtensor = 1,
 } MemForwardType;
 
 typedef struct {

@@ -35,8 +35,7 @@ public:
 
     //! Gen the naive C elemwise compute code, and the degree of unroll is
     //! specific by first param
-    virtual std::string GenKernelNaiveUnroll(
-            std::vector<std::string>) const = 0;
+    virtual std::string GenKernelNaiveUnroll(std::vector<std::string>) const = 0;
 
     virtual ~ElemwiseGenBase() {}
 };
@@ -51,16 +50,16 @@ public:
     std::unique_ptr<ArmCommon::ArmSimdHelper> m_dst_simd;
     bool m_i32_to_qs8;
     std::unique_ptr<ArmCommon::ElemwiseGenUnarySigmoid> m_common_sigmoid_gen;
-    ElemwiseGenUnary(std::string src_dtype = "f32",
-                     std::string dst_dtype = "f32", bool inline_mode = false)
+    ElemwiseGenUnary(
+            std::string src_dtype = "f32", std::string dst_dtype = "f32",
+            bool inline_mode = false)
             : m_src_dtype(src_dtype),
               m_dst_dtype(dst_dtype),
               m_inline_mode(inline_mode) {
         m_src_simd = std::make_unique<ArmCommon::ArmSimdHelper>(src_dtype);
         m_dst_simd = std::make_unique<ArmCommon::ArmSimdHelper>(dst_dtype);
-        m_common_sigmoid_gen =
-                std::make_unique<ArmCommon::ElemwiseGenUnarySigmoid>(
-                        src_dtype, dst_dtype, inline_mode);
+        m_common_sigmoid_gen = std::make_unique<ArmCommon::ElemwiseGenUnarySigmoid>(
+                src_dtype, dst_dtype, inline_mode);
         m_i32_to_qs8 = Utils::is_int_dtype(m_src_dtype, 32) &&
                        Utils::is_int_dtype(m_dst_dtype, 8);
     };
@@ -77,20 +76,18 @@ struct ElemwiseHelperFunc {
 
 /************************************Unary***********************************/
 
-#define DEFINE_NNARY_OP(_name)                                                 \
-    class _name : public ElemwiseGenUnary {                                    \
-    public:                                                                    \
-        _name(std::string src_dtype = "f32", std::string dst_dtype = "f32",    \
-              bool inline_mode = false)                                        \
-                : ElemwiseGenUnary(SymbolHelper::gen_valid_dtype(src_dtype),   \
-                                   SymbolHelper::gen_valid_dtype(dst_dtype),   \
-                                   inline_mode) {}                             \
-        std::string GenKernelAsmInit(std::vector<std::string>) const override; \
-        std::string GenKernelSimdUnroll(                                       \
-                std::vector<std::string>) const override;                      \
-        std::string GenKernelNaiveUnroll(                                      \
-                std::vector<std::string>) const override;                      \
-        std::string GenInlineName() const override;                            \
+#define DEFINE_NNARY_OP(_name)                                                      \
+    class _name : public ElemwiseGenUnary {                                         \
+    public:                                                                         \
+        _name(std::string src_dtype = "f32", std::string dst_dtype = "f32",         \
+              bool inline_mode = false)                                             \
+                : ElemwiseGenUnary(                                                 \
+                          SymbolHelper::gen_valid_dtype(src_dtype),                 \
+                          SymbolHelper::gen_valid_dtype(dst_dtype), inline_mode) {} \
+        std::string GenKernelAsmInit(std::vector<std::string>) const override;      \
+        std::string GenKernelSimdUnroll(std::vector<std::string>) const override;   \
+        std::string GenKernelNaiveUnroll(std::vector<std::string>) const override;  \
+        std::string GenInlineName() const override;                                 \
     };
 
 DEFINE_NNARY_OP(ElemwiseGenUnarySigmoid)

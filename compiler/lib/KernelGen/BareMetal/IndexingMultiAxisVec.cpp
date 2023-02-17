@@ -20,12 +20,13 @@ bool IndexingMultiAxisKernel::IsAvailable(TContext* context) const {
     int nr_operand = context->getAttrInt("nr_operands");
     bool ok_operand = nr_operand > 2;
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool ok_dtype = Utils::is_int_dtype(src_dtype, 32) ||
-                    Utils::is_float_dtype(src_dtype, 32);
+    bool ok_dtype =
+            Utils::is_int_dtype(src_dtype, 32) || Utils::is_float_dtype(src_dtype, 32);
     for (int i = 1; i < nr_operand - 1; ++i) {
-        ok_operand = ok_operand &&
-                     context->getAttrOprand("operand:" + std::to_string(i))
-                                     .shape.size() == 1;
+        ok_operand =
+                ok_operand &&
+                context->getAttrOprand("operand:" + std::to_string(i)).shape.size() ==
+                        1;
     }
     bool ok_axis = true;
     int last_axis = -1;
@@ -53,8 +54,8 @@ std::string IndexingMultiAxisKernel::GetKernelBody(TContext* context) const {
     std::stringstream axis_init_ss;
     int nr_operand = context->getAttrInt("nr_operands");
     for (int i = 0; i < nr_operand - 2; ++i) {
-        axis_init_ss << "axis_vec[" << i << "] = "
-                     << context->getAttrInt("axis:" + std::to_string(i))
+        axis_init_ss << "axis_vec[" << i
+                     << "] = " << context->getAttrInt("axis:" + std::to_string(i))
                      << ";\n";
     }
     std::stringstream writer;

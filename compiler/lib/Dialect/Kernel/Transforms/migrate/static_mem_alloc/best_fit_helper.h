@@ -19,8 +19,7 @@ namespace migrate {
 struct BestFitHelper {
     using Interval = StaticMemAllocImplHelper::Interval;
     std::function<void(Interval*)> alloc;
-    std::function<void(Interval* dest, size_t offset, Interval*)>
-            alloc_overwrite;
+    std::function<void(Interval* dest, size_t offset, Interval*)> alloc_overwrite;
     std::function<void(Interval*)> free;
 
     /*!

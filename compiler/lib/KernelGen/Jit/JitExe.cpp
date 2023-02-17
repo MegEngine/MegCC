@@ -72,8 +72,7 @@ struct AutoFile {
 using namespace megcc;
 using namespace KernelGen;
 
-size_t JitExec::jit_exec_and_get_workspace(const KernelFn* func,
-                                           TContext* ctx) {
+size_t JitExec::jit_exec_and_get_workspace(const KernelFn* func, TContext* ctx) {
     static AutoFile lib_file;
     std::string program = get_header_define();
     program += func->GetWorkspaceBodyAndJitExec(ctx);
@@ -127,8 +126,7 @@ size_t JitExec::jit_exec_and_get_workspace(const KernelFn* func,
     workspace_func(inputs_ptr.data(), inputs_ptr.size(), 1, &workspace);
     tcc_delete(state);
     LOG_DEBUG << "Jit get workspace size: " << workspace
-              << ", with symbol: " << func->GetWorkspaceSymbol(ctx).c_str()
-              << "\n";
+              << ", with symbol: " << func->GetWorkspaceSymbol(ctx).c_str() << "\n";
     return workspace;
 }
 

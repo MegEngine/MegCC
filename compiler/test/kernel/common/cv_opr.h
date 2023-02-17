@@ -93,8 +93,7 @@ public:
     Param& param() { return m_param; }
 
     DnnOpr::Param dnn_param(Param ori_param) { return ori_param; }
-    static void reformat_layout(CVWarpAffine* opr,
-                                TensorLayoutArray& layouts){};
+    static void reformat_layout(CVWarpAffine* opr, TensorLayoutArray& layouts){};
 
 private:
     Param m_param;

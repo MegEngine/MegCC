@@ -22,14 +22,17 @@ using namespace megcc;
 
 llvm::cl::opt<megcc::KernelGen::Arch> target_arch(
         llvm::cl::desc("The target architecture to execute the model"),
-        llvm::cl::values(clEnumValN(megcc::KernelGen::BAREMETAL, "baremetal",
-                                    "compiler for device baremetal."),
-                         clEnumValN(megcc::KernelGen::ARM64, "arm64",
-                                    "compiler for device arm64."),
-                         clEnumValN(megcc::KernelGen::ARMV7, "armv7",
-                                    "compiler for device armv7."),
-                         clEnumValN(megcc::KernelGen::ARM64V7, "arm64v7",
-                                    "compiler for device arm64v7.")),
+        llvm::cl::values(
+                clEnumValN(
+                        megcc::KernelGen::BAREMETAL, "baremetal",
+                        "compiler for device baremetal."),
+                clEnumValN(
+                        megcc::KernelGen::ARM64, "arm64", "compiler for device arm64."),
+                clEnumValN(
+                        megcc::KernelGen::ARMV7, "armv7", "compiler for device armv7."),
+                clEnumValN(
+                        megcc::KernelGen::ARM64V7, "arm64v7",
+                        "compiler for device arm64v7.")),
         llvm::cl::init(megcc::KernelGen::BAREMETAL));
 
 namespace mlir {
@@ -37,8 +40,8 @@ namespace {
 #define GEN_PASS_CLASSES
 #include "compiler/Dialect/Kernel/Transforms/Passes.h.inc"
 
-LogicalResult fetchInputsAndOutputs(Operation* op, SmallVector<Value>& inputs,
-                                    SmallVector<Value>& outputs) {
+LogicalResult fetchInputsAndOutputs(
+        Operation* op, SmallVector<Value>& inputs, SmallVector<Value>& outputs) {
     auto memoryEffect = dyn_cast<MemoryEffectOpInterface>(op);
     if (!memoryEffect) {
         return failure();
@@ -46,16 +49,14 @@ LogicalResult fetchInputsAndOutputs(Operation* op, SmallVector<Value>& inputs,
     for (auto&& operand : op->getOperands()) {
         SmallVector<MemoryEffects::EffectInstance, 1> effects;
         memoryEffect.getEffectsOnValue(operand, effects);
-        if (llvm::any_of(
-                    effects, [](const MemoryEffects::EffectInstance& instance) {
-                        return isa<MemoryEffects::Read>(instance.getEffect());
-                    })) {
+        if (llvm::any_of(effects, [](const MemoryEffects::EffectInstance& instance) {
+                return isa<MemoryEffects::Read>(instance.getEffect());
+            })) {
             inputs.push_back(operand);
         }
-        if (llvm::any_of(
-                    effects, [](const MemoryEffects::EffectInstance& instance) {
-                        return isa<MemoryEffects::Write>(instance.getEffect());
-                    })) {
+        if (llvm::any_of(effects, [](const MemoryEffects::EffectInstance& instance) {
+                return isa<MemoryEffects::Write>(instance.getEffect());
+            })) {
             outputs.push_back(operand);
         }
     }
@@ -75,12 +76,12 @@ std::unordered_map<std::string, CCAttr> convertAttrToKernelAttr(
             if (type.isSignedInteger() && type.getIntOrFloatBitWidth() <= 32) {
                 attr_map[attr.getName().str()] =
                         static_cast<int32_t>(value.getSExtValue());
-            } else if ((type.isSignlessInteger() || type.isUnsignedInteger()) &&
-                       type.getIntOrFloatBitWidth() <= 32) {
+            } else if (
+                    (type.isSignlessInteger() || type.isUnsignedInteger()) &&
+                    type.getIntOrFloatBitWidth() <= 32) {
                 attr_map[attr.getName().str()] =
                         static_cast<uint32_t>(value.getZExtValue());
-            } else if (type.isSignlessIntOrIndex() ||
-                       type.isUnsignedInteger()) {
+            } else if (type.isSignlessIntOrIndex() || type.isUnsignedInteger()) {
                 attr_map[attr.getName().str()] =
                         static_cast<uint64_t>(value.getZExtValue());
             } else {
@@ -107,23 +108,19 @@ std::unordered_map<std::string, CCAttr> convertAttrToKernelAttr(
                     auto value = attr_iter.dyn_cast<IntegerAttr>().getValue();
                     auto type = attr_iter.dyn_cast<IntegerAttr>().getType();
                     CC_ASSERT(type.getIntOrFloatBitWidth() <= 32)
-                            << "is sign " << type.isSignedInteger()
-                            << ", bitwise " << type.getIntOrFloatBitWidth()
-                            << "\n";
+                            << "is sign " << type.isSignedInteger() << ", bitwise "
+                            << type.getIntOrFloatBitWidth() << "\n";
                     if (type.isSignedInteger()) {
-                        attr_map[attr.getName().str() + ":" +
-                                 std::to_string(cnt++)] =
+                        attr_map[attr.getName().str() + ":" + std::to_string(cnt++)] =
                                 (int32_t)(value.getSExtValue());
                     } else {
-                        attr_map[attr.getName().str() + ":" +
-                                 std::to_string(cnt++)] =
+                        attr_map[attr.getName().str() + ":" + std::to_string(cnt++)] =
                                 (int32_t)(value.getZExtValue());
                     }
                 } else if (attr_iter.dyn_cast<StringAttr>()) {
-                    auto value =
-                            attr_iter.dyn_cast<StringAttr>().getValue().str();
-                    attr_map[attr.getName().str() + ":" +
-                             std::to_string(cnt++)] = value;
+                    auto value = attr_iter.dyn_cast<StringAttr>().getValue().str();
+                    attr_map[attr.getName().str() + ":" + std::to_string(cnt++)] =
+                            value;
                 }
             }
             attr_map[attr.getName().str() + ":size"] = cnt;
@@ -139,17 +136,15 @@ std::unordered_map<std::string, CCAttr> getKernelAttr(Operation* op) {
     attrs["nr_operands"] = static_cast<uint32_t>(nr_operands);
     //! add "operand:0" to dtype string attribute
     for (uint32_t i = 0; i < nr_operands; i++) {
-        if (auto shapedType = op->getOperands()[i]
-                                      .getType()
-                                      .dyn_cast_or_null<ShapedType>()) {
+        if (auto shapedType =
+                    op->getOperands()[i].getType().dyn_cast_or_null<ShapedType>()) {
             CCOperand cc_operand;
             llvm::raw_string_ostream raw_os(cc_operand.dtype);
             auto dtype = shapedType.getElementType();
             dtype.print(raw_os);
-            cc_operand.shape = {shapedType.getShape().begin(),
-                                shapedType.getShape().end()};
-            if (dtype.isa<IntegerType>() &&
-                dtype.dyn_cast<IntegerType>().isQuant()) {
+            cc_operand.shape = {
+                    shapedType.getShape().begin(), shapedType.getShape().end()};
+            if (dtype.isa<IntegerType>() && dtype.dyn_cast<IntegerType>().isQuant()) {
                 cc_operand.scale = dtype.dyn_cast<IntegerType>().getScale();
             }
             attrs[llvm::formatv("operand:{0}", i)] = cc_operand;
@@ -181,17 +176,15 @@ class KernelMaterializationPass final
 class DupFuncPattern final : public OpRewritePattern<FuncOp> {
 public:
     DupFuncPattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
-    LogicalResult matchAndRewrite(FuncOp op,
-                                  PatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(FuncOp op, PatternRewriter& rewriter) const override {
         auto op_name = op.getName();
-        auto is_modi =
-                op_name.contains(KernelGen::DumpHelper::ARM64V7_COMMON_POSTFIX);
+        auto is_modi = op_name.contains(KernelGen::DumpHelper::ARM64V7_COMMON_POSTFIX);
         if (llvm::isa<FuncOp>(op) && !is_modi) {
             auto clone_op = op.clone();
-            clone_op.setName(op.getName().str() +
-                             KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX);
-            op.setName(op.getName().str() +
-                       KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX);
+            clone_op.setName(
+                    op.getName().str() + KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX);
+            op.setName(
+                    op.getName().str() + KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX);
             rewriter.insert(clone_op);
             return success();
         }
@@ -205,15 +198,15 @@ class KernelMaterialization final
     using KernelJIT = Kernel::RawCodeKernelJIT;
 
 public:
-    KernelMaterialization(MLIRContext* ctx, std::unique_ptr<KTRegistry> reg,
-                          std::string prefix = "")
+    KernelMaterialization(
+            MLIRContext* ctx, std::unique_ptr<KTRegistry> reg, std::string prefix = "")
             : OpTraitRewritePattern(ctx),
               registry(std::move(reg)),
               kernelJIT(KernelJIT::make(registry.get())),
               m_prefix(prefix) {}
 
-    LogicalResult matchAndRewrite(Operation* op,
-                                  PatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(
+            Operation* op, PatternRewriter& rewriter) const override {
         SmallVector<Value> inputs;
         SmallVector<Value> outputs;
         if (failed(fetchInputsAndOutputs(op, inputs, outputs))) {
@@ -234,8 +227,7 @@ public:
             int64_t workspaceInBytes = 0;
             {
                 OpBuilder::InsertionGuard _(rewriter);
-                rewriter.setInsertionPointToStart(
-                        &parent->getRegion(0).front());
+                rewriter.setInsertionPointToStart(&parent->getRegion(0).front());
                 CodeGenContext cgctx{kernel_attr};
                 kernelTemplate->prepare(op, &cgctx);
                 kernelDef = kernelTemplate->instantiate(rewriter, &cgctx);
@@ -244,8 +236,7 @@ public:
             if (kernelDef) {
                 bool is_dynamic = false;
                 for (auto&& value : outputs) {
-                    if (llvm::dyn_cast<Kernel::DynamicAlloc>(
-                                value.getDefiningOp())) {
+                    if (llvm::dyn_cast<Kernel::DynamicAlloc>(value.getDefiningOp())) {
                         is_dynamic = true;
                         break;
                     }
@@ -255,8 +246,7 @@ public:
                     //! FIXME: add workspace body for dynamic opr, now default
                     //! zero
                     auto deduce_func_name =
-                            kernelDef->getAttrOfType<StringAttr>(
-                                    "deduce_sym_name");
+                            kernelDef->getAttrOfType<StringAttr>("deduce_sym_name");
                     CC_ASSERT(deduce_func_name.getValue().size() > 0)
                             << op->getName().getStringRef().str()
                             << "need layout deduce func\n";
@@ -267,13 +257,12 @@ public:
                     // another pass(createBufferDeallocationPass) later
                     workspace = rewriter.create<memref::AllocOp>(
                             op->getLoc(),
-                            MemRefType::get({workspaceInBytes},
-                                            rewriter.getIntegerType(8)));
+                            MemRefType::get(
+                                    {workspaceInBytes}, rewriter.getIntegerType(8)));
                 }
                 rewriter.replaceOpWithNewOp<Kernel::KernelCall>(
                         op, op->getResultTypes(),
-                        llvm::dyn_cast<Kernel::RawCodeKernelDef>(kernelDef)
-                                .sym_name(),
+                        llvm::dyn_cast<Kernel::RawCodeKernelDef>(kernelDef).sym_name(),
                         inputs, outputs, workspace, op->getAttrDictionary(),
                         is_dynamic);
                 return success();

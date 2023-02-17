@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "WarpPerspective.h"
 #include "../Utils/StringTemplate.h"
 #include "../Utils/Utils.h"
-#include "WarpPerspective.h"
 #include "compiler/Common/Logger.h"
 
 using namespace megcc;
@@ -26,9 +26,9 @@ bool WarpPerspectiveKernel::IsAvailable(TContext* ctx) const {
     } else {
         CC_ASSERT(nr_operands == 3);
     }
-    bool dtype_valid =
-            (src_layout.dtype == "f32" || src_layout.dtype == "ui8") &&
-            mat_layout.dtype == "f32" && dst_layout.dtype == src_layout.dtype;
+    bool dtype_valid = (src_layout.dtype == "f32" || src_layout.dtype == "ui8") &&
+                       mat_layout.dtype == "f32" &&
+                       dst_layout.dtype == src_layout.dtype;
     bool shape_valid =
             (nr_operands == 3 && src_layout.shape[0] == mat_layout.shape[0] &&
              src_layout.shape[0] == dst_layout.shape[0]) ||
@@ -114,8 +114,8 @@ std::string gen_get_real_coord(const std::string& bmode) {
             .render(body_temp);
 }
 
-std::string gen_visit(const std::string& bmode, float border_val,
-                      const std::string& dtype_c_str) {
+std::string gen_visit(
+        const std::string& bmode, float border_val, const std::string& dtype_c_str) {
     std::string temp_body;
     if (bmode != "CONSTANT") {
         temp_body = R"(
@@ -172,8 +172,7 @@ std::string WarpPerspectiveKernel::GetKernelBody(TContext* ctx) const {
     )";
     ss << StringTemplate::StringTemplateArgs()
                     .add("dst_ctype", dst_ctype)
-                    .add("round_func",
-                         Utils::is_float_dtype(dst_dtype) ? "" : "roundf")
+                    .add("round_func", Utils::is_float_dtype(dst_dtype) ? "" : "roundf")
                     .render(visit_dst_temp);
     std::string stride_str = R"(
         size_t sstrd[3] = {ih * iw, iw, 1};

@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "megbrain/reflection.h"
 #include "test/kernel/common/checker.h"
 #include "test/kernel/common/cv_opr.h"
-#include "megbrain/reflection.h"
 using namespace megcc::test;
 using namespace megdnn;
 using namespace megcc::KernelGen;
@@ -108,8 +108,9 @@ TEST(GI, CVWarpAffine) {
     CVWarpAffine::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NHWC})
-        for (auto bmode : {BorderMode::WRAP, BorderMode::REFLECT,
-                           BorderMode::REPLICATE, BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {BorderMode::WRAP, BorderMode::REFLECT, BorderMode::REPLICATE,
+              BorderMode::CONSTANT}) {
             printf("border_mode=%d\n", bmode);
 
             for (size_t c : {1, 2, 3, 4})

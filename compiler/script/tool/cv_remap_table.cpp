@@ -25,8 +25,8 @@ static inline int div_ceil(int x, int r) {
 }
 
 #define SATURATE_CAST_SHORT(X) (short)min(max((int)(X), SHRT_MIN), SHRT_MAX)
-#define INTER_BITS 5
-#define AB_BITS 10
+#define INTER_BITS             5
+#define AB_BITS                10
 static const int AB_SCALE = 1 << AB_BITS;
 static const int INTER_TAB_SIZE = (1 << INTER_BITS);
 static const int INTER_TAB_SIZE2 = INTER_TAB_SIZE * INTER_TAB_SIZE;
@@ -72,12 +72,11 @@ static short* get_table() {
                     int mk1 = ksize2, mk2 = ksize2;
                     for (k1 = ksize2; k1 < ksize2 + 2; ++k1)
                         for (k2 = ksize2; k2 < ksize2 + 2; ++k2) {
-                            if (itab[k1 * ksize + k2] <
-                                itab[mk1 * ksize + mk2]) {
+                            if (itab[k1 * ksize + k2] < itab[mk1 * ksize + mk2]) {
                                 mk1 = k1;
                                 mk2 = k2;
-                            } else if (itab[k1 * ksize + k2] >
-                                       itab[Mk1 * ksize + Mk2]) {
+                            } else if (
+                                    itab[k1 * ksize + k2] > itab[Mk1 * ksize + Mk2]) {
                                 Mk1 = k1;
                                 Mk2 = k2;
                             }

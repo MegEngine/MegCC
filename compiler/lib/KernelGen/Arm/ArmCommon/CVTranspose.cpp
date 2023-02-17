@@ -36,8 +36,7 @@ std::string CvTransposeKernel::GetCVKernelSubSymbol(TContext* context) const {
 }
 
 std::string CvTransposeKernel::GetCVKernelSignature(TContext* context) const {
-    return GetCVKernelSymbol(context) +
-           "(const TinyMat* src, const TinyMat* dst)";
+    return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 
 std::string CvTransposeKernel::GetCVKernelBody(TContext* context) const {

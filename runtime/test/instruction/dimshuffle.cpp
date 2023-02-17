@@ -65,8 +65,7 @@ TEST(INSTRUCTION, Dimshuffle) {
                     out_layout.dims[index + 1] * out_layout.stride[index + 1];
         }
 
-        auto trueth = create_tensor(shape, TinyNNDType::TinyNN_INT,
-                                    data1.data());
+        auto trueth = create_tensor(shape, TinyNNDType::TinyNN_INT, data1.data());
         trueth->layout = out_layout;
         NoconIter src_iter = init_iter(src_layout);
         NoconIter dst_iter = init_iter(out_layout);

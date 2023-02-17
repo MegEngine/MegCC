@@ -20,8 +20,9 @@ TEST(NAIVE, ElementwiseUnique) {
     checker.set_kernel_symbol("kernel_.*");
     checker.set_dynamic_megcc(true);
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::NEGATE,
-                      MODE::ROUND, MODE::H_SWISH, MODE::ABS}) {
+    for (auto mode :
+         {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::NEGATE, MODE::ROUND,
+          MODE::H_SWISH, MODE::ABS}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {}});
@@ -62,9 +63,9 @@ TEST(NAIVE, ElementwiseBinary) {
     checker.set_epsilon(1e-4);
 
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
-                      MODE::FUSE_ADD_SIGMOID, MODE::MAX, MODE::MIN, MODE::LEQ,
-                      MODE::LT, MODE::EQ, MODE::FUSE_ADD_TANH}) {
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::FUSE_ADD_SIGMOID,
+          MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT, MODE::EQ, MODE::FUSE_ADD_TANH}) {
         param.mode = mode;
         checker.set_param(param);
         // scalar_scalar
@@ -116,8 +117,8 @@ TEST(NAIVE, ElementwiseBinaryInt) {
     checker.set_dtype(1, dtype::Int32());
 
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::MAX, MODE::MIN,
-                      MODE::LEQ, MODE::LT}) {
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {1}, {}});
@@ -164,8 +165,7 @@ TEST(NAIVE, ElementwiseTernary) {
     checker.execs({{1}, {2, 3, 4, 5}, {1}, {}});
     // multi batch broadcast
     checker.execs({{2, 32, 32, 20}, {2, 32, 1, 1}, {2, 32, 32, 20}, {}});
-    checker.execs(
-            {{2, 32, 32, 20, 4}, {2, 32, 1, 1, 4}, {2, 32, 32, 20, 4}, {}});
+    checker.execs({{2, 32, 32, 20, 4}, {2, 32, 1, 1, 4}, {2, 32, 32, 20, 4}, {}});
 }
 
 TEST(NAIVE, ElementwiseQuater) {
@@ -185,22 +185,17 @@ TEST(NAIVE, ElementwiseQuater) {
     checker.execs({{2, 3, 4, 5}, {1}, {2, 3, 4, 5}, {1}, {}});
     checker.execs({{2, 3, 4, 5}, {1, 3, 1, 1}, {2, 3, 4, 5}, {1, 3, 1, 1}, {}});
     checker.execs({{1, 3, 1, 1}, {2, 3, 4, 5}, {1, 3, 1, 1}, {2, 3, 4, 5}, {}});
-    checker.execs({{2, 3, 4, 5, 4},
-                   {1, 3, 1, 1, 4},
-                   {2, 3, 4, 5, 4},
-                   {1, 3, 1, 1, 4},
-                   {}});
-    checker.execs({{1, 3, 1, 1, 4},
-                   {2, 3, 4, 5, 4},
-                   {1, 3, 1, 1, 4},
-                   {2, 3, 4, 5, 4},
-                   {}});
+    checker.execs(
+            {{2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {}});
+    checker.execs(
+            {{1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {}});
     // multi batch broadcast
-    checker.execs({{2, 32, 32, 20, 4},
-                   {2, 32, 1, 1, 4},
-                   {2, 32, 32, 20, 4},
-                   {2, 32, 1, 1, 4},
-                   {}});
+    checker.execs(
+            {{2, 32, 32, 20, 4},
+             {2, 32, 1, 1, 4},
+             {2, 32, 32, 20, 4},
+             {2, 32, 1, 1, 4},
+             {}});
 }
 
 TEST(NAIVE, ElementwiseBinary_Boundary_test) {
@@ -214,9 +209,9 @@ TEST(NAIVE, ElementwiseBinary_Boundary_test) {
     TensorShape dst_shape_temp{2, 3, 4, 5, 6};
     ElemwiseForward::Param param;
     auto bound_case = get_elewise_binary_bound_case();
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
-                      MODE::FUSE_ADD_SIGMOID, MODE::MAX, MODE::MIN, MODE::LEQ,
-                      MODE::LT, MODE::FUSE_ADD_TANH}) {
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::FUSE_ADD_SIGMOID,
+          MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT, MODE::FUSE_ADD_TANH}) {
         param.mode = mode;
         checker.set_param(param);
         for (auto&& shapes : bound_case) {
@@ -270,14 +265,14 @@ TEST(NAIVE, ElementwiseQunary_Boundary_test) {
                     sample_shape[bit] = 1;
                 }
             }
-            checker.execs({dst_shape, sample_shape, dst_shape, sample_shape,
-                           dst_shape});
-            checker.execs({dst_shape, sample_shape, sample_shape, dst_shape,
-                           dst_shape});
-            checker.execs({sample_shape, dst_shape, sample_shape, dst_shape,
-                           dst_shape});
-            checker.execs({sample_shape, dst_shape, dst_shape, sample_shape,
-                           dst_shape});
+            checker.execs(
+                    {dst_shape, sample_shape, dst_shape, sample_shape, dst_shape});
+            checker.execs(
+                    {dst_shape, sample_shape, sample_shape, dst_shape, dst_shape});
+            checker.execs(
+                    {sample_shape, dst_shape, sample_shape, dst_shape, dst_shape});
+            checker.execs(
+                    {sample_shape, dst_shape, dst_shape, sample_shape, dst_shape});
         }
     }
 }

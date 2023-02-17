@@ -19,17 +19,15 @@ using namespace KernelGen;
 using namespace GeneralIntrinsic;
 
 bool TypecvtKernel::IsAvailable(TContext* context) const {
-    auto src_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
+    auto src_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     bool ok_type =
             (Utils::is_quant_dtype(src_dtype, 8) &&
              Utils::is_quant_dtype(dst_dtype, 8)) ||
-            (Utils::is_quant_dtype(src_dtype, 8) &&
-             Utils::is_float_dtype(dst_dtype)) ||
-            (Utils::is_float_dtype(src_dtype) &&
-             Utils::is_quant_dtype(dst_dtype, 8)) ||
+            (Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) ||
+            (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) ||
             (Utils::get_dtype_enum(src_dtype) == Utils::DtypeEnum::uint8 &&
              Utils::is_float_dtype(dst_dtype));
     if (Utils::is_quant_dtype(src_dtype)) {
@@ -48,8 +46,7 @@ std::string TypecvtKernel::GetKernelSymbol(TContext* context) const {
     return ss.str();
 }
 namespace {
-std::string init_declare(const std::string& src_dtype,
-                         const std::string& dst_dtype) {
+std::string init_declare(const std::string& src_dtype, const std::string& dst_dtype) {
     std::string body_temp = R"(
         float scale;
         GI_FLOAT32_t vscale;
@@ -58,8 +55,7 @@ std::string init_declare(const std::string& src_dtype,
     return body_temp;
 }
 
-std::string gen_scale(const std::string& src_dtype,
-                      const std::string& dst_dtype) {
+std::string gen_scale(const std::string& src_dtype, const std::string& dst_dtype) {
     std::string body_temp;
     if (Utils::is_float_dtype(src_dtype)) {
         body_temp += R"(
@@ -74,13 +70,11 @@ std::string gen_scale(const std::string& src_dtype,
     return body_temp;
 }
 
-std::string gen_cvt(const std::string& src_dtype,
-                    const std::string& dst_dtype) {
+std::string gen_cvt(const std::string& src_dtype, const std::string& dst_dtype) {
     auto src_dtype_enum = Utils::get_dtype_enum(src_dtype);
     auto dst_dtype_enum = Utils::get_dtype_enum(dst_dtype);
     std::string body_temp;
-    if (Utils::is_float_dtype(src_dtype) &&
-        Utils::is_quant_dtype(dst_dtype, 8)) {
+    if (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             GI_FLOAT32_t vitem0 = GiMultiplyFloat32(GiLoadFloat32(src), vscale);
             GI_FLOAT32_t vitem1 = GiMultiplyFloat32(GiLoadFloat32(src + 4), vscale);
@@ -95,8 +89,8 @@ std::string gen_cvt(const std::string& src_dtype,
             GI_INT8_t ans = GiCvtFromFloat32V4ToInt8(vitem);
             GiStoreInt8(dst, ans);
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_float_dtype(dst_dtype)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) {
         body_temp = R"(
             GI_INT8_t src_reg = GiLoadInt8(src);
             GI_INT16_t vsrc0 = GiMoveLowLongInt8(src_reg);
@@ -107,8 +101,9 @@ std::string gen_cvt(const std::string& src_dtype,
             GiStoreFloat32(dst+12, GiMultiplyFloat32(GiCastToFloat32(GiMoveHighLongInt16(vsrc1)), vscale));
 
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_quant_dtype(dst_dtype, 8)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) &&
+            Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             GI_INT8_t src_reg = GiLoadInt8(src);
             GI_INT16_t vsrc0 = GiMoveLowLongInt8(src_reg);
@@ -131,8 +126,9 @@ std::string gen_cvt(const std::string& src_dtype,
             GI_INT8_t ans = GiCvtFromFloat32V4ToInt8(vitem);
             GiStoreInt8(dst, ans);
          )";
-    } else if (src_dtype_enum == Utils::DtypeEnum::uint8 &&
-               dst_dtype_enum == Utils::DtypeEnum::float32) {
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::uint8 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
         //! TODO: GI uint8 API is not integral this implement is little slow
         //! than using uint8 API directly, when GI uint8 API is updated, please
         //! optimize this implemnet
@@ -152,19 +148,17 @@ std::string gen_cvt(const std::string& src_dtype,
             GiStoreFloat32(dst + 3 * 4, vitem3);
          )";
     } else {
-        CC_ABORT << "General Intrinsic not support optimise cvt " << src_dtype
-                 << "->" << dst_dtype << "\n";
+        CC_ABORT << "General Intrinsic not support optimise cvt " << src_dtype << "->"
+                 << dst_dtype << "\n";
     }
     return body_temp;
 }
 
-std::string gen_cvt_remain(const std::string& src_dtype,
-                           const std::string& dst_dtype) {
+std::string gen_cvt_remain(const std::string& src_dtype, const std::string& dst_dtype) {
     auto src_dtype_enum = Utils::get_dtype_enum(src_dtype);
     auto dst_dtype_enum = Utils::get_dtype_enum(dst_dtype);
     std::string body_temp;
-    if (Utils::is_float_dtype(src_dtype) &&
-        Utils::is_quant_dtype(dst_dtype, 8)) {
+    if (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
                 float val = (*src)*scale;
                 int dst_val = roundf(val);
@@ -172,13 +166,14 @@ std::string gen_cvt_remain(const std::string& src_dtype,
                 dst_val = dst_val <= -128? -128:dst_val;
                 *dst = dst_val;
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_float_dtype(dst_dtype)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) {
         body_temp = R"(
             *dst = (*src)*scale;
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_quant_dtype(dst_dtype, 8)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) &&
+            Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             float val = (*src)*scale;
             int dst_val = roundf(val);
@@ -186,8 +181,9 @@ std::string gen_cvt_remain(const std::string& src_dtype,
             dst_val = dst_val <= -128? -128:dst_val;
             *dst = dst_val;
          )";
-    } else if (src_dtype_enum == Utils::DtypeEnum::uint8 &&
-               dst_dtype_enum == Utils::DtypeEnum::float32) {
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::uint8 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
         body_temp = R"(
             *dst = (float)*src;
          )";
@@ -202,10 +198,10 @@ std::string gen_cvt_remain(const std::string& src_dtype,
 
 std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     std::stringstream ss;
-    auto src_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
+    auto src_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     std::string src_specifier = Utils::cvt_dtype_specifier(src_dtype_str);
     std::string dst_specifier = Utils::cvt_dtype_specifier(dst_dtype_str);
     ss << R"(
@@ -256,8 +252,7 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
                     .add("dst_specifier", dst_specifier)
                     .add("gen_scale", gen_scale(src_dtype_str, dst_dtype_str))
                     .add("gen_cvt", gen_cvt(src_dtype_str, dst_dtype_str))
-                    .add("gen_cvt_remain",
-                         gen_cvt_remain(src_dtype_str, dst_dtype_str))
+                    .add("gen_cvt_remain", gen_cvt_remain(src_dtype_str, dst_dtype_str))
                     .render(body_temp);
     return ss.str();
 }

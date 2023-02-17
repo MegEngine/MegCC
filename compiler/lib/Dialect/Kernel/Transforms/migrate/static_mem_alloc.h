@@ -43,14 +43,13 @@ public:
      *      [begin, end)
      * \return interval id
      */
-    virtual size_t add(size_t begin, size_t end, size_t size,
-                       UserKeyType key) = 0;
+    virtual size_t add(size_t begin, size_t end, size_t size, UserKeyType key) = 0;
 
     /*!
      * \brief add an overwrite spec: *iid_src* could overwrite *iid_dest*
      */
-    virtual StaticMemAlloc& add_overwrite_spec(size_t iid_src, size_t iid_dest,
-                                               size_t offset) = 0;
+    virtual StaticMemAlloc& add_overwrite_spec(
+            size_t iid_src, size_t iid_dest, size_t offset) = 0;
 
     /*!
      * \brief solve allocation scheme after add() and add_overwrite_spec()

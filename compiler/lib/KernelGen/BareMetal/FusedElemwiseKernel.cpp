@@ -10,8 +10,8 @@
 #include <sstream>
 
 #include "Common/ElemwiseCommon.h"
-#include "FusedElemwiseKernel.h"
 #include "FormatHelper.h"
+#include "FusedElemwiseKernel.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
@@ -118,7 +118,7 @@ std::string gen_quater(std::string mode) {
     return "";
 }
 
-std::string gen_op(std::vector<std::string> mode, const std::string& specifier){
+std::string gen_op(std::vector<std::string> mode, const std::string& specifier) {
     size_t nr_str = mode.size();
     CC_ASSERT(nr_str >= 3);
     if (nr_str == 3) {
@@ -156,7 +156,7 @@ std::string gen_op(std::vector<std::string> mode, const std::string& specifier){
                 .add("out", mode[5])
                 .render(Op);
     } else {
-        CC_ABORT<<"Not support mode in FusedElemwise\n";
+        CC_ABORT << "Not support mode in FusedElemwise\n";
     }
     return "";
 }
@@ -208,8 +208,7 @@ std::string gen_one_get_data<BCAST101>(size_t id, const std::string& specifier) 
 }
 
 template <>
-std::string gen_one_get_data<BCAST101x4>(size_t id,
-                                         const std::string& specifier) {
+std::string gen_one_get_data<BCAST101x4>(size_t id, const std::string& specifier) {
     std::string get_data = R"(
        static inline ${specifier} get_input${id}(size_t elem_id, ${specifier}* ptr,
                                     Layout* dst_layout, size_t* stride) {
@@ -246,8 +245,8 @@ std::string gen_one_get_data<UNKNOWN_TENSOR_TYPE>(
             .render(get_data);
 }
 
-std::string gen_get_data_func(std::vector<TensorType> tensor_types,
-                              const std::string& specifier) {
+std::string gen_get_data_func(
+        std::vector<TensorType> tensor_types, const std::string& specifier) {
     size_t nr_operands = tensor_types.size();
     std::string functions;
     for (size_t i = 0; i < nr_operands; i++) {
@@ -286,17 +285,14 @@ bool FusedElmwiseKernel::IsAvailable(TContext* context) const {
                 context->getAttrStr("modes:" + std::to_string(i)), ',');
         size_t modes_size = modes.size();
         auto mode = modes[modes_size - 2];
-        bool mode_ok_unary =
-                mode == "RELU" || mode == "SIGMOID" || mode == "EXP" ||
-                mode == "NEGATE" || mode == "ROUND" || mode == "ABS" ||
-                mode == "H_SWISH" || mode == "LOG" || mode == "SILU";
-        bool mode_ok_binary = mode == "ADD" || mode == "SUB" || mode == "MUL" ||
-                              mode == "MAX" || mode == "MIN" || mode == "LEQ" ||
-                              mode == "LT" || mode == "FLOOR_DIV" ||
-                              mode == "EQ" || mode == "TRUE_DIV" ||
-                              mode == "FUSE_ADD_RELU" ||
-                              mode == "FUSE_ADD_SIGMOID" ||
-                              mode == "FUSE_ADD_TANH" || mode == "MOD";
+        bool mode_ok_unary = mode == "RELU" || mode == "SIGMOID" || mode == "EXP" ||
+                             mode == "NEGATE" || mode == "ROUND" || mode == "ABS" ||
+                             mode == "H_SWISH" || mode == "LOG" || mode == "SILU";
+        bool mode_ok_binary =
+                mode == "ADD" || mode == "SUB" || mode == "MUL" || mode == "MAX" ||
+                mode == "MIN" || mode == "LEQ" || mode == "LT" || mode == "FLOOR_DIV" ||
+                mode == "EQ" || mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
+                mode == "FUSE_ADD_SIGMOID" || mode == "FUSE_ADD_TANH" || mode == "MOD";
         bool mode_ok_other = mode == "FUSE_MUL_ADD3" || mode == "FUSE_MUL_ADD4";
         mode_ok = mode_ok_unary || mode_ok_binary || mode_ok_other;
     }
@@ -305,8 +301,8 @@ bool FusedElmwiseKernel::IsAvailable(TContext* context) const {
 
 std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
     size_t nr_operands = context->getAttrInt("nr_operands");
-    auto dst_operand = context->getAttrOprand("operand:" +
-                                              std::to_string(nr_operands - 1));
+    auto dst_operand =
+            context->getAttrOprand("operand:" + std::to_string(nr_operands - 1));
     std::stringstream ss;
     ss << "kernel_naive_fused_elementwise";
     auto mode_size = context->getAttrInt("modes:size");
@@ -315,12 +311,12 @@ std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
                 context->getAttrStr("modes:" + std::to_string(i)), ',');
         size_t modes_size = modes.size();
         auto mode = modes[modes_size - 2];
-        ss << "_" << mode ;
+        ss << "_" << mode;
     }
     for (size_t i = 0; i < nr_operands; i++) {
         auto operand = context->getAttrOprand("operand:" + std::to_string(i));
         auto tensor_type = GetOperandTensorType(dst_operand, operand);
-        ss << "_tensortype" << tensor_type ;
+        ss << "_tensortype" << tensor_type;
     }
     ss << "_" << SymbolHelper::gen_io_str(context);
     return ss.str();
@@ -328,8 +324,8 @@ std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
 
 std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
     size_t nr_operands = context->getAttrInt("nr_operands");
-    auto dst_operand = context->getAttrOprand("operand:" +
-                                              std::to_string(nr_operands - 1));
+    auto dst_operand =
+            context->getAttrOprand("operand:" + std::to_string(nr_operands - 1));
     auto op0 = context->getAttrOprand("operand:0");
     auto src_dtype = op0.dtype;
     auto specifier = Utils::cvt_dtype_specifier(src_dtype);
@@ -359,7 +355,7 @@ std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
 
     std::string body;
     //! get the output ptr
-    std::string out_memory =R"(
+    std::string out_memory = R"(
         ${specifier}* D_ptr = (${specifier}*)outputs[0]->ptr;
         TINYNN_ASSERT(D_ptr);
         Layout D_layout = outputs[0]->layout;
@@ -410,9 +406,9 @@ std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
             )";
         }
         compute_body += StringTemplate::StringTemplateArgs()
-                        .add("specifier", specifier)
-                        .add("id", std::to_string(id))
-                        .render(input_data);
+                                .add("specifier", specifier)
+                                .add("id", std::to_string(id))
+                                .render(input_data);
     }
 
     for (size_t id = 0; id < op_modes.size(); id++) {

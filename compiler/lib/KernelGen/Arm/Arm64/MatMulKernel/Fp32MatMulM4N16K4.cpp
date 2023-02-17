@@ -7,10 +7,10 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "Fp32MatMul.h"
 #include "../InternalKernel/InternalKernel.h"
-#include "compiler/Common/Logger.h"
+#include "Fp32MatMul.h"
 #include "Utils/StringTemplate.h"
+#include "compiler/Common/Logger.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -62,7 +62,8 @@ std::vector<KernelObj> Fp32MatMulM4N16K4::GetDependInternalSymbol(
         TContext* context) const {
     auto matmul_kernel = MatmulM4N16MK4Kernel();
     auto ctx = GetInnerCtx(context);
-    return {{matmul_kernel.GetKernelSymbol(ctx.get()),
+    return {
+            {matmul_kernel.GetKernelSymbol(ctx.get()),
              matmul_kernel.GetKernelBody(ctx.get()),
              matmul_kernel.GetBodyGuardBegin(ctx.get()),
              matmul_kernel.GetBodyGuardEnd(ctx.get()),
@@ -111,8 +112,7 @@ std::string Fp32MatMulM4N16K4::GetKernelBody(TContext* context) const {
 
     std::stringstream ss;
     ss << StringTemplate::StringTemplateArgs()
-                    .add("matmul_symbol",
-                         matmul_kernel.GetKernelSymbol(context))
+                    .add("matmul_symbol", matmul_kernel.GetKernelSymbol(context))
                     .render(writer.str());
     return ss.str();
 }

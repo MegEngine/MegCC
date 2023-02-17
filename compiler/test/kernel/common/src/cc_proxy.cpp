@@ -123,28 +123,24 @@ static inline bool check_layout_equal(const Layout& l1, const Layout& l2) {
         return false;
     }
     for (int i = 0; i < l1.nr_dim; ++i) {
-        bool ok_shape =
-                l1.dims[i] == l2.dims[i] && l1.stride[i] == l2.stride[i];
+        bool ok_shape = l1.dims[i] == l2.dims[i] && l1.stride[i] == l2.stride[i];
         if (!ok_shape) {
             return false;
         }
     }
     return true;
 }
-PerformanceResult proxy_kernel(TensorNDArray tensor_array, StdKernelCall func,
-                               StdKernelInitCall init_func,
-                               StdKernelWorkspaceCall workspace_func,
-                               StdKernelDeduceCall deduce_func,
-                               const BenchmarkOption& benchmark_option,
-                               const size_t workspace_bytes,
-                               OutputScope output_idx) {
+PerformanceResult proxy_kernel(
+        TensorNDArray tensor_array, StdKernelCall func, StdKernelInitCall init_func,
+        StdKernelWorkspaceCall workspace_func, StdKernelDeduceCall deduce_func,
+        const BenchmarkOption& benchmark_option, const size_t workspace_bytes,
+        OutputScope output_idx) {
     constexpr size_t mem_align_bytes = 64;
     megdnn::SmallVector<Tensor> cc_tensor_in;
     megdnn::SmallVector<std::string> cc_tensor_in_name;
     megdnn::SmallVector<Tensor> cc_tensor_out;
     for (int i = output_idx.start; i <= output_idx.end; ++i) {
-        cc_tensor_out.push_back(
-                dnntensor_2_cctensor(tensor_array.at(i), "cc_output"));
+        cc_tensor_out.push_back(dnntensor_2_cctensor(tensor_array.at(i), "cc_output"));
     }
     size_t input_cnt = 0;
     for (size_t i = 0; i < tensor_array.size(); ++i) {
@@ -168,8 +164,7 @@ PerformanceResult proxy_kernel(TensorNDArray tensor_array, StdKernelCall func,
     auto output_ptr_array = make_pointer_array(cc_tensor_out);
 
     size_t workspace_size = 0;
-    workspace_func(input_ptr_array.data(), input_ptr_array.size(), 1,
-                   &workspace_size);
+    workspace_func(input_ptr_array.data(), input_ptr_array.size(), 1, &workspace_size);
     mgb_assert(
             workspace_bytes == workspace_size,
             "two method workspace must equal, jit get %zu, runtime get %zu\n",
@@ -179,24 +174,24 @@ PerformanceResult proxy_kernel(TensorNDArray tensor_array, StdKernelCall func,
         int nr_weight_after_process = 0;
 
         auto input_ptr_array = make_pointer_array(cc_tensor_in);
-        init_func(input_ptr_array.data(), input_ptr_array.size(), NULL,
-                  &nr_weight_after_process, nullptr);
+        init_func(
+                input_ptr_array.data(), input_ptr_array.size(), NULL,
+                &nr_weight_after_process, nullptr);
 
         if (nr_weight_after_process) {
             std::vector<Tensor> new_cc_weight_vec(nr_weight_after_process);
             preprocessed_weight_storage.resize(nr_weight_after_process);
-            init_func(input_ptr_array.data(), input_ptr_array.size(),
-                      new_cc_weight_vec.data(), NULL, nullptr);
+            init_func(
+                    input_ptr_array.data(), input_ptr_array.size(),
+                    new_cc_weight_vec.data(), NULL, nullptr);
             for (int i = 0; i < nr_weight_after_process; ++i) {
-                size_t size_in_bytes =
-                        tensor_length_in_byte(&new_cc_weight_vec[i]);
+                size_t size_in_bytes = tensor_length_in_byte(&new_cc_weight_vec[i]);
                 preprocessed_weight_storage[i].resize(size_in_bytes);
-                new_cc_weight_vec[i].ptr =
-                        preprocessed_weight_storage[i].data();
+                new_cc_weight_vec[i].ptr = preprocessed_weight_storage[i].data();
             }
-            init_func(input_ptr_array.data(), input_ptr_array.size(),
-                      new_cc_weight_vec.data(), &nr_weight_after_process,
-                      nullptr);
+            init_func(
+                    input_ptr_array.data(), input_ptr_array.size(),
+                    new_cc_weight_vec.data(), &nr_weight_after_process, nullptr);
             for (size_t i = 0; i < input_ptr_array.size(); i++) {
                 auto&& old_weight = cc_tensor_in[i];
                 for (auto&& new_weight : new_cc_weight_vec) {
@@ -224,28 +219,29 @@ PerformanceResult proxy_kernel(TensorNDArray tensor_array, StdKernelCall func,
             cc_tensor_out_shape.push_back(tensor);
         }
         auto output_ptr_shape = make_pointer_array(cc_tensor_out_shape);
-        deduce_func(input_ptr_array.data(), input_ptr_array.size(),
-                    output_ptr_shape.data(), output_ptr_shape.size());
+        deduce_func(
+                input_ptr_array.data(), input_ptr_array.size(), output_ptr_shape.data(),
+                output_ptr_shape.size());
         //! check layout with dnn
         for (size_t i = 0; i < cc_tensor_out_shape.size(); ++i) {
-            mgb_assert(check_layout_equal(output_ptr_shape[i]->layout,
-                                          output_ptr_array[i]->layout),
-                       "deduce layout must equal with dnn at output %zu :: %s "
-                       "!= %s",
-                       i, to_string(output_ptr_shape[i]->layout).c_str(),
-                       to_string(output_ptr_array[i]->layout).c_str());
+            mgb_assert(
+                    check_layout_equal(
+                            output_ptr_shape[i]->layout, output_ptr_array[i]->layout),
+                    "deduce layout must equal with dnn at output %zu :: %s "
+                    "!= %s",
+                    i, to_string(output_ptr_shape[i]->layout).c_str(),
+                    to_string(output_ptr_array[i]->layout).c_str());
         }
     }
 
-    func(input_ptr_array.data(), input_ptr_array.size(),
-         output_ptr_array.data(), output_ptr_array.size(), workspace_ptr,
-         runtime_opt);
+    func(input_ptr_array.data(), input_ptr_array.size(), output_ptr_array.data(),
+         output_ptr_array.size(), workspace_ptr, runtime_opt);
     if (benchmark_option.valid_megcc_performance) {
         if (benchmark_option.warmup_iter > 0) {
             for (int i = 0; i < benchmark_option.warmup_iter; ++i) {
                 func(input_ptr_array.data(), input_ptr_array.size(),
-                     output_ptr_array.data(), output_ptr_array.size(),
-                     workspace_ptr, runtime_opt);
+                     output_ptr_array.data(), output_ptr_array.size(), workspace_ptr,
+                     runtime_opt);
             }
         }
         mgb_assert(benchmark_option.test_iter > 0);
@@ -253,30 +249,29 @@ PerformanceResult proxy_kernel(TensorNDArray tensor_array, StdKernelCall func,
         timer.start();
         for (int i = 0; i < benchmark_option.test_iter; ++i) {
             func(input_ptr_array.data(), input_ptr_array.size(),
-                 output_ptr_array.data(), output_ptr_array.size(),
-                 workspace_ptr, runtime_opt);
+                 output_ptr_array.data(), output_ptr_array.size(), workspace_ptr,
+                 runtime_opt);
         }
 
         timer.stop();
         PerformanceResult res;
         res.valid = true;
-        res.kernel_time_ms =
-                timer.get_time_in_us() / 1e3 / benchmark_option.test_iter;
+        res.kernel_time_ms = timer.get_time_in_us() / 1e3 / benchmark_option.test_iter;
         return res;
     }
     return {};
 }
 
-void gen_kernel(KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
-                const std::string& kernel_symbol, bool gen_deduce_func) {
+void gen_kernel(
+        KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
+        const std::string& kernel_symbol, bool gen_deduce_func) {
     int usable_kern_cnt = 0;
     for (auto kernel : kernels.first) {
         if (kernel->IsAvailable(ctx)) {
             usable_kern_cnt++;
             TargetModule& g_module = TargetModule::get_global_target_module();
             auto kern_sym = kernel->GetKernelSymbol(ctx);
-            auto if_match =
-                    std::regex_match(kern_sym, std::regex(kernel_symbol));
+            auto if_match = std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)
                 continue;
             if (!g_module.exist(kern_sym)) {
@@ -290,19 +285,18 @@ void gen_kernel(KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
                 g_module.add(
                         kern_sym, kernel->GetKernelBody(ctx),
                         kernel->GetInitSymbol(ctx), kernel->GetInitBody(ctx),
-                        kernel->GetWorkspaceSymbol(ctx),
-                        kernel->GetWorkspaceBody(ctx), deduce_sym, deduce_body);
+                        kernel->GetWorkspaceSymbol(ctx), kernel->GetWorkspaceBody(ctx),
+                        deduce_sym, deduce_body);
                 auto depends = kernel->GetDependInternalSymbol(ctx);
                 gen_depend_kernels(arch, depends);
             }
             size_t workspace_bytes = 0;
 #if MEGCC_TEST_GEN
             workspace_bytes =
-                    megcc::KernelGen::JitExec::jit_exec_and_get_workspace(
-                            kernel, ctx);
+                    megcc::KernelGen::JitExec::jit_exec_and_get_workspace(kernel, ctx);
 #endif
-            auto workspace_size_symbol = kernel->GetWorkspaceSymbol(ctx) +
-                                         input_shape_to_string(ctx);
+            auto workspace_size_symbol =
+                    kernel->GetWorkspaceSymbol(ctx) + input_shape_to_string(ctx);
             g_module.add_workspace_size(workspace_size_symbol, workspace_bytes);
             return;
         }
@@ -311,12 +305,12 @@ void gen_kernel(KernelGenRet& kernels, TContext* ctx, KernelGen::Arch arch,
 }
 
 PerformanceResult call_kernel(
-        std::pair<std::vector<const KernelGen::KernelFunc*>,
-                  const KernelGen::DeduceFunc*>& kernels,
+        std::pair<
+                std::vector<const KernelGen::KernelFunc*>,
+                const KernelGen::DeduceFunc*>& kernels,
         TContext* ctx, const TensorNDArray& tensors,
-        const BenchmarkOption& benchmark_option,
-        const std::string& kernel_symbol, const OutputScope output_idx,
-        bool dynamic_shape) {
+        const BenchmarkOption& benchmark_option, const std::string& kernel_symbol,
+        const OutputScope output_idx, bool dynamic_shape) {
     std::string kern_name;
     std::string kern_init_name;
     std::string kern_deduce_name;
@@ -324,8 +318,7 @@ PerformanceResult call_kernel(
     for (auto kernel : kernels.first) {
         if (kernel->IsAvailable(ctx)) {
             auto kern_sym = kernel->GetKernelSymbol(ctx);
-            auto if_match =
-                    std::regex_match(kern_sym, std::regex(kernel_symbol));
+            auto if_match = std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)
                 continue;
             kern_name = kern_sym;
@@ -338,32 +331,32 @@ PerformanceResult call_kernel(
             break;
         }
     }
-    mgb_assert(kern_name.size() > 0 && kern_init_name.size() > 0,
-               "gen kernel name failed");
+    mgb_assert(
+            kern_name.size() > 0 && kern_init_name.size() > 0,
+            "gen kernel name failed");
     TargetModule& g_module = TargetModule::get_global_target_module();
     auto func = g_module.get_kernel(kern_name);
-    mgb_assert(func, "can not get kernel[%s] from target module",
-               kern_name.c_str());
+    mgb_assert(func, "can not get kernel[%s] from target module", kern_name.c_str());
     auto init_func = g_module.get_kernel_init(kern_init_name);
-    mgb_assert(init_func, "can not get init kernel[%s] from target module",
-               kern_init_name.c_str());
+    mgb_assert(
+            init_func, "can not get init kernel[%s] from target module",
+            kern_init_name.c_str());
     auto workspace_func = g_module.get_kernel_workspace(kern_workspace_name);
-    mgb_assert(workspace_func,
-               "can not get workspace kernel[%s] from target module",
-               kern_workspace_name.c_str());
-    auto workspace_size_symbol =
-            kern_workspace_name + input_shape_to_string(ctx);
-    size_t workspace_bytes =
-            g_module.get_kernel_workspace_size(workspace_size_symbol);
+    mgb_assert(
+            workspace_func, "can not get workspace kernel[%s] from target module",
+            kern_workspace_name.c_str());
+    auto workspace_size_symbol = kern_workspace_name + input_shape_to_string(ctx);
+    size_t workspace_bytes = g_module.get_kernel_workspace_size(workspace_size_symbol);
     StdKernelDeduceCall deduce_func = nullptr;
     if (dynamic_shape) {
         deduce_func = g_module.get_kernel_deduce(kern_deduce_name);
-        mgb_assert(deduce_func,
-                   "can not get deduce func[%s] from target module",
-                   kern_deduce_name.c_str());
+        mgb_assert(
+                deduce_func, "can not get deduce func[%s] from target module",
+                kern_deduce_name.c_str());
     }
-    return proxy_kernel(tensors, func, init_func, workspace_func, deduce_func,
-                        benchmark_option, workspace_bytes, output_idx);
+    return proxy_kernel(
+            tensors, func, init_func, workspace_func, deduce_func, benchmark_option,
+            workspace_bytes, output_idx);
 }
 
 }  // namespace
@@ -414,10 +407,8 @@ OutputScope CCOprProxy<megdnn::IndexingMultiAxisVec>::get_output_idx(
 template <typename Opr>
 PerformanceResult CCOprProxy<Opr>::exec(
         Opr* opr, const TensorNDArray& tensors, KernelGen::Arch arch,
-        const BenchmarkOption& benchmark_option,
-        const std::string& kernel_symbol,
-        const std::unordered_map<std::string, CCAttr>& proxy_attr,
-        bool gen_dynamic) {
+        const BenchmarkOption& benchmark_option, const std::string& kernel_symbol,
+        const std::unordered_map<std::string, CCAttr>& proxy_attr, bool gen_dynamic) {
     std::unordered_map<std::string, CCAttr> attr_map;
     auto kernels = opr_fill_attr<Opr>(attr_map, opr, tensors, arch, proxy_attr);
     auto output_idx = get_output_idx(opr);
@@ -431,20 +422,20 @@ PerformanceResult CCOprProxy<Opr>::exec(
     return {};
 #else
     //! call kernel
-    return call_kernel(kernels, &ctx, tensors, benchmark_option, kernel_symbol,
-                       output_idx, gen_dynamic);
+    return call_kernel(
+            kernels, &ctx, tensors, benchmark_option, kernel_symbol, output_idx,
+            gen_dynamic);
 #endif
 }
 
 #undef FILL_MAP
 #undef FILL_MAP_EX
 
-#define DEF_CCOPRPROXY(_OPR_CLS)                                               \
-    template PerformanceResult CCOprProxy<_OPR_CLS>::exec(                     \
-            _OPR_CLS* opr, const TensorNDArray& tensors, KernelGen::Arch arch, \
-            const BenchmarkOption& benchmark_option,                           \
-            const std::string& kernel_symbol,                                  \
-            const std::unordered_map<std::string, CCAttr>& proxy_attr,         \
+#define DEF_CCOPRPROXY(_OPR_CLS)                                                       \
+    template PerformanceResult CCOprProxy<_OPR_CLS>::exec(                             \
+            _OPR_CLS* opr, const TensorNDArray& tensors, KernelGen::Arch arch,         \
+            const BenchmarkOption& benchmark_option, const std::string& kernel_symbol, \
+            const std::unordered_map<std::string, CCAttr>& proxy_attr,                 \
             bool gen_dynamic)
 
 DEF_CCOPRPROXY(megdnn::ElemwiseForward);

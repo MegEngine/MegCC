@@ -7,12 +7,14 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "KernelPack.h"
 #include <memory>
 #include "Argmax.h"
 #include "Argsort.h"
 #include "BatchedMatmul.h"
 #include "CVTranspose.h"
 #include "Concat.h"
+#include "ConvBackDataKernel.h"
 #include "ConvKernel.h"
 #include "CvtColor.h"
 #include "ElemwiseKernel.h"
@@ -23,7 +25,6 @@
 #include "FusedElemwiseKernel.h"
 #include "IndexingMultiAxisVec.h"
 #include "IndexingOneHot.h"
-#include "KernelPack.h"
 #include "MatrixInv.h"
 #include "MatrixMul.h"
 #include "Pooling.h"
@@ -37,7 +38,6 @@
 #include "Typecvt.h"
 #include "WarpAffine.h"
 #include "WarpPerspective.h"
-#include "ConvBackDataKernel.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace BareMetal;
@@ -102,8 +102,7 @@ struct AllBareKernel {
                 std::make_shared<BareMetal::FusedElmwiseKernel>()};
     }
 
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 }  // namespace

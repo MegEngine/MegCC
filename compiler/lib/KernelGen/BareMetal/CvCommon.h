@@ -18,9 +18,7 @@ class CVKernelImpl : public KernelFunc {
 public:
     bool IsAvailable(TContext* context) const override { return false; };
     std::string GetKernelBody(TContext* context) const override { return ""; };
-    std::string GetKernelSymbol(TContext* context) const override {
-        return "";
-    };
+    std::string GetKernelSymbol(TContext* context) const override { return ""; };
     virtual std::string GetCVKernelSubSymbol(TContext* context) const {
         CC_ABORT << "must impl cv subsymbol";
         return "";

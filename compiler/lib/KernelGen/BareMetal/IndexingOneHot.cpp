@@ -20,8 +20,8 @@ bool IndexingOneHotKernel::IsAvailable(TContext* context) const {
     int nr_operand = context->getAttrInt("nr_operands");
     bool ok_operand = nr_operand == 3;
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool ok_dtype = Utils::is_int_dtype(src_dtype, 32) ||
-                    Utils::is_float_dtype(src_dtype, 32);
+    bool ok_dtype =
+            Utils::is_int_dtype(src_dtype, 32) || Utils::is_float_dtype(src_dtype, 32);
     return ok_dtype && ok_operand;
 }
 //! kernel gen

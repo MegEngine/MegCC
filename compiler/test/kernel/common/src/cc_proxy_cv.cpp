@@ -43,8 +43,7 @@ class RunCvHelper<megdnn::CVtranspose> {
 public:
     typedef void (*CVtransposeFunc)(const TinyMat* src, const TinyMat* dst);
     RunCvHelper(megdnn::CVtranspose*){};
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         CVtransposeFunc func = (CVtransposeFunc)func_ptr;
         func(&mat_array[0], &mat_array[1]);
     };
@@ -58,14 +57,12 @@ public:
 template <>
 class RunCvHelper<megdnn::CVflip> {
 public:
-    typedef void (*CVflipFunc)(const TinyMat* src, const TinyMat* dst,
-                               bool vertical, bool horizontal);
+    typedef void (*CVflipFunc)(
+            const TinyMat* src, const TinyMat* dst, bool vertical, bool horizontal);
     RunCvHelper(megdnn::CVflip* opr) { m_param = opr->param(); };
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         CVflipFunc func = (CVflipFunc)func_ptr;
-        func(&mat_array[0], &mat_array[1], m_param.vertical,
-             m_param.horizontal);
+        func(&mat_array[0], &mat_array[1], m_param.vertical, m_param.horizontal);
     };
     TensorNDArray on_tensor_before(TensorNDArray& tensor_array) {
         return tensor_array;
@@ -80,8 +77,7 @@ class RunCvHelper<megdnn::CVResize> {
 public:
     typedef void (*ResizeFunc)(const TinyMat* src, const TinyMat* dst);
     RunCvHelper(megdnn::CVResize* opr){};
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         ResizeFunc func = (ResizeFunc)func_ptr;
         func(&mat_array[0], &mat_array[1]);
     };
@@ -95,11 +91,10 @@ private:
 template <>
 class RunCvHelper<megdnn::CVRotate> {
 public:
-    typedef void (*CVrotateFunc)(const TinyMat* src, const TinyMat* dst,
-                                 bool clockwise);
+    typedef void (*CVrotateFunc)(
+            const TinyMat* src, const TinyMat* dst, bool clockwise);
     RunCvHelper(megdnn::CVRotate* opr) { m_param = opr->param(); };
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         CVrotateFunc func = (CVrotateFunc)func_ptr;
         func(&mat_array[0], &mat_array[1], m_param.clockwise);
     };
@@ -114,12 +109,11 @@ private:
 template <>
 class RunCvHelper<megdnn::CVRoicopy> {
 public:
-    typedef void (*CVroicopyFunc)(const TinyMat* src, const TinyMat* dst,
-                                  size_t row_from, size_t row_to,
-                                  size_t col_from, size_t col_to);
+    typedef void (*CVroicopyFunc)(
+            const TinyMat* src, const TinyMat* dst, size_t row_from, size_t row_to,
+            size_t col_from, size_t col_to);
     RunCvHelper(megdnn::CVRoicopy* opr) { m_param = opr->param(); };
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         CVroicopyFunc func = (CVroicopyFunc)func_ptr;
         func(&mat_array[0], &mat_array[1], m_param.row_from, m_param.row_to,
              m_param.col_from, m_param.col_to);
@@ -137,8 +131,7 @@ class RunCvHelper<megdnn::CVCvtColor> {
 public:
     typedef void (*CVCvtColorFunc)(const TinyMat* src, const TinyMat* dst);
     RunCvHelper(megdnn::CVCvtColor* opr) { m_param = opr->param(); };
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         CVCvtColorFunc func = (CVCvtColorFunc)func_ptr;
         func(&mat_array[0], &mat_array[1]);
     };
@@ -153,15 +146,13 @@ private:
 template <>
 class RunCvHelper<megdnn::CVWarpAffine> {
 public:
-    typedef void (*CVWarpAffineFunc)(const TinyMat* src, const TinyMat* dst,
-                                     const double* trans);
-    typedef void (*CVWarpAffineFuncWithConst)(const TinyMat* src,
-                                              const TinyMat* dst,
-                                              const double* trans,
-                                              uint8_t const_val);
+    typedef void (*CVWarpAffineFunc)(
+            const TinyMat* src, const TinyMat* dst, const double* trans);
+    typedef void (*CVWarpAffineFuncWithConst)(
+            const TinyMat* src, const TinyMat* dst, const double* trans,
+            uint8_t const_val);
     RunCvHelper(megdnn::CVWarpAffine* opr) { m_param = opr->param(); };
-    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array,
-                       void* func_ptr) {
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
         double mat[6];
         float* ori_mat = (float*)(mat_array[1].data);
         for (int i = 0; i < 6; ++i) {
@@ -169,8 +160,7 @@ public:
         }
         if (m_param.border_mode ==
             megdnn::CVWarpAffine::Param::BorderMode::BORDER_CONSTANT) {
-            CVWarpAffineFuncWithConst func =
-                    (CVWarpAffineFuncWithConst)func_ptr;
+            CVWarpAffineFuncWithConst func = (CVWarpAffineFuncWithConst)func_ptr;
             uint8_t const_val = m_param.border_val;
             func(&mat_array[0], &mat_array[2], mat, const_val);
         } else {
@@ -188,9 +178,10 @@ private:
 
 static inline TinyMat tensor2TinyMat(const megdnn::TensorND& tensor) {
     auto layout = tensor.layout;
-    mgb_assert(layout.ndim == 3 || ((layout.ndim == 4) && (layout[0] == 1)),
-               "failed %s, %d %d", layout.to_string().c_str(),
-               (layout.ndim == 4), (layout[0] == 1));
+    mgb_assert(
+            layout.ndim == 3 || ((layout.ndim == 4) && (layout[0] == 1)),
+            "failed %s, %d %d", layout.to_string().c_str(), (layout.ndim == 4),
+            (layout[0] == 1));
     int idx_offset = layout.ndim - 3;
     TinyMat res;
     res.rows = layout[idx_offset + 0];
@@ -200,10 +191,9 @@ static inline TinyMat tensor2TinyMat(const megdnn::TensorND& tensor) {
     return res;
 }
 template <typename Opr>
-PerformanceResult proxy_cv_kernel(TensorNDArray tensor_array,
-                                  RunCvHelper<Opr>& runner, void* func_ptr,
-                                  const BenchmarkOption& benchmark_option,
-                                  OutputScope output_idx) {
+PerformanceResult proxy_cv_kernel(
+        TensorNDArray tensor_array, RunCvHelper<Opr>& runner, void* func_ptr,
+        const BenchmarkOption& benchmark_option, OutputScope output_idx) {
     megdnn::SmallVector<TinyMat> mat_vec;
     auto temp_tensor = runner.on_tensor_before(tensor_array);
     for (auto& tensor : temp_tensor) {
@@ -226,8 +216,7 @@ PerformanceResult proxy_cv_kernel(TensorNDArray tensor_array,
         timer.stop();
         PerformanceResult res;
         res.valid = true;
-        res.kernel_time_ms =
-                timer.get_time_in_us() / 1e3 / benchmark_option.test_iter;
+        res.kernel_time_ms = timer.get_time_in_us() / 1e3 / benchmark_option.test_iter;
         return res;
     }
     return {};
@@ -243,8 +232,7 @@ PerformanceResult call_kernel_cv(
     for (auto kernel : kernels) {
         if (kernel->IsCVAvailable(ctx)) {
             auto kern_sym = kernel->GetCVKernelSymbol(ctx);
-            auto if_match =
-                    std::regex_match(kern_sym, std::regex(kernel_symbol));
+            auto if_match = std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)
                 continue;
             kern_name = kern_sym;
@@ -257,22 +245,22 @@ PerformanceResult call_kernel_cv(
     return proxy_cv_kernel(tensors, runner, func, benchmark_option, output_idx);
 }
 
-void gen_kernel_cv(std::vector<const KernelGen::KernelFunc*>& kernels,
-                   TContext* ctx, KernelGen::Arch arch,
-                   const std::string& kernel_symbol) {
+void gen_kernel_cv(
+        std::vector<const KernelGen::KernelFunc*>& kernels, TContext* ctx,
+        KernelGen::Arch arch, const std::string& kernel_symbol) {
     int usable_kern_cnt = 0;
     for (auto kernel : kernels) {
         if (kernel->IsCVAvailable(ctx)) {
             usable_kern_cnt++;
             TargetModule& g_module = TargetModule::get_global_target_module();
             auto kern_sym = kernel->GetCVKernelSymbol(ctx);
-            auto if_match =
-                    std::regex_match(kern_sym, std::regex(kernel_symbol));
+            auto if_match = std::regex_match(kern_sym, std::regex(kernel_symbol));
             if (!if_match)
                 continue;
             if (!g_module.exist(kern_sym)) {
-                g_module.add_cv(kern_sym, kernel->GetCVKernelSignature(ctx),
-                                kernel->GetCVKernelBody(ctx));
+                g_module.add_cv(
+                        kern_sym, kernel->GetCVKernelSignature(ctx),
+                        kernel->GetCVKernelBody(ctx));
                 auto depends = kernel->GetDependInternalSymbol(ctx);
                 gen_depend_kernels(arch, depends);
             }
@@ -292,31 +280,29 @@ void gen_kernel_cv(std::vector<const KernelGen::KernelFunc*>& kernels,
         return {};                                               \
     }
 #else
-#define DEFAULT_RUN_INST_CV(_Opr)                                            \
-    {                                                                        \
-        RunCvHelper<_Opr> runner(opr);                                       \
-        return call_kernel_cv<_Opr>(kernels.first, &ctx, tensors,            \
-                                    benchmark_option, kernel_symbol, runner, \
-                                    output_idx);                             \
+#define DEFAULT_RUN_INST_CV(_Opr)                                                      \
+    {                                                                                  \
+        RunCvHelper<_Opr> runner(opr);                                                 \
+        return call_kernel_cv<_Opr>(                                                   \
+                kernels.first, &ctx, tensors, benchmark_option, kernel_symbol, runner, \
+                output_idx);                                                           \
     }
 #endif
-#define DEF_CCOPRPROXY_CV(_Opr)                                                \
-    template <>                                                                \
-    PerformanceResult CCOprProxy<_Opr>::exec(                                  \
-            _Opr* opr, const TensorNDArray& tensors, KernelGen::Arch arch,     \
-            const BenchmarkOption& benchmark_option,                           \
-            const std::string& kernel_symbol,                                  \
-            const std::unordered_map<std::string, CCAttr>& proxy_attr,         \
-            bool gen_dynamic) {                                                \
-        std::unordered_map<std::string, CCAttr> attr_map;                      \
-        auto kernels =                                                         \
-                opr_fill_attr<_Opr>(attr_map, opr, tensors, arch, proxy_attr); \
-        auto output_idx = get_output_idx(opr);                                 \
-        output_idx.normalize((int)tensors.size());                             \
-        fill_operands(attr_map, tensors, output_idx, false);                   \
-        add_test_mode_to_attr(attr_map);                                       \
-        CodeGenContext ctx(attr_map);                                          \
-        DEFAULT_RUN_INST_CV(_Opr);                                             \
+#define DEF_CCOPRPROXY_CV(_Opr)                                                        \
+    template <>                                                                        \
+    PerformanceResult CCOprProxy<_Opr>::exec(                                          \
+            _Opr* opr, const TensorNDArray& tensors, KernelGen::Arch arch,             \
+            const BenchmarkOption& benchmark_option, const std::string& kernel_symbol, \
+            const std::unordered_map<std::string, CCAttr>& proxy_attr,                 \
+            bool gen_dynamic) {                                                        \
+        std::unordered_map<std::string, CCAttr> attr_map;                              \
+        auto kernels = opr_fill_attr<_Opr>(attr_map, opr, tensors, arch, proxy_attr);  \
+        auto output_idx = get_output_idx(opr);                                         \
+        output_idx.normalize((int)tensors.size());                                     \
+        fill_operands(attr_map, tensors, output_idx, false);                           \
+        add_test_mode_to_attr(attr_map);                                               \
+        CodeGenContext ctx(attr_map);                                                  \
+        DEFAULT_RUN_INST_CV(_Opr);                                                     \
     }
 
 DEF_CCOPRPROXY_CV(megdnn::CVtranspose);

@@ -50,15 +50,14 @@ TinyNNStatus vm_instruction_call(VM* vm, Instruction* inst) {
         return TinyNN_ERROR_OUT_OF_RANGE;
     InstructionCall caller = vm->inst_call[inst->tag];
     if (!caller) {
-        LOG_ERROR("unsupported instruction %s\n",
-                  instruction_type_name(inst->tag));
+        LOG_ERROR("unsupported instruction %s\n", instruction_type_name(inst->tag));
         return TinyNN_ERROR_UNSUPPORTED_INSTRUCTION_TYPE;
     }
     return caller(inst, vm);
 }
 
-TinyNNStatus vm_instruction_load(VM* vm, flatbuffers_union_t fbs_union,
-                                 Instruction* inst) {
+TinyNNStatus vm_instruction_load(
+        VM* vm, flatbuffers_union_t fbs_union, Instruction* inst) {
     if (!vm->model) {
         LOG_ERROR("VM hasn't been attached yet\n");
         return TinyNN_ERROR;
@@ -67,8 +66,9 @@ TinyNNStatus vm_instruction_load(VM* vm, flatbuffers_union_t fbs_union,
         return TinyNN_ERROR_OUT_OF_RANGE;
     InstructionLoad loader = vm->inst_load[fbs_union.type];
     if (!loader) {
-        LOG_ERROR("unsupported instruction %s\n",
-                  MegCC_Instruction_type_name(fbs_union.type));
+        LOG_ERROR(
+                "unsupported instruction %s\n",
+                MegCC_Instruction_type_name(fbs_union.type));
         return TinyNN_ERROR_UNSUPPORTED_INSTRUCTION_TYPE;
     }
     return loader(fbs_union.value, inst, vm);
@@ -83,46 +83,48 @@ TinyNNStatus vm_instruction_destruct(VM* vm, Instruction* inst) {
         return TinyNN_ERROR_OUT_OF_RANGE;
     InstructionDestruct destructor = vm->inst_destruct[inst->tag];
     if (!destructor) {
-        LOG_ERROR("unsupported instruction %s\n",
-                  instruction_type_name(inst->tag));
+        LOG_ERROR("unsupported instruction %s\n", instruction_type_name(inst->tag));
         return TinyNN_ERROR_UNSUPPORTED_INSTRUCTION_TYPE;
     }
     return destructor(vm, inst);
 }
 
-TinyNNStatus vm_register_instruction_call(VM* vm, InstructionType type,
-                                          InstructionCall func) {
+TinyNNStatus vm_register_instruction_call(
+        VM* vm, InstructionType type, InstructionCall func) {
     if (type >= TinyNN_INSTRUCTION_TYPE_END)
         return TinyNN_ERROR_OUT_OF_RANGE;
     if (vm->inst_call[type]) {
-        LOG_ERROR("duplicated instruction caller for type %s\n",
-                  instruction_type_name(type));
+        LOG_ERROR(
+                "duplicated instruction caller for type %s\n",
+                instruction_type_name(type));
         return TinyNN_ERROR;
     }
     vm->inst_call[type] = func;
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus vm_register_instruction_load(VM* vm, flatbuffers_union_type_t type,
-                                          InstructionLoad func) {
+TinyNNStatus vm_register_instruction_load(
+        VM* vm, flatbuffers_union_type_t type, InstructionLoad func) {
     if (type >= MegCC_Instruction_INSTRUCTION_TABLE_END)
         return TinyNN_ERROR_OUT_OF_RANGE;
     if (vm->inst_load[type]) {
-        LOG_ERROR("duplicated instruction loader for type %s\n",
-                  MegCC_Instruction_type_name(type));
+        LOG_ERROR(
+                "duplicated instruction loader for type %s\n",
+                MegCC_Instruction_type_name(type));
         return TinyNN_ERROR;
     }
     vm->inst_load[type] = func;
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus vm_register_instruction_destruct(VM* vm, InstructionType type,
-                                              InstructionDestruct func) {
+TinyNNStatus vm_register_instruction_destruct(
+        VM* vm, InstructionType type, InstructionDestruct func) {
     if (type >= MegCC_Instruction_INSTRUCTION_TABLE_END)
         return TinyNN_ERROR_OUT_OF_RANGE;
     if (vm->inst_destruct[type]) {
-        LOG_ERROR("duplicated instruction destructor for type %s\n",
-                  instruction_type_name(type));
+        LOG_ERROR(
+                "duplicated instruction destructor for type %s\n",
+                instruction_type_name(type));
         return TinyNN_ERROR;
     }
     vm->inst_destruct[type] = func;

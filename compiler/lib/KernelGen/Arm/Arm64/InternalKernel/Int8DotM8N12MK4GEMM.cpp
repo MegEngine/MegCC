@@ -80,8 +80,9 @@ static inline void transpose_1x12_4_s(const float* inptr0, float* outptr) {
 )"};
 }
 
-static std::string kern_8x12(TContext* ctx, const std::string& dst_specifier,
-                             const std::string& nonline_mode) {
+static std::string kern_8x12(
+        TContext* ctx, const std::string& dst_specifier,
+        const std::string& nonline_mode) {
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
 
@@ -620,9 +621,8 @@ static std::string kern_8x12(TContext* ctx, const std::string& dst_specifier,
                                [=](std::vector<std::string> args) {
                                    CC_ASSERT(args.size() == 3);
                                    return activation_gen->GenAsmQuantStore(
-                                           {args[0]}, "v6", args[1],
-                                           std::stoi(args[2]), dst_specifier,
-                                           {"v7"}, nonline_mode);
+                                           {args[0]}, "v6", args[1], std::stoi(args[2]),
+                                           dst_specifier, {"v7"}, nonline_mode);
                                })
                           .add("gen_postprocess_reg_init", postprocess_reg_init)
                           .render(tail_temp);
@@ -630,8 +630,9 @@ static std::string kern_8x12(TContext* ctx, const std::string& dst_specifier,
     return writer.str();
 }
 
-static std::string kern_4x12(TContext* ctx, const std::string& dst_specifier,
-                             const std::string& nonline_mode) {
+static std::string kern_4x12(
+        TContext* ctx, const std::string& dst_specifier,
+        const std::string& nonline_mode) {
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
 
@@ -820,8 +821,7 @@ static std::string kern_4x12(TContext* ctx, const std::string& dst_specifier,
                                return activation_gen->GenAsmQuantStore(
                                        {args[0], args[1]}, "v27", args[2],
                                        std::stoi(args[3]), dst_specifier,
-                                       {"v20", "v21", "v22", "v23", "v24",
-                                        "v25"},
+                                       {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode);
                            })
                       .add("gen_postprocess_reg_init", postprocess_reg_init)
@@ -829,8 +829,9 @@ static std::string kern_4x12(TContext* ctx, const std::string& dst_specifier,
     return writer.str();
 }
 
-static std::string kern_8x4(TContext* ctx, const std::string& dst_specifier,
-                            const std::string& nonline_mode) {
+static std::string kern_8x4(
+        TContext* ctx, const std::string& dst_specifier,
+        const std::string& nonline_mode) {
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
     std::string store_str = "STORE_C";
@@ -1085,8 +1086,7 @@ static std::string kern_8x4(TContext* ctx, const std::string& dst_specifier,
                                return activation_gen->GenAsmQuantStore(
                                        {args[0], args[1]}, "v27", "None", 0,
                                        dst_specifier,
-                                       {"v20", "v21", "v22", "v23", "v24",
-                                        "v25"},
+                                       {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode, false);
                            })
                       .add("gen_postprocess_reg_init", postprocess_reg_init)
@@ -1094,8 +1094,9 @@ static std::string kern_8x4(TContext* ctx, const std::string& dst_specifier,
     return writer.str();
 }
 
-static std::string kern_4x4(TContext* ctx, const std::string& dst_specifier,
-                            const std::string& nonline_mode) {
+static std::string kern_4x4(
+        TContext* ctx, const std::string& dst_specifier,
+        const std::string& nonline_mode) {
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
     std::string store_str = "STORE_C";
@@ -1286,8 +1287,7 @@ static std::string kern_4x4(TContext* ctx, const std::string& dst_specifier,
                                return activation_gen->GenAsmQuantStore(
                                        {args[0], args[1]}, "v27", "None", 0,
                                        dst_specifier,
-                                       {"v20", "v21", "v22", "v23", "v24",
-                                        "v25"},
+                                       {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode, false);
                            })
                       .add("gen_postprocess_reg_init", postprocess_reg_init)
@@ -1407,10 +1407,10 @@ std::string gen_pack_b_workspace(const std::string& sig) {
     return ss.str();
 }
 
-std::string gen_kernel(const std::string& dst_specifier, const std::string& sig,
-                       TContext* ctx, const std::string& postprocess_call,
-                       const std::string& preset_str = "",
-                       bool with_temp_dst = false) {
+std::string gen_kernel(
+        const std::string& dst_specifier, const std::string& sig, TContext* ctx,
+        const std::string& postprocess_call, const std::string& preset_str = "",
+        bool with_temp_dst = false) {
     auto post_process_strs = gen_postprocess_inline(ctx);
     std::string gemm_output = "C";
     if (with_temp_dst) {
@@ -1489,8 +1489,7 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
     if (ctx->getAttrBool("with_bias")) {
         ss << "_bias";
     }
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         ss << "_" << ctx->getAttrStr("nonlineMode");
     }
     auto dtype = ctx->getAttrStr("dtype");
@@ -1509,23 +1508,21 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
 }
 
 bool MatmulInt8DotM8N12MK4Kernel::need_post_process(TContext* ctx) const {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     return nonline_mode == "SIGMOID";
 }
 
 std::vector<KernelObj> MatmulInt8DotM8N12MK4Kernel::GetDependInternalSymbol(
         TContext* ctx) const {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::vector<KernelObj> depends;
     if (nonline_mode == "SIGMOID") {
         ExpNeonKernel kern;
-        depends.emplace_back(kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
-                             kern.GetBodyGuardBegin(ctx),
-                             kern.GetBodyGuardEnd(ctx));
+        depends.emplace_back(
+                kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
+                kern.GetBodyGuardBegin(ctx), kern.GetBodyGuardEnd(ctx));
     }
     return depends;
 }
@@ -1543,9 +1540,8 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
         last_dtype = ctx->getAttrStr("last_dtype");
     }
     std::string dst_specifier = "int32_t";
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     if (Utils::is_quant_dtype(dtype) &&
         (nonline_mode == "RELU" || nonline_mode == "IDENTITY" ||
          nonline_mode == "H_SWISH")) {
@@ -1566,8 +1562,9 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     writer << gen_pack_a_workspace(GetPackAWorkspaceSignature(ctx));
     writer << gen_pack_b_workspace(GetPackBWorkspaceSignature(ctx));
     writer << postprocess_pair.first;
-    writer << gen_kernel(dst_specifier, GetNakedKernelSignature(ctx), ctx,
-                         postprocess_pair.second, "", need_temp_dst);
+    writer << gen_kernel(
+            dst_specifier, GetNakedKernelSignature(ctx), ctx, postprocess_pair.second,
+            "", need_temp_dst);
 
     std::string preset_temp = R"(
         size_t pack_a_size = ${packa_workspace_sym}(0, M, 0, K);
@@ -1582,17 +1579,16 @@ std::string MatmulInt8DotM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
                     .add("packa_sym", GetPackASymbol(ctx))
                     .add("packb_sym", GetPackBSymbol(ctx))
                     .render(preset_temp);
-    writer << gen_kernel(dst_specifier, GetKernelSignature(ctx), ctx,
-                         postprocess_pair.second, preset_str, need_temp_dst);
+    writer << gen_kernel(
+            dst_specifier, GetKernelSignature(ctx), ctx, postprocess_pair.second,
+            preset_str, need_temp_dst);
     return writer.str();
 }
 
-std::string MatmulInt8DotM8N12MK4Kernel::GetPackAWorkspaceBody(
-        TContext* ctx) const {
+std::string MatmulInt8DotM8N12MK4Kernel::GetPackAWorkspaceBody(TContext* ctx) const {
     return gen_pack_a_workspace(GetPackAWorkspaceSignature(ctx));
 }
-std::string MatmulInt8DotM8N12MK4Kernel::GetPackBWorkspaceBody(
-        TContext* ctx) const {
+std::string MatmulInt8DotM8N12MK4Kernel::GetPackBWorkspaceBody(TContext* ctx) const {
     return gen_pack_b_workspace(GetPackBWorkspaceSignature(ctx));
 }
 

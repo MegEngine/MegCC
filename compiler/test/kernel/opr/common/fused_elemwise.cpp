@@ -123,8 +123,7 @@ std::shared_ptr<TensorNDArray> fused_elemwise_compute_cc(
     }
     proxy_attr[key + "size"] = id;
 
-    auto output_storage =
-            megdnn::test::dnn_alloc_tensors(dnn_handle, {out_layout}, 0);
+    auto output_storage = megdnn::test::dnn_alloc_tensors(dnn_handle, {out_layout}, 0);
     auto in_tensors = *inputs;
     in_tensors.push_back((*output_storage)[0]);
     fused_elemwise_exec(in_tensors, arch, proxy_attr, symbol);
@@ -135,10 +134,9 @@ std::shared_ptr<TensorNDArray> fused_elemwise_compute_cc(
 namespace megcc {
 namespace test {
 
-void check_fuse_elemwise(TensorShapeArray shapes,
-                         std::vector<std::string> modes,
-                         megcc::KernelGen::Arch arch, const std::string& symbol,
-                         float epsilon) {
+void check_fuse_elemwise(
+        TensorShapeArray shapes, std::vector<std::string> modes,
+        megcc::KernelGen::Arch arch, const std::string& symbol, float epsilon) {
     Checker<ElemwiseForward> checker;
     auto dnn_handle = checker.get_dnn_handle();
     auto inputs_layout = checker.make_layouts(shapes, {}, {});
@@ -149,11 +147,10 @@ void check_fuse_elemwise(TensorShapeArray shapes,
         rng_map[i] = &rng;
     }
     checker.init_tensor(*inputs, {});
-    auto outputs_truth =
-            fused_elemwise_compute_dnn_truth(inputs, modes, dnn_handle);
+    auto outputs_truth = fused_elemwise_compute_dnn_truth(inputs, modes, dnn_handle);
     auto output_layout = (*outputs_truth)[0].layout;
-    auto outputs = fused_elemwise_compute_cc(inputs, output_layout, modes, arch,
-                                             dnn_handle, symbol);
+    auto outputs = fused_elemwise_compute_cc(
+            inputs, output_layout, modes, arch, dnn_handle, symbol);
 #if !MEGCC_TEST_GEN
     checker.check_tensors(*outputs_truth, *outputs, epsilon, epsilon, epsilon);
 #endif

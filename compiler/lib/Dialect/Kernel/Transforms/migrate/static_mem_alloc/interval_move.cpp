@@ -51,8 +51,8 @@ void StaticMemAllocIntervalMove::do_solve() {
                     << "detected conflict: cur=[" << cur->addr_begin << ", "
                     << cur->addr_end() << ")@[" << cur->time_begin << ", "
                     << cur->time_end << ") "
-                    << "conflict=[" << i->addr_begin << ", " << i->addr_end()
-                    << ")@[" << i->time_begin << ", " << i->time_end << ")";
+                    << "conflict=[" << i->addr_begin << ", " << i->addr_end() << ")@["
+                    << i->time_begin << ", " << i->time_end << ")";
 
             if (i->addr_begin < cur->addr_begin) {
                 m_interval_extra[i->id].move_conflict.push_back(cur);
@@ -77,9 +77,8 @@ void StaticMemAllocIntervalMove::sort_intervals() {
     auto cmp = [](const Interval* a, const Interval* b) {
         auto t0 = a->time_length(), t1 = b->time_length();
         return (t0 > t1) ||
-               (t0 == t1 &&
-                (a->time_begin < b->time_begin ||
-                 (a->time_begin == b->time_begin && a->size > b->size)));
+               (t0 == t1 && (a->time_begin < b->time_begin ||
+                             (a->time_begin == b->time_begin && a->size > b->size)));
     };
     std::sort(m_interval.begin(), m_interval.end(), cmp);
 }
@@ -135,14 +134,12 @@ std::pair<size_t, size_t> StaticMemAllocIntervalMove::find_best_fit(
                 if (i->addr_end() <= free_begin)
                     continue;
                 CC_ASSERT(free_end <= i->addr_begin);
-                size_t max_dist =
-                        i->addr_begin - free_end + get_move_space_size(i);
+                size_t max_dist = i->addr_begin - free_end + get_move_space_size(i);
                 if (max_dist < chunk_end_incr)
                     update_max(peak_add, chunk_end_incr - max_dist);
             }
             if (peak_add < best_fit_peak_add ||
-                (peak_add == best_fit_peak_add &&
-                 chunk_end_incr < best_fit_move)) {
+                (peak_add == best_fit_peak_add && chunk_end_incr < best_fit_move)) {
                 best_fit_peak_add = peak_add;
                 best_fit_move = chunk_end_incr;
                 best_fit_addr = free_begin;
@@ -162,9 +159,8 @@ std::pair<size_t, size_t> StaticMemAllocIntervalMove::find_best_fit(
     return {best_fit_addr, best_fit_peak_add};
 }
 
-std::vector<StaticMemAllocIntervalMove::MergedInterval>
-StaticMemAllocIntervalMove::merge_interval_by_addr(
-        const IntervalPtrArray& intervals) {
+std::vector<StaticMemAllocIntervalMove::MergedInterval> StaticMemAllocIntervalMove::
+        merge_interval_by_addr(const IntervalPtrArray& intervals) {
     std::vector<MergedInterval> result;
     std::vector<std::pair<size_t, size_t>> addrs;  // addr_begin, addr_end
     for (auto i : intervals) {
@@ -207,8 +203,8 @@ size_t StaticMemAllocIntervalMove::get_move_space_size(Interval* interval) {
     return sz;
 }
 
-void StaticMemAllocIntervalMove::move_interval_higher(Interval* interval,
-                                                      size_t prev_end) {
+void StaticMemAllocIntervalMove::move_interval_higher(
+        Interval* interval, size_t prev_end) {
     if (interval->addr_begin >= prev_end)
         return;
 

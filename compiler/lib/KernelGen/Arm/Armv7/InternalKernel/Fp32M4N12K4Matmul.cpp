@@ -79,9 +79,8 @@ static inline void transpose_1x4_4_s(const float* inptr0, float* outptr) {
 }
 
 static std::string kern_4x12(TContext* ctx) {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
@@ -283,9 +282,8 @@ static std::string kern_4x12(TContext* ctx) {
 }
 
 static std::string kern_4x4(TContext* ctx) {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
@@ -500,9 +498,9 @@ std::string gen_pack_b_workspace(const std::string& sig) {
     return ss.str();
 }
 
-std::string gen_kernel(const std::string& sig, TContext* ctx,
-                       const std::string& postprocess_call,
-                       const std::string& preset_str = "") {
+std::string gen_kernel(
+        const std::string& sig, TContext* ctx, const std::string& postprocess_call,
+        const std::string& preset_str = "") {
     auto post_process_strs = gen_postprocess_inline(ctx);
     std::string keren_body =
             R"(
@@ -553,8 +551,7 @@ std::string MatmulM4N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
     if (ctx->getAttrBool("with_bias")) {
         ss << "_bias";
     }
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         ss << "_" << ctx->getAttrStr("nonlineMode");
     }
     return ss.str();
@@ -562,15 +559,14 @@ std::string MatmulM4N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
 
 std::vector<KernelObj> MatmulM4N12MK4Kernel::GetDependInternalSymbol(
         TContext* ctx) const {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::vector<KernelObj> depends;
     if (nonline_mode == "SIGMOID") {
         ExpNeonKernel kern;
-        depends.emplace_back(kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
-                             kern.GetBodyGuardBegin(ctx),
-                             kern.GetBodyGuardEnd(ctx));
+        depends.emplace_back(
+                kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
+                kern.GetBodyGuardBegin(ctx), kern.GetBodyGuardEnd(ctx));
     }
     return depends;
 }
@@ -591,8 +587,7 @@ std::string MatmulM4N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     writer << gen_pack_a_workspace(GetPackAWorkspaceSignature(ctx));
     writer << gen_pack_b_workspace(GetPackBWorkspaceSignature(ctx));
     writer << postprocess_pair.first;
-    writer << gen_kernel(GetNakedKernelSignature(ctx), ctx,
-                         postprocess_pair.second);
+    writer << gen_kernel(GetNakedKernelSignature(ctx), ctx, postprocess_pair.second);
 
     std::string preset_temp = R"(
         size_t pack_a_size = ${packa_workspace_sym}(0, M, 0, K);
@@ -607,8 +602,8 @@ std::string MatmulM4N12MK4Kernel::GetKernelBody(TContext* ctx) const {
                     .add("packa_sym", GetPackASymbol(ctx))
                     .add("packb_sym", GetPackBSymbol(ctx))
                     .render(preset_temp);
-    writer << gen_kernel(GetKernelSignature(ctx), ctx, postprocess_pair.second,
-                         preset_str);
+    writer << gen_kernel(
+            GetKernelSignature(ctx), ctx, postprocess_pair.second, preset_str);
     return writer.str();
 }
 

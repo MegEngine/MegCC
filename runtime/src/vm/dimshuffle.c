@@ -6,15 +6,14 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "common.h"
 #include "init.h"
 #include "parse.h"
 #include "vm.h"
-#include "common.h"
 #include "vm/registry.h"
 #if ENABLE_INST_DIMSHUFFLE
-static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
-    Dimshuffle* dimshuffle= &inst->workload.dimshuffle;
+static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
+    Dimshuffle* dimshuffle = &inst->workload.dimshuffle;
     ns(Dimshuffle_table_t) fbs_dimshuffle = (ns(Dimshuffle_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_DIMSHUFFLE;
     int32_t input_idx = ns(Dimshuffle_input(fbs_dimshuffle));
@@ -27,11 +26,11 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
     }
     int32_t output_idx = ns(Dimshuffle_output(fbs_dimshuffle));
     dimshuffle->output = model->tensors + output_idx;
-    LOG_DEBUG("\t dimshuffle inputs tensor id:%d, output tensor id:%d\n",
-              input_idx, output_idx);
+    LOG_DEBUG(
+            "\t dimshuffle inputs tensor id:%d, output tensor id:%d\n", input_idx,
+            output_idx);
 
-    flatbuffers_int32_vec_t fbs_pattern =
-            ns(Dimshuffle_pattern(fbs_dimshuffle));
+    flatbuffers_int32_vec_t fbs_pattern = ns(Dimshuffle_pattern(fbs_dimshuffle));
     dimshuffle->pattern_dim = flatbuffers_int32_vec_len(fbs_pattern);
     for (int32_t idx = 0; idx < dimshuffle->pattern_dim; idx++) {
         dimshuffle->pattern[idx] = flatbuffers_int32_vec_at(fbs_pattern, idx);
@@ -56,8 +55,8 @@ static TinyNNStatus execute(Instruction* inst, VM* vm) {
     //! init output stride
     output->layout.stride[output->layout.nr_dim - 1] = 1;
     for (int index = output->layout.nr_dim - 2; index >= 0; index--) {
-        output->layout.stride[index] = output->layout.dims[index + 1] *
-                                       output->layout.stride[index + 1];
+        output->layout.stride[index] =
+                output->layout.dims[index + 1] * output->layout.stride[index + 1];
     }
     alloc_tensor(output, vm);
     //! do dimshuffle naive

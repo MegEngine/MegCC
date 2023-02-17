@@ -33,14 +33,14 @@ class GlobalCtx {
 public:
     GlobalCtx() {
         reg_ptr = std::make_unique<mlir::DialectRegistry>();
-        reg_ptr->insert<StandardOpsDialect, tensor::TensorDialect,
-                        tosa::TosaDialect, linalg::LinalgDialect,
-                        bufferization::BufferizationDialect>();
+        reg_ptr->insert<
+                StandardOpsDialect, tensor::TensorDialect, tosa::TosaDialect,
+                linalg::LinalgDialect, bufferization::BufferizationDialect>();
 
         ctx_ptr = std::make_unique<mlir::MLIRContext>(*reg_ptr);
-        ctx_ptr->loadDialect<StandardOpsDialect, tosa::TosaDialect,
-                             linalg::LinalgDialect,
-                             bufferization::BufferizationDialect>();
+        ctx_ptr->loadDialect<
+                StandardOpsDialect, tosa::TosaDialect, linalg::LinalgDialect,
+                bufferization::BufferizationDialect>();
 
         registerLLVMDialectTranslation(*ctx_ptr);
     }

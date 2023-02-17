@@ -17,8 +17,7 @@ TEST(NAIVE, PoolingNCHW) {
     checker.set_kernel_symbol("kernel_.*");
     PoolingForward::Param param;
     checker.set_param(param);
-    for (auto mode :
-         {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
+    for (auto mode : {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
         for (size_t window : {2, 3, 5})
             for (size_t stride : {(size_t)1, window})
                 for (size_t pad : {(size_t)0, window / 2})
@@ -46,8 +45,7 @@ TEST(NAIVE, PoolingNCHWQuant) {
     checker.set_dtype(0, dtype::QuantizedS8(0.7f));
     checker.set_dtype(1, dtype::QuantizedS8(0.7f));
     checker.set_param(param);
-    for (auto mode :
-         {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
+    for (auto mode : {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
         for (size_t window : {2, 3, 5})
             for (size_t stride : {(size_t)1, window})
                 for (size_t pad : {(size_t)0, window / 2})

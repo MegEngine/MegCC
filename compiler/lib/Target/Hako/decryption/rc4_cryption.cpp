@@ -6,22 +6,22 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "rc4/rc4_cryption_impl.h"
 #include "rc4_cryption.h"
+#include "rc4/rc4_cryption_impl.h"
 
 #include <vector>
 
 using namespace megcc;
 
-std::vector<uint8_t> RC4::decrypt_model(const void* model_mem, size_t size,
-                                        const std::vector<uint8_t>& key) {
+std::vector<uint8_t> RC4::decrypt_model(
+        const void* model_mem, size_t size, const std::vector<uint8_t>& key) {
     RC4Impl rc4_impl(model_mem, size, key);
     rc4_impl.init_rc4_state();
     return rc4_impl.decrypt_model();
 }
 
-std::vector<uint8_t> RC4::encrypt_model(const void* model_mem, size_t size,
-                                        const std::vector<uint8_t>& key) {
+std::vector<uint8_t> RC4::encrypt_model(
+        const void* model_mem, size_t size, const std::vector<uint8_t>& key) {
     RC4Impl rc4_impl(model_mem, size, key);
     return rc4_impl.encrypt_model();
 }

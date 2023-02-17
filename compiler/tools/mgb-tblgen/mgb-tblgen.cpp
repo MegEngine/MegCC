@@ -28,8 +28,9 @@ enum ActionType { None, EnumReflection };
 // NOLINTNEXTLINE
 llvm::cl::opt<ActionType> action(
         llvm::cl::desc("Action to perform:"),
-        llvm::cl::values(clEnumValN(EnumReflection, "gen-enum-reflection",
-                                    "Generate enumerate class reflection")));
+        llvm::cl::values(clEnumValN(
+                EnumReflection, "gen-enum-reflection",
+                "Generate enumerate class reflection")));
 
 bool gen_enum_reflection(raw_ostream& os, RecordKeeper& keeper) {
     std::unordered_set<unsigned int> enums;
@@ -41,11 +42,12 @@ bool gen_enum_reflection(raw_ostream& os, RecordKeeper& keeper) {
         }
         if (enums.insert(attr.getBaseRecord()->getID()).second) {
             FmtContext ctx;
-            ctx.addSubst("enumClass",
-                         attr.getParentNamespace() + "::" + attr.getEnumName());
+            ctx.addSubst(
+                    "enumClass", attr.getParentNamespace() + "::" + attr.getEnumName());
             auto addBody = [&](const char* tpl) {
-                ctx.addSubst("body",
-                             llvm::join(llvm::map_range(
+                ctx.addSubst(
+                        "body", llvm::join(
+                                        llvm::map_range(
                                                 attr.getEnumMembers(),
                                                 [&](auto&& i) -> std::string {
                                                     return tgfmt(tpl, &ctx, i);

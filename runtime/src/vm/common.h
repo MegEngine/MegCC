@@ -16,8 +16,7 @@
 #include "tensor_util.h"
 #include "vm.h"
 
-static inline TinyNNStatus alloc_tensor_opt(Tensor* tensor,
-                                            const RuntimeOpt* opt) {
+static inline TinyNNStatus alloc_tensor_opt(Tensor* tensor, const RuntimeOpt* opt) {
     if (tensor->is_dynamic) {
         size_t length_in_byte = tensor_length_in_byte(tensor);
         if (!tensor->ptr || tensor->size < length_in_byte) {
@@ -49,17 +48,17 @@ static inline void free_dev_ptr(void* dev_ptr, VM* vm) {
     }
 }
 
-static TinyNNStatus parase_inputs(Tensor** inputs, int nr_input,
-                                  DeviceModel* model, CombineModel* com_model,
-                                  flatbuffers_int32_vec_t fbs_inputs,
-                                  flatbuffers_int8_vec_t fbs_input_types) {
+static TinyNNStatus parase_inputs(
+        Tensor** inputs, int nr_input, DeviceModel* model, CombineModel* com_model,
+        flatbuffers_int32_vec_t fbs_inputs, flatbuffers_int8_vec_t fbs_input_types) {
     for (int i = 0; i < nr_input; i++) {
         int index = flatbuffers_int32_vec_at(fbs_inputs, i);
         int input_type = flatbuffers_int8_vec_at(fbs_input_types, i);
         if (input_type == ns(TensorType_TENSOR)) {
             *(inputs + i) = model->tensors + index;
-            LOG_DEBUG("\t\tinput %d tensor index=%d offset %zu size %zu\n", i,
-                      index, (*(inputs + i))->offset, (*(inputs + i))->size);
+            LOG_DEBUG(
+                    "\t\tinput %d tensor index=%d offset %zu size %zu\n", i, index,
+                    (*(inputs + i))->offset, (*(inputs + i))->size);
         } else {
             *(inputs + i) = com_model->weights + index;
             LOG_DEBUG("\t\tinput %d weight index=%d \n", i, index);
@@ -100,8 +99,9 @@ static inline void print_tensor(Tensor* output) {
             }
         }
         avg = sum / nr_elem;
-    } else if (output->dtype.type_enum == TinyNN_INT8 ||
-               output->dtype.type_enum == TinyNN_QINT8) {
+    } else if (
+            output->dtype.type_enum == TinyNN_INT8 ||
+            output->dtype.type_enum == TinyNN_QINT8) {
         nr_elem = total_length / sizeof(int8_t);
         float sum = 0;
         for (int i = 0; i < nr_elem; ++i) {
@@ -111,8 +111,9 @@ static inline void print_tensor(Tensor* output) {
             }
         }
         avg = sum / nr_elem;
-    } else if (output->dtype.type_enum == TinyNN_UINT8 ||
-               output->dtype.type_enum == TinyNN_QUINT8) {
+    } else if (
+            output->dtype.type_enum == TinyNN_UINT8 ||
+            output->dtype.type_enum == TinyNN_QUINT8) {
         nr_elem = total_length / sizeof(int8_t);
         float sum = 0;
         for (int i = 0; i < nr_elem; ++i) {
@@ -122,8 +123,9 @@ static inline void print_tensor(Tensor* output) {
             }
         }
         avg = sum / nr_elem;
-    } else if (output->dtype.type_enum == TinyNN_INT ||
-               output->dtype.type_enum == TinyNN_QINT32) {
+    } else if (
+            output->dtype.type_enum == TinyNN_INT ||
+            output->dtype.type_enum == TinyNN_QINT32) {
         nr_elem = total_length / sizeof(int32_t);
         float sum = 0;
         for (int i = 0; i < nr_elem; ++i) {
@@ -139,12 +141,10 @@ static inline void print_tensor(Tensor* output) {
     LOG_DEBUG_NO_PREFIX("]");
     LOG_DEBUG_NO_PREFIX(
             "avg %f  [%d(%d) %d(%d) %d(%d) %d(%d) %d(%d)] %d dim used\n", avg,
-            output->layout.dims[0], output->layout.stride[0],
-            output->layout.dims[1], output->layout.stride[1],
-            output->layout.dims[2], output->layout.stride[2],
-            output->layout.dims[3], output->layout.stride[3],
-            output->layout.dims[4], output->layout.stride[4],
-            output->layout.nr_dim);
+            output->layout.dims[0], output->layout.stride[0], output->layout.dims[1],
+            output->layout.stride[1], output->layout.dims[2], output->layout.stride[2],
+            output->layout.dims[3], output->layout.stride[3], output->layout.dims[4],
+            output->layout.stride[4], output->layout.nr_dim);
 }
 
 static inline void log_tensor(Tensor* output, char* post_fix, Tensor* input) {
@@ -156,11 +156,9 @@ static inline void log_tensor(Tensor* output, char* post_fix, Tensor* input) {
     //! may overflow
     char name[1024];
     int dump_name_len = 0;
-    dump_name_len =
-            sprintf(name, "dump/%d__%s_%s", dump_cnt++, output->name, post_fix);
+    dump_name_len = sprintf(name, "dump/%d__%s_%s", dump_cnt++, output->name, post_fix);
     for (int i = 0; i < output->layout.nr_dim; ++i) {
-        dump_name_len +=
-                sprintf(name + dump_name_len, "_%d", output->layout.dims[i]);
+        dump_name_len += sprintf(name + dump_name_len, "_%d", output->layout.dims[i]);
     }
     write_ptr = tinynn_fopen(name, "wb");  // w for write, b for binary
     tinynn_fwrite(output->ptr, 1, total_length, write_ptr);

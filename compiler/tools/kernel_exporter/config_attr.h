@@ -26,8 +26,8 @@ using KA = megcc::KernelGen::Arch;
 namespace megcc {
 namespace exporter {
 
-std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
-                                               bool use_default_attr);
+std::vector<megcc::CodeGenContext> config_attr(
+        KPT k_type, std::string k_name, bool use_default_attr);
 
 }  // namespace exporter
 }  // namespace megcc

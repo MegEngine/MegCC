@@ -22,16 +22,15 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
         TContext* ctx, bool need_postprocess = true) {
     std::string call_str;
     std::stringstream declare_ss;
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
-    if ((nonline_mode == "SIGMOID" || nonline_mode == "H_SWISH") &&
-        need_postprocess) {
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
+    if ((nonline_mode == "SIGMOID" || nonline_mode == "H_SWISH") && need_postprocess) {
         std::vector<CCOperand> operands;
         operands.resize(2);
         auto dtype = ctx->getAttrStr("dtype");
-        auto create_elem = [=](std::string src_dtype, std::string dst_dtype)
-                -> std::shared_ptr<ElemwiseGenUnary> {
+        auto create_elem =
+                [=](std::string src_dtype,
+                    std::string dst_dtype) -> std::shared_ptr<ElemwiseGenUnary> {
             if (nonline_mode == "SIGMOID") {
                 return std::make_shared<ElemwiseGenUnarySigmoid>(
                         src_dtype, dst_dtype, true);
@@ -42,8 +41,7 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
             }
         };
 
-        std::shared_ptr<ElemwiseGenUnary> ElemwiseImpl =
-                create_elem("f32", "f32");
+        std::shared_ptr<ElemwiseGenUnary> ElemwiseImpl = create_elem("f32", "f32");
 
         if (Utils::is_quant_dtype(dtype)) {
             ElemwiseImpl = create_elem("si32", "si8");
@@ -90,13 +88,11 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
             }
         )";
         }
-        call_str =
-                StringTemplate::StringTemplateArgs()
-                        .add("ElemwiseImplName", ElemwiseImpl->GenInlineName())
-                        .render(post_process_temp);
+        call_str = StringTemplate::StringTemplateArgs()
+                           .add("ElemwiseImplName", ElemwiseImpl->GenInlineName())
+                           .render(post_process_temp);
         auto InternalKernelFunc = ExpNeonKernel();
-        declare_ss << "extern " << InternalKernelFunc.GetKernelSignature(ctx)
-                   << ";\n";
+        declare_ss << "extern " << InternalKernelFunc.GetKernelSignature(ctx) << ";\n";
         declare_ss << ElemwiseImpl->GenCodeBody({});
     }
     return {declare_ss.str(), call_str};

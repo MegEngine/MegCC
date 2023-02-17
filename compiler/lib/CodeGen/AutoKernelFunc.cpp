@@ -39,8 +39,8 @@ KernelGen::KernelObj codegen::AutoKernelFuncInternal::GetKernelObj(
     mlir::OpBuilder op_builder(ctx);
     op_builder.setInsertionPointToEnd(mod->getBody());
     auto func_name = GetKernelSymbol(context);
-    auto func = op_builder.create<FuncOp>(op_builder.getUnknownLoc(), func_name,
-                                          get_func_type_memref(context, ctx));
+    auto func = op_builder.create<FuncOp>(
+            op_builder.getUnknownLoc(), func_name, get_func_type_memref(context, ctx));
     Block* entryBlock = func.addEntryBlock();
     op_builder.setInsertionPointToStart(entryBlock);
     CreateCompute(entryBlock, op_builder, ctx, context);
@@ -62,8 +62,7 @@ KernelGen::KernelObj codegen::AutoKernelFuncInternal::CompileKernel(
     auto opt_pipeline = mlir::makeOptimizingTransformer(3, 1, 0);
     auto&& mb_engine = mlir::ExecutionEngine::create(
             mod, nullptr, opt_pipeline, llvm::None,
-            std::vector<llvm::StringRef>(libs.begin(), libs.end()), true,
-            false);
+            std::vector<llvm::StringRef>(libs.begin(), libs.end()), true, false);
 
     CC_ASSERT(mb_engine && "Error can't create engine\n");
     std::unique_ptr<mlir::ExecutionEngine> my_engine = std::move(*mb_engine);

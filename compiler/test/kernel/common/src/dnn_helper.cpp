@@ -7,8 +7,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include <numeric>
 #include "test/kernel/common/dnn_helper.h"
+#include <numeric>
 #include "test/kernel/common/memory_manager.h"
 using namespace megdnn;
 
@@ -65,19 +65,17 @@ void megdnn::test::WorkspaceBundle::set(void* ptr) {
 
 size_t megdnn::test::WorkspaceBundle::total_size_in_bytes() const {
     //! return 0 if the WorkspaceBundle is empty
-    size_t size =
-            std::accumulate(m_aligned_sizes.begin(), m_aligned_sizes.end(),
-                            static_cast<size_t>(0));
+    size_t size = std::accumulate(
+            m_aligned_sizes.begin(), m_aligned_sizes.end(), static_cast<size_t>(0));
     return size ? size + m_align_in_bytes : size;
 }
 
 std::shared_ptr<TensorNDArray> megdnn::test::dnn_alloc_tensors(
-        megdnn::Handle* handle, const TensorLayoutArray& layouts,
-        const size_t offset) {
+        megdnn::Handle* handle, const TensorLayoutArray& layouts, const size_t offset) {
     auto deleter = [handle, offset](TensorNDArray* ptr) {
         for (auto&& i : *ptr) {
-            auto pdata = static_cast<dt_byte*>(i.raw_ptr()) +
-                         i.layout.span().low_byte - offset;
+            auto pdata = static_cast<dt_byte*>(i.raw_ptr()) + i.layout.span().low_byte -
+                         offset;
             megdnn_free(handle, pdata);
         }
         delete ptr;
@@ -85,25 +83,23 @@ std::shared_ptr<TensorNDArray> megdnn::test::dnn_alloc_tensors(
     std::shared_ptr<TensorNDArray> ret{new TensorNDArray, deleter};
     for (size_t i = 0; i < layouts.size(); ++i) {
         auto span = layouts[i].span();
-        ret->emplace_back(static_cast<dt_byte*>(megdnn_malloc(
-                                  handle, span.dist_byte() + offset)) -
-                                  span.low_byte + offset,
-                          layouts[i]);
+        ret->emplace_back(
+                static_cast<dt_byte*>(
+                        megdnn_malloc(handle, span.dist_byte() + offset)) -
+                        span.low_byte + offset,
+                layouts[i]);
     }
     return ret;
 }
 
-void megdnn::test::dnn_copy_tensors(const TensorNDArray& dest,
-                                    const TensorNDArray& src) {
+void megdnn::test::dnn_copy_tensors(
+        const TensorNDArray& dest, const TensorNDArray& src) {
     mgb_assert(dest.size() == src.size());
     for (size_t i = 0; i < dest.size(); ++i) {
-        mgb_assert(dest[i].layout.total_nr_elems() ==
-                   src[i].layout.total_nr_elems());
+        mgb_assert(dest[i].layout.total_nr_elems() == src[i].layout.total_nr_elems());
         mgb_assert(dest[i].layout.dtype == src[i].layout.dtype);
-        memcpy(static_cast<int8_t*>(dest[i].raw_ptr()) +
-                       dest[i].layout.span().low_byte,
-               static_cast<int8_t*>(src[i].raw_ptr()) +
-                       src[i].layout.span().low_byte,
+        memcpy(static_cast<int8_t*>(dest[i].raw_ptr()) + dest[i].layout.span().low_byte,
+               static_cast<int8_t*>(src[i].raw_ptr()) + src[i].layout.span().low_byte,
                dest[i].layout.span().dist_byte());
     }
 }

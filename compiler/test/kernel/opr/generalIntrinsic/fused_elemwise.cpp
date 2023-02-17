@@ -25,8 +25,8 @@ TEST(GI, FusedElemwiseKernel) {
     modes.push_back("O0,I3,SUB,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*");
     };
 
     test({{4, 6, 9, 2}, {4, 6, 9, 2}, {1}, {4, 6, 9, 2}});
@@ -43,8 +43,8 @@ TEST(GI, FusedMoreElemwise) {
     modes.push_back("O2,I2,TRUE_DIV,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*", 1e-1);
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*", 1e-1);
     };
 
     test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}, {1}});
@@ -59,8 +59,8 @@ TEST(GI, FusedAllMode) {
     modes.push_back("O0,O1,FUSE_ADD_RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*");
     };
     test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}});
 }
@@ -72,8 +72,8 @@ TEST(GI, FusedAllMode2) {
     modes.push_back("O0,O1,FUSE_ADD_SIGMOID,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*");
     };
     test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}});
 }
@@ -85,8 +85,8 @@ TEST(GI, FusedMulAnd3) {
     modes.push_back("O0,RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*");
     };
 
     test({{3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}});
@@ -100,8 +100,8 @@ TEST(GI, FusedMulAnd4) {
     modes.push_back("O0,RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_gi_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_gi_.*");
     };
 
     test({{3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}});

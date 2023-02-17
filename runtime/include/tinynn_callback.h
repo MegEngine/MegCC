@@ -52,10 +52,9 @@ typedef struct {
     long (*tinynn_ftell_cb)(FILE* stream);
     int (*tinynn_fseek_cb)(FILE* stream, long offset, int whence);
     int (*tinynn_fclose_cb)(FILE* stream);
-    size_t (*tinynn_fwrite_cb)(const void* ptr, size_t size, size_t nmemb,
-                               FILE* stream);
-    size_t (*tinynn_fread_cb)(void* ptr, size_t size, size_t nmemb,
-                              FILE* stream);
+    size_t (*tinynn_fwrite_cb)(
+            const void* ptr, size_t size, size_t nmemb, FILE* stream);
+    size_t (*tinynn_fread_cb)(void* ptr, size_t size, size_t nmemb, FILE* stream);
 } TinyNnCallBack;
 
 /**

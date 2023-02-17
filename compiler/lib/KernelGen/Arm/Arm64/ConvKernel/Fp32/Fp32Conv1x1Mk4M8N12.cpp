@@ -22,14 +22,11 @@ namespace KernelGen {
 namespace Arm64 {
 
 bool Conv1x1FloatMk4::IsAvailable(TContext* ctx) const {
-    bool param_value_ok = ctx->getAttrUInt("kernel_h") == 1 &&
-                          ctx->getAttrUInt("kernel_w") == 1 &&
-                          ctx->getAttrUInt("stride_h") == 1 &&
-                          ctx->getAttrUInt("stride_w") == 1 &&
-                          ctx->getAttrUInt("pad_h") == 0 &&
-                          ctx->getAttrUInt("pad_w") == 0 &&
-                          ctx->getAttrUInt("dilate_h") == 1 &&
-                          ctx->getAttrUInt("dilate_w") == 1;
+    bool param_value_ok =
+            ctx->getAttrUInt("kernel_h") == 1 && ctx->getAttrUInt("kernel_w") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("stride_w") == 1 &&
+            ctx->getAttrUInt("pad_h") == 0 && ctx->getAttrUInt("pad_w") == 0 &&
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
                          ctx->getAttrStr("format") == "NCHW44" &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
@@ -53,8 +50,7 @@ std::string Conv1x1FloatMk4::GetKernelSymbol(TContext* ctx) const {
     if (is_bias(ctx)) {
         extra_ss << "_bias";
     }
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         extra_ss << "_" << ctx->getAttrStr("nonlineMode");
     }
     std::string name_temp =
@@ -114,15 +110,14 @@ std::string Conv1x1FloatMk4::GetInitBody(TContext* ctx) const {
     return writer.str();
 }
 
-std::string Conv1x1FloatMk4::GetWorkspaceBodyCondition(TContext* ctx,
-                                                       bool jit) const {
+std::string Conv1x1FloatMk4::GetWorkspaceBodyCondition(TContext* ctx, bool jit) const {
     std::stringstream ss;
     auto inner_ctx = GetInnerCtx(ctx);
     if (jit) {
         ss << m_inner_gemm.GetPackBWorkspaceBody(inner_ctx.get()) << ";\n";
     } else {
-        ss << "extern "
-           << m_inner_gemm.GetPackBWorkspaceSignature(inner_ctx.get()) << ";\n";
+        ss << "extern " << m_inner_gemm.GetPackBWorkspaceSignature(inner_ctx.get())
+           << ";\n";
     }
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
     std::string workspace_temp =
@@ -142,11 +137,11 @@ std::string Conv1x1FloatMk4::GetWorkspaceBodyCondition(TContext* ctx,
     return ss.str();
 }
 
-std::vector<KernelObj> Conv1x1FloatMk4::GetDependInternalSymbol(
-        TContext* ctx) const {
+std::vector<KernelObj> Conv1x1FloatMk4::GetDependInternalSymbol(TContext* ctx) const {
     auto inner_ctx = GetInnerCtx(ctx);
 
-    return {{m_inner_gemm.GetKernelSymbol(inner_ctx.get()),
+    return {
+            {m_inner_gemm.GetKernelSymbol(inner_ctx.get()),
              m_inner_gemm.GetKernelBody(inner_ctx.get()),
              m_inner_gemm.GetBodyGuardBegin(inner_ctx.get()),
              m_inner_gemm.GetBodyGuardEnd(inner_ctx.get()),
@@ -156,8 +151,7 @@ std::vector<KernelObj> Conv1x1FloatMk4::GetDependInternalSymbol(
 std::shared_ptr<TContext> Conv1x1FloatMk4::GetInnerCtx(TContext* ctx) const {
     auto inner_ctx = std::make_shared<CodeGenContext>();
     if (ctx->haveAttr("nonlineMode")) {
-        inner_ctx->setAttr("nonlineMode",
-                           CCAttr(ctx->getAttrStr("nonlineMode")));
+        inner_ctx->setAttr("nonlineMode", CCAttr(ctx->getAttrStr("nonlineMode")));
     }
     inner_ctx->setAttr("with_bias", ConvImpl::is_bias(ctx));
     inner_ctx->setAttr("transposeA", false);

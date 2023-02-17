@@ -409,14 +409,13 @@ struct CvtColorReg {
     };
 
     CvtColorReg() {
-        reg_map = {{"RGB2YUV", {gen_rgb_yuv, "rgb2yuv"}},
-                   {"YUV2BGR_NV21", {gen_yuv_bgr_nv21, "yuv2bgr_nv21"}},
-                   {"RGB2BGR", {gen_rgb_bgr, "rgb2bgr"}}};
+        reg_map = {
+                {"RGB2YUV", {gen_rgb_yuv, "rgb2yuv"}},
+                {"YUV2BGR_NV21", {gen_yuv_bgr_nv21, "yuv2bgr_nv21"}},
+                {"RGB2BGR", {gen_rgb_bgr, "rgb2bgr"}}};
     }
 
-    bool usable(const std::string& mode) {
-        return reg_map.find(mode) != reg_map.end();
-    }
+    bool usable(const std::string& mode) { return reg_map.find(mode) != reg_map.end(); }
     GenFunc get_func(const std::string& mode) { return reg_map[mode].func; }
     std::string get_mode_sym(const std::string& mode) {
         return reg_map[mode].mode_symbol;
@@ -445,8 +444,7 @@ std::string CvtColorKernel::GetCVKernelSubSymbol(TContext* context) const {
 }
 
 std::string CvtColorKernel::GetCVKernelSignature(TContext* context) const {
-    return GetCVKernelSymbol(context) +
-           "(const TinyMat* src, const TinyMat* dst)";
+    return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 
 std::string CvtColorKernel::GetCVKernelBody(TContext* context) const {
@@ -456,12 +454,12 @@ std::string CvtColorKernel::GetCVKernelBody(TContext* context) const {
     auto code = gen_func(context);
     std::stringstream writer;
     writer << R"(
-        #include "gi_int.h"
         #include <limits.h>
         #include <string.h>
+        #include "gi_int.h"
         #include "tinycv_c.h"
     )";
-    
+
     std::string body_temp = R"(
         ${aux_func}
         void ${kernel_sig}{
@@ -478,10 +476,10 @@ std::string CvtColorKernel::GetCVKernelBody(TContext* context) const {
     )";
 
     writer << StringTemplate::StringTemplateArgs()
-            .add("aux_func", code.aux_func)
-            .add("cvt_code", code.cvt_code)
-            .add("kernel_sig", kernel_sig)
-            .render(body_temp);
+                      .add("aux_func", code.aux_func)
+                      .add("cvt_code", code.cvt_code)
+                      .add("kernel_sig", kernel_sig)
+                      .render(body_temp);
     return writer.str();
 }
 

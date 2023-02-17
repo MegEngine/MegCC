@@ -22,8 +22,7 @@ namespace OpTrait {
 namespace Kernel {
 // trait to mark abstract kernel
 template <typename ConcreteType>
-class AbstractKernelTrait
-        : OpTrait::TraitBase<ConcreteType, AbstractKernelTrait> {};
+class AbstractKernelTrait : OpTrait::TraitBase<ConcreteType, AbstractKernelTrait> {};
 
 }  // namespace Kernel
 }  // namespace OpTrait

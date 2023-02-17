@@ -66,22 +66,21 @@ public:
 };
 
 #define LOG_DEBUG megcc::Logger::debug()
-#define LOG_INFO megcc::Logger::info()
-#define LOG_WARN megcc::Logger::warning()
+#define LOG_INFO  megcc::Logger::info()
+#define LOG_WARN  megcc::Logger::warning()
 #define LOG_ERROR megcc::Logger::error()
 
-#define CC_ASSERT(expr)                                                     \
-    if (!(expr))                                                            \
-    megcc::LogFatal() << "MegCC Assert " << #expr                           \
-                      << " Error, in file: " << __FILE__ << ":" << __LINE__ \
-                      << ", at function: " << __PRETTY_FUNCTION__           \
+#define CC_ASSERT(expr)                                                              \
+    if (!(expr))                                                                     \
+    megcc::LogFatal() << "MegCC Assert " << #expr << " Error, in file: " << __FILE__ \
+                      << ":" << __LINE__ << ", at function: " << __PRETTY_FUNCTION__ \
                       << ", line: " << __LINE__ << ". extra message: "
 
 //! in order to destruct LogFatal after message is print, add `if(true)`
-#define CC_ABORT                                                              \
-    if (true)                                                                 \
-    megcc::LogFatal() << "MegCC Abort, Error in file: " << __FILE__ << ":"    \
-                      << __LINE__ << ", at function: " << __PRETTY_FUNCTION__ \
+#define CC_ABORT                                                                       \
+    if (true)                                                                          \
+    megcc::LogFatal() << "MegCC Abort, Error in file: " << __FILE__ << ":" << __LINE__ \
+                      << ", at function: " << __PRETTY_FUNCTION__                      \
                       << ", line: " << __LINE__ << ". extra message: "
 
 }  // namespace megcc

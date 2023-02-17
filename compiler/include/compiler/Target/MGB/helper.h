@@ -60,8 +60,7 @@ static inline ::megdnn::DType type_to_dtype(Type type) {
     return {};
 }
 
-static inline Type dtype_to_type(MLIRContext* context,
-                                 const ::megdnn::DType& dtype) {
+static inline Type dtype_to_type(MLIRContext* context, const ::megdnn::DType& dtype) {
     switch (dtype.enumv()) {
         case ::megdnn::DTypeEnum::Float32:
             return FloatType::getF32(context);
@@ -73,18 +72,18 @@ static inline Type dtype_to_type(MLIRContext* context,
             return IntegerType::get(context, 8, IntegerType::Signed);
         case ::megdnn::DTypeEnum::QuantizedS8: {
             constexpr int bit_width = 8;
-            auto dtype_param = dtype.param< ::megdnn::dtype::QuantizedS8>();
+            auto dtype_param = dtype.param<::megdnn::dtype::QuantizedS8>();
             float scale = dtype_param.scale;
-            auto dtype = IntegerType::get(context, bit_width,
-                                          IntegerType::Signed, scale);
+            auto dtype =
+                    IntegerType::get(context, bit_width, IntegerType::Signed, scale);
             return dtype;
         };
         case ::megdnn::DTypeEnum::QuantizedS32: {
             constexpr int bit_width = 32;
-            auto dtype_param = dtype.param< ::megdnn::dtype::QuantizedS32>();
+            auto dtype_param = dtype.param<::megdnn::dtype::QuantizedS32>();
             float scale = dtype_param.scale;
-            auto dtype = IntegerType::get(context, bit_width,
-                                          IntegerType::Signed, scale);
+            auto dtype =
+                    IntegerType::get(context, bit_width, IntegerType::Signed, scale);
             return dtype;
         };
         case ::megdnn::DTypeEnum::Float16:
@@ -97,9 +96,8 @@ static inline Type dtype_to_type(MLIRContext* context,
     return Type();
 }
 
-static inline bool shapedTypeToTensorShape(ShapedType shape,
-                                           ::megdnn::TensorShape& tensorShape,
-                                           ::megdnn::DType& dtype) {
+static inline bool shapedTypeToTensorShape(
+        ShapedType shape, ::megdnn::TensorShape& tensorShape, ::megdnn::DType& dtype) {
     if (!shape.hasRank()) {
         return false;
     }
@@ -117,8 +115,7 @@ static inline bool shapedTypeToTensorShape(ShapedType shape,
 }
 
 static inline bool memrefTypeToTensorLayout(
-        MemRefType memref, ::megdnn::TensorLayout& tensorLayout,
-        int64_t& offset) {
+        MemRefType memref, ::megdnn::TensorLayout& tensorLayout, int64_t& offset) {
     if (!shapedTypeToTensorShape(memref, tensorLayout, tensorLayout.dtype)) {
         return false;
     }
@@ -153,13 +150,14 @@ static inline ShapedType tensorShapeToShapedType(
 }
 
 static inline MemRefType tensorLayoutToMemref(
-        MLIRContext* context, const ::megdnn::TensorLayout& layout,
-        size_t offset = 0, megcc::MemoryStatus status = {}) {
+        MLIRContext* context, const ::megdnn::TensorLayout& layout, size_t offset = 0,
+        megcc::MemoryStatus status = {}) {
     std::vector<int64_t> shape(layout.shape, layout.shape + layout.ndim);
     std::vector<int64_t> stride(layout.stride, layout.stride + layout.ndim);
-    return MemRefType::get(shape, dtype_to_type(context, layout.dtype),
-                           makeStridedLinearLayoutMap(stride, offset, context),
-                           static_cast<uint64_t>(status));
+    return MemRefType::get(
+            shape, dtype_to_type(context, layout.dtype),
+            makeStridedLinearLayoutMap(stride, offset, context),
+            static_cast<uint64_t>(status));
 }
 
 }  // namespace MGB

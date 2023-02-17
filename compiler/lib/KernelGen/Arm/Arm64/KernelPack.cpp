@@ -44,8 +44,7 @@ struct AllA64Kernel {
         inner_map[KernelPack::KernType::ElemwiseKernel] = {
                 std::make_shared<Arm64::ElemwiseKernel>()};
     }
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 }  // namespace

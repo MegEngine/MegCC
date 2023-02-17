@@ -6,10 +6,10 @@
 #include "stdint.h"
 #include "string.h"
 
-#define NR_KERNELS (12)
-#define NR_INIT (12)
+#define NR_KERNELS      (12)
+#define NR_INIT         (12)
 #define NR_DEDUCE_SHAPE (1)
-#define NR_WORKSPACE (0)
+#define NR_WORKSPACE    (0)
 
 #define KERNEL_MARK_USDED_VAR(x) (void)(x);
 

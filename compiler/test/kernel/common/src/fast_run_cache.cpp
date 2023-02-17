@@ -6,14 +6,13 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
-#include "megbrain/common.h"
 #include "test/kernel/common/fast_run_cache.h"
+#include "megbrain/common.h"
 
 using namespace megdnn;
 using namespace test;
 
-FastRunCache::SearchItemStorage::SearchItemStorage(
-        const Algorithm::SearchItem& item) {
+FastRunCache::SearchItemStorage::SearchItemStorage(const Algorithm::SearchItem& item) {
     Algorithm::serialize_write_pod(item.opr_type, data_hold);
     for (auto&& layout : item.layouts) {
         data_hold += layout.serialize();
@@ -32,8 +31,8 @@ Algorithm::Info::Desc FastRunCache::get(const Algorithm::SearchItem& key) {
     return iter->second;
 }
 
-void FastRunCache::put(const Algorithm::SearchItem& key,
-                       const Algorithm::Info::Desc& val) {
+void FastRunCache::put(
+        const Algorithm::SearchItem& key, const Algorithm::Info::Desc& val) {
     SearchItemStorage key_storage(key);
     key_storage.init_hash();
     mgb_assert(m_cache.find(key_storage) == m_cache.end());

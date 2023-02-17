@@ -79,9 +79,8 @@ void register_tinynn_cb(int cb_version, const TinyNnCallBack cb) {
     }
     memcpy(&g_cb, &cb, sizeof(TinyNnCallBack));
     //! fs api just check at use stage
-    if (!g_cb.tinynn_fopen_cb || !g_cb.tinynn_ftell_cb ||
-        !g_cb.tinynn_fseek_cb || !g_cb.tinynn_fclose_cb ||
-        !g_cb.tinynn_fwrite_cb || !g_cb.tinynn_fread_cb) {
+    if (!g_cb.tinynn_fopen_cb || !g_cb.tinynn_ftell_cb || !g_cb.tinynn_fseek_cb ||
+        !g_cb.tinynn_fclose_cb || !g_cb.tinynn_fwrite_cb || !g_cb.tinynn_fread_cb) {
         LOG_WARNING(
                 "customer do not imp file api, TINYNN_DUMP_TENSOR and "
                 "LITE_load_model_from_path function will trap!!\n")
@@ -100,8 +99,7 @@ void register_tinynn_cb(int cb_version, const TinyNnCallBack cb) {
     }
 
     has_init_cb = 1;
-    __tinynn_log__(
-            "register runtime callback to global runtime cb success!!\n");
+    __tinynn_log__("register runtime callback to global runtime cb success!!\n");
 #else
     (void)&cb_version;
     (void)&cb;

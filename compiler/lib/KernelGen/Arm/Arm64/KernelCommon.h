@@ -20,9 +20,7 @@ namespace Arm64 {
     std::string GetBodyGuardBegin(TContext* ctx) const override { \
         return "\n#if defined(__aarch64__)\n";                    \
     }                                                             \
-    std::string GetBodyGuardEnd(TContext* ctx) const override {   \
-        return "\n#endif\n";                                      \
-    }
+    std::string GetBodyGuardEnd(TContext* ctx) const override { return "\n#endif\n"; }
 
 class Arm64MatmulInternal : public ArmCommon::MatmulInternal {
 public:

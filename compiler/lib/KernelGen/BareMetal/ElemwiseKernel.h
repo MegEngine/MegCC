@@ -9,8 +9,8 @@
 #pragma once
 #include <sstream>
 #include <string>
-#include "compiler/KernelGen/KernelGen.h"
 #include "compiler/Common/Logger.h"
+#include "compiler/KernelGen/KernelGen.h"
 
 namespace megcc {
 namespace KernelGen {

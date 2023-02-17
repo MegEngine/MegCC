@@ -21,10 +21,8 @@ bool ConvFloatNCHWNCHW44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
             ctx->getAttrUInt("kernel_h") == ctx->getAttrUInt("kernel_w") &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            (ctx->getAttrUInt("stride_w") == 2 ||
-             ctx->getAttrUInt("stride_w") == 1) &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
-            ctx->getAttrUInt("dilate_w") == 1;
+            (ctx->getAttrUInt("stride_w") == 2 || ctx->getAttrUInt("stride_w") == 1) &&
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
                          ctx->getAttrStr("format") == "NCHW44" &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
@@ -40,8 +38,7 @@ bool ConvFloatNCHWNCHW44::IsAvailable(TContext* ctx) const {
     bool layout_ok =
             ctx->getAttrOprand("operand:0").shape.size() == 4 &&
             ctx->getAttrOprand(
-                       "operand:" +
-                       std::to_string(ctx->getAttrInt("nr_operands") - 1))
+                       "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1))
                             .shape.size() == 5;
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
@@ -52,11 +49,9 @@ std::string ConvFloatNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
                 << "src_tensor size should > 0, now" << src_tensor.shape.size();
         uint32_t ic = src_tensor.shape[1];
         auto dst_tensor = ctx->getAttrOprand(
-                "operand:" +
-                std::to_string(ctx->getAttrInt("nr_operands") - 1));
+                "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
         uint32_t oc = dst_tensor.shape[1] * 4;
-        std::string name_temp =
-                "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
+        std::string name_temp = "${base_kernel_sym}_nchw_nchw44_oc${oc}_ic${ic}";
         return StringTemplate::StringTemplateArgs(ctx)
                 .add("base_kernel_sym", GIConvImpl::GetKernelSymbol(ctx))
                 .add("oc", oc)
@@ -159,8 +154,8 @@ std::string render_init(int c_idx, int nr_ow, bool with_bias) {
     for (int src_idx = 0; src_idx < nr_ow; ++src_idx) {
         if (with_bias) {
             ss << "c[" << c_idx << "][" << src_idx
-               << "] = GiFloat32Type2FixLenType(GiLoadFloat32(bias_ptr + "
-               << c_idx << " * 4));";
+               << "] = GiFloat32Type2FixLenType(GiLoadFloat32(bias_ptr + " << c_idx
+               << " * 4));";
         } else {
             ss << "c[" << c_idx << "][" << src_idx
                << "] = GiFloat32Type2FixLenType(GiBroadcastFloat32(0.f));";
@@ -168,9 +163,9 @@ std::string render_init(int c_idx, int nr_ow, bool with_bias) {
     }
     return ss.str();
 }
-std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
-                        int ld_weight_fw, int ld_weight_oc, int simd_len,
-                        int nr_ow, int stride, bool remain_n) {
+std::string render_core(
+        int src_reg_size, int filter_size, bool is_big_oc, int ld_weight_fw,
+        int ld_weight_oc, int simd_len, int nr_ow, int stride, bool remain_n) {
     using Rendor = StringTemplate::StringTemplateArgs;
     std::stringstream fw_ss;
     if (remain_n) {
@@ -211,18 +206,17 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
                   << "] = "
                      "GiFloat32Type2FixLenType(GiSimdFmaLane("
                      "GiFixLenType2GiFloat32Type(c[0]["
-                  << i << "]), GiFixLenType2GiFloat32Type(weight[0]["
-                  << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[(" << i
-                  << " * ${stride} + " << src_idx << ") / 4]), "
-                  << (i * stride + src_idx) % 4 << "));";
+                  << i << "]), GiFixLenType2GiFloat32Type(weight[0][" << weight_idx
+                  << "]),  GiFixLenType2GiFloat32Type(src[(" << i << " * ${stride} + "
+                  << src_idx << ") / 4]), " << (i * stride + src_idx) % 4 << "));";
             if (is_big_oc) {
                 fw_ss << "c[1][" << i
                       << "] = "
                          "GiFloat32Type2FixLenType(GiSimdFmaLane("
                          "GiFixLenType2GiFloat32Type(c[1]["
-                      << i << "]), GiFixLenType2GiFloat32Type(weight[1]["
-                      << weight_idx << "]),  GiFixLenType2GiFloat32Type(src[("
-                      << i << " * ${stride} + " << src_idx << ") / 4]), "
+                      << i << "]), GiFixLenType2GiFloat32Type(weight[1][" << weight_idx
+                      << "]),  GiFixLenType2GiFloat32Type(src[(" << i
+                      << " * ${stride} + " << src_idx << ") / 4]), "
                       << (i * stride + src_idx) % 4 << "));";
             }
         }
@@ -239,8 +233,9 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
     }
     return res_ss.str();
 }
-std::string render_store(int nr_ow, int c_idx, const std::string& store_offset,
-                         const ActivationGenIntrinsicBase& act) {
+std::string render_store(
+        int nr_ow, int c_idx, const std::string& store_offset,
+        const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     for (int ow_idx = 0; ow_idx < nr_ow; ++ow_idx) {
         ss << act.GenIntrinsicFloatStore(
@@ -296,8 +291,7 @@ std::string render_kernel(TContext* ctx) {
             .add("filter_size", filter_size)
             .add("activate_init",
                  [=](std::vector<std::string> args) {
-                     CC_ASSERT(args.size() == 0)
-                             << "args size = " << args.size();
+                     CC_ASSERT(args.size() == 0) << "args size = " << args.size();
 
                      auto str = activate_gen->GenIntrinsicInitFloat();
                      return str;
@@ -309,21 +303,18 @@ std::string render_kernel(TContext* ctx) {
                  })
             .add("render_core",
                  [=]() {
-                     return render_core(src_reg_size, filter_size, true,
-                                        ld_weight_fw, ld_weight_oc, simd_len,
-                                        ow_step, stride, false);
+                     return render_core(
+                             src_reg_size, filter_size, true, ld_weight_fw,
+                             ld_weight_oc, simd_len, ow_step, stride, false);
                  })
             .add("render_store",
-                 [=](const std::string& cidx_str,
-                     const std::string& store_offset) {
+                 [=](const std::string& cidx_str, const std::string& store_offset) {
                      int c_idx = std::atoi(cidx_str.c_str());
-                     return render_store(ow_step, c_idx, store_offset,
-                                         *activate_gen);
+                     return render_store(ow_step, c_idx, store_offset, *activate_gen);
                  })
             .add("activate", [=](std::vector<std::string> args) {
                 CC_ASSERT(args.size() == 2) << "args size = " << args.size();
-                auto str =
-                        activate_gen->GenIntrinsicFloatStore(args[0], args[1]);
+                auto str = activate_gen->GenIntrinsicFloatStore(args[0], args[1]);
                 return str;
             });
     std::string kernel_temp = R"(    
@@ -389,10 +380,9 @@ std::string render_kernel(TContext* ctx) {
     ss << kernel_render
                     .add("render_core",
                          [=]() {
-                             return render_core(src_reg_size, filter_size, true,
-                                                ld_weight_fw, ld_weight_oc,
-                                                simd_len, ow_step, stride,
-                                                true);
+                             return render_core(
+                                     src_reg_size, filter_size, true, ld_weight_fw,
+                                     ld_weight_oc, simd_len, ow_step, stride, true);
                          })
                     .render(kernel_remain_temp);
     //! render small oc
@@ -424,10 +414,9 @@ std::string render_kernel(TContext* ctx) {
     ss << kernel_render
                     .add("render_core",
                          [=]() {
-                             return render_core(src_reg_size, filter_size,
-                                                false, ld_weight_fw,
-                                                ld_weight_oc, simd_len, ow_step,
-                                                stride, false);
+                             return render_core(
+                                     src_reg_size, filter_size, false, ld_weight_fw,
+                                     ld_weight_oc, simd_len, ow_step, stride, false);
                          })
                     .render(small_oc_kernel_temp);
 
@@ -465,10 +454,9 @@ std::string render_kernel(TContext* ctx) {
     ss << kernel_render
                     .add("render_core",
                          [=]() {
-                             return render_core(src_reg_size, filter_size,
-                                                false, ld_weight_fw,
-                                                ld_weight_oc, simd_len, ow_step,
-                                                stride, true);
+                             return render_core(
+                                     src_reg_size, filter_size, false, ld_weight_fw,
+                                     ld_weight_oc, simd_len, ow_step, stride, true);
                          })
                     .render(small_oc_kernel_remain_temp);
     return ss.str();
@@ -616,20 +604,18 @@ static inline void copy_pad_src(float* sptr_dst, const float* sptr_origin,
             (ow_step * stride + filter_size - stride + simd_len - 1) / simd_len;
     const int ld_weight_fw = packed_oc * filter_size;
 
-    std::string main_kern = "nchw_nchw44_s" + std::to_string(stride) + "_" +
-                            std::to_string(filter_size) + "x" +
-                            std::to_string(filter_size) + "_kernel_" +
-                            std::to_string(ow_step) + "_oc" +
-                            std::to_string(big_oc_step);
-    std::string main_kern_remain =
+    std::string main_kern =
             "nchw_nchw44_s" + std::to_string(stride) + "_" +
             std::to_string(filter_size) + "x" + std::to_string(filter_size) +
-            "_kernel_remain_oc" + std::to_string(big_oc_step);
-    std::string oc_remain_kern = "nchw_nchw44_s" + std::to_string(stride) +
-                                 "_" + std::to_string(filter_size) + "x" +
-                                 std::to_string(filter_size) + "_kernel_" +
-                                 std::to_string(ow_step) + "_oc" +
-                                 std::to_string(pack_oc_size);
+            "_kernel_" + std::to_string(ow_step) + "_oc" + std::to_string(big_oc_step);
+    std::string main_kern_remain = "nchw_nchw44_s" + std::to_string(stride) + "_" +
+                                   std::to_string(filter_size) + "x" +
+                                   std::to_string(filter_size) + "_kernel_remain_oc" +
+                                   std::to_string(big_oc_step);
+    std::string oc_remain_kern =
+            "nchw_nchw44_s" + std::to_string(stride) + "_" +
+            std::to_string(filter_size) + "x" + std::to_string(filter_size) +
+            "_kernel_" + std::to_string(ow_step) + "_oc" + std::to_string(pack_oc_size);
     std::string oc_remain_kern_tail =
             "nchw_nchw44_s" + std::to_string(stride) + "_" +
             std::to_string(filter_size) + "x" + std::to_string(filter_size) +

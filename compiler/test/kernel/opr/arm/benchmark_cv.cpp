@@ -30,7 +30,7 @@ TEST(AARCH64, CVBenchmarkresize) {
 TEST(AARCH64, CVBenchmarkWarpAffine) {
     Benchmarker<CVWarpAffine> benchmarker(Arch::ARM64);
     WarpAffineForward::Param param;
-    
+
     param.format = WarpAffineForward::Param::Format::NHWC;
     param.imode = WarpAffineForward::Param::InterpolationMode::LINEAR;
     param.border_mode = WarpAffineForward::BorderMode::REPLICATE;
@@ -41,14 +41,11 @@ TEST(AARCH64, CVBenchmarkWarpAffine) {
     benchmarker.set_dtype(0, dtype::Uint8());
     benchmarker.set_dtype(2, dtype::Uint8());
 
-    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}}).print();
 }
 
 TEST(AARCH64, CVBenchmarktranspose) {
@@ -87,19 +84,16 @@ TEST(AARCH64, CVBenchmarkflip) {
     megdnn::CVflip::Param param;
     benchmarker.set_dtype(0, dtype::Uint8());
     benchmarker.set_dtype(1, dtype::Uint8());
-    for(auto vec:{true,false})
-        for(auto horn:{true,false}){
-        param.vertical = vec;
-        param.horizontal = horn;
-        benchmarker.set_param(param);
-        benchmarker.exec({{1, 1025, 516, 1}, {}}).print();
-        // FIXME: dnn only support channel== 1 and channel == 3
-        //benchmarker.exec({{1, 1025, 516, 2}, {}}).print();
-        benchmarker.exec({{1, 1025, 516, 3}, {}}).print();
-
-    }
-    
-    
+    for (auto vec : {true, false})
+        for (auto horn : {true, false}) {
+            param.vertical = vec;
+            param.horizontal = horn;
+            benchmarker.set_param(param);
+            benchmarker.exec({{1, 1025, 516, 1}, {}}).print();
+            // FIXME: dnn only support channel== 1 and channel == 3
+            // benchmarker.exec({{1, 1025, 516, 2}, {}}).print();
+            benchmarker.exec({{1, 1025, 516, 3}, {}}).print();
+        }
 }
 
 TEST(AARCH64, CVBenchmarkrotate) {
@@ -107,7 +101,7 @@ TEST(AARCH64, CVBenchmarkrotate) {
     megdnn::CVRotate::Param param;
     benchmarker.set_dtype(0, dtype::Uint8());
     benchmarker.set_dtype(1, dtype::Uint8());
-    for(auto clockwise:{true, false}){
+    for (auto clockwise : {true, false}) {
         param.clockwise = clockwise;
         benchmarker.set_param(param);
         benchmarker.exec({{1, 1031, 519, 1}, {}}).print();
@@ -115,6 +109,5 @@ TEST(AARCH64, CVBenchmarkrotate) {
         // benchmarker.exec({{1, 1031, 519, 2}, {}}).print();
         benchmarker.exec({{1, 1031, 519, 3}, {}}).print();
     }
-    
 }
 #endif

@@ -26,8 +26,7 @@ static MemForwardType get_forward_type(ns(MemForwardType_enum_t) type) {
     tinynn_trap();
 }
 
-static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
+static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     MemForward* memforward = &inst->workload.mem_forward;
     ns(MemForward_table_t) fbs_reshape = (ns(MemForward_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_MEM_FORWARD;
@@ -49,9 +48,10 @@ static TinyNNStatus execute(Instruction* inst, VM* vm) {
     Tensor *input = inst->workload.mem_forward.input,
            *output = inst->workload.mem_forward.output;
     // TODO: assert this memforward operation is safe
-    LOG_DEBUG("Memory Forward offset is %d, offset from %p to %p\n",
-              inst->workload.mem_forward.offset, input->ptr,
-              input->ptr + inst->workload.mem_forward.offset);
+    LOG_DEBUG(
+            "Memory Forward offset is %d, offset from %p to %p\n",
+            inst->workload.mem_forward.offset, input->ptr,
+            input->ptr + inst->workload.mem_forward.offset);
     output->ptr = input->ptr + inst->workload.mem_forward.offset;
     return TinyNN_SUCCESS;
 }

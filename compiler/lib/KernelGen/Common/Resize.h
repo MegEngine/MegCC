@@ -15,8 +15,8 @@ namespace KernelGen {
 
 class ResizeHelper {
 public:
-    static std::string GenCoordHelper(const std::string& imode,
-                                      const std::string& specifier) {
+    static std::string GenCoordHelper(
+            const std::string& imode, const std::string& specifier) {
         CC_ASSERT(imode == "LINEAR");
         CC_ASSERT(specifier == "float");
         std::string body = R"(

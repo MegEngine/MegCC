@@ -7,10 +7,10 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "test/kernel/opr/common/fused_elemwise.h"
 #include <string>
 #include "megdnn/handle.h"
 #include "test/kernel/common/checker.h"
-#include "test/kernel/opr/common/fused_elemwise.h"
 
 using namespace megdnn;
 using namespace megcc::test;
@@ -25,8 +25,8 @@ TEST(NAIVE, FusedElemwiseKernel) {
     modes.push_back("O0,I3,SUB,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*");
     };
 
     test({{4, 6, 9, 2}, {4, 6, 9, 2}, {1}, {4, 6, 9, 2}});
@@ -35,7 +35,7 @@ TEST(NAIVE, FusedElemwiseKernel) {
 }
 
 TEST(NAIVE, FusedMoreElemwise) {
-    //! check: max(sigmoid(x + y), z) / z 
+    //! check: max(sigmoid(x + y), z) / z
     std::vector<std::string> modes;
     modes.push_back("I0,I1,ADD,O0");
     modes.push_back("O0,SIGMOID,O1");
@@ -43,13 +43,14 @@ TEST(NAIVE, FusedMoreElemwise) {
     modes.push_back("O2,I2,TRUE_DIV,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*", 1e-1);
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*",
+                1e-1);
     };
 
-    test({{3, 10, 10, 5, 4},{1, 10, 1, 1, 4}, {1}});
-    test({{3, 10, 10, 5, 4},{3, 10, 10, 5, 4}, {3, 10, 10, 5, 4}});
-    test({{3, 10, 10, 5, 4},{1, 10, 1, 1, 4}, {1, 10, 1, 1, 4}});
+    test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}, {1}});
+    test({{3, 10, 10, 5, 4}, {3, 10, 10, 5, 4}, {3, 10, 10, 5, 4}});
+    test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}, {1, 10, 1, 1, 4}});
 }
 
 TEST(NAIVE, FusedAllMode) {
@@ -59,8 +60,8 @@ TEST(NAIVE, FusedAllMode) {
     modes.push_back("O0,O1,FUSE_ADD_RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*");
     };
     test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}});
 }
@@ -72,8 +73,8 @@ TEST(NAIVE, FusedAllMode2) {
     modes.push_back("O0,O1,FUSE_ADD_SIGMOID,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*");
     };
     test({{3, 10, 10, 5, 4}, {1, 10, 1, 1, 4}});
 }
@@ -85,8 +86,8 @@ TEST(NAIVE, FusedMulAnd3) {
     modes.push_back("O0,RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*");
     };
 
     test({{3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}});
@@ -100,11 +101,11 @@ TEST(NAIVE, FusedMulAnd4) {
     modes.push_back("O0,RELU,D");
 
     auto test = [&](TensorShapeArray shapes) {
-        check_fuse_elemwise(shapes, modes, megcc::KernelGen::Arch::BAREMETAL,
-                            "kernel_naive_.*");
+        check_fuse_elemwise(
+                shapes, modes, megcc::KernelGen::Arch::BAREMETAL, "kernel_naive_.*");
     };
 
-    test({{3, 10, 10, 5},{3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}});
+    test({{3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}, {3, 10, 10, 5}});
 }
 
 // vim: syntax=cpp.doxygen

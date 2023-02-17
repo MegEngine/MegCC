@@ -44,8 +44,7 @@ enum BcastType {
     VEC_VEC_VEC = BINARY_END + CAL_BCAST3(VECTOR, VECTOR, VECTOR),
     VEC_VEC_SCALAR = BINARY_END + CAL_BCAST3(VECTOR, VECTOR, SCALAR),
     BCAST101_VEC_BCAST101 = BINARY_END + CAL_BCAST3(BCAST101, VECTOR, BCAST101),
-    BCAST101x4_VEC_BCAST101x4 =
-            BINARY_END + CAL_BCAST3(BCAST101x4, VECTOR, BCAST101x4),
+    BCAST101x4_VEC_BCAST101x4 = BINARY_END + CAL_BCAST3(BCAST101x4, VECTOR, BCAST101x4),
     VEC_BCAST101_VEC = BINARY_END + CAL_BCAST3(VECTOR, BCAST101, VECTOR),
     VEC_BCAST101x4_VEC = BINARY_END + CAL_BCAST3(VECTOR, BCAST101x4, VECTOR),
     VEC_SCALAR_VEC = BINARY_END + CAL_BCAST3(VECTOR, SCALAR, VECTOR),
@@ -57,21 +56,19 @@ enum BcastType {
 //! get the TensorType type of operand when the dst provided
 TensorType GetOperandTensorType(const CCOperand& dst, const CCOperand& operand);
 
-BcastType GetBinaryBcastType(const CCOperand& operand0,
-                             const CCOperand& operand1);
+BcastType GetBinaryBcastType(const CCOperand& operand0, const CCOperand& operand1);
 
-BcastType GetTernaryBcastType(const CCOperand& operand0,
-                              const CCOperand& operand1,
-                              const CCOperand& operand2);
+BcastType GetTernaryBcastType(
+        const CCOperand& operand0, const CCOperand& operand1,
+        const CCOperand& operand2);
 
 std::vector<TensorType> DecodeTernaryBcastType(const BcastType bc_type);
 
-std::vector<TensorType> GetQuaterBcastType(const CCOperand& operand0,
-                                           const CCOperand& operand1,
-                                           const CCOperand& operand2,
-                                           const CCOperand& operand3);
-std::vector<size_t> CalBroadcastElemwise(const std::vector<size_t>& src,
-                                         const std::vector<size_t>& dst);
+std::vector<TensorType> GetQuaterBcastType(
+        const CCOperand& operand0, const CCOperand& operand1, const CCOperand& operand2,
+        const CCOperand& operand3);
+std::vector<size_t> CalBroadcastElemwise(
+        const std::vector<size_t>& src, const std::vector<size_t>& dst);
 
 }  // namespace KernelGen
 }  // namespace megcc

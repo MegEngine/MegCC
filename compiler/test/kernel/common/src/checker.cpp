@@ -35,9 +35,7 @@ public:
      * Add a universal offset to all return values to make the minimal
      * offset zero.
      */
-    size_t positive_offset() const {
-        return m_offset - m_layout.span().low_elem;
-    }
+    size_t positive_offset() const { return m_offset - m_layout.span().low_elem; }
 
 private:
     TensorLayout m_layout;
@@ -49,8 +47,7 @@ private:
     void array_to_offset();
 };
 
-Index::Index(TensorLayout layout, size_t linear)
-        : m_layout(layout), m_linear(linear) {
+Index::Index(TensorLayout layout, size_t linear) : m_layout(layout), m_linear(linear) {
     linear_to_array();
     array_to_offset();
 }
@@ -158,15 +155,15 @@ template <typename ctype, class Iter>
         if (!good_float(iv0) || !good_float(iv1) || std::abs(err) > maxerr) {
             Index index(layout, i);
             return ::testing::AssertionFailure()
-                   << "Unequal value\n"
-                   << "Value of: " << expr1 << "\n"
-                   << "  Actual: " << (iv1 + 0) << "\n"
-                   << "Expected: " << expr0 << "\n"
-                   << "Which is: " << (iv0 + 0) << "\n"
-                   << "At index: " << index.to_string() << "/"
-                   << layout.TensorShape::to_string() << "\n"
-                   << "   DType: " << layout.dtype.name() << "\n"
-                   << "   error: " << std::abs(err) << "/" << maxerr;
+                << "Unequal value\n"
+                << "Value of: " << expr1 << "\n"
+                << "  Actual: " << (iv1 + 0) << "\n"
+                << "Expected: " << expr0 << "\n"
+                << "Which is: " << (iv0 + 0) << "\n"
+                << "At index: " << index.to_string() << "/"
+                << layout.TensorShape::to_string() << "\n"
+                << "   DType: " << layout.dtype.name() << "\n"
+                << "   error: " << std::abs(err) << "/" << maxerr;
         }
 
         ++it0;
@@ -176,22 +173,22 @@ template <typename ctype, class Iter>
     float error_avg = error_sum / nr_elem;
     if (error_avg > maxerr_avg) {
         return ::testing::AssertionFailure()
-               << "Average error exceeds the upper limit\n"
-               << "Value of: " << expr1 << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Average error: " << error_avg << "/" << maxerr_avg << "\n"
-               << "Num of elements: " << nr_elem;
+            << "Average error exceeds the upper limit\n"
+            << "Value of: " << expr1 << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Average error: " << error_avg << "/" << maxerr_avg << "\n"
+            << "Num of elements: " << nr_elem;
     }
 
     float error_avg_biased = error_sum_biased / nr_elem;
     if (std::abs(error_avg_biased) > maxerr_avg_biased) {
         return ::testing::AssertionFailure()
-               << "Average biased error exceeds the upper limit\n"
-               << "Value of: " << expr1 << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Average biased error: " << error_avg_biased << "/"
-               << maxerr_avg_biased << "\n"
-               << "Num of elements: " << nr_elem;
+            << "Average biased error exceeds the upper limit\n"
+            << "Value of: " << expr1 << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Average biased error: " << error_avg_biased << "/" << maxerr_avg_biased
+            << "\n"
+            << "Num of elements: " << nr_elem;
     }
 
     return ::testing::AssertionSuccess();
@@ -199,22 +196,19 @@ template <typename ctype, class Iter>
 
 template <typename ctype>
 ::testing::AssertionResult assert_tensor_eq_with_dtype(
-        const char* expr0, const char* expr1, const TensorND& v0,
-        const TensorND& v1, float maxerr, float maxerr_avg,
-        float maxerr_avg_biased) {
-    if (v0.layout.is_physical_contiguous() &&
-        v1.layout.is_physical_contiguous()) {
+        const char* expr0, const char* expr1, const TensorND& v0, const TensorND& v1,
+        float maxerr, float maxerr_avg, float maxerr_avg_biased) {
+    if (v0.layout.is_physical_contiguous() && v1.layout.is_physical_contiguous()) {
         return assert_tensor_eq_with_iter<ctype>(
-                expr0, expr1, v0.ptr<ctype>(), v1.ptr<ctype>(), v0.layout,
-                maxerr, maxerr_avg, maxerr_avg_biased);
+                expr0, expr1, v0.ptr<ctype>(), v1.ptr<ctype>(), v0.layout, maxerr,
+                maxerr_avg, maxerr_avg_biased);
     }
 
     auto it0 = megdnn::tensor_iter_valonly<ctype>(v0).begin(),
          it1 = megdnn::tensor_iter_valonly<ctype>(v1).begin();
 
-    return assert_tensor_eq_with_iter<ctype>(expr0, expr1, it0, it1, v0.layout,
-                                             maxerr, maxerr_avg,
-                                             maxerr_avg_biased);
+    return assert_tensor_eq_with_iter<ctype>(
+            expr0, expr1, it0, it1, v0.layout, maxerr, maxerr_avg, maxerr_avg_biased);
 }
 
 ::testing::AssertionResult assert_tensor_eq(
@@ -224,20 +218,20 @@ template <typename ctype>
         float maxerr_avg_biased) {
     if (!v0.layout.eq_shape(v1.layout)) {
         return ::testing::AssertionFailure()
-               << "Shape mismatch\n"
-               << "Value of: " << expr1 << "\n"
-               << "  Actual: " << v1.layout.TensorShape::to_string() << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Which is: " << v0.layout.TensorShape::to_string() << "\n";
+            << "Shape mismatch\n"
+            << "Value of: " << expr1 << "\n"
+            << "  Actual: " << v1.layout.TensorShape::to_string() << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Which is: " << v0.layout.TensorShape::to_string() << "\n";
     }
     auto dtype = v0.layout.dtype;
     if (dtype != v1.layout.dtype) {
         return ::testing::AssertionFailure()
-               << "Data type mismatch\n"
-               << "Value of: " << expr1 << "\n"
-               << "  Actual: " << v1.layout.dtype.name() << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Which is: " << v0.layout.dtype.name() << "\n";
+            << "Data type mismatch\n"
+            << "Value of: " << expr1 << "\n"
+            << "  Actual: " << v1.layout.dtype.name() << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Which is: " << v0.layout.dtype.name() << "\n";
     }
 
     switch (dtype.enumv()) {
@@ -252,21 +246,15 @@ template <typename ctype>
             megdnn_trap();
     }
 }
-#define MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(v0, v1, maxerr, maxerr_avg,   \
-                                        maxerr_avg_biased)            \
-    ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, \
-                        maxerr_avg_biased)
+#define MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(v0, v1, maxerr, maxerr_avg, maxerr_avg_biased) \
+    ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, maxerr_avg_biased)
 
-}
-
-
-
+}  // namespace
 
 template <typename Opr>
 void fix_addition_attr_map(
         std::unordered_map<std::string, megcc::CCAttr>& proxy_attr,
-        megdnn::test::DnnOprProxy<Opr>& dnn_proxy,
-        TensorNDArray& tensor_array) {}
+        megdnn::test::DnnOprProxy<Opr>& dnn_proxy, TensorNDArray& tensor_array) {}
 
 template <>
 void fix_addition_attr_map<megdnn::IndexingMultiAxisVec>(
@@ -289,15 +277,14 @@ void fix_addition_attr_map<megdnn::TopK>(
 }
 
 template <typename Opr>
-void Checker<Opr>::check_tensors(const TensorNDArray& expected,
-                                 const TensorNDArray& computed, float epsilon,
-                                 float max_avg_error,
-                                 float max_avg_biased_error) {
+void Checker<Opr>::check_tensors(
+        const TensorNDArray& expected, const TensorNDArray& computed, float epsilon,
+        float max_avg_error, float max_avg_biased_error) {
     for (size_t i = 0; i < expected.size(); ++i) {
         if (expected[i].layout.ndim == 0)
             continue;
-        MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(expected[i], computed[i], epsilon,
-                                        max_avg_error, max_avg_biased_error);
+        MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(
+                expected[i], computed[i], epsilon, max_avg_error, max_avg_biased_error);
     }
 }
 
@@ -311,8 +298,7 @@ void Checker<Opr>::exec(TensorLayoutArray all_layouts) {
         m_dnn_proxy.deduce_layout(opr.get(), all_layouts);
 
     auto tensor_array_storage = dnn_alloc_tensors(dnn_handle, all_layouts, 0);
-    auto tensor_array_naive_storage =
-            dnn_alloc_tensors(dnn_handle, all_layouts, 0);
+    auto tensor_array_naive_storage = dnn_alloc_tensors(dnn_handle, all_layouts, 0);
     auto tensor_array_dnn = *tensor_array_naive_storage;
     auto tensor_array = *tensor_array_storage;
 #if !MEGCC_TEST_GEN
@@ -323,8 +309,9 @@ void Checker<Opr>::exec(TensorLayoutArray all_layouts) {
     CCProxy cc_proxy;
     std::unordered_map<std::string, CCAttr> proxy_attr;
     fix_addition_attr_map<Opr>(proxy_attr, m_dnn_proxy, tensor_array_dnn);
-    cc_proxy.exec(opr.get(), tensor_array, m_arch, {}, m_kernel_symbol,
-                  proxy_attr, m_run_cc_dynamic);
+    cc_proxy.exec(
+            opr.get(), tensor_array, m_arch, {}, m_kernel_symbol, proxy_attr,
+            m_run_cc_dynamic);
 #if !MEGCC_TEST_GEN
     //! run dnn
     if (m_before_exec_callback) {
@@ -336,8 +323,9 @@ void Checker<Opr>::exec(TensorLayoutArray all_layouts) {
             m_output_canonizer(tensor_array);
             m_output_canonizer(tensor_array_dnn);
         }
-        check_tensors(tensor_array_dnn, tensor_array, m_epsilon,
-                      m_max_avg_error, m_max_avg_biased_error);
+        check_tensors(
+                tensor_array_dnn, tensor_array, m_epsilon, m_max_avg_error,
+                m_max_avg_biased_error);
     }
 #endif
 }
@@ -351,11 +339,12 @@ namespace test {
         dnn_copy_tensors(tensor_array, tensor_array_dnn); \
     }
 
-#define RUN_DNN_MACRO(...)                                       \
-    {                                                            \
-        dnn_proxy.exec(opr.get(), tensor_array_dnn);             \
-        check_tensors(tensor_array_dnn, tensor_array, m_epsilon, \
-                      m_max_avg_error, m_max_avg_biased_error);  \
+#define RUN_DNN_MACRO(...)                                                  \
+    {                                                                       \
+        dnn_proxy.exec(opr.get(), tensor_array_dnn);                        \
+        check_tensors(                                                      \
+                tensor_array_dnn, tensor_array, m_epsilon, m_max_avg_error, \
+                m_max_avg_biased_error);                                    \
     }
 #else
 #define INIT_TENSOR_MACRO(...) \
@@ -364,37 +353,35 @@ namespace test {
     {}
 #endif
 
-#define DEF_CV_OPR(_Opr)                                                      \
-    template <>                                                               \
-    void Checker<_Opr>::exec(TensorLayoutArray all_layouts) {                 \
-        using CvOpr = _Opr;                                                   \
-        using CCProxy = CCOprProxy<CvOpr>;                                    \
-        using DnnOpr = CvOpr::DnnOpr;                                         \
-        using DnnProxy = megdnn::test::DnnOprProxy<DnnOpr>;                   \
-        Runner<DnnOpr> runner;                                                \
-        auto dnn_handle = runner.get_dnn_handle();                            \
-        auto opr = dnn_handle->template create_operator<DnnOpr>();            \
-        CvOpr cv_opr;                                                         \
-        cv_opr.param() = m_param;                                             \
-        cv_opr.reformat_layout(&cv_opr, all_layouts);                         \
-        opr->param() = cv_opr.dnn_param(m_param);                             \
-        DnnProxy dnn_proxy;                                                   \
-        if (!m_run_cc_only)                                                   \
-            dnn_proxy.deduce_layout(opr.get(), all_layouts);                  \
-                                                                              \
-        auto tensor_array_storage =                                           \
-                dnn_alloc_tensors(dnn_handle, all_layouts, 0);                \
-        auto tensor_array_naive_storage =                                     \
-                dnn_alloc_tensors(dnn_handle, all_layouts, 0);                \
-        auto tensor_array_dnn = *tensor_array_naive_storage;                  \
-        auto tensor_array = *tensor_array_storage;                            \
-        INIT_TENSOR_MACRO();                                                  \
-        CCProxy cc_proxy;                                                     \
-        cc_proxy.exec(&cv_opr, tensor_array, m_arch, {}, m_kernel_symbol, {}, \
-                      false);                                                 \
-        if (!m_run_cc_only)                                                   \
-            RUN_DNN_MACRO();                                                  \
-    }                                                                         \
+#define DEF_CV_OPR(_Opr)                                                              \
+    template <>                                                                       \
+    void Checker<_Opr>::exec(TensorLayoutArray all_layouts) {                         \
+        using CvOpr = _Opr;                                                           \
+        using CCProxy = CCOprProxy<CvOpr>;                                            \
+        using DnnOpr = CvOpr::DnnOpr;                                                 \
+        using DnnProxy = megdnn::test::DnnOprProxy<DnnOpr>;                           \
+        Runner<DnnOpr> runner;                                                        \
+        auto dnn_handle = runner.get_dnn_handle();                                    \
+        auto opr = dnn_handle->template create_operator<DnnOpr>();                    \
+        CvOpr cv_opr;                                                                 \
+        cv_opr.param() = m_param;                                                     \
+        cv_opr.reformat_layout(&cv_opr, all_layouts);                                 \
+        opr->param() = cv_opr.dnn_param(m_param);                                     \
+        DnnProxy dnn_proxy;                                                           \
+        if (!m_run_cc_only)                                                           \
+            dnn_proxy.deduce_layout(opr.get(), all_layouts);                          \
+                                                                                      \
+        auto tensor_array_storage = dnn_alloc_tensors(dnn_handle, all_layouts, 0);    \
+        auto tensor_array_naive_storage =                                             \
+                dnn_alloc_tensors(dnn_handle, all_layouts, 0);                        \
+        auto tensor_array_dnn = *tensor_array_naive_storage;                          \
+        auto tensor_array = *tensor_array_storage;                                    \
+        INIT_TENSOR_MACRO();                                                          \
+        CCProxy cc_proxy;                                                             \
+        cc_proxy.exec(&cv_opr, tensor_array, m_arch, {}, m_kernel_symbol, {}, false); \
+        if (!m_run_cc_only)                                                           \
+            RUN_DNN_MACRO();                                                          \
+    }                                                                                 \
     template class Checker<_Opr>;
 
 }  // namespace test

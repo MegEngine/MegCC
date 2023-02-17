@@ -7,8 +7,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "NeonIntrinCompat.h"
 #include "Reduce.h"
+#include "NeonIntrinCompat.h"
 #include "compiler/Common/Logger.h"
 
 namespace megcc {
@@ -91,89 +91,85 @@ template <typename dtype, typename ctype, typename comp_type, bool C1>
 struct maxReducer;
 template <typename dtype, typename ctype, typename comp_type, bool C1>
 struct minReducer;
-#define REDUCER_MAX_MIN_C1(_mode, _dtype, _ctype, _comp_type, _stype, __stype, \
-                           _num, _init)                                        \
-    template <>                                                                \
-    struct _mode##Reducer<_dtype, _ctype, _comp_type, true>                    \
-            : public ReducerBase {                                             \
-        std::string get_declaration_simd_width() override {                    \
-            return R"(const int SIMD_WIDTH = 4;)";                             \
-        }                                                                      \
-        std::string get_declaration() override { return #__stype " res;"; };   \
-        std::string get_init(std::string&) override {                          \
-            return R"(  res = vdupq_n_)" #_stype "(" #_init ");";              \
-        };                                                                     \
-        std::string get_feed(std::string& val) override {                      \
-            return "\n"                                                        \
-                   R"(                )" #__stype " vval = vld1q_" #_stype     \
-                   "(" +                                                       \
-                   val +                                                       \
-                   ");\n"                                                      \
-                   R"(                )"                                       \
-                   "res = v" #_mode "q_" #_stype "(vval,res);\n";              \
-        };                                                                     \
-        std::string get_feed_remain(std::string& val) override {               \
-            return "\n"                                                        \
-                   R"(                )" #__stype " vval = vdupq_n_" #_stype   \
-                   "(" +                                                       \
-                   val +                                                       \
-                   ");\n"                                                      \
-                   R"(                )"                                       \
-                   "res = v" #_mode "q_" #_stype "(vval,res);\n";              \
-        };                                                                     \
-        std::string get_post(std::string& dst) override {                      \
-            return "float32x2_t val = v" #_mode "_" #_stype                    \
-                   "(vget_low_" #_stype "(res),vget_high_" #_stype             \
-                   "(res));\n"                                                 \
-                   R"(            )"                                           \
-                   "*" +                                                       \
-                   dst +                                                       \
-                   " = " #_mode "(vget_lane_" #_stype                          \
-                   "(val,0),vget_lane_" #_stype "(val,1));";                   \
-        };                                                                     \
+#define REDUCER_MAX_MIN_C1(                                                        \
+        _mode, _dtype, _ctype, _comp_type, _stype, __stype, _num, _init)           \
+    template <>                                                                    \
+    struct _mode##Reducer<_dtype, _ctype, _comp_type, true> : public ReducerBase { \
+        std::string get_declaration_simd_width() override {                        \
+            return R"(const int SIMD_WIDTH = 4;)";                                 \
+        }                                                                          \
+        std::string get_declaration() override { return #__stype " res;"; };       \
+        std::string get_init(std::string&) override {                              \
+            return R"(  res = vdupq_n_)" #_stype "(" #_init ");";                  \
+        };                                                                         \
+        std::string get_feed(std::string& val) override {                          \
+            return "\n"                                                            \
+                   R"(                )" #__stype " vval = vld1q_" #_stype "(" +   \
+                   val +                                                           \
+                   ");\n"                                                          \
+                   R"(                )"                                           \
+                   "res = v" #_mode "q_" #_stype "(vval,res);\n";                  \
+        };                                                                         \
+        std::string get_feed_remain(std::string& val) override {                   \
+            return "\n"                                                            \
+                   R"(                )" #__stype " vval = vdupq_n_" #_stype "(" + \
+                   val +                                                           \
+                   ");\n"                                                          \
+                   R"(                )"                                           \
+                   "res = v" #_mode "q_" #_stype "(vval,res);\n";                  \
+        };                                                                         \
+        std::string get_post(std::string& dst) override {                          \
+            return "float32x2_t val = v" #_mode "_" #_stype "(vget_low_" #_stype   \
+                   "(res),vget_high_" #_stype                                      \
+                   "(res));\n"                                                     \
+                   R"(            )"                                               \
+                   "*" +                                                           \
+                   dst +                                                           \
+                   " = " #_mode "(vget_lane_" #_stype "(val,0),vget_lane_" #_stype \
+                   "(val,1));";                                                    \
+        };                                                                         \
     }
 
 REDUCER_MAX_MIN_C1(max, float, float, float, f32, float32x4_t, 4, -__FLT_MAX__);
 REDUCER_MAX_MIN_C1(min, float, float, float, f32, float32x4_t, 4, __FLT_MAX__);
 #undef REDUCER_MAX_MIN_C1
 
-#define REDUCER_MAX_MIN_C(_mode, _dtype, _ctype, _comp_type, _stype, __stype, \
-                          _num, _init)                                        \
-    template <>                                                               \
-    struct _mode##Reducer<_dtype, _ctype, _comp_type, false>                  \
-            : public ReducerBase {                                            \
-        std::string get_declaration_simd_width() override {                   \
-            return R"(const int SIMD_WIDTH = 4;)";                            \
-        }                                                                     \
-        std::string get_declaration() override {                              \
-            return "\n"                                                       \
-                   R"(        )" #__stype                                     \
-                   " res;\n"                                                  \
-                   R"(        )" #_ctype " remain;";                          \
-        };                                                                    \
-        std::string get_init(std::string&) override {                         \
-            return "\n"                                                       \
-                   R"(                )"                                      \
-                   "res = vdupq_n_" #_stype "(" #_init                        \
-                   ");\n"                                                     \
-                   R"(                )"                                      \
-                   "remain = " #_init ";";                                    \
-        };                                                                    \
-        std::string get_feed(std::string& val) override {                     \
-            return #__stype " vval = vld1q_" #_stype "(" + val +              \
-                   ");\n"                                                     \
-                   R"(                    )"                                  \
-                   "res = v" #_mode "q_" #_stype "(vval,res);\n";             \
-        };                                                                    \
-        std::string get_feed_remain(std::string& val) override {              \
-            return "remain = " #_mode "(" + val + ",remain);\n";              \
-        };                                                                    \
-        std::string get_post(std::string& dst) override {                     \
-            return "vst1q_" #_stype "(" + dst + ",res);\n";                   \
-        }                                                                     \
-        std::string get_post_remain(std::string& dst) override {              \
-            return "*" + dst + " = remain;\n";                                \
-        }                                                                     \
+#define REDUCER_MAX_MIN_C(                                                          \
+        _mode, _dtype, _ctype, _comp_type, _stype, __stype, _num, _init)            \
+    template <>                                                                     \
+    struct _mode##Reducer<_dtype, _ctype, _comp_type, false> : public ReducerBase { \
+        std::string get_declaration_simd_width() override {                         \
+            return R"(const int SIMD_WIDTH = 4;)";                                  \
+        }                                                                           \
+        std::string get_declaration() override {                                    \
+            return "\n"                                                             \
+                   R"(        )" #__stype                                           \
+                   " res;\n"                                                        \
+                   R"(        )" #_ctype " remain;";                                \
+        };                                                                          \
+        std::string get_init(std::string&) override {                               \
+            return "\n"                                                             \
+                   R"(                )"                                            \
+                   "res = vdupq_n_" #_stype "(" #_init                              \
+                   ");\n"                                                           \
+                   R"(                )"                                            \
+                   "remain = " #_init ";";                                          \
+        };                                                                          \
+        std::string get_feed(std::string& val) override {                           \
+            return #__stype " vval = vld1q_" #_stype "(" + val +                    \
+                   ");\n"                                                           \
+                   R"(                    )"                                        \
+                   "res = v" #_mode "q_" #_stype "(vval,res);\n";                   \
+        };                                                                          \
+        std::string get_feed_remain(std::string& val) override {                    \
+            return "remain = " #_mode "(" + val + ",remain);\n";                    \
+        };                                                                          \
+        std::string get_post(std::string& dst) override {                           \
+            return "vst1q_" #_stype "(" + dst + ",res);\n";                         \
+        }                                                                           \
+        std::string get_post_remain(std::string& dst) override {                    \
+            return "*" + dst + " = remain;\n";                                      \
+        }                                                                           \
     }
 
 REDUCER_MAX_MIN_C(max, float, float, float, f32, float32x4_t, 4, -__FLT_MAX__);
@@ -200,77 +196,74 @@ std::string get_express<OPR_TYPE::MUL>(std::string x, std::string y) {
     return "(" + x + " * " + y + ")";
 }
 
-#define REDUCER_SUM_PRODUCT_C1(_mode, _dtype, _ctype, _comp_type, _stype,      \
-                               __stype, _num, _init, _act, _op)                \
-    template <>                                                                \
-    struct _mode##Reducer<_dtype, _ctype, _comp_type, true>                    \
-            : public ReducerBase {                                             \
-        std::string get_declaration_simd_width() override {                    \
-            return R"(const int SIMD_WIDTH = 4;)";                             \
-        }                                                                      \
-        std::string get_declaration() override {                               \
-            return #__stype                                                    \
-                    " res;\n"                                                  \
-                    R"(        )" #_ctype " remain;\n";                        \
-        };                                                                     \
-        std::string get_init(std::string&) override {                          \
-            return "  res = vdupq_n_" #_stype "(" #_init                       \
-                   ");\n"                                                      \
-                   R"(            remain = )" #_init ";";                      \
-        };                                                                     \
-        std::string get_feed(std::string& val) override {                      \
-            return "\n"                                                        \
-                   R"(                )" #__stype " vval = vld1q_" #_stype     \
-                   "(" +                                                       \
-                   val +                                                       \
-                   ");\n"                                                      \
-                   R"(                )"                                       \
-                   "res = v" #_act "q_" #_stype "(vval,res);\n";               \
-        };                                                                     \
-        std::string get_feed_remain(std::string& val) override {               \
-            return "\n"                                                        \
-                   R"(                )"                                       \
-                   "remain = " +                                               \
-                   get_express<_op>("remain", val) + ";";                      \
-        };                                                                     \
-        std::string get_post(std::string& dst) override {                      \
-            return "float32x2_t val = v" #_act "_" #_stype                     \
-                   "(vget_low_" #_stype "(res),vget_high_" #_stype             \
-                   "(res));\n"                                                 \
-                   R"(            )"                                           \
-                   "*" +                                                       \
-                   dst + " = " +                                               \
-                   get_express<_op>(                                           \
-                           "remain",                                           \
-                           get_express<_op>("vget_lane_" #_stype "(val,0)",    \
-                                            "vget_lane_" #_stype "(val,1)")) + \
-                   ";";                                                        \
-        }                                                                      \
+#define REDUCER_SUM_PRODUCT_C1(                                                     \
+        _mode, _dtype, _ctype, _comp_type, _stype, __stype, _num, _init, _act, _op) \
+    template <>                                                                     \
+    struct _mode##Reducer<_dtype, _ctype, _comp_type, true> : public ReducerBase {  \
+        std::string get_declaration_simd_width() override {                         \
+            return R"(const int SIMD_WIDTH = 4;)";                                  \
+        }                                                                           \
+        std::string get_declaration() override {                                    \
+            return #__stype                                                         \
+                    " res;\n"                                                       \
+                    R"(        )" #_ctype " remain;\n";                             \
+        };                                                                          \
+        std::string get_init(std::string&) override {                               \
+            return "  res = vdupq_n_" #_stype "(" #_init                            \
+                   ");\n"                                                           \
+                   R"(            remain = )" #_init ";";                           \
+        };                                                                          \
+        std::string get_feed(std::string& val) override {                           \
+            return "\n"                                                             \
+                   R"(                )" #__stype " vval = vld1q_" #_stype "(" +    \
+                   val +                                                            \
+                   ");\n"                                                           \
+                   R"(                )"                                            \
+                   "res = v" #_act "q_" #_stype "(vval,res);\n";                    \
+        };                                                                          \
+        std::string get_feed_remain(std::string& val) override {                    \
+            return "\n"                                                             \
+                   R"(                )"                                            \
+                   "remain = " +                                                    \
+                   get_express<_op>("remain", val) + ";";                           \
+        };                                                                          \
+        std::string get_post(std::string& dst) override {                           \
+            return "float32x2_t val = v" #_act "_" #_stype "(vget_low_" #_stype     \
+                   "(res),vget_high_" #_stype                                       \
+                   "(res));\n"                                                      \
+                   R"(            )"                                                \
+                   "*" +                                                            \
+                   dst + " = " +                                                    \
+                   get_express<_op>(                                                \
+                           "remain", get_express<_op>(                              \
+                                             "vget_lane_" #_stype "(val,0)",        \
+                                             "vget_lane_" #_stype "(val,1)")) +     \
+                   ";";                                                             \
+        }                                                                           \
     }
 
-REDUCER_SUM_PRODUCT_C1(Sum, float, float, float, f32, float32x4_t, 4, 0, add,
-                       OPR_TYPE::PLUS);
-REDUCER_SUM_PRODUCT_C1(Product, float, float, float, f32, float32x4_t, 4, 1.0f,
-                       mul, OPR_TYPE::MUL);
+REDUCER_SUM_PRODUCT_C1(
+        Sum, float, float, float, f32, float32x4_t, 4, 0, add, OPR_TYPE::PLUS);
+REDUCER_SUM_PRODUCT_C1(
+        Product, float, float, float, f32, float32x4_t, 4, 1.0f, mul, OPR_TYPE::MUL);
 #undef REDUCER_SUM_PRODUCT_C1
 
-#define REDUCER_SUM_PRODUCT_C(_mode, _dtype, _ctype, _comp_type, _stype, \
-                              __stype, _num, _init, _act, _op)           \
-    template <>                                                          \
-    struct _mode##Reducer<_dtype, _ctype, _comp_type, false>             \
-            : public _mode##Reducer<_dtype, _ctype, _comp_type, true> {  \
-        std::string get_post(std::string& dst) override {                \
-            return "vst1q_" #_stype "(" + dst + ",res);\n";              \
-        }                                                                \
-        std::string get_post_remain(std::string& dst) override {         \
-            return "*" + dst + " = remain;\n";                           \
-        }                                                                \
+#define REDUCER_SUM_PRODUCT_C(                                                      \
+        _mode, _dtype, _ctype, _comp_type, _stype, __stype, _num, _init, _act, _op) \
+    template <>                                                                     \
+    struct _mode##Reducer<_dtype, _ctype, _comp_type, false>                        \
+            : public _mode##Reducer<_dtype, _ctype, _comp_type, true> {             \
+        std::string get_post(std::string& dst) override {                           \
+            return "vst1q_" #_stype "(" + dst + ",res);\n";                         \
+        }                                                                           \
+        std::string get_post_remain(std::string& dst) override {                    \
+            return "*" + dst + " = remain;\n";                                      \
+        }                                                                           \
     }
 
-REDUCER_SUM_PRODUCT_C(Sum, float, float, float, f32, float32x4_t, 4, 0, add,
-                      plus);
-REDUCER_SUM_PRODUCT_C(Product, float, float, float, f32, float32x4_t, 4, 1, mul,
-                      multiplies);
+REDUCER_SUM_PRODUCT_C(Sum, float, float, float, f32, float32x4_t, 4, 0, add, plus);
+REDUCER_SUM_PRODUCT_C(
+        Product, float, float, float, f32, float32x4_t, 4, 1, mul, multiplies);
 
 #undef REDUCER_SUM_PRODUCT_C
 
@@ -371,9 +364,8 @@ template <>
 std::string generate_reducer<false>(std::string& mode) {
     std::stringstream writer;
     auto reducer = getReducer<float, float, float, false>(mode);
-    std::string init_str = "B", feed_str = "temp_src",
-                feed_remain_str = "*temp_src", post_str = "dst",
-                post_remain_str = "dst";
+    std::string init_str = "B", feed_str = "temp_src", feed_remain_str = "*temp_src",
+                post_str = "dst", post_remain_str = "dst";
     writer << reducer->get_declaration_simd_width() << R"(
         )";
     writer << reducer->get_declaration();
@@ -415,8 +407,8 @@ template <>
 std::string generate_reducer<true>(std::string& mode) {
     std::stringstream writer;
     auto reducer = getReducer<float, float, float, true>(mode);
-    std::string init_str = "B", feed_str = "temp_src",
-                feed_remain_str = "*temp_src", post_str = "dst";
+    std::string init_str = "B", feed_str = "temp_src", feed_remain_str = "*temp_src",
+                post_str = "dst";
     writer << reducer->get_declaration_simd_width() << R"(
         )";
     writer << reducer->get_declaration();

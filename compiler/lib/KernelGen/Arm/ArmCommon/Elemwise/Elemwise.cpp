@@ -7,10 +7,10 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "Elemwise.h"
 #include "../ElemwiseHelper/ElemwiseHelper.h"
 #include "../InternalKernel.h"
 #include "../NeonIntrinCompat.h"
-#include "Elemwise.h"
 #include "Utils/SymbolHelper.h"
 #include "compiler/Common/Logger.h"
 
@@ -23,18 +23,16 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
     int nr_operands = ctx->getAttrInt("nr_operands");
     bool type_ok = true;
     for (int i = 0; i < nr_operands; i++) {
-        type_ok &= (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype ==
-                    "f32");
+        type_ok &= (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype == "f32");
     }
     auto mode = ctx->getAttrStr("mode");
     bool mode_ok = mode == "RELU" || mode == "EXP" || mode == "ADD" ||
                    mode == "H_SWISH" || mode == "SIGMOID" || mode == "SUB" ||
-                   mode == "MUL" || mode == "TRUE_DIV" ||
-                   mode == "FUSE_ADD_RELU" || mode == "FUSE_MUL_ADD3";
+                   mode == "MUL" || mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
+                   mode == "FUSE_MUL_ADD3";
     if (mode == "FUSE_MUL_ADD3") {
         auto bcast_type = ElemwiseGenTernary::GetBcastType(
-                ctx->getAttrOprand("operand:0"),
-                ctx->getAttrOprand("operand:1"),
+                ctx->getAttrOprand("operand:0"), ctx->getAttrOprand("operand:1"),
                 ctx->getAttrOprand("operand:2"));
         mode_ok = mode_ok && ElemwiseGenTernary::is_available(bcast_type);
     }
@@ -52,17 +50,15 @@ std::string ElemwiseKernel::GetKernelSymbol(TContext* context) const {
         ss << "_unary_vec_vec";
     } else if (nr_operands == 3) {
         ss << "_binary_";
-        ss << ElemwiseHelperFunc::BcastType2String(
-                ElemwiseGenBinary::GetBcastType(
-                        context->getAttrOprand("operand:0"),
-                        context->getAttrOprand("operand:1")));
+        ss << ElemwiseHelperFunc::BcastType2String(ElemwiseGenBinary::GetBcastType(
+                context->getAttrOprand("operand:0"),
+                context->getAttrOprand("operand:1")));
     } else if (nr_operands == 4) {
         ss << "_ternary_";
-        ss << ElemwiseHelperFunc::BcastType2String(
-                ElemwiseGenTernary::GetBcastType(
-                        context->getAttrOprand("operand:0"),
-                        context->getAttrOprand("operand:1"),
-                        context->getAttrOprand("operand:2")));
+        ss << ElemwiseHelperFunc::BcastType2String(ElemwiseGenTernary::GetBcastType(
+                context->getAttrOprand("operand:0"),
+                context->getAttrOprand("operand:1"),
+                context->getAttrOprand("operand:2")));
     } else {
         //! Not implement ternary elemwise kernel
         ss << "_invalid_nr_operands_";
@@ -136,15 +132,14 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     return ss.str();
 }
 
-std::vector<KernelObj> ElemwiseKernel::GetDependInternalSymbol(
-        TContext* ctx) const {
+std::vector<KernelObj> ElemwiseKernel::GetDependInternalSymbol(TContext* ctx) const {
     auto mode = ctx->getAttrStr("mode");
     std::vector<KernelObj> depends;
     if (mode == "EXP" || mode == "SIGMOID") {
         ExpNeonKernel kern;
-        depends.emplace_back(kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
-                             kern.GetBodyGuardBegin(ctx),
-                             kern.GetBodyGuardEnd(ctx));
+        depends.emplace_back(
+                kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
+                kern.GetBodyGuardBegin(ctx), kern.GetBodyGuardEnd(ctx));
     }
     return depends;
 }

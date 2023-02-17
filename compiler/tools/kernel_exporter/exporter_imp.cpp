@@ -12,9 +12,9 @@ KPT KernelExporter::kernel_name_to_type() {
     KPT ret;
     auto m_find = m_kern_name2type.find(m_kernel_name);
     if (m_find == m_kern_name2type.end()) {
-        EXPORT_ERR(
-                ssprintf("do not support kernel name: %s, support lists:\n%s",
-                         m_kernel_name.c_str(), support_kernels().c_str()));
+        EXPORT_ERR(ssprintf(
+                "do not support kernel name: %s, support lists:\n%s",
+                m_kernel_name.c_str(), support_kernels().c_str()));
     } else {
         ret = m_find->second;
     }
@@ -26,8 +26,9 @@ KA KernelExporter::get_arch_type() {
     KA ret;
     auto m_find = m_name2arch.find(m_kernel_arch);
     if (m_find == m_name2arch.end()) {
-        EXPORT_ERR(ssprintf("do not support arch: %s, support archs:\n%s",
-                            m_kernel_arch.c_str(), support_archs().c_str()));
+        EXPORT_ERR(ssprintf(
+                "do not support arch: %s, support archs:\n%s", m_kernel_arch.c_str(),
+                support_archs().c_str()));
     } else {
         ret = m_find->second;
     }
@@ -35,8 +36,9 @@ KA KernelExporter::get_arch_type() {
     return ret;
 }
 
-std::pair<std::vector<const megcc::KernelGen::KernelFunc*>,
-          const megcc::KernelGen::DeduceFunc*>
+std::pair<
+        std::vector<const megcc::KernelGen::KernelFunc*>,
+        const megcc::KernelGen::DeduceFunc*>
 KernelExporter::get_kernels() {
     KPT k_type = kernel_name_to_type();
     KA arch_type = get_arch_type();
@@ -46,8 +48,8 @@ KernelExporter::get_kernels() {
 void KernelExporter::gen_kenrels() {
     auto kernels = get_kernels().first;
     if (kernels.size() <= 0) {
-        EXPORT_ERR(ssprintf("ERR: can not find any KernelFunc for: %s",
-                            m_kernel_name.c_str()));
+        EXPORT_ERR(ssprintf(
+                "ERR: can not find any KernelFunc for: %s", m_kernel_name.c_str()));
     }
 
     auto attrs = megcc::exporter::config_attr(

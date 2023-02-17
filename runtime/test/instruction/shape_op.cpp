@@ -31,10 +31,10 @@ TEST(INSTRUCTION, ShapeOf) {
     };
     VM* vm = create_vm();
     auto test_shape_of = [&](Tensor* input, const Tensor& expect) {
-        auto shapeof= create_shape_of(input );
+        auto shapeof = create_shape_of(input);
         Instruction inst;
         inst.tag = TinyNN_INST_SHAPEOF;
-        inst.workload.shape_of= *shapeof;
+        inst.workload.shape_of = *shapeof;
         vm_instruction_call(vm, &inst);
         check_tensor(*shapeof->output, expect);
         vm->model->host_dev.free(shapeof->output->ptr);
@@ -46,8 +46,9 @@ TEST(INSTRUCTION, ShapeOf) {
         for (auto i : shape) {
             data1[index++] = i;
         }
-        auto trueth = create_tensor({static_cast<uint32_t>(shape.size())},
-                                    TinyNNDType::TinyNN_INT, data1.data());
+        auto trueth = create_tensor(
+                {static_cast<uint32_t>(shape.size())}, TinyNNDType::TinyNN_INT,
+                data1.data());
         test_shape_of(src.get(), *trueth);
     };
 

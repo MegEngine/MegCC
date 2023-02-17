@@ -7,6 +7,7 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "KernelPack.h"
 #include <memory>
 #include "CVTranspose.h"
 #include "ConvKernel.h"
@@ -14,7 +15,6 @@
 #include "Elemwise/Elemwise.h"
 #include "Flip.h"
 #include "InternalKernel.h"
-#include "KernelPack.h"
 #include "MatMulKernel/Fp32Gemv.h"
 #include "MatMulKernel/Fp32Gevm.h"
 #include "Pooling.h"
@@ -77,8 +77,7 @@ struct AllArmCommonKernel {
                 std::make_shared<ArmCommon::ExpNeonKernel>()};
     }
 
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 }  // namespace

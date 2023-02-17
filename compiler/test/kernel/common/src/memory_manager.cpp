@@ -10,14 +10,13 @@
  * implied.
  */
 
-#include "test/kernel/common/dnn_helper.h"
 #include "test/kernel/common/memory_manager.h"
+#include "test/kernel/common/dnn_helper.h"
 namespace {
 
 using namespace megdnn;
 using namespace std;
-std::unique_ptr<MemoryManager> create_memory_manager_from_handle(
-        Handle* handle) {
+std::unique_ptr<MemoryManager> create_memory_manager_from_handle(Handle* handle) {
     return make_unique<HandleMemoryManager>(handle);
 }
 

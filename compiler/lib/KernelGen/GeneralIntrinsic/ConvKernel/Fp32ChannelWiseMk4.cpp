@@ -26,8 +26,9 @@ struct ComputPadBorder {
     std::string m_nonline_mode;
     bool m_flt_GI;
 
-    ComputPadBorder(int kernel, int stride, int pad_h, int pad_w,
-                    std::string nonline_mode, bool flt_GI)
+    ComputPadBorder(
+            int kernel, int stride, int pad_h, int pad_w, std::string nonline_mode,
+            bool flt_GI)
             : m_kernel(kernel),
               m_pad_h(pad_h),
               m_pad_w(pad_w),
@@ -92,8 +93,7 @@ struct ComputPadBorder {
             return ss.str();
         };
 
-        auto nonline_gen_func =
-                [&](std::vector<std::string> str) -> std::string {
+        auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
             return nonline_gen->GenIntrinsicFloat(str[0], str[1]);
         };
 
@@ -261,8 +261,7 @@ struct ComputPadBorder {
             }
         })";
 
-        auto nonline_gen_func =
-                [&](std::vector<std::string> str) -> std::string {
+        auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
             return nonline_gen->GenIntrinsicFloat(str[0], str[1]);
         };
 
@@ -311,7 +310,9 @@ static std::string compute_vec(std::vector<std::string> str) {
     std::string src2 = str[2];
     std::stringstream ss;
     for (int i = 0; i < compute_size; ++i) {
-        ss << dst << " = GiFloat32Type2FixLenType(GiMlaqFloat32(GiFixLenType2GiFloat32Type(" << dst << "), GiFixLenType2GiFloat32Type((" << src1 << ")[" << i
+        ss << dst
+           << " = GiFloat32Type2FixLenType(GiMlaqFloat32(GiFixLenType2GiFloat32Type("
+           << dst << "), GiFixLenType2GiFloat32Type((" << src1 << ")[" << i
            << "]), GiFixLenType2GiFloat32Type((" << src2 << ")[" << i << "])));\n";
     }
     return ss.str();
@@ -323,8 +324,8 @@ static std::string load_vec_x(std::vector<std::string> str) {
     std::string src = str[2];
     std::stringstream ss;
     for (int i = 0; i < times; i++) {
-        ss << "(" << dst << ")[" << i << "] = GiFloat32Type2FixLenType(GiLoadFloat32((" << src
-           << ")+ 4 *" << i << "));\n";
+        ss << "(" << dst << ")[" << i << "] = GiFloat32Type2FixLenType(GiLoadFloat32(("
+           << src << ")+ 4 *" << i << "));\n";
     }
     return ss.str();
 }
@@ -334,14 +335,11 @@ static std::string load_vec_x(std::vector<std::string> str) {
 bool ChannelWiseFloatMk4::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
             ctx->getAttrUInt("kernel_h") == ctx->getAttrUInt("kernel_w") &&
-            (ctx->getAttrUInt("kernel_w") == 3 ||
-             ctx->getAttrUInt("kernel_w") == 5) &&
+            (ctx->getAttrUInt("kernel_w") == 3 || ctx->getAttrUInt("kernel_w") == 5) &&
             //! stride_h == stride_w and stride == 1 or stride == 2
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            (ctx->getAttrUInt("stride_h") == 1 ||
-             ctx->getAttrUInt("stride_h") == 2) &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
-            ctx->getAttrUInt("dilate_w") == 1;
+            (ctx->getAttrUInt("stride_h") == 1 || ctx->getAttrUInt("stride_h") == 2) &&
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
     if (ctx->getAttrUInt("kernel_w") == 5) {
         param_value_ok = param_value_ok && ctx->getAttrUInt("stride_h") == 1;
     }
@@ -364,8 +362,8 @@ bool ChannelWiseFloatMk4::IsAvailable(TContext* ctx) const {
                            ctx->getAttrOprand("operand:1").shape[5] == 4 &&
                            ctx->getAttrOprand("operand:1").shape[1] == 1 &&
                            ctx->getAttrOprand("operand:1").shape[2] == 1;
-    return param_value_ok && param_mode_ok && type_ok && noline_ok &&
-           layout_ok && channel_wise_ok;
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
+           channel_wise_ok;
 }
 
 std::string ChannelWiseFloatMk4::GetKernelBody(TContext* ctx) const {
@@ -375,12 +373,11 @@ std::string ChannelWiseFloatMk4::GetKernelBody(TContext* ctx) const {
     int pad_w = ctx->getAttrUInt("pad_w");
     auto kern_size = ctx->getAttrUInt("kernel_w");
 
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     bool flt_all_in_reg = (5 == kern_size && 1 == stride) ? false : true;
-    auto border_compute = ComputPadBorder(kernel, stride, pad_h, pad_w,
-                                          nonline_mode, flt_all_in_reg);
+    auto border_compute =
+            ComputPadBorder(kernel, stride, pad_h, pad_w, nonline_mode, flt_all_in_reg);
     std::stringstream writer;
     writer << "#include\"gi_float.h\"\n";
     writer << "#include<string.h>\n";
@@ -406,9 +403,8 @@ std::string ChannelWiseFloatMk4::GenBodyMk4K3S1(TContext* ctx) const {
     int pad_h = ctx->getAttrUInt("pad_h");
     int pad_w = ctx->getAttrUInt("pad_w");
     bool with_bias = is_bias(ctx);
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::stringstream writer;
     writer << " {\n";
     writer << R"(
@@ -642,9 +638,8 @@ std::string ChannelWiseFloatMk4::GenBodyMk4K5S1(TContext* ctx) const {
     int pad_h = ctx->getAttrUInt("pad_h");
     int pad_w = ctx->getAttrUInt("pad_w");
     bool with_bias = is_bias(ctx);
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::stringstream writer;
     writer << " {\n";
     writer << R"(
@@ -914,9 +909,8 @@ std::string ChannelWiseFloatMk4::GenBodyMk4K3S2(TContext* ctx) const {
     int pad_h = ctx->getAttrUInt("pad_h");
     int pad_w = ctx->getAttrUInt("pad_w");
     bool with_bias = is_bias(ctx);
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::stringstream writer;
     writer << " {\n";
     writer << R"(

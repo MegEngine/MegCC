@@ -21,7 +21,7 @@ TEST(AARCH64, TYPECVT) {
             {dtype::Float32(), dtype::QuantizedS8(1.7f)},
             {dtype::QuantizedS8(1.7f), dtype::QuantizedS8(0.3f)},
             {dtype::Uint8(), dtype::Float32()}};
-    for (auto type : types){
+    for (auto type : types) {
         checker.set_dtype(0, type.first);
         checker.set_dtype(1, type.second);
 

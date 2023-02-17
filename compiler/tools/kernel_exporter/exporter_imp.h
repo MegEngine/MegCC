@@ -34,13 +34,15 @@ class KernelExporter {
     KPT kernel_name_to_type();
     KA get_arch_type();
 
-    std::pair<std::vector<const megcc::KernelGen::KernelFunc*>,
-              const megcc::KernelGen::DeduceFunc*>
+    std::pair<
+            std::vector<const megcc::KernelGen::KernelFunc*>,
+            const megcc::KernelGen::DeduceFunc*>
     get_kernels();
 
 public:
-    KernelExporter(std::string kernel_name, std::string kernel_arch,
-                   bool use_default_attr, bool print_to_console)
+    KernelExporter(
+            std::string kernel_name, std::string kernel_arch, bool use_default_attr,
+            bool print_to_console)
             : m_kernel_name{kernel_name},
               m_kernel_arch{kernel_arch},
               m_use_default_attr(use_default_attr),

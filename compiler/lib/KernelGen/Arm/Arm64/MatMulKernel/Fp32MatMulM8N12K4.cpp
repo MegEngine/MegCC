@@ -60,15 +60,16 @@ std::vector<KernelObj> Fp32MatMulM8N12K4::GetDependInternalSymbol(
         TContext* context) const {
     auto matmul_kernel = MatmulM8N12MK4Kernel();
     auto inner_ctx = GetInnerCtx(context);
-    return {{matmul_kernel.GetKernelSymbol(inner_ctx.get()),
+    return {
+            {matmul_kernel.GetKernelSymbol(inner_ctx.get()),
              matmul_kernel.GetKernelBody(inner_ctx.get()),
              matmul_kernel.GetBodyGuardBegin(inner_ctx.get()),
              matmul_kernel.GetBodyGuardEnd(inner_ctx.get()),
              matmul_kernel.GetDependInternalSymbol(inner_ctx.get())}};
 }
 
-std::string Fp32MatMulM8N12K4::GetWorkspaceBodyCondition(TContext* ctx,
-                                                         bool jit) const {
+std::string Fp32MatMulM8N12K4::GetWorkspaceBodyCondition(
+        TContext* ctx, bool jit) const {
     std::stringstream ss;
     auto inner_ctx = GetInnerCtx(ctx);
     auto matmul_kernel = MatmulM8N12MK4Kernel();
@@ -76,11 +77,9 @@ std::string Fp32MatMulM8N12K4::GetWorkspaceBodyCondition(TContext* ctx,
         ss << matmul_kernel.GetPackAWorkspaceBody(inner_ctx.get()) << ";\n";
         ss << matmul_kernel.GetPackBWorkspaceBody(inner_ctx.get()) << ";\n";
     } else {
-        ss << "extern "
-           << matmul_kernel.GetPackAWorkspaceSignature(inner_ctx.get())
+        ss << "extern " << matmul_kernel.GetPackAWorkspaceSignature(inner_ctx.get())
            << ";\n";
-        ss << "extern "
-           << matmul_kernel.GetPackBWorkspaceSignature(inner_ctx.get())
+        ss << "extern " << matmul_kernel.GetPackBWorkspaceSignature(inner_ctx.get())
            << ";\n";
     }
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
@@ -109,8 +108,7 @@ std::string Fp32MatMulM8N12K4::GetKernelBody(TContext* context) const {
     auto matmul_kernel = MatmulM8N12MK4Kernel();
     auto inner_ctx = GetInnerCtx(context);
     writer << "#include <arm_neon.h>\n";
-    writer << "extern " << matmul_kernel.GetKernelSignature(inner_ctx.get())
-           << ";\n";
+    writer << "extern " << matmul_kernel.GetKernelSignature(inner_ctx.get()) << ";\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context);
     std::string body_temp = R"({

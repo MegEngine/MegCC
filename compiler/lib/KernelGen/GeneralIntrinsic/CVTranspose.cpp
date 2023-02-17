@@ -33,21 +33,19 @@ std::string CvTransposeKernel::GetCVKernelSubSymbol(TContext* context) const {
 }
 
 std::string CvTransposeKernel::GetCVKernelSignature(TContext* context) const {
-    return GetCVKernelSymbol(context) +
-           "(const TinyMat* src, const TinyMat* dst)";
+    return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 std::vector<KernelObj> CvTransposeKernel::GetDependInternalSymbol(
         TContext* context) const {
     GeneralIntrinsic::CommonTransposeKernel common_tran;
     auto dtype_str = context->getAttrOprand("operand:0").dtype;
-    std::shared_ptr<CodeGenContext> tran_ctx =
-            std::make_shared<CodeGenContext>();
+    std::shared_ptr<CodeGenContext> tran_ctx = std::make_shared<CodeGenContext>();
     int32_t type_size = Utils::get_dtype_size(dtype_str);
     tran_ctx->setAttr("type_size", CCAttr(type_size));
     auto ctx = std::static_pointer_cast<TContext>(tran_ctx).get();
-    return {{common_tran.GetKernelSymbol(ctx), common_tran.GetKernelBody(ctx),
-             common_tran.GetBodyGuardBegin(ctx),
-             common_tran.GetBodyGuardEnd(ctx),
+    return {
+            {common_tran.GetKernelSymbol(ctx), common_tran.GetKernelBody(ctx),
+             common_tran.GetBodyGuardBegin(ctx), common_tran.GetBodyGuardEnd(ctx),
              common_tran.GetDependInternalSymbol(ctx)}};
 }
 std::string CvTransposeKernel::GetCVKernelBody(TContext* context) const {

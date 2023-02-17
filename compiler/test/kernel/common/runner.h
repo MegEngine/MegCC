@@ -30,15 +30,11 @@ template <typename Opr>
 class Runner {
 public:
     using Param = typename Opr::Param;
-    Runner(KernelGen::Arch arch = KernelGen::Arch::BAREMETAL,
-           const int dnn_level = 2)
+    Runner(KernelGen::Arch arch = KernelGen::Arch::BAREMETAL, const int dnn_level = 2)
             : m_arch(arch) {
-        megcore_check(megcoreCreateDeviceHandle(&m_device_handle,
-                                                megcorePlatformCPU));
-        megcore_check(megcoreCreateComputingHandle(&m_compute_handle,
-                                                   m_device_handle));
-        m_dnn_handle =
-                std::move(megdnn::Handle::make(m_compute_handle, dnn_level));
+        megcore_check(megcoreCreateDeviceHandle(&m_device_handle, megcorePlatformCPU));
+        megcore_check(megcoreCreateComputingHandle(&m_compute_handle, m_device_handle));
+        m_dnn_handle = std::move(megdnn::Handle::make(m_compute_handle, dnn_level));
         m_default_rng = std::move(std::make_unique<NormalRNG>());
     }
 
@@ -64,8 +60,9 @@ public:
         }
         return layouts;
     }
-    void init_tensor(TensorNDArray& tensor_array,
-                     const std::unordered_map<size_t, RNG*>& rng_map) {
+    void init_tensor(
+            TensorNDArray& tensor_array,
+            const std::unordered_map<size_t, RNG*>& rng_map) {
         for (size_t idx = 0; idx < tensor_array.size(); ++idx) {
             auto rng_iter = rng_map.find(idx);
             if (rng_iter != rng_map.end()) {

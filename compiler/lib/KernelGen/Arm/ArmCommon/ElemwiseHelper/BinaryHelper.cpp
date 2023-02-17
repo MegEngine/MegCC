@@ -372,8 +372,7 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
 }
 }  // namespace
 
-std::string ElemwiseGenBinaryAdd::GenKernelSimdInit(
-        std::vector<std::string>) const {
+std::string ElemwiseGenBinaryAdd::GenKernelSimdInit(std::vector<std::string>) const {
     return "";
 }
 
@@ -398,15 +397,14 @@ std::string ElemwiseGenBinaryAdd::GenKernelNaiveUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")["
-               << i << "] + (" << strs[str_id + 1] << ")[" << i << "];";
+        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")[" << i
+               << "] + (" << strs[str_id + 1] << ")[" << i << "];";
         str_id += 2;
     }
     return writer.str();
 }
 
-std::string ElemwiseGenBinarySub::GenKernelSimdInit(
-        std::vector<std::string>) const {
+std::string ElemwiseGenBinarySub::GenKernelSimdInit(std::vector<std::string>) const {
     return "";
 }
 
@@ -418,13 +416,11 @@ std::string ElemwiseGenBinarySub::GenKernelSimdUnroll(
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
         if (!m_should_reverse) {
-            writer << "\n vst1q_f32((" << dst << ") + 4 * " << i
-                   << ", vsubq_f32(" << strs[str_id] << "," << strs[str_id + 1]
-                   << "));";
+            writer << "\n vst1q_f32((" << dst << ") + 4 * " << i << ", vsubq_f32("
+                   << strs[str_id] << "," << strs[str_id + 1] << "));";
         } else {
-            writer << "\n vst1q_f32((" << dst << ") + 4 * " << i
-                   << ", vsubq_f32(" << strs[str_id + 1] << "," << strs[str_id]
-                   << "));";
+            writer << "\n vst1q_f32((" << dst << ") + 4 * " << i << ", vsubq_f32("
+                   << strs[str_id + 1] << "," << strs[str_id] << "));";
         }
         str_id += 2;
     }
@@ -439,20 +435,18 @@ std::string ElemwiseGenBinarySub::GenKernelNaiveUnroll(
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
         if (!m_should_reverse) {
-            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id]
-                   << ")[" << i << "] - (" << strs[str_id + 1] << ")[" << i
-                   << "];";
+            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")[" << i
+                   << "] - (" << strs[str_id + 1] << ")[" << i << "];";
         } else {
-            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id + 1]
-                   << ")[" << i << "] - (" << strs[str_id] << ")[" << i << "];";
+            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id + 1] << ")["
+                   << i << "] - (" << strs[str_id] << ")[" << i << "];";
         }
         str_id += 2;
     }
     return writer.str();
 }
 
-std::string ElemwiseGenBinaryMul::GenKernelSimdInit(
-        std::vector<std::string>) const {
+std::string ElemwiseGenBinaryMul::GenKernelSimdInit(std::vector<std::string>) const {
     return "";
 }
 
@@ -477,8 +471,8 @@ std::string ElemwiseGenBinaryMul::GenKernelNaiveUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")["
-               << i << "] * (" << strs[str_id + 1] << ")[" << i << "];";
+        writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")[" << i
+               << "] * (" << strs[str_id + 1] << ")[" << i << "];";
         str_id += 2;
     }
     return writer.str();
@@ -516,12 +510,11 @@ std::string ElemwiseGenBinaryTrueDiv::GenKernelNaiveUnroll(
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
         if (!m_should_reverse) {
-            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id]
-                   << ")[" << i << "] / (" << strs[str_id + 1] << ")[" << i
-                   << "];";
+            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id] << ")[" << i
+                   << "] / (" << strs[str_id + 1] << ")[" << i << "];";
         } else {
-            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id + 1]
-                   << ")[" << i << "] / (" << strs[str_id] << ")[" << i << "];";
+            writer << "\n(" << dst << ")[" << i << "] = (" << strs[str_id + 1] << ")["
+                   << i << "] / (" << strs[str_id] << ")[" << i << "];";
         }
         str_id += 2;
     }
@@ -542,10 +535,10 @@ std::string ElemwiseGenBinaryFuseAddRelu::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n float32x4_t tmp" << i << " = vaddq_f32(" << strs[str_id]
-               << "," << strs[str_id + 1] << ");";
-        writer << "\n vst1q_f32((" << dst << " +4*" << i << "), vmaxq_f32(tmp"
-               << i << ", vzero));";
+        writer << "\n float32x4_t tmp" << i << " = vaddq_f32(" << strs[str_id] << ","
+               << strs[str_id + 1] << ");";
+        writer << "\n vst1q_f32((" << dst << " +4*" << i << "), vmaxq_f32(tmp" << i
+               << ", vzero));";
         str_id += 2;
     }
     return writer.str();
@@ -569,8 +562,7 @@ std::string ElemwiseGenBinaryFuseAddRelu::GenKernelNaiveUnroll(
     return writer.str();
 }
 
-std::string ElemwiseGenBinary::GenCodeBody(
-        std::vector<std::string> strs) const {
+std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const {
     auto input0 = strs[0];
     auto input1 = strs[1];
     auto output = strs[2];
@@ -633,13 +625,13 @@ std::string ElemwiseGenBinary::GenCodeBody(
     return ss.str();
 }
 
-BcastType ElemwiseGenBinary::GetBcastType(const CCOperand& operand0,
-                                          const CCOperand& operand1) {
+BcastType ElemwiseGenBinary::GetBcastType(
+        const CCOperand& operand0, const CCOperand& operand1) {
     return GetBinaryBcastType(operand0, operand1);
 }
 
-bool ElemwiseGenBinary::WhetherShouldReverse(const CCOperand& operand0,
-                                             const CCOperand& operand1) {
+bool ElemwiseGenBinary::WhetherShouldReverse(
+        const CCOperand& operand0, const CCOperand& operand1) {
     auto shape0 = operand0.shape;
     auto shape1 = operand1.shape;
     size_t nr_elem0 = 1;

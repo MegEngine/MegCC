@@ -18,8 +18,7 @@ public:
     using KernelFn = megcc::KernelGen::KernelFunc;
     //! Jit compile get workspace C kernel and run, return the real workspace
     //! size
-    static size_t jit_exec_and_get_workspace(const KernelFn* func,
-                                             TContext* ctx);
+    static size_t jit_exec_and_get_workspace(const KernelFn* func, TContext* ctx);
 };
 
 }  // namespace KernelGen

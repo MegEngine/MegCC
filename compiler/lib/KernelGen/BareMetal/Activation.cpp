@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "Activation.h"
 #include <sstream>
 #include <string>
-#include "Activation.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -51,8 +51,7 @@ static inline float hswish_act(float res){
 }
 
 std::string GenActivation::gen_func_call_with_typecvt_dep(
-        std::string mode, std::string src_specifier,
-        std::string dst_specifier) {
+        std::string mode, std::string src_specifier, std::string dst_specifier) {
     auto act_dep = gen_func_dep(mode);
     if (src_specifier == "int" && dst_specifier == "int8_t") {
         return act_dep + R"(
@@ -66,8 +65,8 @@ std::string GenActivation::gen_func_call_with_typecvt_dep(
     } else if (src_specifier == dst_specifier) {
         return act_dep;
     } else {
-        CC_ABORT << "not support type" << src_specifier << " to "
-                 << dst_specifier << "\n";
+        CC_ABORT << "not support type" << src_specifier << " to " << dst_specifier
+                 << "\n";
     }
     return "";
 }
@@ -89,18 +88,18 @@ std::string GenActivation::gen_func_call(std::string mode, std::string val) {
 
 std::string GenActivation::gen_func_call_with_typecvt(
         std::string mode, std::string args, std::string src_specifier,
-        std::string dst_specifier, std::string scale_name,
-        std::string flt_scale_name, std::string div_scale_name) {
+        std::string dst_specifier, std::string scale_name, std::string flt_scale_name,
+        std::string div_scale_name) {
     if (src_specifier == "int" && dst_specifier == "int8_t") {
-        auto act_str = gen_func_call(mode, args + "*" + scale_name + "*" +
-                                                   flt_scale_name + "/" +
-                                                   div_scale_name);
+        auto act_str = gen_func_call(
+                mode,
+                args + "*" + scale_name + "*" + flt_scale_name + "/" + div_scale_name);
         return "fp32_to_int8(" + act_str + ")";
     } else if (src_specifier == dst_specifier) {
         return gen_func_call(mode, args);
     } else {
-        CC_ABORT << "not support type" << src_specifier << " to "
-                 << dst_specifier << "\n";
+        CC_ABORT << "not support type" << src_specifier << " to " << dst_specifier
+                 << "\n";
     }
     return "";
 }

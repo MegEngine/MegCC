@@ -93,8 +93,7 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::FusedElmwiseKernel>()};
     }
 
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 }  // namespace

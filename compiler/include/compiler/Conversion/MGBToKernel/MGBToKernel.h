@@ -13,8 +13,8 @@ namespace mlir {
 
 class TypeConverter;
 
-void populateMGBToKernelConversionPatterns(TypeConverter& typeConverter,
-                                           RewritePatternSet& patterns);
+void populateMGBToKernelConversionPatterns(
+        TypeConverter& typeConverter, RewritePatternSet& patterns);
 
 std::unique_ptr<OperationPass<ModuleOp>> createMGBToKernelPass();
 

@@ -35,8 +35,7 @@ bool RelayoutKernel::IsAvailable(TContext* context) const {
 std::string RelayoutKernel::GetKernelSymbol(TContext* context) const {
     std::stringstream ss;
     ss << "kernel_relayout_"
-       << SymbolHelper::gen_valid_dtype(
-                  context->getAttrOprand("operand:0").dtype);
+       << SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
     return ss.str();
 }
 

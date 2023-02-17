@@ -12,7 +12,6 @@ using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
 
-
 TEST(NAIVE, IndexingMultiAxisVec) {
     Checker<IndexingMultiAxisVec> checker(Arch::BAREMETAL);
     checker.set_kernel_symbol("kernel_.*");

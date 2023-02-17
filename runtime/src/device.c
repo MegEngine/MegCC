@@ -23,8 +23,7 @@ static void* cpu_aligned_malloc(size_t size) {
         return NULL;
     }
     void** ptr =
-            (void**)(((size_t)raw_ptr + sizeof(void*) + CPU_ALIGNMENT - 1) &
-                     (-CPU_ALIGNMENT));
+            (void**)(((size_t)raw_ptr + sizeof(void*) + CPU_ALIGNMENT - 1) & (-CPU_ALIGNMENT));
     ptr[-1] = raw_ptr;
     return ptr;
 }
@@ -38,8 +37,7 @@ TinyNNStatus init_device(Device* device) {
     if (!device) {
         return TinyNN_ERROR_NULL_PTR;
     }
-    if (device->device_type == TinyNN_ARM64 ||
-        device->device_type == TinyNN_ARM32 ||
+    if (device->device_type == TinyNN_ARM64 || device->device_type == TinyNN_ARM32 ||
         device->device_type == TinyNN_BARE_METAL) {
         device->alignment = CPU_ALIGNMENT;
         device->malloc = cpu_aligned_malloc;

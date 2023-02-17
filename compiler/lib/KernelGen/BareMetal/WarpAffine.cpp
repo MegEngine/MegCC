@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "WarpAffine.h"
 #include "../Utils/StringTemplate.h"
 #include "../Utils/Utils.h"
-#include "WarpAffine.h"
 #include "compiler/Common/Logger.h"
 
 using namespace megcc;
@@ -24,10 +24,9 @@ bool WarpAffineKernel::IsAvailable(TContext* ctx) const {
 
     CC_ASSERT(nr_operands == 3);
 
-    bool dtype_valid =
-            ((src_layout.dtype == "f32" && dst_layout.dtype == "f32") ||
-             (src_layout.dtype == "ui8" && dst_layout.dtype == "ui8")) &&
-            mat_layout.dtype == "f32";
+    bool dtype_valid = ((src_layout.dtype == "f32" && dst_layout.dtype == "f32") ||
+                        (src_layout.dtype == "ui8" && dst_layout.dtype == "ui8")) &&
+                       mat_layout.dtype == "f32";
     return dtype_valid;
 }
 //! kernel gen
@@ -103,9 +102,9 @@ std::string gen_get_real_coord(const std::string& bmode) {
             .render(body_temp);
 }
 
-std::string gen_visit(const std::string& bmode, float border_val,
-                      const std::string& dtype_c_str,
-                      const std::string& dtype) {
+std::string gen_visit(
+        const std::string& bmode, float border_val, const std::string& dtype_c_str,
+        const std::string& dtype) {
     std::stringstream temp_body;
     if (bmode != "CONSTANT") {
         temp_body << R"(
@@ -287,16 +286,14 @@ std::string WarpAffineKernel::GetCVKernelSubSymbol(TContext* context) const {
     std::stringstream ss;
     auto bmode = context->getAttrStr("border_mode");
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    ss << "tinycv_warp_affine_" << to_lower_case(bmode) << "_linear_"
-       << src_dtype;
+    ss << "tinycv_warp_affine_" << to_lower_case(bmode) << "_linear_" << src_dtype;
     return ss.str();
 }
 
 std::string WarpAffineKernel::GetCVKernelSignature(TContext* context) const {
     auto bmode = context->getAttrStr("border_mode");
     bool is_const_bmode = bmode == "CONSTANT";
-    std::string const_bmode_arg =
-            is_const_bmode ? ", uint8_t const_board_val" : "";
+    std::string const_bmode_arg = is_const_bmode ? ", uint8_t const_board_val" : "";
     return GetCVKernelSymbol(context) +
            "(const TinyMat* src, const TinyMat* dst, const double* trans" +
            const_bmode_arg + ")";

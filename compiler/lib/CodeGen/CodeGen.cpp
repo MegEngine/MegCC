@@ -6,9 +6,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include <unistd.h>
 #include <sstream>
 #include <vector>
-#include <unistd.h>
 
 #include "Elemwise.h"
 #include "Matmul.h"
@@ -25,8 +25,7 @@ struct AllMLIRKernel {
                 std::make_shared<codegen::MatmulKernel>();
     }
 
-    std::unordered_map<KernelPack::KernType,
-                       std::shared_ptr<codegen::AutoKernelFunc>>
+    std::unordered_map<KernelPack::KernType, std::shared_ptr<codegen::AutoKernelFunc>>
             inner_map;
 };
 }  // namespace
@@ -39,4 +38,3 @@ codegen::AutoKernelFunc* codegen::GenCode(KernelPack::KernType kern_type) {
         return nullptr;
     }
 }
-

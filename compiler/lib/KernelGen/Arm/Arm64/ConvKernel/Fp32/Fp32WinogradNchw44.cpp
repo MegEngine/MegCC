@@ -10,9 +10,9 @@
 #include <memory>
 #include "Arm/Arm64/Activation.h"
 #include "Arm/Arm64/ConvKernel.h"
+#include "Arm/Arm64/InternalKernel/InternalKernel.h"
 #include "Utils/StringTemplate.h"
 #include "compiler/KernelGen/KernelGen.h"
-#include "Arm/Arm64/InternalKernel/InternalKernel.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -21,11 +21,9 @@ using namespace ArmCommon;
 
 bool WinogradFloatF23Nchw44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -60,7 +58,7 @@ std::string WinogradFloatF23Nchw44::GetInitBody(TContext* ctx) const {
 
 std::string WinogradFloatF23Nchw44::GetWorkspaceBody(TContext* ctx) const {
     std::stringstream writer;
-    writer << GenCommonRet() << " " << GetWorkspaceSignature(ctx)<<"{\n";
+    writer << GenCommonRet() << " " << GetWorkspaceSignature(ctx) << "{\n";
     writer << m_framework.GenGetWorkSpaceCode(ctx, &m_winograd_strategy);
     writer << "\n}";
     return writer.str();
@@ -70,8 +68,7 @@ std::string WinogradFloatF23Nchw44::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include<arm_neon.h>";
     writer << "\n\n";
-    writer << "extern " << MatmulM4N16MK4Kernel().GetKernelSignature(ctx)
-           << ";\n";
+    writer << "extern " << MatmulM4N16MK4Kernel().GetKernelSignature(ctx) << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     writer << m_framework.GenKernelBodyCode(ctx, &m_winograd_strategy);
     writer << "return TinyNN_SUCCESS;\n}";
@@ -81,7 +78,8 @@ std::string WinogradFloatF23Nchw44::GetKernelBody(TContext* ctx) const {
 std::vector<KernelObj> WinogradFloatF23Nchw44::GetDependInternalSymbol(
         TContext*) const {
     auto matmul = MatmulM4N16MK4Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }

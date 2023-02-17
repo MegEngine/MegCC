@@ -52,8 +52,8 @@ void tinycv_transpose_ui8(const TinyMat* src, const TinyMat* dst);
  *
  * \warning \c vertical and \c horizontal can be set at the same time.
  */
-void tinycv_flip_ui8(const TinyMat* src, const TinyMat* dst, bool vertical,
-                     bool horizontal);
+void tinycv_flip_ui8(
+        const TinyMat* src, const TinyMat* dst, bool vertical, bool horizontal);
 
 void tinycv_cvt_rgb2bgr_ui8(const TinyMat* src, const TinyMat* dst);
 
@@ -95,9 +95,8 @@ void tinycv_rotate_ui8(const TinyMat* src, const TinyMat* dst, bool clockwise);
  *
  * \warning Ensure the size of trans is 6
  */
-void tinycv_warp_affine_replicate_linear_ui8(const TinyMat* src,
-                                             const TinyMat* dst,
-                                             const double* trans);
+void tinycv_warp_affine_replicate_linear_ui8(
+        const TinyMat* src, const TinyMat* dst, const double* trans);
 
 /**
  * \fn tinycv_warp_affine_constant_linear_ui8
@@ -111,9 +110,8 @@ void tinycv_warp_affine_replicate_linear_ui8(const TinyMat* src,
  *
  * \warning Ensure the size of trans is 6
  */
-void tinycv_warp_affine_constant_linear_ui8(const TinyMat* src,
-                                            const TinyMat* dst,
-                                            const double* trans, uint8_t board);
+void tinycv_warp_affine_constant_linear_ui8(
+        const TinyMat* src, const TinyMat* dst, const double* trans, uint8_t board);
 
 /**
  * \fn tinycv_roi_copy_ui8
@@ -132,9 +130,9 @@ void tinycv_warp_affine_constant_linear_ui8(const TinyMat* src,
  * \param[in] col_from The ROI col start.
  * \param[in] col_to The ROI col end.
  */
-void tinycv_roi_copy_ui8(const TinyMat* src, const TinyMat* dst,
-                         size_t row_from, size_t row_to, size_t col_from,
-                         size_t col_to);
+void tinycv_roi_copy_ui8(
+        const TinyMat* src, const TinyMat* dst, size_t row_from, size_t row_to,
+        size_t col_from, size_t col_to);
 
 #ifdef __cplusplus
 }

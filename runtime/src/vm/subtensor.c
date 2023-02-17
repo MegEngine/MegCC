@@ -12,8 +12,7 @@
 #include "vm.h"
 #include "vm/registry.h"
 #if ENABLE_INST_SUBTENSOR || ENABLE_INST_SETSUBTENSOR
-static TinyNNStatus sort_descs(IndexDesc* descs, int32_t nr_descs,
-                               IndexDesc* flags) {
+static TinyNNStatus sort_descs(IndexDesc* descs, int32_t nr_descs, IndexDesc* flags) {
     //! sort the desc with decrease order
     for (int32_t i = 0; i < nr_descs; i++) {
         for (int32_t j = i + 1; j < nr_descs; j++) {
@@ -31,9 +30,9 @@ static TinyNNStatus sort_descs(IndexDesc* descs, int32_t nr_descs,
 }
 
 //! compute output shape and update the copied input layout
-static uint32_t update_layout(Tensor** inputs, Tensor* input_copy,
-                              Tensor* output, IndexDesc* descs,
-                              IndexDesc* flags, uint32_t nr_desc) {
+static uint32_t update_layout(
+        Tensor** inputs, Tensor* input_copy, Tensor* output, IndexDesc* descs,
+        IndexDesc* flags, uint32_t nr_desc) {
     uint32_t offset = 0;
     for (uint32_t i = 0; i < nr_desc; i++) {
         IndexDesc desc = descs[i];
@@ -42,14 +41,12 @@ static uint32_t update_layout(Tensor** inputs, Tensor* input_copy,
         int32_t axis = desc.axis;
         //! if index is valid
         if (flag.index != -1) {
-            int32_t index = flag.index == 0
-                                    ? desc.index
-                                    : get_tensor_value(inputs[desc.index], 0);
+            int32_t index = flag.index == 0 ? desc.index
+                                            : get_tensor_value(inputs[desc.index], 0);
             output->layout.dims[axis] = 1;
             //! remove this axis
             if (output->layout.nr_dim > 1) {
-                for (int index = axis; index < output->layout.nr_dim - 1;
-                     index++) {
+                for (int index = axis; index < output->layout.nr_dim - 1; index++) {
                     output->layout.dims[index] = output->layout.dims[index + 1];
                 }
                 output->layout.nr_dim--;
@@ -57,15 +54,13 @@ static uint32_t update_layout(Tensor** inputs, Tensor* input_copy,
             input_copy->layout.dims[axis] = 1;
             offset += input_copy->layout.stride[axis] * index;
         } else {
-            int32_t start = flag.start != 1
-                                    ? desc.start
-                                    : get_tensor_value(inputs[desc.start], 0);
-            int32_t end = flag.end != 1 ? desc.end
-                                        : get_tensor_value(inputs[desc.end], 0);
+            int32_t start = flag.start != 1 ? desc.start
+                                            : get_tensor_value(inputs[desc.start], 0);
+            int32_t end =
+                    flag.end != 1 ? desc.end : get_tensor_value(inputs[desc.end], 0);
             end = (end < 0 ? end + input_copy->layout.dims[axis] + 1 : end);
-            int32_t step = flag.step != 1
-                                   ? desc.step
-                                   : get_tensor_value(inputs[desc.step], 0);
+            int32_t step =
+                    flag.step != 1 ? desc.step : get_tensor_value(inputs[desc.step], 0);
             int32_t step_abs = (step < 0 ? -step : step);
             //! if step < 0 and start is not valid, default set to the max shape
             //! of the axis
@@ -82,27 +77,24 @@ static uint32_t update_layout(Tensor** inputs, Tensor* input_copy,
     //! init output stride
     output->layout.stride[output->layout.nr_dim - 1] = 1;
     for (int index = output->layout.nr_dim - 2; index >= 0; index--) {
-        output->layout.stride[index] = output->layout.dims[index + 1] *
-                                       output->layout.stride[index + 1];
+        output->layout.stride[index] =
+                output->layout.dims[index + 1] * output->layout.stride[index + 1];
     }
     //! offset the source ptr
-    input_copy->ptr =
-            (char*)(input_copy->ptr) +
-            offset * dtype_length((input_copy)->dtype.type_enum, NULL);
+    input_copy->ptr = (char*)(input_copy->ptr) +
+                      offset * dtype_length((input_copy)->dtype.type_enum, NULL);
     return offset;
 }
 
 #endif
 
 #if ENABLE_INST_SUBTENSOR
-static TinyNNStatus parse_subtensor(IndexDesc** descs,
-                                    flatbuffers_generic_t fbs_desc) {
+static TinyNNStatus parse_subtensor(IndexDesc** descs, flatbuffers_generic_t fbs_desc) {
     int nr_desc = ns(IndexDesc_vec_len(fbs_desc));
     IndexDesc* ptr = tinynn_malloc(sizeof(IndexDesc) * nr_desc);
     *descs = ptr;
     for (int i = 0; i < nr_desc; i++) {
-        ns(IndexDesc_table_t) fbs_index_desc =
-                ns(IndexDesc_vec_at(fbs_desc, i));
+        ns(IndexDesc_table_t) fbs_index_desc = ns(IndexDesc_vec_at(fbs_desc, i));
         ptr[i].axis = ns(IndexDesc_axis(fbs_index_desc));
         ptr[i].start = ns(IndexDesc_start(fbs_index_desc));
         ptr[i].end = ns(IndexDesc_end(fbs_index_desc));
@@ -112,14 +104,13 @@ static TinyNNStatus parse_subtensor(IndexDesc** descs,
     return TinyNN_SUCCESS;
 }
 
-static TinyNNStatus load_subtensor(flatbuffers_generic_t fbs_inst,
-                                   Instruction* inst, VM* vm) {
+static TinyNNStatus load_subtensor(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     SubTensor* subtensor = &inst->workload.subtensor;
     ns(SubTensor_table_t) fbs_subtensor = (ns(SubTensor_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_SUBTENSOR;
     flatbuffers_int32_vec_t fbs_inputs = ns(SubTensor_inputs(fbs_subtensor));
-    flatbuffers_int8_vec_t fbs_input_types =
-            ns(SubTensor_input_types(fbs_subtensor));
+    flatbuffers_int8_vec_t fbs_input_types = ns(SubTensor_input_types(fbs_subtensor));
     subtensor->nr_input = flatbuffers_int32_vec_len(fbs_inputs);
 
     int total_input = subtensor->nr_input;
@@ -127,8 +118,9 @@ static TinyNNStatus load_subtensor(flatbuffers_generic_t fbs_inst,
     DeviceModel* model = get_active_device_model(vm);
     LOG_DEBUG("\t subtensor inputs tensor number:%d\n", subtensor->nr_input);
     //! parse the input
-    parase_inputs(subtensor->inputs, total_input, model, vm->model, fbs_inputs,
-                  fbs_input_types);
+    parase_inputs(
+            subtensor->inputs, total_input, model, vm->model, fbs_inputs,
+            fbs_input_types);
 
     int32_t output_idx = ns(SubTensor_output(fbs_subtensor));
     subtensor->output = model->tensors + output_idx;
@@ -138,9 +130,9 @@ static TinyNNStatus load_subtensor(flatbuffers_generic_t fbs_inst,
     parse_subtensor(&subtensor->descs, fbs_descs);
     parse_subtensor(&subtensor->flags, fbs_flags);
     subtensor->nr_descs = ns(IndexDesc_vec_len(fbs_descs));
-    TINYNN_ASSERT_MSG(ns(IndexDesc_vec_len(fbs_descs)) ==
-                          ns(IndexDesc_vec_len(fbs_flags)),
-                  "The size of subtensor descs and flags is not equal.");
+    TINYNN_ASSERT_MSG(
+            ns(IndexDesc_vec_len(fbs_descs)) == ns(IndexDesc_vec_len(fbs_flags)),
+            "The size of subtensor descs and flags is not equal.");
     sort_descs(subtensor->descs, subtensor->nr_descs, subtensor->flags);
 
     return TinyNN_SUCCESS;
@@ -154,11 +146,11 @@ static TinyNNStatus execute_subtensor(Instruction* inst, VM* vm) {
     //! deduce output shape, and modify the input stride
     output->layout = input_copy.layout;
     output->dtype = inputs[0]->dtype;
-    update_layout(inputs, &input_copy, output, subtensor->descs,
-                  subtensor->flags, subtensor->nr_descs);
+    update_layout(
+            inputs, &input_copy, output, subtensor->descs, subtensor->flags,
+            subtensor->nr_descs);
     //! alloc output
-    TINYNN_ASSERT_MSG(output->is_dynamic,
-                  "Subtensor output tensor should be dynamic.");
+    TINYNN_ASSERT_MSG(output->is_dynamic, "Subtensor output tensor should be dynamic.");
     alloc_tensor(output, vm);
     //! do subtensor
     size_t nr_elem = 1;
@@ -211,10 +203,8 @@ static TinyNNStatus destruct_subtensor(VM* vm, Instruction* inst) {
     return TinyNN_SUCCESS;
 }
 void register_subtensor(VM* vm) {
-    vm_register_instruction_load(vm, ns(Instruction_SubTensor),
-                                 &load_subtensor);
-    vm_register_instruction_destruct(vm, TinyNN_INST_SUBTENSOR,
-                                     &destruct_subtensor);
+    vm_register_instruction_load(vm, ns(Instruction_SubTensor), &load_subtensor);
+    vm_register_instruction_destruct(vm, TinyNN_INST_SUBTENSOR, &destruct_subtensor);
     vm_register_instruction_call(vm, TinyNN_INST_SUBTENSOR, &execute_subtensor);
 }
 #else
@@ -222,14 +212,12 @@ void register_subtensor(VM* vm) {}
 #endif
 
 #if ENABLE_INST_SETSUBTENSOR
-static TinyNNStatus load_setsubtensor(flatbuffers_generic_t fbs_inst,
-                                      Instruction* inst, VM* vm) {
+static TinyNNStatus load_setsubtensor(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     SetSubTensor* set_subtensor = &inst->workload.set_subtensor;
-    ns(SetSubTensor_table_t) fbs_set_subtensor =
-            (ns(SetSubTensor_table_t))(fbs_inst);
+    ns(SetSubTensor_table_t) fbs_set_subtensor = (ns(SetSubTensor_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_SETSUBTENSOR;
-    flatbuffers_int32_vec_t fbs_inputs =
-            ns(SetSubTensor_inputs(fbs_set_subtensor));
+    flatbuffers_int32_vec_t fbs_inputs = ns(SetSubTensor_inputs(fbs_set_subtensor));
     flatbuffers_int8_vec_t fbs_input_types =
             ns(SetSubTensor_input_types(fbs_set_subtensor));
     set_subtensor->nr_input = flatbuffers_int32_vec_len(fbs_inputs);
@@ -237,11 +225,11 @@ static TinyNNStatus load_setsubtensor(flatbuffers_generic_t fbs_inst,
     int total_input = set_subtensor->nr_input;
     set_subtensor->inputs = tinynn_malloc(total_input * sizeof(Tensor*));
     DeviceModel* model = get_active_device_model(vm);
-    LOG_DEBUG("\t setsubtensor inputs tensor number:%d\n",
-              set_subtensor->nr_input);
+    LOG_DEBUG("\t setsubtensor inputs tensor number:%d\n", set_subtensor->nr_input);
     //! parse the input
-    parase_inputs(set_subtensor->inputs, total_input, model, vm->model,
-                  fbs_inputs, fbs_input_types);
+    parase_inputs(
+            set_subtensor->inputs, total_input, model, vm->model, fbs_inputs,
+            fbs_input_types);
 
     int32_t output_idx = ns(SetSubTensor_output(fbs_set_subtensor));
     set_subtensor->output = model->tensors + output_idx;
@@ -250,12 +238,11 @@ static TinyNNStatus load_setsubtensor(flatbuffers_generic_t fbs_inst,
     ns(IndexDesc_vec_t) fbs_flags = ns(SetSubTensor_flags(fbs_set_subtensor));
     parse_subtensor(&set_subtensor->descs, fbs_descs);
     parse_subtensor(&set_subtensor->flags, fbs_flags);
-    TINYNN_ASSERT_MSG(ns(IndexDesc_vec_len(fbs_descs)) ==
-                          ns(IndexDesc_vec_len(fbs_flags)),
-                  "The size of setsubtensor descs and flags is not equal.");
+    TINYNN_ASSERT_MSG(
+            ns(IndexDesc_vec_len(fbs_descs)) == ns(IndexDesc_vec_len(fbs_flags)),
+            "The size of setsubtensor descs and flags is not equal.");
     set_subtensor->nr_descs = ns(IndexDesc_vec_len(fbs_descs));
-    sort_descs(set_subtensor->descs, set_subtensor->nr_descs,
-               set_subtensor->flags);
+    sort_descs(set_subtensor->descs, set_subtensor->nr_descs, set_subtensor->flags);
 
     return TinyNN_SUCCESS;
 }
@@ -282,9 +269,9 @@ static TinyNNStatus execute_setsubtensor(Instruction* inst, VM* vm) {
     //! copy all memory to dst
     memcpy(output->ptr, src->ptr, length_in_byte);
     //! deduce output shape, and modify the input stride
-    uint32_t offset =
-            update_layout(inputs, output, &dymmy_src, set_subtensor->descs,
-                          set_subtensor->flags, set_subtensor->nr_descs);
+    uint32_t offset = update_layout(
+            inputs, output, &dymmy_src, set_subtensor->descs, set_subtensor->flags,
+            set_subtensor->nr_descs);
     //! do set_subtensor
     size_t nr_elem = 1;
     for (int i = 0; i < output->layout.nr_dim; ++i) {
@@ -321,12 +308,11 @@ static TinyNNStatus execute_setsubtensor(Instruction* inst, VM* vm) {
         LOG_ERROR("unsupport dtype in set_subtensor.\n");
         return TinyNN_ERROR_UNSUPPORTED_DTYPE_TYPE;
     }
-    output->ptr = (char*)(output->ptr) -
-                  offset * dtype_length(output->dtype.type_enum, NULL);
+    output->ptr =
+            (char*)(output->ptr) - offset * dtype_length(output->dtype.type_enum, NULL);
     output->layout = src->layout;
 #if TINYNN_DUMP_TENSOR
-    log_tensor(set_subtensor->output, "set_subtensor",
-               set_subtensor->inputs[0]);
+    log_tensor(set_subtensor->output, "set_subtensor", set_subtensor->inputs[0]);
 #endif
 
     return TinyNN_SUCCESS;
@@ -341,12 +327,10 @@ static TinyNNStatus destruct_setsubtensor(VM* vm, Instruction* inst) {
     return TinyNN_SUCCESS;
 }
 void register_setsubtensor(VM* vm) {
-    vm_register_instruction_load(vm, ns(Instruction_SetSubTensor),
-                                 &load_setsubtensor);
-    vm_register_instruction_destruct(vm, TinyNN_INST_SETSUBTENSOR,
-                                     &destruct_setsubtensor);
-    vm_register_instruction_call(vm, TinyNN_INST_SETSUBTENSOR,
-                                 &execute_setsubtensor);
+    vm_register_instruction_load(vm, ns(Instruction_SetSubTensor), &load_setsubtensor);
+    vm_register_instruction_destruct(
+            vm, TinyNN_INST_SETSUBTENSOR, &destruct_setsubtensor);
+    vm_register_instruction_call(vm, TinyNN_INST_SETSUBTENSOR, &execute_setsubtensor);
 }
 #else
 void register_setsubtensor(VM* vm) {}

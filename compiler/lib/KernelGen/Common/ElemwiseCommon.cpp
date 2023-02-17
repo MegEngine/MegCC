@@ -12,12 +12,12 @@
 namespace megcc {
 namespace KernelGen {
 
-TensorType GetOperandTensorType(const CCOperand& dst,
-                                const CCOperand& operand) {
+TensorType GetOperandTensorType(const CCOperand& dst, const CCOperand& operand) {
     auto dst_shape = dst.shape;
     auto operand_shape = operand.shape;
-    CC_ASSERT(!Utils::is_shape_dynamic(dst_shape) &&
-              !Utils::is_shape_dynamic(operand_shape))
+    CC_ASSERT(
+            !Utils::is_shape_dynamic(dst_shape) &&
+            !Utils::is_shape_dynamic(operand_shape))
             << "Fused Elemwise don't support dynamic shape.\n";
     size_t nr_elem = 1;
     for (size_t i = 0; i < dst_shape.size(); i++) {
@@ -36,13 +36,13 @@ TensorType GetOperandTensorType(const CCOperand& dst,
                 << dst_shape.size() << "==" << operand_shape.size() << "\n";
         auto small_shape = operand_shape;
         auto big_shape = dst_shape;
-        if (small_shape.size() == 4 && small_shape[0] == 1 &&
-            small_shape[2] == 1 && small_shape[3] == 1) {
+        if (small_shape.size() == 4 && small_shape[0] == 1 && small_shape[2] == 1 &&
+            small_shape[3] == 1) {
             return TensorType::BCAST101;
 
-        } else if (small_shape.size() == 5 && small_shape[0] == 1 &&
-                   small_shape[2] == 1 && small_shape[3] == 1 &&
-                   small_shape[4] == 4) {
+        } else if (
+                small_shape.size() == 5 && small_shape[0] == 1 && small_shape[2] == 1 &&
+                small_shape[3] == 1 && small_shape[4] == 4) {
             return TensorType::BCAST101x4;
         } else {
             return TensorType::UNKNOWN_TENSOR_TYPE;
@@ -52,8 +52,7 @@ TensorType GetOperandTensorType(const CCOperand& dst,
     }
 }
 
-BcastType GetBinaryBcastType(const CCOperand& operand0,
-                             const CCOperand& operand1) {
+BcastType GetBinaryBcastType(const CCOperand& operand0, const CCOperand& operand1) {
     auto shape0 = operand0.shape;
     auto shape1 = operand1.shape;
     if (Utils::is_shape_dynamic(shape0) || Utils::is_shape_dynamic(shape1)) {
@@ -87,17 +86,17 @@ BcastType GetBinaryBcastType(const CCOperand& operand0,
             }
         }
         if (bcast_vec) {
-            if (small_shape.size() == 4 && small_shape[0] == 1 &&
-                small_shape[2] == 1 && small_shape[3] == 1) {
+            if (small_shape.size() == 4 && small_shape[0] == 1 && small_shape[2] == 1 &&
+                small_shape[3] == 1) {
                 if (nr_elem0 < nr_elem1) {
                     return BCAST101_VEC;
                 } else {
                     return VEC_BCAST101;
                 }
 
-            } else if (small_shape.size() == 5 && small_shape[0] == 1 &&
-                       small_shape[2] == 1 && small_shape[3] == 1 &&
-                       small_shape[4] == 4) {
+            } else if (
+                    small_shape.size() == 5 && small_shape[0] == 1 &&
+                    small_shape[2] == 1 && small_shape[3] == 1 && small_shape[4] == 4) {
                 if (nr_elem0 < nr_elem1) {
                     return BCAST101x4_VEC;
                 } else {
@@ -117,9 +116,9 @@ BcastType GetBinaryBcastType(const CCOperand& operand0,
     }
 }
 
-BcastType GetTernaryBcastType(const CCOperand& operand0,
-                              const CCOperand& operand1,
-                              const CCOperand& operand2) {
+BcastType GetTernaryBcastType(
+        const CCOperand& operand0, const CCOperand& operand1,
+        const CCOperand& operand2) {
     auto shape0 = operand0.shape;
     auto shape1 = operand1.shape;
     auto shape2 = operand2.shape;
@@ -169,14 +168,12 @@ BcastType GetTernaryBcastType(const CCOperand& operand0,
     TensorType input0 = get_tensor_type(nr_elem0, shape0, dst_shape);
     TensorType input1 = get_tensor_type(nr_elem1, shape1, dst_shape);
     TensorType input2 = get_tensor_type(nr_elem2, shape2, dst_shape);
-    return static_cast<BcastType>(input0 * 100 + input1 * 10 + input2 +
-                                  VEC_VEC_VEC);
+    return static_cast<BcastType>(input0 * 100 + input1 * 10 + input2 + VEC_VEC_VEC);
 }
 
-std::vector<TensorType> GetQuaterBcastType(const CCOperand& operand0,
-                                           const CCOperand& operand1,
-                                           const CCOperand& operand2,
-                                           const CCOperand& operand3) {
+std::vector<TensorType> GetQuaterBcastType(
+        const CCOperand& operand0, const CCOperand& operand1, const CCOperand& operand2,
+        const CCOperand& operand3) {
     auto shape0 = operand0.shape;
     auto shape1 = operand1.shape;
     auto shape2 = operand2.shape;
@@ -193,8 +190,8 @@ std::vector<TensorType> GetQuaterBcastType(const CCOperand& operand0,
     size_t nr_elem1 = get_nr_elem(shape1);
     size_t nr_elem2 = get_nr_elem(shape2);
     size_t nr_elem3 = get_nr_elem(shape3);
-    size_t max_elemwise = std::max(std::max(nr_elem0, nr_elem1),
-                                   std::max(nr_elem2, nr_elem3));
+    size_t max_elemwise =
+            std::max(std::max(nr_elem0, nr_elem1), std::max(nr_elem2, nr_elem3));
     auto get_tensor_type = [&](size_t nr_elem, std::vector<size_t>& shape) {
         if (nr_elem == 1) {
             return SCALAR;
@@ -218,17 +215,15 @@ std::vector<TensorType> GetQuaterBcastType(const CCOperand& operand0,
 
 std::vector<TensorType> DecodeTernaryBcastType(const BcastType bct_type) {
     std::vector<TensorType> input_type;
-    input_type.push_back(
-            static_cast<TensorType>((bct_type - VEC_VEC_VEC) / 100));
+    input_type.push_back(static_cast<TensorType>((bct_type - VEC_VEC_VEC) / 100));
     input_type.push_back(
             static_cast<TensorType>(((bct_type - VEC_VEC_VEC) % 100) / 10));
-    input_type.push_back(
-            static_cast<TensorType>((bct_type - VEC_VEC_VEC) % 10));
+    input_type.push_back(static_cast<TensorType>((bct_type - VEC_VEC_VEC) % 10));
     return input_type;
 }
 
-std::vector<size_t> CalBroadcastElemwise(const std::vector<size_t>& src,
-                                         const std::vector<size_t>& dst) {
+std::vector<size_t> CalBroadcastElemwise(
+        const std::vector<size_t>& src, const std::vector<size_t>& dst) {
     std::vector<size_t> res;
     res.push_back(1);
     bool is_broadcast = true;

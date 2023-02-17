@@ -42,8 +42,7 @@ TEST(GI, BenchmarkFP32M4N8K4) {
                 param.transposeB = false;
                 param.format = param::MatrixMul::Format::MK4;
                 benchmarker.set_param(param);
-                benchmarker.execs({{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}})
-                        .print();
+                benchmarker.execs({{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}}).print();
             }
 }
 

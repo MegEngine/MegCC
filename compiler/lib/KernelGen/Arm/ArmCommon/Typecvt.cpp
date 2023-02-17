@@ -21,17 +21,15 @@ using namespace KernelGen;
 using namespace ArmCommon;
 
 bool TypecvtKernel::IsAvailable(TContext* context) const {
-    auto src_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
+    auto src_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     bool ok_type =
             (Utils::is_quant_dtype(src_dtype, 8) &&
              Utils::is_quant_dtype(dst_dtype, 8)) ||
-            (Utils::is_quant_dtype(src_dtype, 8) &&
-             Utils::is_float_dtype(dst_dtype)) ||
-            (Utils::is_float_dtype(src_dtype) &&
-             Utils::is_quant_dtype(dst_dtype, 8)) ||
+            (Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) ||
+            (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) ||
             (Utils::get_dtype_enum(src_dtype) == Utils::DtypeEnum::uint8 &&
              Utils::is_float_dtype(dst_dtype));
     if (Utils::is_quant_dtype(src_dtype)) {
@@ -50,8 +48,7 @@ std::string TypecvtKernel::GetKernelSymbol(TContext* context) const {
     return ss.str();
 }
 namespace {
-std::string init_declare(const std::string& src_dtype,
-                         const std::string& dst_dtype) {
+std::string init_declare(const std::string& src_dtype, const std::string& dst_dtype) {
     auto src_dtype_enum = Utils::get_dtype_enum(src_dtype);
     auto dst_dtype_enum = Utils::get_dtype_enum(dst_dtype);
     std::string body_temp = R"(
@@ -70,8 +67,7 @@ std::string init_declare(const std::string& src_dtype,
     return body_temp;
 }
 
-std::string gen_scale(const std::string& src_dtype,
-                      const std::string& dst_dtype) {
+std::string gen_scale(const std::string& src_dtype, const std::string& dst_dtype) {
     std::string body_temp;
     if (Utils::is_float_dtype(src_dtype)) {
         body_temp += R"(
@@ -86,13 +82,11 @@ std::string gen_scale(const std::string& src_dtype,
     return body_temp;
 }
 
-std::string gen_cvt(const std::string& src_dtype,
-                    const std::string& dst_dtype) {
+std::string gen_cvt(const std::string& src_dtype, const std::string& dst_dtype) {
     auto src_dtype_enum = Utils::get_dtype_enum(src_dtype);
     auto dst_dtype_enum = Utils::get_dtype_enum(dst_dtype);
     std::string body_temp;
-    if (Utils::is_float_dtype(src_dtype) &&
-        Utils::is_quant_dtype(dst_dtype, 8)) {
+    if (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             float32x4_t vitem0 = vmulq_f32(vld1q_f32(src), vscale);
             float32x4_t vitem1 = vmulq_f32(vld1q_f32(src + 4), vscale);
@@ -102,15 +96,16 @@ std::string gen_cvt(const std::string& src_dtype,
 
             vst1_s8(dst, vqmovn_s16(vcombine_s16(vqmovn_s32(vres0), vqmovn_s32(vres1))));
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_float_dtype(dst_dtype)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) {
         body_temp = R"(
             int16x8_t vsrc = vmovl_s8(vld1_s8(src));
             vst1q_f32(dst, vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_low_s16(vsrc))), vscale));
             vst1q_f32(dst+4, vmulq_f32(vcvtq_f32_s32(vmovl_s16(vget_high_s16(vsrc))), vscale));
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_quant_dtype(dst_dtype, 8)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) &&
+            Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             int16x8_t vsrc = vmovl_s8(vld1_s8(src));
             float32x4_t vitem0 =
@@ -121,8 +116,9 @@ std::string gen_cvt(const std::string& src_dtype,
             int32x4_t vres1 = vcvtaq_s32_f32(vitem1);
             vst1_s8(dst, vqmovn_s16(vcombine_s16(vqmovn_s32(vres0), vqmovn_s32(vres1))));
          )";
-    } else if (src_dtype_enum == Utils::DtypeEnum::uint8 &&
-               dst_dtype_enum == Utils::DtypeEnum::float32) {
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::uint8 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
         body_temp = R"(
             uint8x16_t u8_src = vld1q_u8(src);
             uint16x8_t vsrc0 = vmovl_u8(vget_low_u8(u8_src));
@@ -143,13 +139,11 @@ std::string gen_cvt(const std::string& src_dtype,
     return body_temp;
 }
 
-std::string gen_cvt_remain(const std::string& src_dtype,
-                           const std::string& dst_dtype) {
+std::string gen_cvt_remain(const std::string& src_dtype, const std::string& dst_dtype) {
     auto src_dtype_enum = Utils::get_dtype_enum(src_dtype);
     auto dst_dtype_enum = Utils::get_dtype_enum(dst_dtype);
     std::string body_temp;
-    if (Utils::is_float_dtype(src_dtype) &&
-        Utils::is_quant_dtype(dst_dtype, 8)) {
+    if (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
                 float val = (*src)*scale;
                 int dst_val = roundf(val);
@@ -157,13 +151,14 @@ std::string gen_cvt_remain(const std::string& src_dtype,
                 dst_val = dst_val <= -128? -128:dst_val;
                 *dst = dst_val;
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_float_dtype(dst_dtype)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) {
         body_temp = R"(
             *dst = (*src)*scale;
          )";
-    } else if (Utils::is_quant_dtype(src_dtype, 8) &&
-               Utils::is_quant_dtype(dst_dtype, 8)) {
+    } else if (
+            Utils::is_quant_dtype(src_dtype, 8) &&
+            Utils::is_quant_dtype(dst_dtype, 8)) {
         body_temp = R"(
             float val = (*src)*scale;
             int dst_val = roundf(val);
@@ -171,8 +166,9 @@ std::string gen_cvt_remain(const std::string& src_dtype,
             dst_val = dst_val <= -128? -128:dst_val;
             *dst = dst_val;
          )";
-    } else if (src_dtype_enum == Utils::DtypeEnum::uint8 &&
-               dst_dtype_enum == Utils::DtypeEnum::float32) {
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::uint8 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
         body_temp = R"(
             *dst = (float)*src;
          )";
@@ -187,10 +183,10 @@ std::string gen_cvt_remain(const std::string& src_dtype,
 
 std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     std::stringstream ss;
-    auto src_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
+    auto src_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     std::string src_specifier = Utils::cvt_dtype_specifier(src_dtype_str);
     std::string dst_specifier = Utils::cvt_dtype_specifier(dst_dtype_str);
     ss << R"(
@@ -241,8 +237,7 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
                     .add("dst_specifier", dst_specifier)
                     .add("gen_scale", gen_scale(src_dtype_str, dst_dtype_str))
                     .add("gen_cvt", gen_cvt(src_dtype_str, dst_dtype_str))
-                    .add("gen_cvt_remain",
-                         gen_cvt_remain(src_dtype_str, dst_dtype_str))
+                    .add("gen_cvt_remain", gen_cvt_remain(src_dtype_str, dst_dtype_str))
                     .render(body_temp);
     return ss.str();
 }

@@ -30,11 +30,12 @@ struct MGBImporterOptions {
     std::vector<std::map<std::string, megdnn::TensorShape>> input_map_vec;
 };
 
-mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
-                               MGBImporterOptions options, int hako_ver = 0);
+mlir::LogicalResult import_mgb(
+        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options,
+        int hako_ver = 0);
 
-mlir::LogicalResult parseInputShapes(std::string s,
-                                     mlir::MGB::MGBImporterOptions& options);
+mlir::LogicalResult parseInputShapes(
+        std::string s, mlir::MGB::MGBImporterOptions& options);
 
 }  // namespace MGB
 }  // namespace mlir

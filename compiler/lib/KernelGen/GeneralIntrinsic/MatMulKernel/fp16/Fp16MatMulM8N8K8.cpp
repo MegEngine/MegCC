@@ -62,7 +62,8 @@ std::vector<KernelObj> Fp16MatMulM8N8K8::GetDependInternalSymbol(
         TContext* context) const {
     auto matmul_kernel = MatmulM8N8MK8Kernel();
     auto ctx = GetInnerCtx(context);
-    return {{matmul_kernel.GetKernelSymbol(ctx.get()),
+    return {
+            {matmul_kernel.GetKernelSymbol(ctx.get()),
              matmul_kernel.GetKernelBody(ctx.get()),
              matmul_kernel.GetBodyGuardBegin(ctx.get()),
              matmul_kernel.GetBodyGuardEnd(ctx.get()),
@@ -111,8 +112,7 @@ std::string Fp16MatMulM8N8K8::GetKernelBody(TContext* context) const {
 
     std::stringstream ss;
     ss << StringTemplate::StringTemplateArgs()
-                    .add("matmul_symbol",
-                         matmul_kernel.GetKernelSymbol(context))
+                    .add("matmul_symbol", matmul_kernel.GetKernelSymbol(context))
                     .render(writer.str());
     return ss.str();
 }

@@ -26,14 +26,13 @@ public:
     }
     std::string GetKernelSymbol(TContext* context) const override;
 
-    static bool is_qint8_conv_dtype(TContext* ctx,
-                                    bool is_dst_support_si32 = false) {
+    static bool is_qint8_conv_dtype(TContext* ctx, bool is_dst_support_si32 = false) {
         bool type_ok = ctx->getAttrInt("nr_operands") >= 3;
         auto dst_dtype = Utils::get_last_operand(ctx).dtype;
-        type_ok = type_ok && Utils::is_quant_dtype(
-                                     ctx->getAttrOprand("operand:0").dtype, 8);
-        type_ok = type_ok && Utils::is_quant_dtype(
-                                     ctx->getAttrOprand("operand:1").dtype, 8);
+        type_ok = type_ok &&
+                  Utils::is_quant_dtype(ctx->getAttrOprand("operand:0").dtype, 8);
+        type_ok = type_ok &&
+                  Utils::is_quant_dtype(ctx->getAttrOprand("operand:1").dtype, 8);
         if (is_dst_support_si32) {
             type_ok = type_ok && (Utils::is_quant_dtype(dst_dtype, 8) ||
                                   Utils::is_quant_dtype(dst_dtype, 32));
@@ -42,8 +41,7 @@ public:
         }
         if (is_bias(ctx)) {
             type_ok = type_ok &&
-                      Utils::is_quant_dtype(
-                              ctx->getAttrOprand("operand:2").dtype, 32);
+                      Utils::is_quant_dtype(ctx->getAttrOprand("operand:2").dtype, 32);
         }
         return type_ok;
     }

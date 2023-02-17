@@ -14,7 +14,7 @@
         __builtin_trap();             \
     }
 
-#define NMS_THRESH 0.65
+#define NMS_THRESH       0.65
 #define BBOX_CONF_THRESH 0.3
 
 constexpr int INPUT_W = 640;
@@ -49,34 +49,33 @@ const float color_list[80][3] = {
         {0.714, 0.714, 0.714}, {0.857, 0.857, 0.857}, {0.000, 0.447, 0.741},
         {0.314, 0.717, 0.741}, {0.50, 0.5, 0}};
 
-static const char* class_names[] = {
-        "person",        "bicycle",      "car",
-        "motorcycle",    "airplane",     "bus",
-        "train",         "truck",        "boat",
-        "traffic light", "fire hydrant", "stop sign",
-        "parking meter", "bench",        "bird",
-        "cat",           "dog",          "horse",
-        "sheep",         "cow",          "elephant",
-        "bear",          "zebra",        "giraffe",
-        "backpack",      "umbrella",     "handbag",
-        "tie",           "suitcase",     "frisbee",
-        "skis",          "snowboard",    "sports ball",
-        "kite",          "baseball bat", "baseball glove",
-        "skateboard",    "surfboard",    "tennis racket",
-        "bottle",        "wine glass",   "cup",
-        "fork",          "knife",        "spoon",
-        "bowl",          "banana",       "apple",
-        "sandwich",      "orange",       "broccoli",
-        "carrot",        "hot dog",      "pizza",
-        "donut",         "cake",         "chair",
-        "couch",         "potted plant", "bed",
-        "dining table",  "toilet",       "tv",
-        "laptop",        "mouse",        "remote",
-        "keyboard",      "cell phone",   "microwave",
-        "oven",          "toaster",      "sink",
-        "refrigerator",  "book",         "clock",
-        "vase",          "scissors",     "teddy bear",
-        "hair drier",    "toothbrush"};
+static const char* class_names[] = {"person",        "bicycle",      "car",
+                                    "motorcycle",    "airplane",     "bus",
+                                    "train",         "truck",        "boat",
+                                    "traffic light", "fire hydrant", "stop sign",
+                                    "parking meter", "bench",        "bird",
+                                    "cat",           "dog",          "horse",
+                                    "sheep",         "cow",          "elephant",
+                                    "bear",          "zebra",        "giraffe",
+                                    "backpack",      "umbrella",     "handbag",
+                                    "tie",           "suitcase",     "frisbee",
+                                    "skis",          "snowboard",    "sports ball",
+                                    "kite",          "baseball bat", "baseball glove",
+                                    "skateboard",    "surfboard",    "tennis racket",
+                                    "bottle",        "wine glass",   "cup",
+                                    "fork",          "knife",        "spoon",
+                                    "bowl",          "banana",       "apple",
+                                    "sandwich",      "orange",       "broccoli",
+                                    "carrot",        "hot dog",      "pizza",
+                                    "donut",         "cake",         "chair",
+                                    "couch",         "potted plant", "bed",
+                                    "dining table",  "toilet",       "tv",
+                                    "laptop",        "mouse",        "remote",
+                                    "keyboard",      "cell phone",   "microwave",
+                                    "oven",          "toaster",      "sink",
+                                    "refrigerator",  "book",         "clock",
+                                    "vase",          "scissors",     "teddy bear",
+                                    "hair drier",    "toothbrush"};
 
 struct OutputInfo {
     cv::Rect_<float> rect;
@@ -117,14 +116,13 @@ static void preprocess(cv::Mat& img, float* data_ptr) {
     }
 }
 
-static inline float intersection_area(const OutputInfo& a,
-                                      const OutputInfo& b) {
+static inline float intersection_area(const OutputInfo& a, const OutputInfo& b) {
     cv::Rect_<float> inter = a.rect & b.rect;
     return inter.area();
 }
 
-static void qsort_descent_inplace(std::vector<OutputInfo>& faceoutput_infos,
-                                  int left, int right) {
+static void qsort_descent_inplace(
+        std::vector<OutputInfo>& faceoutput_infos, int left, int right) {
     int i = left;
     int j = right;
     float p = faceoutput_infos[(left + right) / 2].prob;
@@ -167,9 +165,9 @@ static void qsort_descent_inplace(std::vector<OutputInfo>& output_infos) {
     qsort_descent_inplace(output_infos, 0, output_infos.size() - 1);
 }
 
-static void nms_sorted_bboxes(const std::vector<OutputInfo>& faceoutput_infos,
-                              std::vector<int>& picked_output,
-                              float nms_threshold) {
+static void nms_sorted_bboxes(
+        const std::vector<OutputInfo>& faceoutput_infos,
+        std::vector<int>& picked_output, float nms_threshold) {
     picked_output.clear();
 
     const int n = faceoutput_infos.size();
@@ -199,9 +197,9 @@ static void nms_sorted_bboxes(const std::vector<OutputInfo>& faceoutput_infos,
     }
 }
 
-static void postpreprocess(const float* output_ptr,
-                           std::vector<OutputInfo>& output_infos, float scale,
-                           const int img_w, const int img_h) {
+static void postpreprocess(
+        const float* output_ptr, std::vector<OutputInfo>& output_infos, float scale,
+        const int img_w, const int img_h) {
     std::vector<OutputInfo> valid_output_info;
     std::vector<BaseAnchor> base_anchors;
 
@@ -264,10 +262,8 @@ static void postpreprocess(const float* output_ptr,
         // adjust offset to original unpadded
         float x0 = (output_infos[i].rect.x) / scale;
         float y0 = (output_infos[i].rect.y) / scale;
-        float x1 =
-                (output_infos[i].rect.x + output_infos[i].rect.width) / scale;
-        float y1 =
-                (output_infos[i].rect.y + output_infos[i].rect.height) / scale;
+        float x1 = (output_infos[i].rect.x + output_infos[i].rect.width) / scale;
+        float y1 = (output_infos[i].rect.y + output_infos[i].rect.height) / scale;
 
         // clip
         x0 = std::max(std::min(x0, (float)(img_w - 1)), 0.f);
@@ -282,20 +278,20 @@ static void postpreprocess(const float* output_ptr,
     }
 }
 
-static void draw_output_infos(const cv::Mat& bgr,
-                              const std::vector<OutputInfo>& output_infos, std::string& output_name) {
+static void draw_output_infos(
+        const cv::Mat& bgr, const std::vector<OutputInfo>& output_infos,
+        std::string& output_name) {
     cv::Mat image = bgr.clone();
 
     for (size_t i = 0; i < output_infos.size(); i++) {
         const OutputInfo& obj = output_infos[i];
 
-        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label,
-                obj.prob, obj.rect.x, obj.rect.y, obj.rect.width,
-                obj.rect.height);
+        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
 
-        cv::Scalar color =
-                cv::Scalar(color_list[obj.label][0], color_list[obj.label][1],
-                           color_list[obj.label][2]);
+        cv::Scalar color = cv::Scalar(
+                color_list[obj.label][0], color_list[obj.label][1],
+                color_list[obj.label][2]);
         float c_mean = cv::mean(color)[0];
         cv::Scalar txt_color;
         if (c_mean > 0.5) {
@@ -310,8 +306,8 @@ static void draw_output_infos(const cv::Mat& bgr,
         sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
 
         int baseLine = 0;
-        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX,
-                                              0.4, 1, &baseLine);
+        cv::Size label_size =
+                cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, &baseLine);
 
         cv::Scalar txt_bk_color = color * 0.7 * 255;
 
@@ -319,14 +315,16 @@ static void draw_output_infos(const cv::Mat& bgr,
         int y = obj.rect.y + 1;
         if (y > image.rows)
             y = image.rows;
-        cv::rectangle(image,
-                      cv::Rect(cv::Point(x, y),
-                               cv::Size(label_size.width,
-                                        label_size.height + baseLine)),
-                      txt_bk_color, -1);
+        cv::rectangle(
+                image,
+                cv::Rect(
+                        cv::Point(x, y),
+                        cv::Size(label_size.width, label_size.height + baseLine)),
+                txt_bk_color, -1);
 
-        cv::putText(image, text, cv::Point(x, y + label_size.height),
-                    cv::FONT_HERSHEY_SIMPLEX, 0.4, txt_color, 1);
+        cv::putText(
+                image, text, cv::Point(x, y + label_size.height),
+                cv::FONT_HERSHEY_SIMPLEX, 0.4, txt_color, 1);
     }
 
     cv::imwrite(output_name.c_str(), image);
@@ -345,30 +343,31 @@ std::vector<float> run_model(LiteNetwork model) {
     printf("every iter use time: %fms\n", ((float)diff) / 1000);
     LiteTensor output;
     size_t nr_output = 0;
-    LITE_CAPI_CHECK(LITE_get_all_output_name(model, &nr_output, NULL),
-                    "get output number failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_output_name(model, &nr_output, NULL),
+            "get output number failed\n");
     char* output_name_ptr[nr_output];
-    LITE_CAPI_CHECK(LITE_get_all_output_name(model, NULL,
-                                             (const char**)&output_name_ptr),
-                    "get output name failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_output_name(model, NULL, (const char**)&output_name_ptr),
+            "get output name failed\n");
     LITE_CAPI_CHECK(
             LITE_get_io_tensor(model, output_name_ptr[0], LITE_OUTPUT, &output),
             "get output tensor failed\n");
     size_t length = 0;
-    LITE_CAPI_CHECK(LITE_get_tensor_total_size_in_byte(output, &length),
-                    "get output tensor size failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_tensor_total_size_in_byte(output, &length),
+            "get output tensor size failed\n");
     float* output_ptr = NULL;
-    LITE_CAPI_CHECK(LITE_get_tensor_memory(output, (void**)&output_ptr),
-                    "get output tensor memory failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_tensor_memory(output, (void**)&output_ptr),
+            "get output tensor memory failed\n");
 
-    std::vector<float> output_vec(output_ptr,
-                                  output_ptr + length / sizeof(float));
+    std::vector<float> output_vec(output_ptr, output_ptr + length / sizeof(float));
 
     return output_vec;
 }
 
-std::vector<float> inference(const char* model_path,
-                             std::vector<float>& input_data) {
+std::vector<float> inference(const char* model_path, std::vector<float>& input_data) {
     LITE_set_log_level(INFO);
     LiteNetwork model;
     LiteTensor input;
@@ -377,13 +376,15 @@ std::vector<float> inference(const char* model_path,
     LITE_CAPI_CHECK(
             LITE_make_network(&model, *default_config(), *default_network_io()),
             "create model error. \n");
-    LITE_CAPI_CHECK(LITE_load_model_from_path(model, model_path),
-                    "load model error. \n");
+    LITE_CAPI_CHECK(
+            LITE_load_model_from_path(model, model_path), "load model error. \n");
     //! set input tensor
-    LITE_CAPI_CHECK(LITE_get_io_tensor(model, "data", LITE_INPUT, &input),
-                    "get input tensor failed\n");
-    LITE_CAPI_CHECK(LITE_get_tensor_total_size_in_byte(input, &input_length),
-                    "get input tensor size failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_io_tensor(model, "data", LITE_INPUT, &input),
+            "get input tensor failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_tensor_total_size_in_byte(input, &input_length),
+            "get input tensor size failed\n");
 
     LITE_CAPI_CHECK(
             LITE_reset_tensor_memory(input, input_data.data(), input_length),
@@ -420,9 +421,8 @@ int main(int argc, char** argv) {
         return -1;
     }
     const std::string model_path = parser.get<cv::String>("@model");
-    std::string image_filename =
-            cv::samples::findFile(parser.get<cv::String>("input"));
-    std::string outout_filename =parser.get<cv::String>("output");
+    std::string image_filename = cv::samples::findFile(parser.get<cv::String>("input"));
+    std::string outout_filename = parser.get<cv::String>("output");
 
     cv::Mat img = cv::imread(image_filename);
     if (img.empty()) {
@@ -437,8 +437,7 @@ int main(int argc, char** argv) {
     float* predict_ptr = output_data.data();
     int img_w = img.cols;
     int img_h = img.rows;
-    float scale =
-            std::min(INPUT_W / (img.cols * 1.0), INPUT_H / (img.rows * 1.0));
+    float scale = std::min(INPUT_W / (img.cols * 1.0), INPUT_H / (img.rows * 1.0));
     std::vector<OutputInfo> output_infos;
 
     postpreprocess(predict_ptr, output_infos, scale, img_w, img_h);

@@ -13,22 +13,21 @@
 #include "vm.h"
 #include "vm/registry.h"
 #if ENABLE_INST_BROADCAST
-static TinyNNStatus load_broadcast(flatbuffers_generic_t fbs_inst,
-                                   Instruction* inst, VM* vm) {
+static TinyNNStatus load_broadcast(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     BroadCast* broadcast = &inst->workload.broadcast;
     ns(BroadCast_table_t) fbs_broadcast = (ns(BroadCast_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_BROADCAST;
     flatbuffers_int32_vec_t fbs_inputs = ns(BroadCast_inputs(fbs_broadcast));
-    flatbuffers_int8_vec_t fbs_input_types =
-            ns(BroadCast_input_types(fbs_broadcast));
+    flatbuffers_int8_vec_t fbs_input_types = ns(BroadCast_input_types(fbs_broadcast));
     int32_t nr_input = flatbuffers_int32_vec_len(fbs_inputs);
     TINYNN_ASSERT_MSG(nr_input == 2, "BroadCast input is not 2.");
 
     DeviceModel* model = get_active_device_model(vm);
     LOG_DEBUG("\t BroadCast inputs tensor number:%d\n", nr_input);
     //! parse the input
-    parase_inputs(broadcast->inputs, nr_input, model, vm->model, fbs_inputs,
-                  fbs_input_types);
+    parase_inputs(
+            broadcast->inputs, nr_input, model, vm->model, fbs_inputs, fbs_input_types);
     int32_t output_idx = ns(BroadCast_output(fbs_broadcast));
     broadcast->output = model->tensors + output_idx;
     return TinyNN_SUCCESS;
@@ -50,14 +49,15 @@ static TinyNNStatus execute_broadcast(Instruction* inst, VM* vm) {
     //! init output stride
     output->layout.stride[output->layout.nr_dim - 1] = 1;
     for (int index = output->layout.nr_dim - 2; index >= 0; index--) {
-        output->layout.stride[index] = output->layout.dims[index + 1] *
-                                       output->layout.stride[index + 1];
+        output->layout.stride[index] =
+                output->layout.dims[index + 1] * output->layout.stride[index + 1];
     }
     //! alloc output
     alloc_tensor(output, vm);
     //! broadcast input
-    TINYNN_ASSERT_MSG(output->layout.nr_dim >= input.layout.nr_dim,
-                  "Broadcast output dim should large than input.");
+    TINYNN_ASSERT_MSG(
+            output->layout.nr_dim >= input.layout.nr_dim,
+            "Broadcast output dim should large than input.");
     int32_t dim_diff = output->layout.nr_dim - input.layout.nr_dim;
     Layout in_layout;
     in_layout.nr_dim = output->layout.nr_dim;
@@ -117,9 +117,9 @@ static TinyNNStatus execute_broadcast(Instruction* inst, VM* vm) {
     return TinyNN_SUCCESS;
 }
 
-static TinyNNStatus load_shape_of(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
-    ShapeOf* shape_of= &inst->workload.shape_of;
+static TinyNNStatus load_shape_of(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
+    ShapeOf* shape_of = &inst->workload.shape_of;
     ns(ShapeOf_table_t) fbs_shapeof = (ns(ShapeOf_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_SHAPEOF;
     int32_t input_idx = ns(ShapeOf_input(fbs_shapeof));
@@ -132,14 +132,15 @@ static TinyNNStatus load_shape_of(flatbuffers_generic_t fbs_inst, Instruction* i
     }
     int32_t output_idx = ns(ShapeOf_output(fbs_shapeof));
     shape_of->output = model->tensors + output_idx;
-    LOG_DEBUG("\t Load ShapeOf inputs tensor id:%d, output tensor id:%d\n",
-              input_idx, output_idx);
+    LOG_DEBUG(
+            "\t Load ShapeOf inputs tensor id:%d, output tensor id:%d\n", input_idx,
+            output_idx);
     return TinyNN_SUCCESS;
 }
 
 static TinyNNStatus execute_shape_of(Instruction* inst, VM* vm) {
     Tensor* output = inst->workload.shape_of.output;
-    ShapeOf* shape_of= &inst->workload.shape_of;
+    ShapeOf* shape_of = &inst->workload.shape_of;
     Layout layout = shape_of->input->layout;
     output->dtype.type_enum = TinyNN_INT;
     //! init output stride
@@ -147,8 +148,8 @@ static TinyNNStatus execute_shape_of(Instruction* inst, VM* vm) {
     output->layout.dims[0] = layout.nr_dim;
     output->layout.stride[0] = 1;
     //! alloc output
-    TINYNN_ASSERT_MSG(output->is_dynamic,
-		    "dimshuffle output tensor should be dynamic.");
+    TINYNN_ASSERT_MSG(
+            output->is_dynamic, "dimshuffle output tensor should be dynamic.");
     alloc_tensor(output, vm);
     //! broadcast input
     int32_t* ptr = output->ptr;
@@ -176,16 +177,13 @@ static TinyNNStatus destruct_shape_of(VM* vm, Instruction* inst) {
 }
 
 void register_broadcast_shape_of(VM* vm) {
-    vm_register_instruction_load(vm, ns(Instruction_BroadCast),
-                                 &load_broadcast);
+    vm_register_instruction_load(vm, ns(Instruction_BroadCast), &load_broadcast);
     vm_register_instruction_call(vm, TinyNN_INST_BROADCAST, &execute_broadcast);
-    vm_register_instruction_destruct(vm, TinyNN_INST_BROADCAST,
-                                     &destruct_broadcast);
+    vm_register_instruction_destruct(vm, TinyNN_INST_BROADCAST, &destruct_broadcast);
 
     vm_register_instruction_load(vm, ns(Instruction_ShapeOf), &load_shape_of);
     vm_register_instruction_call(vm, TinyNN_INST_SHAPEOF, &execute_shape_of);
-    vm_register_instruction_destruct(vm, TinyNN_INST_SHAPEOF,
-                                     &destruct_shape_of);
+    vm_register_instruction_destruct(vm, TinyNN_INST_SHAPEOF, &destruct_shape_of);
 }
 #else
 void register_broadcast_shape_of(VM* vm) {}

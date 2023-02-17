@@ -6,8 +6,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "CodeGenUtil.h"
 #include "Elemwise.h"
+#include "CodeGenUtil.h"
 #include "GlobalCtx.h"
 
 #include "compiler/CodeGen/CodeGen.h"
@@ -56,23 +56,21 @@ std::string ElemwiseKernel::GetKernelSymbol(TContext* context) const {
     return ss.str();
 }
 
-void ElemwiseKernel::CreateCompute(Block* entryBlock,
-                                   mlir::OpBuilder& op_builder,
-                                   mlir::MLIRContext* ctx,
-                                   TContext* context) const {
+void ElemwiseKernel::CreateCompute(
+        Block* entryBlock, mlir::OpBuilder& op_builder, mlir::MLIRContext* ctx,
+        TContext* context) const {
     Value input_val = entryBlock->getArgument(0);
     Value output_val = entryBlock->getArgument(1);
     MemRefType out_memref = output_val.getType().dyn_cast_or_null<MemRefType>();
 
     SmallVector<AffineMap> indexing_maps;
-    SmallVector<StringRef> iter_type =
-            getNParallelLoopsAttrs(out_memref.getRank());
+    SmallVector<StringRef> iter_type = getNParallelLoopsAttrs(out_memref.getRank());
 
-    indexing_maps.push_back(get_affine_map(
-            input_val.getType().dyn_cast_or_null<MemRefType>(), ctx));
+    indexing_maps.push_back(
+            get_affine_map(input_val.getType().dyn_cast_or_null<MemRefType>(), ctx));
 
-    indexing_maps.push_back(get_affine_map(
-            output_val.getType().dyn_cast_or_null<MemRefType>(), ctx));
+    indexing_maps.push_back(
+            get_affine_map(output_val.getType().dyn_cast_or_null<MemRefType>(), ctx));
     SmallVector<Value> inputs_val;
     SmallVector<Value> outputs_val;
     inputs_val.push_back(input_val);
@@ -80,8 +78,7 @@ void ElemwiseKernel::CreateCompute(Block* entryBlock,
     op_builder.create<linalg::GenericOp>(
             op_builder.getUnknownLoc(), inputs_val, outputs_val, indexing_maps,
             iter_type,
-            [&](OpBuilder& nestedBuilder, Location nestedLoc,
-                ValueRange blockArgs) {
+            [&](OpBuilder& nestedBuilder, Location nestedLoc, ValueRange blockArgs) {
                 Type act_type = blockArgs[0].getType();
                 Value input_val = blockArgs[0];
                 // ConstantOp
@@ -89,17 +86,16 @@ void ElemwiseKernel::CreateCompute(Block* entryBlock,
                         op_builder.getUnknownLoc(), act_type,
                         FloatAttr::get(act_type, llvm::APFloat(0.f)));
                 Value opResult = op_builder.create<arith::MaxFOp>(
-                        op_builder.getUnknownLoc(), act_type, input_val,
-                        const_zero_op);
-                op_builder.create<linalg::YieldOp>(op_builder.getUnknownLoc(),
-                                                   opResult);
+                        op_builder.getUnknownLoc(), act_type, input_val, const_zero_op);
+                op_builder.create<linalg::YieldOp>(
+                        op_builder.getUnknownLoc(), opResult);
             });
     std::vector<Value> results;
     op_builder.create<ReturnOp>(op_builder.getUnknownLoc(), results);
 }
 
-void ElemwiseKernel::CreatePass(mlir::PassManager& pm, mlir::MLIRContext* ctx,
-                                TContext* context) const {
+void ElemwiseKernel::CreatePass(
+        mlir::PassManager& pm, mlir::MLIRContext* ctx, TContext* context) const {
     tosa::addTosaToLinalgPasses(pm);
     //! used to do complex math with some simple operations
     pm.addNestedPass<FuncOp>(arith::createArithmeticExpandOpsPass());

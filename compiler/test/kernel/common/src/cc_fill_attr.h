@@ -25,9 +25,9 @@ using ConvBiasParam = megdnn::ConvBiasForward::Param;
 namespace megcc {
 namespace test {
 
-using KernelGenRet =
-        std::pair<std::vector<const ::megcc::KernelGen::KernelFunc*>,
-                  const ::megcc::KernelGen::DeduceFunc*>;
+using KernelGenRet = std::pair<
+        std::vector<const ::megcc::KernelGen::KernelFunc*>,
+        const ::megcc::KernelGen::DeduceFunc*>;
 using TensorNDArray = megdnn::SmallVector<megdnn::TensorND>;
 template <typename Opr>
 KernelGenRet opr_fill_attr(

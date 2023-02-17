@@ -130,10 +130,9 @@ typedef struct ComboIOTensorS {
 } ComboIOTensor;
 
 //! the uniform kernel function for all kernels of all operators
-typedef TinyNNStatus (*KernelFunc)(Tensor** inputs, int nr_input,
-                                   Tensor** outputs, int nr_output,
-                                   const Workspace* workspace,
-                                   const RuntimeOpt* opt);
+typedef TinyNNStatus (*KernelFunc)(
+        Tensor** inputs, int nr_input, Tensor** outputs, int nr_output,
+        const Workspace* workspace, const RuntimeOpt* opt);
 
 //! the uniform init function for all operators
 //! 1. if out_weights is NULL and nr_out_weights is not NULL, this kernel just
@@ -143,17 +142,17 @@ typedef TinyNNStatus (*KernelFunc)(Tensor** inputs, int nr_input,
 //! 3. if out_weights and nr_out_weight are both not NULL, it works for weights
 //!     init, and fill data in the out_weights, if the in_weights is not used by
 //!     the opr, it's use_count will minus one.
-typedef TinyNNStatus (*InitFunc)(Tensor** inputs, int nr_input,
-                                 Tensor* out_weights, int* nr_out_weight,
-                                 const RuntimeOpt* opt);
+typedef TinyNNStatus (*InitFunc)(
+        Tensor** inputs, int nr_input, Tensor* out_weights, int* nr_out_weight,
+        const RuntimeOpt* opt);
 
 //! the uniform workspace function for all operators
-typedef TinyNNStatus (*WorkspaceFunc)(Tensor** inputs, int nr_input,
-                                      int nr_thread, size_t* workspace);
+typedef TinyNNStatus (*WorkspaceFunc)(
+        Tensor** inputs, int nr_input, int nr_thread, size_t* workspace);
 
 //! the uniform kernel function for all kernels of all operators
-typedef TinyNNStatus (*DeduceFunc)(Tensor** inputs, int nr_input,
-                                   Tensor** outputs, int nr_output);
+typedef TinyNNStatus (*DeduceFunc)(
+        Tensor** inputs, int nr_input, Tensor** outputs, int nr_output);
 #endif
 
 // vim: syntax=cpp.doxygen

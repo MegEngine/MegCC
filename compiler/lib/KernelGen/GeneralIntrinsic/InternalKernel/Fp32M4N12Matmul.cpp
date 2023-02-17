@@ -469,9 +469,8 @@ std::string pack_B_t(const std::string kern_sym, TContext* ctx) {
 std::string kern4x12(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
     ss << R"(
 static void kern_4x12(
@@ -695,8 +694,7 @@ static void kern_4x12(
     ss << StringTemplate::StringTemplateArgs()
                     .add("GenActivate",
                          [=](std::vector<std::string> args) {
-                             return activation_gen->GenIntrinsicFloat(args[0],
-                                                                      args[1]);
+                             return activation_gen->GenIntrinsicFloat(args[0], args[1]);
                          })
                     .render(body_temp);
     return ss.str();
@@ -705,9 +703,8 @@ static void kern_4x12(
 std::string kern4x4(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
     ss << R"(
 
@@ -824,8 +821,7 @@ static void kern_4x4(
     ss << StringTemplate::StringTemplateArgs()
                     .add("GenActivate",
                          [=](std::vector<std::string> args) {
-                             return activation_gen->GenIntrinsicFloat(args[0],
-                                                                      args[1]);
+                             return activation_gen->GenIntrinsicFloat(args[0], args[1]);
                          })
                     .render(body_temp);
     return ss.str();
@@ -834,9 +830,8 @@ static void kern_4x4(
 std::string naked_kern(const std::string& sig, TContext* ctx) {
     std::stringstream ss;
     std::string post_process_str;
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     if (nonline_mode == "SIGMOID") {
         std::vector<CCOperand> operands;
         operands.resize(2);
@@ -929,8 +924,7 @@ std::string MatmulM4N12Kernel::GetKernelSymbol(TContext* ctx) const {
     bool with_bias = ctx->getAttrBool("with_bias");
     std::string bias_suffix = with_bias ? "_bias" : "";
     std::string act_suffix = "";
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         act_suffix = "_" + ctx->getAttrStr("nonlineMode");
     }
     return "GI_fp32_m4_n12_matmul" + bias_suffix + act_suffix;

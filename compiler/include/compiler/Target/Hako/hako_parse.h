@@ -6,8 +6,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 #pragma once
+#include <cstdint>
 #include <vector>
 namespace megcc {
-std::vector<uint8_t> parse_hako(const std::vector<uint8_t>& model_buffer,
-                                int version = 2);
+std::vector<uint8_t> parse_hako(
+        const std::vector<uint8_t>& model_buffer, int version = 2);
 }  // namespace megcc

@@ -146,10 +146,10 @@ static inline void accumulate_1_line_horizon(
 )";
     return ss.str();
 }
-std::string render_store_1_line(std::string dst, std::string oh, std::string ow,
-                                std::string OW, std::string reg_name,
-                                std::string oh_idx,
-                                const ActivationGenIntrinsicBase& act) {
+std::string render_store_1_line(
+        std::string dst, std::string oh, std::string ow, std::string OW,
+        std::string reg_name, std::string oh_idx,
+        const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     std::string store_temp = R"({
         int8_t* store_ptr = ((int8_t*)${dst}) + (${oh} + ${oh_idx}) * ${OW} * 4 + ${ow} * 4;
@@ -170,11 +170,10 @@ std::string render_store_1_line(std::string dst, std::string oh, std::string ow,
     return ss.str();
 }
 
-std::string render_store_1_line_remain(std::string dst, std::string oh,
-                                       std::string ow, std::string OW,
-                                       std::string reg_name, std::string oh_idx,
-                                       std::string remain,
-                                       const ActivationGenIntrinsicBase& act) {
+std::string render_store_1_line_remain(
+        std::string dst, std::string oh, std::string ow, std::string OW,
+        std::string reg_name, std::string oh_idx, std::string remain,
+        const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     std::string store_temp = R"({
         int8_t* store_ptr = ((int8_t*)${dst}) + (${oh} + ${oh_idx}) * ${OW} * 4 + ${ow} * 4;
@@ -199,8 +198,8 @@ std::string render_store_1_line_remain(std::string dst, std::string oh,
     return ss.str();
 }
 
-std::string gen_3x3_s1_kern(TContext* ctx, bool with_bias,
-                            const std::string& nonline_mode) {
+std::string gen_3x3_s1_kern(
+        TContext* ctx, bool with_bias, const std::string& nonline_mode) {
     std::stringstream ss;
     auto activate_gen = create_activation_gener_instrinsic(nonline_mode);
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
@@ -554,9 +553,9 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* sptr, const int8_t* fp
                     .add("render_store_1_line",
                          [=](const std::string& dst, const std::string& idx,
                              const std::string& sum) -> std::string {
-                             return render_store_1_line(dst, "oh", "ow", "OW",
-                                                        sum, idx,
-                                                        *activate_gen.get());
+                             return render_store_1_line(
+                                     dst, "oh", "ow", "OW", sum, idx,
+                                     *activate_gen.get());
                          })
                     .add("render_store_1_line_remain",
                          [=](const std::string& dst, const std::string& idx,
@@ -572,8 +571,8 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* sptr, const int8_t* fp
     return ss.str();
 }
 
-std::string gen_3x3_s2_kern(TContext* ctx, bool with_bias,
-                            const std::string& nonline_mode) {
+std::string gen_3x3_s2_kern(
+        TContext* ctx, bool with_bias, const std::string& nonline_mode) {
     std::stringstream ss;
     auto activate_gen = create_activation_gener_instrinsic(nonline_mode);
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
@@ -779,9 +778,9 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* src, const int8_t* fil
                     .add("render_store_1_line",
                          [=](const std::string& dst, const std::string& idx,
                              const std::string& sum) -> std::string {
-                             return render_store_1_line(dst, "oh", "ow", "OW",
-                                                        sum, idx,
-                                                        *activate_gen.get());
+                             return render_store_1_line(
+                                     dst, "oh", "ow", "OW", sum, idx,
+                                     *activate_gen.get());
                          })
                     .add("render_store_1_line_remain",
                          [=](const std::string& dst, const std::string& idx,
@@ -801,14 +800,11 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* src, const int8_t* fil
 
 bool ChannelWiseInt8Mk4K3::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             //! stride_h == stride_w and stride == 1 or stride == 2
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            (ctx->getAttrUInt("stride_h") == 1 ||
-             ctx->getAttrUInt("stride_h") == 2) &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
-            ctx->getAttrUInt("dilate_w") == 1;
+            (ctx->getAttrUInt("stride_h") == 1 || ctx->getAttrUInt("stride_h") == 2) &&
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "GROUP" &&
                          ctx->getAttrStr("format") == "NCHW44" &&
@@ -824,8 +820,8 @@ bool ChannelWiseInt8Mk4K3::IsAvailable(TContext* ctx) const {
                            ctx->getAttrOprand("operand:1").shape[5] == 4 &&
                            ctx->getAttrOprand("operand:1").shape[1] == 1 &&
                            ctx->getAttrOprand("operand:1").shape[2] == 1;
-    return param_value_ok && param_mode_ok && type_ok && noline_ok &&
-           layout_ok && channel_wise_ok;
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
+           channel_wise_ok;
 }
 std::string ChannelWiseInt8Mk4K3::GetKernelSymbol(TContext* context) const {
     return "Arm64_chanwise" + ConvImpl::GetKernelSymbol(context);
@@ -872,9 +868,8 @@ std::string ChannelWiseInt8Mk4K3::GetKernelBody(TContext* ctx) const {
     int stride = ctx->getAttrUInt("stride_h");
     bool with_bias = ConvImpl::is_bias(ctx);
 
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::stringstream writer;
     writer << R"(
         #include <arm_neon.h>

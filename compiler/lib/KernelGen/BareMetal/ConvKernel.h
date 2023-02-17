@@ -8,8 +8,8 @@
  */
 #pragma once
 #include <string>
-#include "compiler/KernelGen/KernelGen.h"
 #include "Common/ConvKernel.h"
+#include "compiler/KernelGen/KernelGen.h"
 
 namespace megcc {
 namespace KernelGen {

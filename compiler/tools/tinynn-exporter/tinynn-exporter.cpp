@@ -16,10 +16,9 @@
 
 using namespace llvm;
 
-cl::opt<std::string> InputFile(cl::Positional, cl::Required,
-                               cl::desc("<input kernel dialect file>"));
-cl::opt<std::string> OutputDir(cl::Positional, cl::Required,
-                               cl::desc("<output dir>"));
+cl::opt<std::string> InputFile(
+        cl::Positional, cl::Required, cl::desc("<input kernel dialect file>"));
+cl::opt<std::string> OutputDir(cl::Positional, cl::Required, cl::desc("<output dir>"));
 cl::opt<bool> Verbose(
         "verbose", cl::desc("log more detail information when compiler model"));
 cl::opt<bool> SaveModel("save-model", cl::desc("save model to c file"));
@@ -43,12 +42,12 @@ int main(int argc, char** argv) {
     mlir::OwningOpRef<mlir::ModuleOp> mod =
             mlir::parseSourceFile<mlir::ModuleOp>(InputFile.getValue(), &ctx);
 
-    llvm::outs() << "Export tinynn model and kernel to dir "
-                 << OutputDir.getValue() << "\n";
+    llvm::outs() << "Export tinynn model and kernel to dir " << OutputDir.getValue()
+                 << "\n";
     mlir::KernelExporter kernel_exporter;
-    mlir::export_tinynn_model(mod.get(), OutputDir.getValue() + "/model.tiny",
-                              SaveModel, kernel_exporter,
-                              EnableCompressWeightToFp16.getValue());
+    mlir::export_tinynn_model(
+            mod.get(), OutputDir.getValue() + "/model.tiny", SaveModel, kernel_exporter,
+            EnableCompressWeightToFp16.getValue());
     llvm::outs() << "Export tinynn model and kernel done.\n";
     return 0;
 }

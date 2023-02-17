@@ -18,8 +18,8 @@ using namespace mlir::Kernel::migrate;
 
 constexpr size_t StaticMemAllocImplHelper::INVALID;
 
-StaticMemAllocImplHelper::Interval*
-StaticMemAllocImplHelper::Interval::overwrite_dest_root_path_compression() {
+StaticMemAllocImplHelper::Interval* StaticMemAllocImplHelper::Interval::
+        overwrite_dest_root_path_compression() {
     auto&& ptr = m_overwrite_dest_root;
     if (!ptr)
         return this;
@@ -69,17 +69,16 @@ void StaticMemAllocImplHelper::init_overwrite_dest() {
         i.overwrite_dest_root_path_compression();
 }
 
-size_t StaticMemAllocImplHelper::add(size_t begin, size_t end, size_t size,
-                                     UserKeyType key) {
+size_t StaticMemAllocImplHelper::add(
+        size_t begin, size_t end, size_t size, UserKeyType key) {
     CC_ASSERT(begin < end);
     auto id = m_interval_storage.size();
     m_interval_storage.push_back({begin, end, size + m_padding, key, id});
     return id;
 }
 
-StaticMemAlloc& StaticMemAllocImplHelper::add_overwrite_spec(size_t iid_src,
-                                                             size_t iid_dest,
-                                                             size_t offset) {
+StaticMemAlloc& StaticMemAllocImplHelper::add_overwrite_spec(
+        size_t iid_src, size_t iid_dest, size_t offset) {
     auto &&src = m_interval_storage.at(iid_src),
          &&dest = m_interval_storage.at(iid_dest);
     CC_ASSERT(iid_src != iid_dest);
@@ -160,9 +159,9 @@ void StaticMemAllocImplHelper::check_result_and_calc_lower_bound() {
         i.size = i.size_orig;
 
         if (!i.is_overwrite_root()) {
-            CC_ASSERT(i.overwrite_dest()->addr_begin +
-                              i.offset_in_overwrite_dest() ==
-                      i.addr_begin);
+            CC_ASSERT(
+                    i.overwrite_dest()->addr_begin + i.offset_in_overwrite_dest() ==
+                    i.addr_begin);
         }
     }
 

@@ -31,9 +31,7 @@ public:
             return "GI_" + ConvImpl::GetKernelSymbol(context);
         }
     }
-    virtual std::string GetKernelSubSymbol(TContext* context) const {
-        return "";
-    }
+    virtual std::string GetKernelSubSymbol(TContext* context) const { return ""; }
 };
 
 class ConvFloatNCHWNCHW44 : public GIConvImpl {
@@ -74,8 +72,7 @@ public:
     std::string GetKernelBody(TContext* context) const override;
     //! init gen
     std::string GetInitBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetWorkspaceBody(TContext* ctx) const override {
         return GetWorkspaceBodyCondition(ctx, false);
@@ -102,8 +99,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };
@@ -116,8 +112,7 @@ public:
     std::string GetKernelBody(TContext* context) const override;
     //! init gen
     std::string GetInitBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetWorkspaceBody(TContext* ctx) const override {
         return GetWorkspaceBodyCondition(ctx, false);
@@ -143,8 +138,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };
@@ -161,8 +155,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };

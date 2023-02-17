@@ -50,20 +50,18 @@ std::string GenCommonDeduceCall();
 struct KernelObj {
     KernelObj() = default;
 
-    KernelObj(const std::string& kernel_symbol_in,
-              const std::string& kernel_body_in,
-              const std::string& guard_begin_in,
-              const std::string& guard_end_in)
+    KernelObj(
+            const std::string& kernel_symbol_in, const std::string& kernel_body_in,
+            const std::string& guard_begin_in, const std::string& guard_end_in)
             : kernel_symbol(kernel_symbol_in),
               kernel_body(kernel_body_in),
               guard_begin(guard_begin_in),
               guard_end(guard_end_in){};
 
-    KernelObj(const std::string& kernel_symbol_in,
-              const std::string& kernel_body_in,
-              const std::string& guard_begin_in,
-              const std::string& guard_end_in,
-              const std::vector<KernelObj>& kernel_dep_in)
+    KernelObj(
+            const std::string& kernel_symbol_in, const std::string& kernel_body_in,
+            const std::string& guard_begin_in, const std::string& guard_end_in,
+            const std::vector<KernelObj>& kernel_dep_in)
             : kernel_symbol(kernel_symbol_in),
               kernel_body(kernel_body_in),
               guard_begin(guard_begin_in),
@@ -79,9 +77,7 @@ struct KernelObj {
 
 struct KernelFunc {
     virtual bool IsAvailable(TContext* context) const = 0;
-    virtual KernelPriority GetPriority() const {
-        return KernelPriority::NORMAL;
-    }
+    virtual KernelPriority GetPriority() const { return KernelPriority::NORMAL; }
     //! kernel gen
     virtual std::string GetKernelSymbol(TContext* context) const = 0;
     virtual std::string GetKernelSignature(TContext* context) const {
@@ -159,15 +155,9 @@ struct InternalKernelFunc : public KernelFunc {
     std::string GetInitSignature(TContext*) const override { return ""; };
     std::string GetInitBody(TContext*) const override { return ""; };
     //! workspace gen
-    virtual std::string GetWorkspaceSymbol(TContext*) const override {
-        return "";
-    };
-    virtual std::string GetWorkspaceSignature(TContext*) const override {
-        return "";
-    };
-    virtual std::string GetWorkspaceBody(TContext*) const override {
-        return "";
-    };
+    virtual std::string GetWorkspaceSymbol(TContext*) const override { return ""; };
+    virtual std::string GetWorkspaceSignature(TContext*) const override { return ""; };
+    virtual std::string GetWorkspaceBody(TContext*) const override { return ""; };
 };
 
 struct KernelPack {
@@ -202,8 +192,8 @@ struct KernelPack {
         ConvBackDataKernel,
         FusedElemwiseKernel,
     };
-    static std::pair<std::vector<const KernelFunc*>, const DeduceFunc*>
-    GetKernel(KernelPack::KernType kernel_type, Arch arch);
+    static std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> GetKernel(
+            KernelPack::KernType kernel_type, Arch arch);
 };
 
 }  // namespace KernelGen

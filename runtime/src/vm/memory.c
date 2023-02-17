@@ -12,8 +12,8 @@
 #include "vm/registry.h"
 
 #if ENABLE_MEMORY_MANAGEMENT
-static TinyNNStatus load_alloc_device(flatbuffers_generic_t fbs_inst,
-                                      Instruction* inst, VM* vm) {
+static TinyNNStatus load_alloc_device(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     LOG_DEBUG("\t Load instruction DevMemAlloc.\n");
     DevMemAlloc* alloc = &inst->workload.dev_mem_alloc;
     ns(DevMemAlloc_table_t) fbs_alloc = (ns(DevMemAlloc_table_t))(fbs_inst);
@@ -24,8 +24,8 @@ static TinyNNStatus load_alloc_device(flatbuffers_generic_t fbs_inst,
     return TinyNN_SUCCESS;
 }
 
-static TinyNNStatus load_free_device(flatbuffers_generic_t fbs_inst,
-                                     Instruction* inst, VM* vm) {
+static TinyNNStatus load_free_device(
+        flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     LOG_DEBUG("\t Load instruction FreeMemAlloc.\n");
     DevMemFree* free = &inst->workload.dev_mem_free;
     ns(DevMemFree_table_t) fbs_free = (ns(DevMemFree_table_t))(fbs_inst);
@@ -62,15 +62,11 @@ static TinyNNStatus destruct(VM* vm, Instruction* inst) {
 }
 
 void register_memory_management(VM* vm) {
-    vm_register_instruction_load(vm, ns(Instruction_DevMemAlloc),
-                                 &load_alloc_device);
-    vm_register_instruction_call(vm, TinyNN_INST_DEV_MEM_ALLOC,
-                                 &alloc_device_tensor);
+    vm_register_instruction_load(vm, ns(Instruction_DevMemAlloc), &load_alloc_device);
+    vm_register_instruction_call(vm, TinyNN_INST_DEV_MEM_ALLOC, &alloc_device_tensor);
     vm_register_instruction_destruct(vm, TinyNN_INST_DEV_MEM_ALLOC, &destruct);
-    vm_register_instruction_load(vm, ns(Instruction_DevMemFree),
-                                 &load_free_device);
-    vm_register_instruction_call(vm, TinyNN_INST_DEV_MEM_FREE,
-                                 &free_device_tensor);
+    vm_register_instruction_load(vm, ns(Instruction_DevMemFree), &load_free_device);
+    vm_register_instruction_call(vm, TinyNN_INST_DEV_MEM_FREE, &free_device_tensor);
     vm_register_instruction_destruct(vm, TinyNN_INST_DEV_MEM_FREE, &destruct);
 }
 #else

@@ -672,9 +672,8 @@ std::string pack_B_t(const std::string kern_sym, TContext* ctx) {
 std::string kern8x12(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     ss << R"(
 static inline void kern_8x12(const float* packA, const float* packB, int K,
@@ -1010,9 +1009,8 @@ static inline void kern_8x12(const float* packA, const float* packB, int K,
 std::string kern8x4(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     ss << R"(
     static void kern_8x4(const float* packA, const float* packB, int K,
@@ -1211,9 +1209,8 @@ std::string kern8x4(TContext* ctx) {
 std::string kern4x12(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     ss << R"(
     static void kern_4x12(const float* packA, const float* packB, int K,
@@ -1425,9 +1422,8 @@ std::string kern4x12(TContext* ctx) {
 std::string kern4x4(TContext* ctx) {
     std::stringstream ss;
     bool with_bias = ctx->getAttrBool("with_bias");
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
     ss << R"(
     static void kern_4x4(const float* packA, const float* packB, int K,
@@ -1662,17 +1658,15 @@ std::string gen_pack_b_workspace(const std::string& sig) {
 
 }  // namespace
 
-std::vector<KernelObj> MatmulM8N12Kernel::GetDependInternalSymbol(
-        TContext* ctx) const {
-    auto nonline_mode = ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+std::vector<KernelObj> MatmulM8N12Kernel::GetDependInternalSymbol(TContext* ctx) const {
+    auto nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::vector<KernelObj> depends;
     if (nonline_mode == "SIGMOID") {
         ExpNeonKernel kern;
-        depends.emplace_back(kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
-                             kern.GetBodyGuardBegin(ctx),
-                             kern.GetBodyGuardEnd(ctx));
+        depends.emplace_back(
+                kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
+                kern.GetBodyGuardBegin(ctx), kern.GetBodyGuardEnd(ctx));
     }
     return depends;
 }
@@ -1681,8 +1675,7 @@ std::string MatmulM8N12Kernel::GetKernelSymbol(TContext* ctx) const {
     bool with_bias = ctx->getAttrBool("with_bias");
     std::string bias_suffix = with_bias ? "_bias" : "";
     std::string act_suffix = "";
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         act_suffix = "_" + ctx->getAttrStr("nonlineMode");
     }
     return "Arm64_fp32_m8_n12_matmul" + bias_suffix + act_suffix;

@@ -173,8 +173,8 @@ std::string PoolingNchw44Fp32::GetKernelBody(TContext* context) const {
                     .add_ctx_int("window_h")
                     .add_ctx_int("window_w")
                     .add("pool_init_str", pooler.gen_init_str())
-                    .add("gen_feed_str", StringTemplate::object_bind(
-                                                 &Pooler::gen_feed_str, pooler))
+                    .add("gen_feed_str",
+                         StringTemplate::object_bind(&Pooler::gen_feed_str, pooler))
                     .add("gen_final_str", pooler.gen_final_str())
                     .add("get_result_str", pooler.get_result_str())
                     .render(body_temp);

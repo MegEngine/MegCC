@@ -20,11 +20,11 @@ bool PoolingNchw44QInt8::IsAvailable(TContext* context) const {
     bool format_ok = context->getAttrStr("format") == "NCHW44";
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     auto dst_dtype = context->getAttrOprand("operand:1").dtype;
-    bool dtype_ok =
-            (src_dtype == dst_dtype) && Utils::is_quant_dtype(src_dtype, 8);
+    bool dtype_ok = (src_dtype == dst_dtype) && Utils::is_quant_dtype(src_dtype, 8);
     if (Utils::is_quant_dtype(src_dtype, 8)) {
-        CC_ASSERT(context->getAttrOprand("operand:0").scale ==
-                  context->getAttrOprand("operand:1").scale)
+        CC_ASSERT(
+                context->getAttrOprand("operand:0").scale ==
+                context->getAttrOprand("operand:1").scale)
                 << "quant pooling only support same scale\n";
     }
     return format_ok && dtype_ok;
@@ -48,8 +48,7 @@ struct Pooler {
                 GI_INT32_t ans;
                 GI_INT8_t max = GiBroadcastInt8(INT8_MIN);
             )";
-        } else if (m_mode == "AVERAGE" ||
-                   m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
+        } else if (m_mode == "AVERAGE" || m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
             std::string str = R"(
                 GI_INT32_t ans;
                 GI_INT32_t sum0 = GiBroadcastInt32(0);
@@ -71,8 +70,7 @@ struct Pooler {
                 GI_INT32_t in_elem =  GiBroadcastInt32(*(in_ptr+ih_idx*iw+iw_idx));
                 max =GiMaximumInt8(max,GiReinterInt32ToInt8(in_elem));
             )";
-        } else if (m_mode == "AVERAGE" ||
-                   m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
+        } else if (m_mode == "AVERAGE" || m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
             std::string str = R"(
                 int32_t* in_ptr = (int32_t*)input_ptr;
                 GI_INT32_t in_elem = GiBroadcastInt32(*(in_ptr+ih_idx*iw+iw_idx)); 
@@ -95,12 +93,11 @@ struct Pooler {
             return R"(
                  ans = GiReinterpretInt8AsInt32(max);
             )";
-        } else if (m_mode == "AVERAGE" ||
-                   m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
+        } else if (m_mode == "AVERAGE" || m_mode == "AVERAGE_COUNT_EXCLUDE_PADDING") {
             std::string str = "";
             if (m_mode == "AVERAGE") {
-                str += "uint32_t window_count = " +
-                       std::to_string(m_windows_cnt) + ";\n";
+                str += "uint32_t window_count = " + std::to_string(m_windows_cnt) +
+                       ";\n";
             } else {
                 str += R"(
                     uint32_t window_count = count;

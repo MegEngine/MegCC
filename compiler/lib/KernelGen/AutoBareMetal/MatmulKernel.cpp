@@ -135,8 +135,7 @@ std::string MatmulKernel::GetKernelBody(TContext* context) const {
     return writer.str();
 }
 
-std::vector<KernelObj> MatmulKernel::GetDependInternalSymbol(
-        TContext* context) const {
+std::vector<KernelObj> MatmulKernel::GetDependInternalSymbol(TContext* context) const {
     auto rst = codegen::GenCode(KernelPack::KernType::MatrixMulKernel);
     return {rst->GetKernelObj(context)};
 }

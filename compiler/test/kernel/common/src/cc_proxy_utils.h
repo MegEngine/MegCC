@@ -74,8 +74,8 @@ std::string dnndtype_2_str(megdnn::DType dtype, float scale) {
     }
     return "invalid";
 }
-megcc::CCOperand dnntensor_2_ccoperand(const megdnn::TensorND& tensor,
-                                       bool is_dynamic) {
+megcc::CCOperand dnntensor_2_ccoperand(
+        const megdnn::TensorND& tensor, bool is_dynamic) {
     megcc::CCOperand res;
     size_t unknow_shape = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < tensor.layout.ndim; ++i) {
@@ -87,18 +87,16 @@ megcc::CCOperand dnntensor_2_ccoperand(const megdnn::TensorND& tensor,
     }
     auto dtype_enum = tensor.layout.dtype.enumv();
     if (dtype_enum == megdnn::DTypeEnum::QuantizedS8) {
-        res.scale =
-                tensor.layout.dtype.param<megdnn::dtype::QuantizedS8>().scale;
+        res.scale = tensor.layout.dtype.param<megdnn::dtype::QuantizedS8>().scale;
     } else if (dtype_enum == megdnn::DTypeEnum::QuantizedS32) {
-        res.scale =
-                tensor.layout.dtype.param<megdnn::dtype::QuantizedS32>().scale;
+        res.scale = tensor.layout.dtype.param<megdnn::dtype::QuantizedS32>().scale;
     }
     res.dtype = dnndtype_2_str(tensor.layout.dtype, res.scale);
     return res;
 }
-void fill_operands(std::unordered_map<std::string, CCAttr>& map,
-                   const TensorNDArray& tensors, OutputScope output_idx,
-                   bool is_dynamic) {
+void fill_operands(
+        std::unordered_map<std::string, CCAttr>& map, const TensorNDArray& tensors,
+        OutputScope output_idx, bool is_dynamic) {
     int tensor_size = (int)tensors.size();
     map["nr_operands"] = CCAttr(tensor_size);
     int input_cnt = 0;
@@ -115,8 +113,8 @@ void fill_operands(std::unordered_map<std::string, CCAttr>& map,
     }
 }
 
-void gen_depend_kernels(KernelGen::Arch arch,
-                        const std::vector<KernelGen::KernelObj>& depends) {
+void gen_depend_kernels(
+        KernelGen::Arch arch, const std::vector<KernelGen::KernelObj>& depends) {
     TargetModule& g_module = TargetModule::get_global_target_module();
     auto internal_kernels =
             KernelGen::KernelPack::GetKernel(KernType::InternelKernel, arch);
@@ -125,8 +123,7 @@ void gen_depend_kernels(KernelGen::Arch arch,
             if (depend.kernel_bin.size() > 0) {
                 g_module.add_binary(depend.kernel_symbol, depend.kernel_bin);
             }
-            g_module.add_internal_func(depend.kernel_symbol,
-                                       depend.kernel_body);
+            g_module.add_internal_func(depend.kernel_symbol, depend.kernel_body);
             if (depend.kernel_dep.size() > 0) {
                 gen_depend_kernels(arch, depend.kernel_dep);
             }
@@ -134,8 +131,7 @@ void gen_depend_kernels(KernelGen::Arch arch,
     }
 }
 
-inline void add_test_mode_to_attr(
-        std::unordered_map<std::string, CCAttr>& map) {
+inline void add_test_mode_to_attr(std::unordered_map<std::string, CCAttr>& map) {
     map["unitest_mode"] = CCAttr(true);
 }
 }  // namespace

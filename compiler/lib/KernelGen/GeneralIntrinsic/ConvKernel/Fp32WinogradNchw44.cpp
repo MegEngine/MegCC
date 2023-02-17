@@ -21,11 +21,9 @@ using namespace GeneralIntrinsic;
 
 bool WinogradFloatF23NCHW44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -71,8 +69,7 @@ std::string WinogradFloatF23NCHW44::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include \"gi_float.h\"";
     writer << "\n\n";
-    writer << "extern " << MatmulM4N8MK4Kernel().GetKernelSignature(ctx)
-           << ";\n";
+    writer << "extern " << MatmulM4N8MK4Kernel().GetKernelSignature(ctx) << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     writer << m_framework.GenKernelBodyCode(ctx, &m_winograd_strategy);
     writer << "return TinyNN_SUCCESS;\n}";
@@ -82,7 +79,8 @@ std::string WinogradFloatF23NCHW44::GetKernelBody(TContext* ctx) const {
 std::vector<KernelObj> WinogradFloatF23NCHW44::GetDependInternalSymbol(
         TContext*) const {
     auto matmul = MatmulM4N8MK4Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }
@@ -94,11 +92,9 @@ std::string WinogradFloatF23NCHW44::GetKernelSymbol(TContext* context) const {
 
 bool WinogradFloatF43Nchw44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -144,8 +140,7 @@ std::string WinogradFloatF43Nchw44::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include \"gi_float.h\"";
     writer << "\n\n";
-    writer << "extern "
-           << Arm64::MatmulM4N16MK4Kernel().GetKernelSignature(nullptr)
+    writer << "extern " << Arm64::MatmulM4N16MK4Kernel().GetKernelSignature(nullptr)
            << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     writer << m_framework.GenKernelBodyCode(ctx, &m_winograd_strategy);
@@ -156,7 +151,8 @@ std::string WinogradFloatF43Nchw44::GetKernelBody(TContext* ctx) const {
 std::vector<KernelObj> WinogradFloatF43Nchw44::GetDependInternalSymbol(
         TContext*) const {
     auto matmul = Arm64::MatmulM4N16MK4Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }
@@ -168,11 +164,9 @@ std::string WinogradFloatF43Nchw44::GetKernelSymbol(TContext* context) const {
 
 bool WinogradFloatF63Nchw44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -218,8 +212,7 @@ std::string WinogradFloatF63Nchw44::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include \"gi_float.h\"";
     writer << "\n\n";
-    writer << "extern "
-           << Arm64::MatmulM4N16MK4Kernel().GetKernelSignature(nullptr)
+    writer << "extern " << Arm64::MatmulM4N16MK4Kernel().GetKernelSignature(nullptr)
            << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     writer << m_framework.GenKernelBodyCode(ctx, &m_winograd_strategy);
@@ -230,7 +223,8 @@ std::string WinogradFloatF63Nchw44::GetKernelBody(TContext* ctx) const {
 std::vector<KernelObj> WinogradFloatF63Nchw44::GetDependInternalSymbol(
         TContext*) const {
     auto matmul = Arm64::MatmulM4N16MK4Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }

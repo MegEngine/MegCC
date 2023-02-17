@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "Arm/Armv7/KernelPack.h"
 #include <memory>
 #include "Arm/Armv7/ConvKernel/ConvKernel.h"
-#include "Arm/Armv7/KernelPack.h"
 #include "InternalKernel/InternalKernel.h"
 #include "MatMulKernel/Fp32MatMul.h"
 
@@ -23,8 +23,7 @@ struct AllA32Kernel {
                 std::make_shared<Armv7::ConvFloatNCHWNCHW443x3s2>(),
                 std::make_shared<Armv7::Conv1x1FloatMk4>(),
                 std::make_shared<Armv7::WinogradFloatF23NCHW44>(),
-                std::make_shared<Armv7::ConvIm2colFloat>()
-        };
+                std::make_shared<Armv7::ConvIm2colFloat>()};
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
                 std::make_shared<Armv7::Fp32MatMulM4N8K4>(),
@@ -36,8 +35,7 @@ struct AllA32Kernel {
                 std::make_shared<Armv7::MatmulM4N12MK4Kernel>(),
                 std::make_shared<Armv7::MatmulM4N12Kernel>()};
     }
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 

@@ -16,9 +16,9 @@
 #if TINYNN_DUMP_TENSOR
 #include <stdlib.h>
 #endif
-static TinyNNStatus parse_opr(DeviceModel* model, Opr* opr,
-                              CombineModel* combine_model,
-                              ns(Opr_table_t) fbs_opr) {
+static TinyNNStatus parse_opr(
+        DeviceModel* model, Opr* opr, CombineModel* combine_model,
+        ns(Opr_table_t) fbs_opr) {
     //! name and opr type
     opr->name = get_string(ns(Opr_name(fbs_opr)));
     opr->type = get_string(ns(Opr_type(fbs_opr)));
@@ -29,8 +29,9 @@ static TinyNNStatus parse_opr(DeviceModel* model, Opr* opr,
     opr->deduce_shape_func = ns(Opr_deduce_id(fbs_opr));
     opr->workspace_func = ns(Opr_workspace_id(fbs_opr));
 
-    LOG_DEBUG("Operator info: symbol=%s, kernel id=%d, init_id=%d\n", opr->type,
-              opr->kernel_func, opr->init_func);
+    LOG_DEBUG(
+            "Operator info: symbol=%s, kernel id=%d, init_id=%d\n", opr->type,
+            opr->kernel_func, opr->init_func);
     //! inputs
     flatbuffers_int32_vec_t fbs_inputs = ns(Opr_inputs(fbs_opr));
     flatbuffers_int8_vec_t fbs_input_types = ns(Opr_input_types(fbs_opr));
@@ -41,8 +42,9 @@ static TinyNNStatus parse_opr(DeviceModel* model, Opr* opr,
     memset(opr->inputs, 0, total_input * sizeof(Tensor*));
     LOG_DEBUG("\t Opr inputs tensor number:%d\n", opr->nr_input);
     //! parse the input
-    parase_inputs(opr->inputs, total_input, model, combine_model, fbs_inputs,
-                  fbs_input_types);
+    parase_inputs(
+            opr->inputs, total_input, model, combine_model, fbs_inputs,
+            fbs_input_types);
     //! outputs
     flatbuffers_int32_vec_t fbs_outputs = ns(Opr_outputs(fbs_opr));
     opr->nr_output = flatbuffers_int32_vec_len(fbs_outputs);
@@ -55,8 +57,7 @@ static TinyNNStatus parse_opr(DeviceModel* model, Opr* opr,
         LOG_DEBUG(
                 "\t\toutput %d is tensor, tensor index=%d offset %zu size "
                 "%zu\n",
-                i, index, (*(opr->outputs + i))->offset,
-                (*(opr->outputs + i))->size);
+                i, index, (*(opr->outputs + i))->offset, (*(opr->outputs + i))->size);
     }
 
     //! workspace
@@ -65,8 +66,9 @@ static TinyNNStatus parse_opr(DeviceModel* model, Opr* opr,
     opr->workspace.offset = ns(Workspace_offset(fbs_workspace));
     //! workspace ptr will be set in init_model_memory
     opr->workspace.ptr = NULL;
-    LOG_DEBUG("\tworkspace size is %zu offset %zu\n", opr->workspace.size,
-              ns(Workspace_offset(fbs_workspace)));
+    LOG_DEBUG(
+            "\tworkspace size is %zu offset %zu\n", opr->workspace.size,
+            ns(Workspace_offset(fbs_workspace)));
     return TinyNN_SUCCESS;
 }
 
@@ -86,13 +88,12 @@ static TinyNNStatus execute_single_opr(const Opr* opr, const RuntimeOpt* opt) {
         LOG_DEBUG("\t\tid %d:%s layout:", i, opr->inputs[i]->name);
         Layout layout = opr->inputs[i]->layout;
         for (int dim = 0; dim < layout.nr_dim; ++dim) {
-            LOG_DEBUG_NO_PREFIX("%d(%d), ", layout.dims[dim],
-                                layout.stride[dim]);
+            LOG_DEBUG_NO_PREFIX("%d(%d), ", layout.dims[dim], layout.stride[dim]);
         }
-        LOG_DEBUG_NO_PREFIX("dtype = %d, scale = %f, ptr = %p, offset %zu\n",
-                            opr->inputs[i]->dtype.type_enum,
-                            opr->inputs[i]->dtype.param.scale,
-                            opr->inputs[i]->ptr, opr->inputs[i]->offset);
+        LOG_DEBUG_NO_PREFIX(
+                "dtype = %d, scale = %f, ptr = %p, offset %zu\n",
+                opr->inputs[i]->dtype.type_enum, opr->inputs[i]->dtype.param.scale,
+                opr->inputs[i]->ptr, opr->inputs[i]->offset);
         print_tensor(opr->inputs[i]);
     }
     LOG_DEBUG("\tWith outputs tensor number:%d\n", opr->nr_output);
@@ -100,13 +101,12 @@ static TinyNNStatus execute_single_opr(const Opr* opr, const RuntimeOpt* opt) {
         LOG_DEBUG("\t\tid %d:%s layout:", i, (*(opr->outputs + i))->name);
         Layout layout = opr->outputs[i]->layout;
         for (int dim = 0; dim < layout.nr_dim; ++dim) {
-            LOG_DEBUG_NO_PREFIX("%d(%d), ", layout.dims[dim],
-                                layout.stride[dim]);
+            LOG_DEBUG_NO_PREFIX("%d(%d), ", layout.dims[dim], layout.stride[dim]);
         }
-        LOG_DEBUG_NO_PREFIX("dtype = %d, scale = %f, ptr = %p, offset %zu\n",
-                            opr->outputs[i]->dtype.type_enum,
-                            opr->outputs[i]->dtype.param.scale,
-                            opr->outputs[i]->ptr, opr->outputs[i]->offset);
+        LOG_DEBUG_NO_PREFIX(
+                "dtype = %d, scale = %f, ptr = %p, offset %zu\n",
+                opr->outputs[i]->dtype.type_enum, opr->outputs[i]->dtype.param.scale,
+                opr->outputs[i]->ptr, opr->outputs[i]->offset);
     }
 #endif
     int kernel_index = opr->kernel_func;
@@ -130,8 +130,7 @@ static TinyNNStatus execute_single_opr(const Opr* opr, const RuntimeOpt* opt) {
         int dtype_len = dtype_length(inputs_alloc[i].dtype.type_enum, NULL);
         for (int dim = 0; dim < layout.nr_dim; ++dim) {
             if (layout.stride[dim] < 0) {
-                offset_fix += -layout.stride[dim] * (layout.dims[dim] - 1) *
-                              dtype_len;
+                offset_fix += -layout.stride[dim] * (layout.dims[dim] - 1) * dtype_len;
             }
         }
         input_offset_fix[i] = offset_fix;
@@ -145,32 +144,31 @@ static TinyNNStatus execute_single_opr(const Opr* opr, const RuntimeOpt* opt) {
     for (int i = 0; i < opr->nr_output; i++) {
         outputs_alloc[i] = *opr->outputs[i];
         outputs_alloc[i].ptr = tinynn_malloc(outputs_alloc[i].size);
-        memcpy(outputs_alloc[i].ptr, opr->outputs[i]->ptr,
-               outputs_alloc[i].size);
+        memcpy(outputs_alloc[i].ptr, opr->outputs[i]->ptr, outputs_alloc[i].size);
         outputs_alloc_ptr[i] = &outputs_alloc[i];
     }
     Workspace workspace;
     workspace.size = opr->workspace.size;
     workspace.ptr = tinynn_malloc(opr->workspace.size);
     TinyNNStatus error =
-            kernel(inputs_alloc_ptr, opr->nr_input, outputs_alloc_ptr,
-                   opr->nr_output, &workspace, opt);
+            kernel(inputs_alloc_ptr, opr->nr_input, outputs_alloc_ptr, opr->nr_output,
+                   &workspace, opt);
     for (int i = 0; i < opr->nr_input; i++) {
         int fix_offset = input_offset_fix[i];
-        memcpy(opr->inputs[i]->ptr - fix_offset,
-               inputs_alloc[i].ptr - fix_offset, inputs_alloc[i].size);
+        memcpy(opr->inputs[i]->ptr - fix_offset, inputs_alloc[i].ptr - fix_offset,
+               inputs_alloc[i].size);
         FREE(inputs_alloc[i].ptr - fix_offset);
     }
     for (int i = 0; i < opr->nr_output; i++) {
-        memcpy(opr->outputs[i]->ptr, outputs_alloc[i].ptr,
-               outputs_alloc[i].size);
+        memcpy(opr->outputs[i]->ptr, outputs_alloc[i].ptr, outputs_alloc[i].size);
         FREE(outputs_alloc[i].ptr);
     }
     FREE(workspace.ptr);
 
 #else
-    TinyNNStatus error = kernel(opr->inputs, opr->nr_input, opr->outputs,
-                                opr->nr_output, &opr->workspace, opt);
+    TinyNNStatus error =
+            kernel(opr->inputs, opr->nr_input, opr->outputs, opr->nr_output,
+                   &opr->workspace, opt);
 #endif
 #if TINYNN_DUMP_TENSOR
     log_tensor(opr->outputs[0], opr->type, opr->inputs[0]);
@@ -181,8 +179,7 @@ static TinyNNStatus execute_single_opr(const Opr* opr, const RuntimeOpt* opt) {
     return error;
 }
 
-static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
+static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     Opr* opr = &inst->workload.opr;
     ns(Opr_table_t) fbs_opr = (ns(Opr_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_OPR;

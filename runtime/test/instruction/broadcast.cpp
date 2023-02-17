@@ -36,32 +36,30 @@ TEST(INSTRUCTION, BroadCast) {
         return broad_cast;
     };
     VM* vm = create_vm();
-    auto test_broadcast = [&](std::vector<Tensor*> inputs,
-                              const Tensor& expect) {
-        auto broadcast= create_broadcast(inputs);
+    auto test_broadcast = [&](std::vector<Tensor*> inputs, const Tensor& expect) {
+        auto broadcast = create_broadcast(inputs);
         Instruction inst;
         inst.tag = TinyNN_INST_BROADCAST;
-        inst.workload.broadcast= *broadcast;
+        inst.workload.broadcast = *broadcast;
         vm_instruction_call(vm, &inst);
         check_tensor(*broadcast->output, expect);
         vm->model->host_dev.free(broadcast->output->ptr);
     };
 
-    auto test_case = [&](std::vector<uint32_t> shape0,
-                         std::vector<uint32_t> shape1) {
+    auto test_case = [&](std::vector<uint32_t> shape0, std::vector<uint32_t> shape1) {
         auto src0 = create_tensor(shape0, TinyNNDType::TinyNN_INT, data0.data());
         int index = 0;
         for (auto i : shape1) {
             data1[index++] = i;
         }
-        auto src1 = create_tensor({static_cast<uint32_t>(shape1.size())},
-                                  TinyNNDType::TinyNN_INT, data1.data());
-        auto trueth =
-                create_tensor(shape1, TinyNNDType::TinyNN_INT, data2.data());
+        auto src1 = create_tensor(
+                {static_cast<uint32_t>(shape1.size())}, TinyNNDType::TinyNN_INT,
+                data1.data());
+        auto trueth = create_tensor(shape1, TinyNNDType::TinyNN_INT, data2.data());
         Tensor src_copy = *src0;
         //! broadcast input
         for (int i = 0; i < shape1.size(); i++) {
-            if (src_copy.layout.dims[i] == 1 && shape1[i] != 1){
+            if (src_copy.layout.dims[i] == 1 && shape1[i] != 1) {
                 src_copy.layout.dims[i] = shape1[i];
                 src_copy.layout.stride[i] = 0;
             }

@@ -6,9 +6,9 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
+#include "StringTemplate.h"
 #include <regex>
 #include <sstream>
-#include "StringTemplate.h"
 using namespace megcc;
 using namespace KernelGen;
 
@@ -22,12 +22,11 @@ void trim(std::string& s) {
     s.erase(0, s.find_first_not_of(" "));
     s.erase(s.find_last_not_of(" ") + 1);
 }
-std::string render_with_cbk(const std::string& template_str, std::regex regx,
-                            const StringTemplate::KvMap kv_map,
-                            const StringTemplate::FuncMap func_map) {
+std::string render_with_cbk(
+        const std::string& template_str, std::regex regx,
+        const StringTemplate::KvMap kv_map, const StringTemplate::FuncMap func_map) {
     std::stringstream ss;
-    std::sregex_iterator iter(template_str.begin(), template_str.end(), regx),
-            end;
+    std::sregex_iterator iter(template_str.begin(), template_str.end(), regx), end;
     std::string last_suffix = template_str;
     std::for_each(iter, end, [&](const std::smatch& match) {
         ss << match.prefix().str();
@@ -39,8 +38,8 @@ std::string render_with_cbk(const std::string& template_str, std::regex regx,
             std::regex param_reg("([^,]+)");
             auto func_name = base_match[1].str();
             auto param_str = base_match[2].str();
-            std::sregex_iterator param_iter(param_str.begin(), param_str.end(),
-                                            param_reg),
+            std::sregex_iterator param_iter(
+                    param_str.begin(), param_str.end(), param_reg),
                     param_end;
             std::vector<std::string> param_str_vec;
             std::for_each(param_iter, param_end, [&](const std::smatch& match) {
@@ -51,16 +50,14 @@ std::string render_with_cbk(const std::string& template_str, std::regex regx,
             if (func_map.find(func_name) != func_map.end()) {
                 ss << func_map.find(func_name)->second(param_str_vec);
             } else {
-                CC_ABORT << "render failed, can not render " << key_str.c_str()
-                         << "\n";
+                CC_ABORT << "render failed, can not render " << key_str.c_str() << "\n";
             }
         } else {
             //! match var type
             if (kv_map.find(key_str) != kv_map.end()) {
                 ss << kv_map.find(key_str)->second;
             } else {
-                CC_ABORT << "render failed, can not render " << key_str.c_str()
-                         << "\n";
+                CC_ABORT << "render failed, can not render " << key_str.c_str() << "\n";
             }
         }
         last_suffix = match.suffix();
@@ -71,12 +68,11 @@ std::string render_with_cbk(const std::string& template_str, std::regex regx,
 
 }  // namespace
 
-std::string StringTemplate::render(const std::string& template_str,
-                                   const KvMap& kv_map,
-                                   const FuncMap& func_map) {
+std::string StringTemplate::render(
+        const std::string& template_str, const KvMap& kv_map, const FuncMap& func_map) {
     //! template args used as ${args}
-    return render_with_cbk(template_str, std::regex(R"(\$\{([^\{\}]+)\})"),
-                           kv_map, func_map);
+    return render_with_cbk(
+            template_str, std::regex(R"(\$\{([^\{\}]+)\})"), kv_map, func_map);
 }
 
 void StringTemplate::StringTemplateArgs::init_builtin() {
@@ -117,8 +113,7 @@ void StringTemplate::StringTemplateArgs::init_builtin() {
 
 const std::string StringTemplate::render_init_body(
         uint32_t nr_out_weight, const std::string& fill_weight_attr,
-        const std::string& fill_weight_transform,
-        const std::string& common_def) {
+        const std::string& fill_weight_transform, const std::string& common_def) {
     const std::string body_temp = R"({
     if (out_weights == NULL && nr_out_weight != NULL) {
         *nr_out_weight = ${nr_out_weight};

@@ -39,8 +39,7 @@ bool ConvGeneral::IsAvailable(TContext* ctx) const {
         auto scale_src = ctx->getAttrOprand("operand:0").scale;
         auto scale_flt = ctx->getAttrOprand("operand:1").scale;
         auto scale_bias = ctx->getAttrOprand("operand:2").scale;
-        type_qint_ok =
-                type_qint_ok && fabs(scale_src * scale_flt - scale_bias) < 1e-5;
+        type_qint_ok = type_qint_ok && fabs(scale_src * scale_flt - scale_bias) < 1e-5;
     }
 
     return param_mode_ok && (type_float_ok || type_qint_ok);
@@ -75,8 +74,7 @@ std::string gen_inline_addr(std::string format_str, std::string sparse) {
     } else {
         ss << GenFormatIter::gen_inline_format_iter_body(format_str);
     }
-    ss << R"(static inline size_t get_filter_addr_)" << format_str << "_"
-       << sparse;
+    ss << R"(static inline size_t get_filter_addr_)" << format_str << "_" << sparse;
     ss << R"((const int group, const int ocpg,
                                      const int icpg, const int fh, const int fw,
                                      const int* stride) {)";
@@ -102,11 +100,11 @@ std::string gen_inline_addr(std::string format_str, std::string sparse) {
 
 std::string get_format(TContext* ctx) {
     auto format_str = ctx->getAttrStr("format");
-    if (format_str == "NCHW44" &&
-        ctx->getAttrOprand("operand:0").shape.size() == 4) {
+    if (format_str == "NCHW44" && ctx->getAttrOprand("operand:0").shape.size() == 4) {
         return "NCHW_NCHW44";
-    } else if (format_str == "NCHW44_DOT" &&
-               ctx->getAttrOprand("operand:0").shape.size() == 4) {
+    } else if (
+            format_str == "NCHW44_DOT" &&
+            ctx->getAttrOprand("operand:0").shape.size() == 4) {
         return "NCHW_NCHW44_DOT";
     }
     return format_str;
@@ -164,8 +162,8 @@ std::string ConvImpl::GetKernelSymbol(TContext* ctx) const {
 std::string ConvGeneral::GetKernelBody(TContext* context) const {
     std::stringstream ss;
     std::string noline_mode = context->haveAttr("nonlineMode")
-                                      ? context->getAttrStr("nonlineMode")
-                                      : "IDENTITY";
+                                    ? context->getAttrStr("nonlineMode")
+                                    : "IDENTITY";
     auto sparse_str = context->getAttrStr("sparse");
     auto filter_format_str = get_format(context);
     auto src_format_str = get_src_foramt(filter_format_str);
@@ -321,18 +319,15 @@ std::string ConvGeneral::GetKernelBody(TContext* context) const {
                     .add("filter_stride",
                          gen_filter_stride(filter_format_str, sparse_str))
                     .add("src_layout_iter_symbol",
-                         GenFormatIter::gen_inline_format_iter_symbol(
-                                 src_format_str))
+                         GenFormatIter::gen_inline_format_iter_symbol(src_format_str))
                     .add("dst_layout_iter_symbol",
-                         GenFormatIter::gen_inline_format_iter_symbol(
-                                 dst_format_str))
-                    .add("filter_iter_symbol", "get_filter_addr_" +
-                                                       filter_format_str + "_" +
-                                                       sparse_str)
-                    .add("act_func", GenActivation::gen_func_call_with_typecvt(
-                                             noline_mode, "dval", acc_specifier,
-                                             dst_specifier, "scale",
-                                             "flt_scale", "dst_scale"))
+                         GenFormatIter::gen_inline_format_iter_symbol(dst_format_str))
+                    .add("filter_iter_symbol",
+                         "get_filter_addr_" + filter_format_str + "_" + sparse_str)
+                    .add("act_func",
+                         GenActivation::gen_func_call_with_typecvt(
+                                 noline_mode, "dval", acc_specifier, dst_specifier,
+                                 "scale", "flt_scale", "dst_scale"))
                     .add("gen_bias_ptr",
                          [&]() -> std::string {
                              if (with_bias) {

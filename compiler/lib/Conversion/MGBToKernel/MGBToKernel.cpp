@@ -32,22 +32,20 @@ class MGBToKernelPass final : public MGBToKernelPassBase<MGBToKernelPass> {
         ConversionTarget target(getContext());
 
         populateMGBToKernelConversionPatterns(typeConverter, patterns);
-        populateFunctionOpInterfaceTypeConversionPattern<FuncOp>(patterns,
-                                                                 typeConverter);
+        populateFunctionOpInterfaceTypeConversionPattern<FuncOp>(
+                patterns, typeConverter);
         populateReturnOpTypeConversionPattern(patterns, typeConverter);
         target.addLegalDialect<Kernel::KernelDialect, memref::MemRefDialect>();
         target.addIllegalDialect<MGB::MGBDialect>();
-        auto isMemRefType = [](Type type) {
-            return type.isa<BaseMemRefType>();
-        };
+        auto isMemRefType = [](Type type) { return type.isa<BaseMemRefType>(); };
         target.addLegalOp<ModuleOp>();
         target.addDynamicallyLegalOp<FuncOp>([&](FuncOp op) {
             auto inputs = op.type().dyn_cast<FunctionType>().getInputs();
             return llvm::all_of(inputs, isMemRefType);
         });
         target.addDynamicallyLegalOp<mlir::ReturnOp>([&](mlir::ReturnOp op) {
-            return std::all_of(op.operand_type_begin(), op.operand_type_end(),
-                               isMemRefType);
+            return std::all_of(
+                    op.operand_type_begin(), op.operand_type_end(), isMemRefType);
         });
 
         auto op = getOperation();
@@ -68,8 +66,7 @@ bool isDynamicShape(ValueRange operands) {
 
 MemRefType asMemRef(Type type) {
     if (auto shapedType = type.dyn_cast<ShapedType>()) {
-        return MemRefType::get(shapedType.getShape(),
-                               shapedType.getElementType());
+        return MemRefType::get(shapedType.getShape(), shapedType.getElementType());
     }
     return {};
 }
@@ -77,8 +74,7 @@ MemRefType asMemRef(Type type) {
 Value asBuffer(Value value, ConversionPatternRewriter& rewriter) {
     if (auto memref = asMemRef(value.getType())) {
         if (value.getType().dyn_cast<ShapedType>().getNumDynamicDims() == 0) {
-            return rewriter.create<memref::AllocOp>(rewriter.getUnknownLoc(),
-                                                    memref);
+            return rewriter.create<memref::AllocOp>(rewriter.getUnknownLoc(), memref);
         } else {
             LOG_WARN << "Value shape is dynamic, compiler just create place "
                         "holder of DynamicAlloc.\n";
@@ -89,8 +85,9 @@ Value asBuffer(Value value, ConversionPatternRewriter& rewriter) {
     return nullptr;
 }
 
-LogicalResult prepareOperands(Operation* op, SmallVector<Value>& operands,
-                              ConversionPatternRewriter& rewriter) {
+LogicalResult prepareOperands(
+        Operation* op, SmallVector<Value>& operands,
+        ConversionPatternRewriter& rewriter) {
     for (auto&& i : op->getResults()) {
         if (auto memref = asBuffer(i, rewriter)) {
             operands.push_back(memref);
@@ -102,33 +99,31 @@ LogicalResult prepareOperands(Operation* op, SmallVector<Value>& operands,
 }
 
 template <typename OpType>
-LogicalResult createOp(Operation* op, ::mlir::ValueRange operands,
-                       ConversionPatternRewriter& rewriter,
-                       llvm::ArrayRef<NamedAttribute> attributes = {}) {
+LogicalResult createOp(
+        Operation* op, ::mlir::ValueRange operands, ConversionPatternRewriter& rewriter,
+        llvm::ArrayRef<NamedAttribute> attributes = {}) {
     SmallVector<Value> newOperands(operands.begin(), operands.end());
     if (succeeded(prepareOperands(op, newOperands, rewriter))) {
-        rewriter.create<OpType>(rewriter.getUnknownLoc(), llvm::None,
-                                newOperands, attributes);
+        rewriter.create<OpType>(
+                rewriter.getUnknownLoc(), llvm::None, newOperands, attributes);
         rewriter.replaceOp(
-                op, llvm::makeArrayRef(newOperands.begin() + operands.size(),
-                                       newOperands.end()));
+                op, llvm::makeArrayRef(
+                            newOperands.begin() + operands.size(), newOperands.end()));
         return success();
     }
     return failure();
 }
 
-void setOperandSegmentAttr(MLIRContext* context,
-                           SmallVector<NamedAttribute, 4>& attrs,
-                           const SmallVector<int32_t>& value) {
+void setOperandSegmentAttr(
+        MLIRContext* context, SmallVector<NamedAttribute, 4>& attrs,
+        const SmallVector<int32_t>& value) {
     auto attr = DenseIntElementsAttr::get(
-            VectorType::get(value.size(), IntegerType::get(context, 32)),
-            value);
+            VectorType::get(value.size(), IntegerType::get(context, 32)), value);
 
     attrs.push_back({StringAttr::get(context, "operand_segment_sizes"), attr});
 }
 
-class ConvertParamStorage final
-        : public OpConversionPattern<MGB::ParamStorage> {
+class ConvertParamStorage final : public OpConversionPattern<MGB::ParamStorage> {
 public:
     using OpConversionPattern::OpConversionPattern;
 
@@ -144,8 +139,7 @@ public:
     }
 };
 
-class ConvertParamProvider final
-        : public OpConversionPattern<MGB::ParamProvider> {
+class ConvertParamProvider final : public OpConversionPattern<MGB::ParamProvider> {
 public:
     using OpConversionPattern::OpConversionPattern;
 
@@ -210,20 +204,15 @@ public:
             case Mode::EXP:
                 return createOp<Kernel::ExpKernel>(op, operands, rewriter);
             case Mode::FUSE_MUL_ADD3:
-                return createOp<Kernel::FuseMulAdd3Kernel>(op, operands,
-                                                           rewriter);
+                return createOp<Kernel::FuseMulAdd3Kernel>(op, operands, rewriter);
             case Mode::FUSE_MUL_ADD4:
-                return createOp<Kernel::FuseMulAdd4Kernel>(op, operands,
-                                                           rewriter);
+                return createOp<Kernel::FuseMulAdd4Kernel>(op, operands, rewriter);
             case Mode::FUSE_ADD_RELU:
-                return createOp<Kernel::FuseAddReluKernel>(op, operands,
-                                                           rewriter);
+                return createOp<Kernel::FuseAddReluKernel>(op, operands, rewriter);
             case Mode::FUSE_ADD_TANH:
-                return createOp<Kernel::FuseAddTanhKernel>(op, operands,
-                                                           rewriter);
+                return createOp<Kernel::FuseAddTanhKernel>(op, operands, rewriter);
             case Mode::FUSE_ADD_SIGMOID:
-                return createOp<Kernel::FuseAddSigmoidKernel>(op, operands,
-                                                              rewriter);
+                return createOp<Kernel::FuseAddSigmoidKernel>(op, operands, rewriter);
             case Mode::LOG:
                 return createOp<Kernel::LogKernel>(op, operands, rewriter);
 
@@ -235,8 +224,8 @@ public:
             case Mode::SILU:
                 return createOp<Kernel::SILUKernel>(op, operands, rewriter);
             default:
-                CC_ABORT << "Unsupport Elemwise mode :"
-                         << static_cast<int>(op.mode()) << "\n";
+                CC_ABORT << "Unsupport Elemwise mode :" << static_cast<int>(op.mode())
+                         << "\n";
                 return failure();
         };
         return success();
@@ -276,25 +265,21 @@ public:
         CC_ASSERT(!isDynamicShape(operands))
                 << "Convolution operands shape should not be dynamic.\n";
         if (isa<MGB::Convolution>(op) || isa<MGB::ConvBias>(op)) {
-            auto attrs = ConvertConvLikeAttr(op->getAttrDictionary(),
-                                             operands[1], op->getContext());
-            setOperandSegmentAttr(op->getContext(), attrs,
-                                  operand_segment_sizes);
-            return createOp<Kernel::Conv2DKernel>(op, operands, rewriter,
-                                                  attrs);
+            auto attrs = ConvertConvLikeAttr(
+                    op->getAttrDictionary(), operands[1], op->getContext());
+            setOperandSegmentAttr(op->getContext(), attrs, operand_segment_sizes);
+            return createOp<Kernel::Conv2DKernel>(op, operands, rewriter, attrs);
         } else if (isa<MGB::ConvolutionBackwardData>(op)) {
-            auto attrs = ConvertConvLikeAttr(op->getAttrDictionary(),
-                                             operands[0], op->getContext());
-            return createOp<Kernel::ConvBackDataKernel>(op, operands, rewriter,
-                                                        attrs);
+            auto attrs = ConvertConvLikeAttr(
+                    op->getAttrDictionary(), operands[0], op->getContext());
+            return createOp<Kernel::ConvBackDataKernel>(op, operands, rewriter, attrs);
         } else {
             return failure();
         }
     }
 };
 
-class ConvertFusedElemwise final
-        : public OpConversionPattern<MGB::FusedElemwise> {
+class ConvertFusedElemwise final : public OpConversionPattern<MGB::FusedElemwise> {
 public:
     using OpConversionPattern::OpConversionPattern;
     LogicalResult matchAndRewrite(
@@ -308,8 +293,8 @@ public:
                 << "FusedElemwise operands shape should not be dynamic.\n";
 
         auto attrs = op->getAttrs();
-        return createOp<Kernel::FusedElemwiseKernel>(op, adaptor.getOperands(),
-                                                     rewriter, attrs);
+        return createOp<Kernel::FusedElemwiseKernel>(
+                op, adaptor.getOperands(), rewriter, attrs);
     }
 };
 
@@ -326,15 +311,14 @@ public:
         CC_ASSERT(!isDynamicShape(operands))
                 << "Reduce operands shape should not be dynamic.\n";
 
-        auto attrs = ConvertAttr<MGB::Reduce>(op->getAttrDictionary(),
-                                              op->getContext());
-        return createOp<Kernel::ReduceKernel>(op, adaptor.getOperands(),
-                                              rewriter, attrs);
+        auto attrs =
+                ConvertAttr<MGB::Reduce>(op->getAttrDictionary(), op->getContext());
+        return createOp<Kernel::ReduceKernel>(
+                op, adaptor.getOperands(), rewriter, attrs);
     }
 };
 
-class ConvertSetSubtensor final
-        : public OpConversionPattern<MGB::SetSubtensor> {
+class ConvertSetSubtensor final : public OpConversionPattern<MGB::SetSubtensor> {
 public:
     using OpConversionPattern::OpConversionPattern;
     LogicalResult matchAndRewrite(
@@ -350,15 +334,14 @@ public:
             auto value = operands[1];
             //! 1. create output tensor, and copy to
             auto dst_value = asBuffer(op->getResult(0), rewriter);
-            rewriter.create<Kernel::RelayoutKernel>(op->getLoc(), src,
-                                                    dst_value);
+            rewriter.create<Kernel::RelayoutKernel>(op->getLoc(), src, dst_value);
             //! 2. create SubtensorView
             auto sub_view = asMemRef(dst_value.getType());
             auto descs = op->getAttrDictionary().getAs<ArrayAttr>("descs");
             auto flags = op->getAttrDictionary().getAs<ArrayAttr>("flags");
             auto subtensor_opr = rewriter.create<Kernel::Subtensor>(
-                    op->getLoc(), sub_view, dst_value,
-                    rewriter.getBoolAttr(true), descs, flags);
+                    op->getLoc(), sub_view, dst_value, rewriter.getBoolAttr(true),
+                    descs, flags);
             subtensor_opr->setAttr("determined", rewriter.getBoolAttr(true));
             //! 3. create relayou and replace origin opr
             rewriter.create<Kernel::RelayoutKernel>(
@@ -366,10 +349,9 @@ public:
             rewriter.replaceOp(op, dst_value);
             return success();
         } else {
-            auto attrs = ConvertAttr<MGB::SetSubtensor>(op->getAttrDictionary(),
-                                                        op->getContext());
-            return createOp<Kernel::SetSubtensorIns>(op, operands, rewriter,
-                                                     attrs);
+            auto attrs = ConvertAttr<MGB::SetSubtensor>(
+                    op->getAttrDictionary(), op->getContext());
+            return createOp<Kernel::SetSubtensorIns>(op, operands, rewriter, attrs);
         }
     }
 };
@@ -393,10 +375,9 @@ public:
                     op, resultType, operands, op->getAttrs());
             return success();
         } else {
-            auto attrs = ConvertAttr<MGB::Subtensor>(op->getAttrDictionary(),
-                                                     op->getContext());
-            return createOp<Kernel::SubtensorIns>(op, operands, rewriter,
-                                                  attrs);
+            auto attrs = ConvertAttr<MGB::Subtensor>(
+                    op->getAttrDictionary(), op->getContext());
+            return createOp<Kernel::SubtensorIns>(op, operands, rewriter, attrs);
         }
     }
 };
@@ -417,8 +398,7 @@ public:
             //! 1. create output tensor, and copy to
             auto dst_value = asBuffer(op->getResult(0), rewriter);
             //! 2. create every src SubtensorView and create relayout
-            auto axis =
-                    op->getAttrDictionary().getAs<IntegerAttr>("axis").getInt();
+            auto axis = op->getAttrDictionary().getAs<IntegerAttr>("axis").getInt();
             auto type = operands[0].getType().cast<ShapedType>();
             if (axis < 0) {
                 axis = type.getShape().size() + axis;
@@ -428,15 +408,14 @@ public:
             for (size_t i = 0; i < nr_input; i++) {
                 auto sub_view = asMemRef(dst_value.getType());
                 auto input = operands[i];
-                auto desc = MakeConcatArrayAttr(axis, start_index, input,
-                                                dst_value, rewriter);
+                auto desc = MakeConcatArrayAttr(
+                        axis, start_index, input, dst_value, rewriter);
                 auto subtensor_opr = rewriter.create<Kernel::Subtensor>(
-                        op->getLoc(), sub_view, dst_value,
-                        rewriter.getBoolAttr(true), desc,
+                        op->getLoc(), sub_view, dst_value, rewriter.getBoolAttr(true),
+                        desc,
                         rewriter.getArrayAttr(
                                 rewriter.getI32ArrayAttr({0, 0, 0, 0, 0})));
-                subtensor_opr->setAttr("determined",
-                                       rewriter.getBoolAttr(true));
+                subtensor_opr->setAttr("determined", rewriter.getBoolAttr(true));
                 rewriter.create<Kernel::RelayoutKernel>(
                         op->getLoc(), input, subtensor_opr->getResult(0));
             }
@@ -444,10 +423,9 @@ public:
             rewriter.replaceOp(op, dst_value);
             return success();
         } else {
-            auto attrs = ConvertAttr<MGB::Concat>(op->getAttrDictionary(),
-                                                  op->getContext());
-            return createOp<Kernel::ConcatKernel>(op, operands, rewriter,
-                                                  attrs);
+            auto attrs =
+                    ConvertAttr<MGB::Concat>(op->getAttrDictionary(), op->getContext());
+            return createOp<Kernel::ConcatKernel>(op, operands, rewriter, attrs);
         }
     }
 };
@@ -462,8 +440,8 @@ public:
         bool is_dynamic_shape = isDynamicShape(operands);
         LOG_DEBUG << "Convert Reshape MGB dialect to Abstract kernel of "
                      "opr name: "
-                  << op.getOperationName().str()
-                  << ", dynamic = " << is_dynamic_shape << "\n";
+                  << op.getOperationName().str() << ", dynamic = " << is_dynamic_shape
+                  << "\n";
         if (!is_dynamic_shape || operands.size() == 1) {
             auto resultType = asMemRef(op->getResult(0).getType());
             if (!resultType)
@@ -472,8 +450,8 @@ public:
                     op, resultType, operands, op->getAttrs());
             return success();
         } else {
-            auto attrs = ConvertAttr<MGB::Reshape>(op->getAttrDictionary(),
-                                                   op->getContext());
+            auto attrs = ConvertAttr<MGB::Reshape>(
+                    op->getAttrDictionary(), op->getContext());
             return createOp<Kernel::ReshapeIns>(op, operands, rewriter, attrs);
         }
     }
@@ -488,8 +466,7 @@ public:
             SrcOp op, OpAdaptor adaptor,
             ConversionPatternRewriter& rewriter) const override {
         auto operands = adaptor.getOperands();
-        auto attrs =
-                ConvertAttr<SrcOp>(op->getAttrDictionary(), op->getContext());
+        auto attrs = ConvertAttr<SrcOp>(op->getAttrDictionary(), op->getContext());
         auto out_shapedType =
                 op->getResult(0).getType().template dyn_cast<ShapedType>();
         if (out_shapedType.getNumDynamicDims() > 0) {
@@ -515,18 +492,17 @@ public:
         bool is_dynamic_shape = isDynamicShape(operands);
         LOG_DEBUG << "Convert MGB dialect to Abstract kernel of "
                      "opr name: "
-                  << op.getOperationName().str()
-                  << ", dynamic = " << is_dynamic_shape << "\n";
+                  << op.getOperationName().str() << ", dynamic = " << is_dynamic_shape
+                  << "\n";
         if (!is_dynamic_shape) {
             auto resultType = asMemRef(op->getResult(0).getType());
             if (!resultType)
                 return failure();
-            rewriter.replaceOpWithNewOp<DstOp>(op, resultType, operands,
-                                               op->getAttrs());
+            rewriter.replaceOpWithNewOp<DstOp>(
+                    op, resultType, operands, op->getAttrs());
             return success();
         } else {
-            auto attrs = ConvertAttr<SrcOp>(op->getAttrDictionary(),
-                                            op->getContext());
+            auto attrs = ConvertAttr<SrcOp>(op->getAttrDictionary(), op->getContext());
             return createOp<DstKernelOp>(op, operands, rewriter, attrs);
         }
     }
@@ -544,8 +520,7 @@ public:
                      "opr name: "
                   << op.getOperationName().str() << "\n";
         auto operands = adaptor.getOperands();
-        auto attrs =
-                ConvertAttr<SrcOp>(op->getAttrDictionary(), op->getContext());
+        auto attrs = ConvertAttr<SrcOp>(op->getAttrDictionary(), op->getContext());
         return createOp<DstOp>(op, operands, rewriter, attrs);
     }
 };
@@ -563,38 +538,34 @@ public:
         auto operands = adaptor.getOperands();
         CC_ASSERT(!isDynamicShape(operands))
                 << "ExternOpr operands shape should not be dynamic.\n";
-        auto attrs = ConvertAttr<MGB::ExternOpr>(op->getAttrDictionary(),
-                                                 op->getContext());
-        setOperandSegmentAttr(op->getContext(), attrs,
-                              {static_cast<int>(op.nr_input()),
-                               static_cast<int>(op.nr_output())});
+        auto attrs =
+                ConvertAttr<MGB::ExternOpr>(op->getAttrDictionary(), op->getContext());
+        setOperandSegmentAttr(
+                op->getContext(), attrs,
+                {static_cast<int>(op.nr_input()), static_cast<int>(op.nr_output())});
         return createOp<Kernel::ExternOpr>(op, operands, rewriter, attrs);
     }
 };
 
 }  // namespace
 
-void populateMGBToKernelConversionPatterns(TypeConverter& typeConverter,
-                                           RewritePatternSet& patterns) {
+void populateMGBToKernelConversionPatterns(
+        TypeConverter& typeConverter, RewritePatternSet& patterns) {
     patterns.add<
             ConvertParamStorage, ConvertParamProvider, ConvertElemwise,
-            ConvertFusedElemwise, ConvertConvLike, ConvertReduce,
-            ConvertReshape, ConvertSubtensor, ConvertSetSubtensor,
-            ConvertConcat, ExternOprConverter,
-            GenericConverter<MGB::WarpPerspective,
-                             Kernel::WarpPerspectiveKernel>,
-            GenericConverter<MGB::IndexingMultiAxisVec,
-                             Kernel::IndexingMultiAxisVecKernel>,
+            ConvertFusedElemwise, ConvertConvLike, ConvertReduce, ConvertReshape,
+            ConvertSubtensor, ConvertSetSubtensor, ConvertConcat, ExternOprConverter,
+            GenericConverter<MGB::WarpPerspective, Kernel::WarpPerspectiveKernel>,
+            GenericConverter<
+                    MGB::IndexingMultiAxisVec, Kernel::IndexingMultiAxisVecKernel>,
             GenericConverter<MGB::IndexingOneHot, Kernel::IndexingOneHotKernel>,
-            MemRefConverter<MGB::Dimshuffle, Kernel::Dimshuffle,
-                            Kernel::DimshuffleIns>,
+            MemRefConverter<MGB::Dimshuffle, Kernel::Dimshuffle, Kernel::DimshuffleIns>,
             GenericConverter<MGB::Argsort, Kernel::ArgsortKernel>,
             GenericConverter<MGB::Argmax, Kernel::ArgmaxKernel>,
             GenericConverter<MGB::TopK, Kernel::TopkKernel>,
             GenericConverter<MGB::Broadcast, Kernel::BroadcastIns>,
             GenericConverter<MGB::TypeCvt, Kernel::TypeCvtKernel>,
-            GenericConverter<MGB::BatchedMatrixMul,
-                             Kernel::BatchedMatrixMulKernel>,
+            GenericConverter<MGB::BatchedMatrixMul, Kernel::BatchedMatrixMulKernel>,
             GenericConverter<MGB::MatrixMul, Kernel::MatrixMulKernel>,
             GenericConverter<MGB::Pooling, Kernel::Pooling2DKernel>,
             GenericConverter<MGB::WarpAffine, Kernel::WarpAffineKernel>,

@@ -57,9 +57,9 @@ std::string gen_unary(std::string mode) {
         return "val > 0? val:-val";
     } else if (mode == "LOG") {
         return "logf(val)";
-    } else if (mode == "SILU"){
+    } else if (mode == "SILU") {
         return "val / (1 + expf(-val))";
-    }else {
+    } else {
         CC_ABORT << "not support mode " << mode.c_str() << "\n";
     }
     return "";
@@ -103,8 +103,7 @@ std::string gen_binary(std::string mode) {
 }
 // set stride of the dims with broadcast attribute into 0 stride[i]=0,if
 // dims_in[i]!=dims_out[i] or i > nr_dims_in
-std::string set_broadcast_stride(std::string in_layout,
-                                 std::string out_layout) {
+std::string set_broadcast_stride(std::string in_layout, std::string out_layout) {
     std::string body = R"(
         // get the broadcast location in the given input layout
         size_t ${in_layout}_access_stride[MAX_DIM];
@@ -125,8 +124,7 @@ std::string set_broadcast_stride(std::string in_layout,
 }
 // broadcast_offset = sum(idx[i]*stride_in[i]),i=0,1,...,nr_dim idx[i] =
 // i_remain/out_stride[i]
-std::string get_broadcast_offset(std::string in_layout,
-                                 std::string out_layout) {
+std::string get_broadcast_offset(std::string in_layout, std::string out_layout) {
     std::string body = R"(
         // get the offset of broadcast layout with given offset of output (i)
         int ${in_layout}_broadcast_offset = 0, ${in_layout}_i_remain = i;
@@ -289,8 +287,7 @@ std::string compute_quater_body(TContext* ctx, std::string specifier) {
         auto data3 = strs[3];
         std::stringstream writer;
         if (mode == "FUSE_MUL_ADD4") {
-            writer << data0 << " * " << data1 << " + " << data2 << "*" << data3
-                   << ";";
+            writer << data0 << " * " << data1 << " + " << data2 << "*" << data3 << ";";
         } else {
             CC_ABORT << "Not support elemwise mode " << mode << "\n";
         }
@@ -423,13 +420,12 @@ bool ElmwiseKernel::IsAvailable(TContext* context) const {
     bool mode_ok_unary = mode == "RELU" || mode == "SIGMOID" || mode == "EXP" ||
                          mode == "NEGATE" || mode == "ROUND" || mode == "ABS" ||
                          mode == "H_SWISH" || mode == "LOG" || mode == "SILU";
-    bool mode_ok_binary =
-            mode == "ADD" || mode == "SUB" || mode == "MUL" || mode == "MAX" ||
-            mode == "MIN" || mode == "LEQ" || mode == "LT" ||
-            mode == "FLOOR_DIV" || mode == "EQ" || mode == "TRUE_DIV" ||
-            mode == "FUSE_ADD_RELU" || mode == "FUSE_ADD_SIGMOID" ||
-            mode == "FUSE_ADD_TANH" ||
-            (mode == "MOD" && (dtype == "i32" || dtype == "si32"));
+    bool mode_ok_binary = mode == "ADD" || mode == "SUB" || mode == "MUL" ||
+                          mode == "MAX" || mode == "MIN" || mode == "LEQ" ||
+                          mode == "LT" || mode == "FLOOR_DIV" || mode == "EQ" ||
+                          mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
+                          mode == "FUSE_ADD_SIGMOID" || mode == "FUSE_ADD_TANH" ||
+                          (mode == "MOD" && (dtype == "i32" || dtype == "si32"));
     bool mode_ok_other = mode == "FUSE_MUL_ADD3" || mode == "FUSE_MUL_ADD4";
     return nr_operands_ok && (mode_ok_unary || mode_ok_binary || mode_ok_other);
 }

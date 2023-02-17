@@ -18,8 +18,7 @@ class ArmSimdHelper {
     using Enum = Utils::DtypeEnum;
 
 public:
-    ArmSimdHelper(std::string dtype)
-            : m_dtype_enum(Utils::get_dtype_enum(dtype)){};
+    ArmSimdHelper(std::string dtype) : m_dtype_enum(Utils::get_dtype_enum(dtype)){};
     std::string get_dtype_sym() {
         switch (m_dtype_enum) {
             case Enum::float32:

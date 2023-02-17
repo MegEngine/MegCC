@@ -69,24 +69,21 @@ std::string ElemwiseGenUnary::GenCodeBody(std::vector<std::string> strs) const {
         return GenKernelNaiveUnroll(strs);
     };
     std::stringstream ss;
-    auto body_render = StringTemplate::StringTemplateArgs()
-                               .add("kernel_init", kernel_init)
-                               .add("kernel_simd_unroll", kernel_simd_unroll)
-                               .add("kernel_naive_unroll", kernel_naive_unroll)
-                               .add("src_specifier",
-                                    Utils::cvt_dtype_specifier(m_src_dtype))
-                               .add("dst_specifier",
-                                    Utils::cvt_dtype_specifier(m_dst_dtype))
-                               .add("src_ld1q", m_src_simd->get_ld1q_symbol())
-                               .add("dst_store",
-                                    [=](std::string ptr, std::string dst_reg) {
-                                        return m_dst_simd->get_st1q_symbol() +
-                                               "(" + ptr + "," + dst_reg +
-                                               ")\n";
-                                    })
-                               .add("dst_st1q", m_dst_simd->get_st1q_symbol())
-                               .add("src_simd_specifier",
-                                    m_src_simd->get_specifier_q_symbol());
+    auto body_render =
+            StringTemplate::StringTemplateArgs()
+                    .add("kernel_init", kernel_init)
+                    .add("kernel_simd_unroll", kernel_simd_unroll)
+                    .add("kernel_naive_unroll", kernel_naive_unroll)
+                    .add("src_specifier", Utils::cvt_dtype_specifier(m_src_dtype))
+                    .add("dst_specifier", Utils::cvt_dtype_specifier(m_dst_dtype))
+                    .add("src_ld1q", m_src_simd->get_ld1q_symbol())
+                    .add("dst_store",
+                         [=](std::string ptr, std::string dst_reg) {
+                             return m_dst_simd->get_st1q_symbol() + "(" + ptr + "," +
+                                    dst_reg + ")\n";
+                         })
+                    .add("dst_st1q", m_dst_simd->get_st1q_symbol())
+                    .add("src_simd_specifier", m_src_simd->get_specifier_q_symbol());
 
     if (m_inline_mode) {
         body_render.add("inline_func_name", GenInlineName());
@@ -104,8 +101,7 @@ std::string ElemwiseGenUnary::GenCodeBody(std::vector<std::string> strs) const {
 std::string ElemwiseGenUnarySigmoid::GenInlineName() const {
     return "ElemwiseGenUnarySigmoid";
 }
-std::string ElemwiseGenUnarySigmoid::GenKernelAsmInit(
-        std::vector<std::string>) const {
+std::string ElemwiseGenUnarySigmoid::GenKernelAsmInit(std::vector<std::string>) const {
     std::stringstream writer;
     writer << R"(
         size_t x6_iter = nr_elem / (4 * 6);

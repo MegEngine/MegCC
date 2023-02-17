@@ -1116,14 +1116,12 @@ std::string gen_transpose(int type_size) {
 class CommonTransposeKernel : public InternalKernelFunc {
 public:
     std::string GetKernelSymbol(TContext* ctx) const override {
-        int type_size =
-                ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
+        int type_size = ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
         return "Common_Internal_Transpose_" + std::to_string(type_size * 8);
     };
 
     std::string GetKernelSignature(TContext* ctx) const override {
-        int type_size =
-                ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
+        int type_size = ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
         std::stringstream ss;
         ss << "void fast_transpose_impl_";
         ss << std::to_string(type_size * 8);
@@ -1134,8 +1132,7 @@ public:
 
     std::string GetKernelBody(TContext* ctx) const override {
         std::stringstream writer;
-        int type_size =
-                ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
+        int type_size = ctx->haveAttr("type_size") ? ctx->getAttrInt("type_size") : 0;
         writer << R"(
             #include "gi_int.h"
         )";

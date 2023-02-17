@@ -25,8 +25,7 @@ public:
 
     std::string GetKernelBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 };
 
 }  // namespace AutoBareMetal

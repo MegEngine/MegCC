@@ -23,12 +23,11 @@ namespace {
 #define GEN_PASS_CLASSES
 #include "compiler/Dialect/Kernel/Transforms/Passes.h.inc"
 
-class CleanDimshufflePattern final
-        : public OpRewritePattern<Kernel::Dimshuffle> {
+class CleanDimshufflePattern final : public OpRewritePattern<Kernel::Dimshuffle> {
 public:
     CleanDimshufflePattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
-    LogicalResult matchAndRewrite(Kernel::Dimshuffle op,
-                                  PatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(
+            Kernel::Dimshuffle op, PatternRewriter& rewriter) const override {
         if (!op->getAttrOfType<BoolAttr>("determined").getValue())
             return failure();
         Value input = op->getOperand(0);
@@ -47,9 +46,9 @@ public:
             CC_ASSERT(output_memref);
             bool io_contig = Kernel::isContiguous(input_memref) &&
                              Kernel::isContiguous(output_memref);
-            bool next_reshape = output.hasOneUse() &&
-                                mlir::dyn_cast_or_null<Kernel::Reshape>(
-                                        output.getUses().begin()->getOwner());
+            bool next_reshape =
+                    output.hasOneUse() && mlir::dyn_cast_or_null<Kernel::Reshape>(
+                                                  output.getUses().begin()->getOwner());
             CC_ASSERT(io_contig || next_reshape);
         }
         op.replaceAllUsesWith(input);
@@ -59,8 +58,7 @@ public:
 };
 
 void populateFinalCleanPatterns(RewritePatternSet& patterns) {
-    patterns.add(
-            std::make_unique<CleanDimshufflePattern>(patterns.getContext()));
+    patterns.add(std::make_unique<CleanDimshufflePattern>(patterns.getContext()));
 }
 
 class KernelFinalCleanPass final

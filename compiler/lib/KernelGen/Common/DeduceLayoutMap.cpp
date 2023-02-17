@@ -114,9 +114,7 @@ public:
             }
         )";
         int axis = context->getAttrInt("axis");
-        writer << StringTemplate::StringTemplateArgs()
-                          .add("axis", axis)
-                          .render(body);
+        writer << StringTemplate::StringTemplateArgs().add("axis", axis).render(body);
         return writer.str();
     }
 };
@@ -239,14 +237,11 @@ public:
 DeduceLayoutMap::DeduceLayoutMap() {
     map[KernelPack::KernType::IndexingMultiAxisKernel] =
             std::make_shared<IndexingDeduceLayout>();
-    map[KernelPack::KernType::ArgSortKernel] =
-            std::make_shared<ArgSortDeduceLayout>();
-    map[KernelPack::KernType::ConcatKernel] =
-            std::make_shared<ConcatDeduceLayout>();
+    map[KernelPack::KernType::ArgSortKernel] = std::make_shared<ArgSortDeduceLayout>();
+    map[KernelPack::KernType::ConcatKernel] = std::make_shared<ConcatDeduceLayout>();
     map[KernelPack::KernType::ElemwiseKernel] =
             std::make_shared<ElemwiseDeduceLayout>();
-    map[KernelPack::KernType::TypeCvtKernel] =
-            std::make_shared<TypecvtDeduceLayout>();
+    map[KernelPack::KernType::TypeCvtKernel] = std::make_shared<TypecvtDeduceLayout>();
     map[KernelPack::KernType::WarpPerspectiveKernel] =
             std::make_shared<WarpPerspectiveDeduceLayout>();
 }

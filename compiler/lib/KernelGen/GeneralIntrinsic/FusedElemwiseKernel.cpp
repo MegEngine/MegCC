@@ -318,14 +318,13 @@ std::string gen_init(std::shared_ptr<GISimdHelper> simd_helper) {
     auto ins = simd_helper->get_dupq_n_symbol();
     std::string init = "${simd_specifier} simd_zero = " + ins + "(0);";
     auto templateS = StringTemplate::StringTemplateArgs();
-    return templateS
-            .add("simd_specifier", simd_helper->get_specifier_q_symbol())
+    return templateS.add("simd_specifier", simd_helper->get_specifier_q_symbol())
             .render(init);
 }
 
-std::vector<std::string> gen_op(std::vector<std::string> mode,
-                                std::shared_ptr<GISimdHelper> simd_helper,
-                                const std::string& specifier) {
+std::vector<std::string> gen_op(
+        std::vector<std::string> mode, std::shared_ptr<GISimdHelper> simd_helper,
+        const std::string& specifier) {
     size_t nr_str = mode.size();
     CC_ASSERT(nr_str >= 3);
     auto templateS = StringTemplate::StringTemplateArgs();
@@ -367,14 +366,14 @@ std::vector<std::string> gen_op(std::vector<std::string> mode,
 }
 
 template <TensorType>
-std::string gen_one_get_data(size_t id,
-                             std::shared_ptr<GISimdHelper> simd_helper,
-                             const std::string& specifier);
+std::string gen_one_get_data(
+        size_t id, std::shared_ptr<GISimdHelper> simd_helper,
+        const std::string& specifier);
 
 template <>
-std::string gen_one_get_data<SCALAR>(size_t id,
-                                     std::shared_ptr<GISimdHelper> simd_helper,
-                                     const std::string& specifier) {
+std::string gen_one_get_data<SCALAR>(
+        size_t id, std::shared_ptr<GISimdHelper> simd_helper,
+        const std::string& specifier) {
     std::string get_data = R"(
        static inline ${simd_specifier} get_input${id}(${specifier}* ptr, size_t c) {
            return ${gi_broadcast}(*ptr);
@@ -394,9 +393,9 @@ std::string gen_one_get_data<SCALAR>(size_t id,
 }
 
 template <>
-std::string gen_one_get_data<VECTOR>(size_t id,
-                                     std::shared_ptr<GISimdHelper> simd_helper,
-                                     const std::string& specifier) {
+std::string gen_one_get_data<VECTOR>(
+        size_t id, std::shared_ptr<GISimdHelper> simd_helper,
+        const std::string& specifier) {
     std::string get_data = R"(
        static inline ${simd_specifier} get_input${id}(size_t elem_id, ${specifier}* ptr) {
            return ${gi_load}(ptr + elem_id);
@@ -463,29 +462,25 @@ std::string gen_one_get_data<BCAST101x4>(
             .render(get_data + get_naive_data);
 }
 
-std::string gen_get_data_func(std::vector<TensorType> tensor_types,
-                              std::shared_ptr<GISimdHelper> simd_helper,
-                              const std::string& specifier) {
+std::string gen_get_data_func(
+        std::vector<TensorType> tensor_types, std::shared_ptr<GISimdHelper> simd_helper,
+        const std::string& specifier) {
     size_t nr_operands = tensor_types.size();
     std::string functions;
     for (size_t i = 0; i < nr_operands; i++) {
         auto tensor_type = tensor_types[i];
         switch (tensor_type) {
             case TensorType::SCALAR:
-                functions +=
-                        gen_one_get_data<SCALAR>(i, simd_helper, specifier);
+                functions += gen_one_get_data<SCALAR>(i, simd_helper, specifier);
                 break;
             case TensorType::VECTOR:
-                functions +=
-                        gen_one_get_data<VECTOR>(i, simd_helper, specifier);
+                functions += gen_one_get_data<VECTOR>(i, simd_helper, specifier);
                 break;
             case TensorType::BCAST101:
-                functions +=
-                        gen_one_get_data<BCAST101>(i, simd_helper, specifier);
+                functions += gen_one_get_data<BCAST101>(i, simd_helper, specifier);
                 break;
             case TensorType::BCAST101x4:
-                functions +=
-                        gen_one_get_data<BCAST101x4>(i, simd_helper, specifier);
+                functions += gen_one_get_data<BCAST101x4>(i, simd_helper, specifier);
                 break;
             default:
                 CC_ABORT << "Not support tensor type in fused elemwise\n";
@@ -498,8 +493,8 @@ std::string gen_get_data_func(std::vector<TensorType> tensor_types,
 
 std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
     size_t nr_operands = context->getAttrInt("nr_operands");
-    auto dst_operand = context->getAttrOprand("operand:" +
-                                              std::to_string(nr_operands - 1));
+    auto dst_operand =
+            context->getAttrOprand("operand:" + std::to_string(nr_operands - 1));
     auto op0 = context->getAttrOprand("operand:0");
     auto src_dtype = op0.dtype;
     auto specifier = Utils::cvt_dtype_specifier(src_dtype);
@@ -625,30 +620,28 @@ std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
             ${simd_specifier} I${id}_0 = get_input${id}(elem_id, I${id}_ptr);
             ${simd_specifier} I${id}_1 = get_input${id}(elem_id + 4, I${id}_ptr);
             )";
-            simd_unroll_load += templateS.add("id", std::to_string(id))
-                                        .render(tmp_simd_unroll);
+            simd_unroll_load +=
+                    templateS.add("id", std::to_string(id)).render(tmp_simd_unroll);
             std::string tmp_simd = R"(
             ${simd_specifier} I${id}_0 = get_input${id}(elem_id, I${id}_ptr);
             )";
-            simd_load +=
-                    templateS.add("id", std::to_string(id)).render(tmp_simd);
+            simd_load += templateS.add("id", std::to_string(id)).render(tmp_simd);
             std::string tmp_naive = R"(
             ${specifier} I${id} = get_naive_input${id}(elem_id, I${id}_ptr);
             )";
-            naive_load +=
-                    templateS.add("id", std::to_string(id)).render(tmp_naive);
+            naive_load += templateS.add("id", std::to_string(id)).render(tmp_naive);
         } else {
             std::string tmp_simd_unroll = R"(
             ${simd_specifier} I${id}_0 = get_input${id}(I${id}_ptr, c);
             ${simd_specifier} I${id}_1 = get_input${id}(I${id}_ptr, c);
             )";
-            simd_load_channel += templateS.add("id", std::to_string(id))
-                                         .render(tmp_simd_unroll);
+            simd_load_channel +=
+                    templateS.add("id", std::to_string(id)).render(tmp_simd_unroll);
             std::string tmp_naive = R"(
             ${specifier} I${id} = get_naive_input${id}(I${id}_ptr, c);
             )";
-            naive_load_channel += templateS.add("id", std::to_string(id))
-                                          .render(tmp_naive);
+            naive_load_channel +=
+                    templateS.add("id", std::to_string(id)).render(tmp_naive);
         }
     }
     std::string simd_unroll_compute;
@@ -656,16 +649,15 @@ std::string FusedElmwiseKernel::GetKernelBody(TContext* context) const {
     std::string naive_compute;
     for (size_t id = 0; id < op_modes.size(); id++) {
         auto op = gen_op(op_modes[id], gi_simd_type, specifier);
-        CC_ASSERT(op.size()==3);
+        CC_ASSERT(op.size() == 3);
         naive_compute += op[2] + ";\n";
         simd_compute += op[1] + ";\n";
         simd_unroll_compute += op[0] + ";\n";
     }
     std::string simd_init = gen_init(gi_simd_type);
-    std::string simd_unroll_store = gi_simd_type->get_st1q_symbol() +
-                                    "(D_ptr+ elem_id, D_0);\n" +
-                                    gi_simd_type->get_st1q_symbol() +
-                                    "(D_ptr+ elem_id + simd_len, D_1);\n";
+    std::string simd_unroll_store =
+            gi_simd_type->get_st1q_symbol() + "(D_ptr+ elem_id, D_0);\n" +
+            gi_simd_type->get_st1q_symbol() + "(D_ptr+ elem_id + simd_len, D_1);\n";
     std::string simd_store =
             gi_simd_type->get_st1q_symbol() + "(D_ptr+elem_id, D_0);\n";
     std::string naive_store = R"(
@@ -704,13 +696,11 @@ bool FusedElmwiseKernel::IsAvailable(TContext* context) const {
                 context->getAttrStr("modes:" + std::to_string(i)), ',');
         size_t modes_size = modes.size();
         auto mode = modes[modes_size - 2];
-        bool mode_ok_unary = mode == "RELU" || mode == "SIGMOID" ||
-                             mode == "EXP" || mode == "H_SWISH" ||
-                             mode == "NEGATE";
+        bool mode_ok_unary = mode == "RELU" || mode == "SIGMOID" || mode == "EXP" ||
+                             mode == "H_SWISH" || mode == "NEGATE";
         bool mode_ok_binary = mode == "ADD" || mode == "SUB" || mode == "MUL" ||
-                              mode == "MAX" || mode == "MIN" ||
-                              mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
-                              mode == "FUSE_ADD_SIGMOID";
+                              mode == "MAX" || mode == "MIN" || mode == "TRUE_DIV" ||
+                              mode == "FUSE_ADD_RELU" || mode == "FUSE_ADD_SIGMOID";
         bool mode_ok_other = mode == "FUSE_MUL_ADD3" || mode == "FUSE_MUL_ADD4";
         mode_ok = mode_ok_unary || mode_ok_binary || mode_ok_other;
     }
@@ -719,8 +709,8 @@ bool FusedElmwiseKernel::IsAvailable(TContext* context) const {
 
 std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
     size_t nr_operands = context->getAttrInt("nr_operands");
-    auto dst_operand = context->getAttrOprand("operand:" +
-                                              std::to_string(nr_operands - 1));
+    auto dst_operand =
+            context->getAttrOprand("operand:" + std::to_string(nr_operands - 1));
     std::stringstream ss;
     ss << "kernel_gi_fused_elementwise";
     auto mode_size = context->getAttrInt("modes:size");
@@ -729,16 +719,15 @@ std::string FusedElmwiseKernel::GetKernelSymbol(TContext* context) const {
                 context->getAttrStr("modes:" + std::to_string(i)), ',');
         size_t modes_size = modes.size();
         auto mode = modes[modes_size - 2];
-        ss << "_" << mode ;
+        ss << "_" << mode;
     }
     for (size_t i = 0; i < nr_operands; i++) {
         auto operand = context->getAttrOprand("operand:" + std::to_string(i));
         auto tensor_type = GetOperandTensorType(dst_operand, operand);
-        ss << "_tensortype" << tensor_type ;
+        ss << "_tensortype" << tensor_type;
     }
     ss << "_" << SymbolHelper::gen_io_str(context);
     return ss.str();
 }
-
 
 // vim: syntax=cpp.doxygen

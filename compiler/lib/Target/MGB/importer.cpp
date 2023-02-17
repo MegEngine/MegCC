@@ -81,8 +81,7 @@ namespace cg {
 namespace {
 class ComputeDepOprIter {
 public:
-    using VarNodeMap =
-            std::unordered_map<VarNode*, std::vector<OperatorNodeBase*>>;
+    using VarNodeMap = std::unordered_map<VarNode*, std::vector<OperatorNodeBase*>>;
     using Callback = thin_function<void(OperatorNodeBase*, VarNodeMap&)>;
 
     ComputeDepOprIter(Callback cb, VarNodeMap& varnode_to_used_opr)
@@ -114,8 +113,7 @@ public:
 
 private:
     ThinHashSet<OperatorNodeBase*> m_visited;
-    std::unordered_map<VarNode*, std::vector<OperatorNodeBase*>>
-            m_varnode_to_used_opr;
+    std::unordered_map<VarNode*, std::vector<OperatorNodeBase*>> m_varnode_to_used_opr;
     Callback m_cb;
 };
 
@@ -144,8 +142,7 @@ void sort_inputs_with_index(std::vector<T>& inputs, std::vector<int>& axis) {
     }
 }
 
-std::vector<int> reduceAxisFromShape(TensorShape src_shape,
-                                     TensorShape dst_shape) {
+std::vector<int> reduceAxisFromShape(TensorShape src_shape, TensorShape dst_shape) {
     std::vector<int> res;
     CC_ASSERT(src_shape.ndim == dst_shape.ndim)
             << src_shape.to_string() << ", " << dst_shape.to_string();
@@ -171,8 +168,7 @@ std::vector<uint8_t> read_file(std::string path) {
     return res;
 }
 
-inline std::vector<std::string> split(std::string str,
-                                      const std::string& delimiter) {
+inline std::vector<std::string> split(std::string str, const std::string& delimiter) {
     std::vector<std::string> res;
     size_t pos = 0;
     while ((pos = str.find(delimiter)) != std::string::npos) {
@@ -216,8 +212,7 @@ inline void parse_extern_loader_info() {
             if (specify_dtype) {
                 auto&& output_dtypes = split(output_dtypes_str, ";");
                 CC_ASSERT((output_shapes.size() == output_dtypes.size()))
-                        << "Number of extern opr output shapes("
-                        << output_shapes.size()
+                        << "Number of extern opr output shapes(" << output_shapes.size()
                         << ") should equal to "
                            "number "
                            "of extern opr output dtypes("
@@ -233,21 +228,18 @@ inline void parse_extern_loader_info() {
                     if (dtype_str2uint.find(tmp_str) != dtype_str2uint.end())
                         uint_output_dtypes[i] = dtype_str2uint.at(tmp_str);
                     else
-                        CC_ASSERT(0)
-                                << tmp_str
-                                << " is invalid extern opr output dtype! Dtype "
-                                   "should be float32, int32, uint8, float16 "
-                                   "or "
-                                   "int16.\n";
+                        CC_ASSERT(0) << tmp_str
+                                     << " is invalid extern opr output dtype! Dtype "
+                                        "should be float32, int32, uint8, float16 "
+                                        "or "
+                                        "int16.\n";
                 }
             }
 
-            std::vector<std::vector<uint32_t>> uint_output_shapes(
-                    output_shapes.size());
+            std::vector<std::vector<uint32_t>> uint_output_shapes(output_shapes.size());
             for (size_t i = 0; i < output_shapes.size(); ++i) {
                 auto&& tmp_str = skip_whitespace(output_shapes[i]);
-                CC_ASSERT((tmp_str[0] == '(' &&
-                           tmp_str[tmp_str.size() - 1] == ')'))
+                CC_ASSERT((tmp_str[0] == '(' && tmp_str[tmp_str.size() - 1] == ')'))
                         << "The output shape needs to be surrounded by "
                            "parentheses.\n";
                 tmp_str = tmp_str.substr(1, tmp_str.size() - 2);
@@ -258,16 +250,15 @@ inline void parse_extern_loader_info() {
                            "is "
                         << MGB_TENSOR_MAX_NDIM << ".\n";
                 uint_output_shapes[i].resize(tmp_shape.size());
-                std::transform(tmp_shape.begin(), tmp_shape.end(),
-                               uint_output_shapes[i].begin(),
-                               [](const std::string& s) {
-                                   return static_cast<uint32_t>(std::stoul(s));
-                               });
+                std::transform(
+                        tmp_shape.begin(), tmp_shape.end(),
+                        uint_output_shapes[i].begin(), [](const std::string& s) {
+                            return static_cast<uint32_t>(std::stoul(s));
+                        });
             }
 
-            name2outputinfo[loader_name] =
-                    std::make_pair(std::move(uint_output_shapes),
-                                   std::move(uint_output_dtypes));
+            name2outputinfo[loader_name] = std::make_pair(
+                    std::move(uint_output_shapes), std::move(uint_output_dtypes));
         };
 
         if (nr_loader == 1) {
@@ -278,8 +269,7 @@ inline void parse_extern_loader_info() {
             const std::string& shapes =
                     specify_name ? name_and_shapes[1] : name_and_shapes[0];
             if (specify_dtype) {
-                parse_output_info(shapes, output_dtypes_loaders[0],
-                                  loader_name);
+                parse_output_info(shapes, output_dtypes_loaders[0], loader_name);
             } else {
                 parse_output_info(shapes, "", loader_name);
             }
@@ -292,8 +282,7 @@ inline void parse_extern_loader_info() {
                 std::string&& loader_name = skip_whitespace(name_and_shapes[0]);
                 const std::string& shapes = name_and_shapes[1];
                 if (specify_dtype) {
-                    parse_output_info(shapes, output_dtypes_loaders[i],
-                                      loader_name);
+                    parse_output_info(shapes, output_dtypes_loaders[i], loader_name);
                 } else {
                     parse_output_info(shapes, "", loader_name);
                 }
@@ -324,8 +313,7 @@ inline void parse_extern_loader_info() {
         if (loaderPath_interface.size() == 1 || loaderPath_interface[1] == "") {
             loaderInfo.m_loader_path_with_interface.second = "mgb_c_opr_init";
         } else {
-            loaderInfo.m_loader_path_with_interface.second =
-                    loaderPath_interface[1];
+            loaderInfo.m_loader_path_with_interface.second = loaderPath_interface[1];
         }
     }
 }
@@ -336,20 +324,17 @@ class Importer {
 
 public:
     Importer(mlir::ModuleOp mod)
-            : m_module(mod),
-              m_context(m_module->getContext()),
-              m_builder(m_context) {
+            : m_module(mod), m_context(m_module->getContext()), m_builder(m_context) {
         m_context->loadDialect<mlir::MGB::MGBDialect>();
         m_context->loadDialect<mlir::StandardOpsDialect>();
     }
 
-    mlir::LogicalResult import_mgb(std::string model_path, Options options,
-                                   int hako_ver = 0) {
+    mlir::LogicalResult import_mgb(
+            std::string model_path, Options options, int hako_ver = 0) {
         std::vector<uint8_t> mdl_model_buffer;
         std::unique_ptr<serialization::InputFile> inp_file;
         hako_ver = hako_ver == 0 ? hako_version.getValue() : hako_ver;
-        if (model_path.substr(model_path.size() - 5, model_path.size()) ==
-            ".emod") {
+        if (model_path.substr(model_path.size() - 5, model_path.size()) == ".emod") {
             auto model_buffer = read_file(model_path);
             mdl_model_buffer = megcc::parse_hako(model_buffer, hako_ver);
             std::shared_ptr<void> ptr;
@@ -360,11 +345,9 @@ public:
         } else {
             inp_file = serialization::InputFile::make_fs(model_path.c_str());
         }
-        auto format = serialization::GraphLoader::identify_graph_dump_format(
-                *inp_file);
+        auto format = serialization::GraphLoader::identify_graph_dump_format(*inp_file);
         CC_ASSERT(format.valid()) << "invalid model: unknown model format.\n";
-        m_loader = serialization::GraphLoader::make(std::move(inp_file),
-                                                    format.val());
+        m_loader = serialization::GraphLoader::make(std::move(inp_file), format.val());
 
         parse_extern_loader_info();
         dummy_mgb_c_opr_init(mgb_get_extern_c_opr_api_versioned);
@@ -380,8 +363,8 @@ private:
         return tensorShapeToShapedType(m_context, var->shape(), var->dtype());
     }
 
-    mlir::ShapedType var_to_shaped_type_with_shape(VarNode* var,
-                                                   const TensorShape& shape) {
+    mlir::ShapedType var_to_shaped_type_with_shape(
+            VarNode* var, const TensorShape& shape) {
         // dynamic allocation
         return tensorShapeToShapedType(m_context, shape, var->dtype());
     }
@@ -411,24 +394,20 @@ private:
             auto layout = host_tensor.layout();
             size_t nr_elems = layout.total_nr_elems();
             ret.resize(nr_elems);
-            memcpy(ret.data(), host_tensor.raw_ptr(),
-                   layout.dtype.size(nr_elems));
+            memcpy(ret.data(), host_tensor.raw_ptr(), layout.dtype.size(nr_elems));
             return ret;
         }
         return ret;
     }
 
     //! return the subtensor desc and corresponding flag
-    std::tuple<std::vector<
-                       std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>,
-               std::vector<
-                       std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>>
-    get_subtensor_desc_and_flag(const opr::indexing::IndexDesc& index_desc,
-                                VarNodeArray& inputs_array) {
-        std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>
-                desc;
-        std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>
-                flag;
+    std::tuple<
+            std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>,
+            std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>>>
+    get_subtensor_desc_and_flag(
+            const opr::indexing::IndexDesc& index_desc, VarNodeArray& inputs_array) {
+        std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>> desc;
+        std::vector<std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t>> flag;
         auto is_const_var = [](VarNode* var) {
             if (var->owner_opr()->try_cast_final<opr::ImmutableTensor>()) {
                 return true;
@@ -465,8 +444,7 @@ private:
         for (auto& item : index_desc) {
             int32_t axis = item.axis.get_raw();
             int32_t begin = 0, end = -1, step = 1, index = -1;
-            int32_t begin_flag = -1, end_flag = -1, step_flag = -1,
-                    index_flag = -1;
+            int32_t begin_flag = -1, end_flag = -1, step_flag = -1, index_flag = -1;
 
             process_node(item.begin.node(), begin, begin_flag, 0);
             process_node(item.end.node(), end, end_flag, -1);
@@ -507,16 +485,15 @@ private:
         return shape_type.getNumDynamicDims() > 0;
     }
 
-    auto var_array_to_value_array(const cg::VarNodeArray& vars,
-                                  bool no_dynamic = false) {
+    auto var_array_to_value_array(
+            const cg::VarNodeArray& vars, bool no_dynamic = false) {
         std::vector<mlir::Value> inputs;
         inputs.reserve(vars.size());
         int cnt = 0;
         for (auto&& i : vars) {
             if (no_dynamic) {
                 auto tensor = m_var2value.at(i);
-                CC_ASSERT(!is_dynamic_value(tensor))
-                        << "with input " << cnt << "\n";
+                CC_ASSERT(!is_dynamic_value(tensor)) << "with input " << cnt << "\n";
             }
             inputs.push_back(m_var2value.at(i));
             cnt++;
@@ -524,9 +501,8 @@ private:
         return inputs;
     }
 
-    MGB::ParamStorage& create_param_storage(VarNode* var,
-                                            const DeviceTensorND& tensor,
-                                            size_t idx) {
+    MGB::ParamStorage& create_param_storage(
+            VarNode* var, const DeviceTensorND& tensor, size_t idx) {
         std::string name = var->cname();
         bool equal_flag = true;
         auto tensor_attr = dev_tensor_to_attr(tensor);
@@ -565,13 +541,12 @@ private:
 
     void on_opr(
             cg::OperatorNodeBase* opr,
-            std::unordered_map<VarNode*, std::vector<cg::OperatorNodeBase*>>&
-                    input2opr,
+            std::unordered_map<VarNode*, std::vector<cg::OperatorNodeBase*>>& input2opr,
             size_t idx) {
         LOG_DEBUG << "Import Operator type: " << opr->dyn_typeinfo()->name
                   << ", with name: " << opr->name() << ", output size "
-                  << opr->output().size() << ", input size "
-                  << opr->input().size() << "\n";
+                  << opr->output().size() << ", input size " << opr->input().size()
+                  << "\n";
         //! make the var name unique for MLIR symboltable
         for (auto& var : opr->output()) {
             auto new_name = var->name() + "_" + var->id_str();
@@ -588,13 +563,11 @@ private:
                     m_builder.getUnknownLoc(), storage);
             m_var2value.emplace(opr->output(0), value);
         } else if (auto imm = opr->try_cast_final<opr::ImmutableTensor>()) {
-            auto storage = create_param_storage(opr->output(0),
-                                                imm->host_value(), idx);
+            auto storage = create_param_storage(opr->output(0), imm->host_value(), idx);
             mlir::Value value = m_builder.create<mlir::MGB::ParamProvider>(
                     m_builder.getUnknownLoc(), storage);
             m_var2value.emplace(opr->output(0), value);
-        } else if (auto mdt = opr->try_cast_final<
-                              opr::MultipleDeviceTensorHolder>()) {
+        } else if (auto mdt = opr->try_cast_final<opr::MultipleDeviceTensorHolder>()) {
             for (size_t i = 0; i < opr->output().size(); ++i) {
                 DeviceTensorND dv(CompNode::default_cpu());
                 dv.copy_from(*mdt->values()[i]).sync();
@@ -609,13 +582,11 @@ private:
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
                     var_array_to_value_array(opr->input()), elem->param().mode);
             m_var2value.emplace(out, value);
-        } else if (auto elem_multi =
-                           opr->try_cast_final<opr::ElemwiseMultiType>()) {
+        } else if (auto elem_multi = opr->try_cast_final<opr::ElemwiseMultiType>()) {
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::ElemwiseMultiType>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    var_array_to_value_array(opr->input()),
-                    elem_multi->param().mode);
+                    var_array_to_value_array(opr->input()), elem_multi->param().mode);
             m_var2value.emplace(out, value);
         } else if (auto shuffle = opr->try_cast_final<opr::Dimshuffle>()) {
             auto&& p = shuffle->param();
@@ -634,40 +605,37 @@ private:
         } else if (auto conv = opr->try_cast_final<opr::Convolution>()) {
             auto&& p = conv->param();
             auto&& out = opr->output(0);
-            CC_ASSERT(!is_dynamic_value(m_var2value.at(opr->input(0))) &&
-                      !is_dynamic_value(m_var2value.at(opr->input(1))));
+            CC_ASSERT(
+                    !is_dynamic_value(m_var2value.at(opr->input(0))) &&
+                    !is_dynamic_value(m_var2value.at(opr->input(1))));
             mlir::Value value = m_builder.create<mlir::MGB::Convolution>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)),
-                    m_var2value.at(opr->input(1)), p.mode, p.pad_h, p.pad_w,
-                    p.stride_h, p.stride_w, p.dilate_h, p.dilate_w, p.sparse,
-                    p.format, p.compute_mode);
+                    m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                    p.mode, p.pad_h, p.pad_w, p.stride_h, p.stride_w, p.dilate_h,
+                    p.dilate_w, p.sparse, p.format, p.compute_mode);
             m_var2value.emplace(out, value);
-        } else if (auto deconv = opr->try_cast_final<
-                                 opr::ConvolutionBackwardData>()) {
+        } else if (auto deconv = opr->try_cast_final<opr::ConvolutionBackwardData>()) {
             auto&& p = deconv->param();
             auto&& out = opr->output(0);
-            CC_ASSERT(!is_dynamic_value(m_var2value.at(opr->input(0))) &&
-                      !is_dynamic_value(m_var2value.at(opr->input(1))));
-            mlir::Value value =
-                    m_builder.create<mlir::MGB::ConvolutionBackwardData>(
-                            m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                            m_var2value.at(opr->input(0)),
-                            m_var2value.at(opr->input(1)), p.mode, p.pad_h,
-                            p.pad_w, p.stride_h, p.stride_w, p.dilate_h,
-                            p.dilate_w, p.sparse, p.format, p.compute_mode);
+            CC_ASSERT(
+                    !is_dynamic_value(m_var2value.at(opr->input(0))) &&
+                    !is_dynamic_value(m_var2value.at(opr->input(1))));
+            mlir::Value value = m_builder.create<mlir::MGB::ConvolutionBackwardData>(
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
+                    m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                    p.mode, p.pad_h, p.pad_w, p.stride_h, p.stride_w, p.dilate_h,
+                    p.dilate_w, p.sparse, p.format, p.compute_mode);
             m_var2value.emplace(out, value);
         } else if (auto conv = opr->try_cast_final<opr::ConvBiasForward>()) {
             auto&& p = conv->param();
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::ConvBias>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    var_array_to_value_array(opr->input(), true), p.nonlineMode,
-                    p.mode, p.sparse, p.format, p.pad_h, p.pad_w, p.stride_h,
-                    p.stride_w, p.dilate_h, p.dilate_w, p.compute_mode);
+                    var_array_to_value_array(opr->input(), true), p.nonlineMode, p.mode,
+                    p.sparse, p.format, p.pad_h, p.pad_w, p.stride_h, p.stride_w,
+                    p.dilate_h, p.dilate_w, p.compute_mode);
             m_var2value.emplace(out, value);
-        } else if (auto resize_opr =
-                           opr->try_cast_final<opr::ResizeForward>()) {
+        } else if (auto resize_opr = opr->try_cast_final<opr::ResizeForward>()) {
             auto&& p = resize_opr->param();
             auto&& out = opr->output(0);
 
@@ -707,11 +675,10 @@ private:
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::Pooling>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)), p.mode, p.pad_h, p.pad_w,
-                    p.stride_h, p.stride_w, p.window_h, p.window_w, p.format);
+                    m_var2value.at(opr->input(0)), p.mode, p.pad_h, p.pad_w, p.stride_h,
+                    p.stride_w, p.window_h, p.window_w, p.format);
             m_var2value.emplace(out, value);
-        } else if (auto adapt_pooling =
-                           opr->try_cast_final<opr::AdaptivePooling>()) {
+        } else if (auto adapt_pooling = opr->try_cast_final<opr::AdaptivePooling>()) {
             auto&& p = adapt_pooling->param();
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::AdaptivePooling>(
@@ -723,19 +690,16 @@ private:
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::MatrixMul>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)),
-                    m_var2value.at(opr->input(1)), p.transposeA, p.transposeB,
-                    p.compute_mode, p.format);
+                    m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                    p.transposeA, p.transposeB, p.compute_mode, p.format);
             m_var2value.emplace(out, value);
-        } else if (auto batched_matmul =
-                           opr->try_cast_final<opr::BatchedMatrixMul>()) {
+        } else if (auto batched_matmul = opr->try_cast_final<opr::BatchedMatrixMul>()) {
             auto&& p = batched_matmul->param();
             auto&& out = opr->output(0);
             mlir::Value value = m_builder.create<mlir::MGB::BatchedMatrixMul>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)),
-                    m_var2value.at(opr->input(1)), p.transposeA, p.transposeB,
-                    p.compute_mode, p.format);
+                    m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                    p.transposeA, p.transposeB, p.compute_mode, p.format);
             m_var2value.emplace(out, value);
         } else if (auto reduce = opr->try_cast_final<opr::Reduce>()) {
             auto&& p = reduce->param();
@@ -743,16 +707,14 @@ private:
             auto inputs = opr->input();
             int axis = p.axis;
             if (inputs.size() > 1) {
-                CC_ASSERT(inputs.size() == 2 &&
-                          inputs[1]
-                                  ->owner_opr()
-                                  ->try_cast_final<opr::ImmutableTensor>());
-                auto imma = inputs[1]
-                                    ->owner_opr()
-                                    ->try_cast_final<opr::ImmutableTensor>();
-                CC_ASSERT(imma->host_value().dtype().enumv() ==
-                                  DTypeEnum::Int32 &&
-                          imma->host_value().layout().total_nr_elems() == 1);
+                CC_ASSERT(
+                        inputs.size() == 2 &&
+                        inputs[1]->owner_opr()->try_cast_final<opr::ImmutableTensor>());
+                auto imma =
+                        inputs[1]->owner_opr()->try_cast_final<opr::ImmutableTensor>();
+                CC_ASSERT(
+                        imma->host_value().dtype().enumv() == DTypeEnum::Int32 &&
+                        imma->host_value().layout().total_nr_elems() == 1);
                 auto shape_value = imma->host_value();
                 CC_ASSERT(inputs[0]->shape().ndim != 0);
                 auto out_shape = out->shape();
@@ -769,10 +731,9 @@ private:
                     auto inner_shape_type = tensorShapeToShapedType(
                             m_context, inner_shape, out->dtype());
 
-                    mlir::Value inner_value =
-                            m_builder.create<mlir::MGB::Reshape>(
-                                    m_builder.getUnknownLoc(), inner_shape_type,
-                                    var_array_to_value_array({inputs[0]}));
+                    mlir::Value inner_value = m_builder.create<mlir::MGB::Reshape>(
+                            m_builder.getUnknownLoc(), inner_shape_type,
+                            var_array_to_value_array({inputs[0]}));
 
                     std::vector<mlir::Value> inner_inputs;
                     inner_inputs.push_back(inner_value);
@@ -790,24 +751,22 @@ private:
             }
             mlir::Value value = m_builder.create<mlir::MGB::Reduce>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    var_array_to_value_array(inputs), p.mode, axis,
-                    p.data_type);
+                    var_array_to_value_array(inputs), p.mode, axis, p.data_type);
             m_var2value.emplace(out, value);
         } else if (auto subtensor = opr->try_cast_final<opr::Subtensor>()) {
             auto index_desc = subtensor->index_desc();
             auto&& out = subtensor->output(0);
             VarNodeArray inputs_array;
             inputs_array.push_back(opr->input(0));
-            auto desc_flag = get_subtensor_desc_and_flag(
-                    subtensor->index_desc(), inputs_array);
+            auto desc_flag =
+                    get_subtensor_desc_and_flag(subtensor->index_desc(), inputs_array);
             auto desc = std::get<0>(desc_flag);
             auto flag = std::get<1>(desc_flag);
             mlir::Value value = m_builder.create<mlir::MGB::Subtensor>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
                     var_array_to_value_array(inputs_array), desc, flag);
             m_var2value.emplace(out, value);
-        } else if (auto set_subtensor =
-                           opr->try_cast_final<opr::SetSubtensor>()) {
+        } else if (auto set_subtensor = opr->try_cast_final<opr::SetSubtensor>()) {
             auto&& out = set_subtensor->output(0);
             VarNodeArray inputs_array;
             inputs_array.push_back(opr->input(0));
@@ -828,8 +787,9 @@ private:
                     var_array_to_value_array(opr->input()), p.axis,
                     CompNode::default_cpu());
             m_var2value.emplace(out, value);
-        } else if (auto warpperspective =
-                           opr->try_cast_final<opr::WarpPerspectiveForward>()) {
+        } else if (
+                auto warpperspective =
+                        opr->try_cast_final<opr::WarpPerspectiveForward>()) {
             auto&& p = warpperspective->param();
             auto&& out = opr->output(0);
             //! if mat_id size=0 means no mat_id tensor
@@ -846,8 +806,8 @@ private:
             }
             mlir::Value value = m_builder.create<mlir::MGB::WarpPerspective>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    var_array_to_value_array(inputs_array), p.imode, p.bmode,
-                    p.format, p.border_val, mat_id);
+                    var_array_to_value_array(inputs_array), p.imode, p.bmode, p.format,
+                    p.border_val, mat_id);
             m_var2value.emplace(out, value);
         } else if (auto typecvt = opr->try_cast_final<opr::TypeCvt>()) {
             auto&& out_dtype = dtype_to_type(m_context, typecvt->param());
@@ -871,8 +831,7 @@ private:
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
                     var_array_to_value_array(opr->input()));
             m_var2value.emplace(out, value);
-        } else if (auto idx_multi =
-                           opr->try_cast_final<opr::IndexingMultiAxisVec>()) {
+        } else if (auto idx_multi = opr->try_cast_final<opr::IndexingMultiAxisVec>()) {
             auto&& out = opr->output(0);
             int slice_node_cnt = 0;
             std::vector<int> axiss;
@@ -891,10 +850,9 @@ private:
             if (slice_node_cnt == 0) {
                 auto mlir_inputs = var_array_to_value_array(opr->input());
                 sort_inputs_with_index(mlir_inputs, axiss);
-                mlir::Value value =
-                        m_builder.create<mlir::MGB::IndexingMultiAxisVec>(
-                                m_builder.getUnknownLoc(),
-                                var_to_shaped_type(out), mlir_inputs, axiss);
+                mlir::Value value = m_builder.create<mlir::MGB::IndexingMultiAxisVec>(
+                        m_builder.getUnknownLoc(), var_to_shaped_type(out), mlir_inputs,
+                        axiss);
                 m_var2value.emplace(out, value);
             } else {
                 CC_ASSERT(slice_node_cnt == opr->input().size() - 1)
@@ -917,8 +875,8 @@ private:
 
             auto values = m_builder.create<mlir::MGB::Argsort>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out_val),
-                    var_to_shaped_type(out_index),
-                    m_var2value.at(opr->input(0)), param.order);
+                    var_to_shaped_type(out_index), m_var2value.at(opr->input(0)),
+                    param.order);
             m_var2value.emplace(out_val, values.getResult(0));
             m_var2value.emplace(out_index, values.getResult(1));
         } else if (auto arg_max = opr->try_cast_final<opr::Argmax>()) {
@@ -930,15 +888,14 @@ private:
             m_var2value.emplace(out_val, value);
         } else if (auto arg_topk = opr->try_cast_final<opr::TopK>()) {
             CC_ASSERT(arg_topk->output().size() >= 2)
-                    << "only support size >= 2 , but "
-                    << arg_topk->output().size() << "\n";
+                    << "only support size >= 2 , but " << arg_topk->output().size()
+                    << "\n";
             auto k_opr = arg_topk->input(1)
                                  ->owner_opr()
                                  ->try_cast_final<opr::ImmutableTensor>();
-            CC_ASSERT(k_opr)
-                    << "k_opr must be ImmutableTensor, but "
-                    << arg_topk->input(1)->owner_opr()->dyn_typeinfo()->name
-                    << "\n";
+            CC_ASSERT(k_opr) << "k_opr must be ImmutableTensor, but "
+                             << arg_topk->input(1)->owner_opr()->dyn_typeinfo()->name
+                             << "\n";
             auto k_tensor = k_opr->host_value();
             CC_ASSERT(k_tensor.shape().total_nr_elems() == 1);
             int k = k_tensor.ptr<int>()[0];
@@ -947,8 +904,8 @@ private:
             auto param = arg_topk->param();
             auto values = m_builder.create<mlir::MGB::TopK>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out_val),
-                    var_to_shaped_type(out_index),
-                    m_var2value.at(opr->input(0)), param.mode, k);
+                    var_to_shaped_type(out_index), m_var2value.at(opr->input(0)),
+                    param.mode, k);
             m_var2value.emplace(out_val, values.getResult(0));
             m_var2value.emplace(out_index, values.getResult(1));
         } else if (auto idx_one = opr->try_cast_final<opr::IndexingOneHot>()) {
@@ -956,8 +913,8 @@ private:
             auto param = idx_one->param();
             mlir::Value value = m_builder.create<mlir::MGB::IndexingOneHot>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)),
-                    m_var2value.at(opr->input(1)), param.axis);
+                    m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                    param.axis);
             m_var2value.emplace(out, value);
         } else if (auto warp_affine = opr->try_cast_final<opr::WarpAffine>()) {
             auto&& p = warp_affine->param();
@@ -972,16 +929,14 @@ private:
                         m_builder.getUnknownLoc(),
                         var_to_shaped_type_with_shape(
                                 out, input2opr[out][0]->output()[0]->shape()),
-                        m_var2value.at(opr->input(0)),
-                        m_var2value.at(opr->input(1)), p.imode, p.border_mode,
-                        p.border_val, p.format);
+                        m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                        p.imode, p.border_mode, p.border_val, p.format);
                 m_var2value.emplace(out, value);
             } else {
                 mlir::Value value = m_builder.create<mlir::MGB::WarpAffine>(
                         m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                        m_var2value.at(opr->input(0)),
-                        m_var2value.at(opr->input(1)), p.imode, p.border_mode,
-                        p.border_val, p.format);
+                        m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
+                        p.imode, p.border_mode, p.border_val, p.format);
                 m_var2value.emplace(out, value);
             }
         } else if (auto softmax = opr->try_cast_final<opr::Softmax>()) {
@@ -990,23 +945,21 @@ private:
             auto reduce_shape = out->shape();
             auto&& inp = opr->input(0);
             int32_t axis = p.axis < 0 ? p.axis + inp->shape().ndim : p.axis;
-            CC_ASSERT(axis >= 0 &&
-                      axis < static_cast<int32_t>(inp->shape().ndim))
+            CC_ASSERT(axis >= 0 && axis < static_cast<int32_t>(inp->shape().ndim))
                     << "Softmax axis param out of input dim\n";
             reduce_shape[axis] = 1;
-            auto reduce_shape_type = tensorShapeToShapedType(
-                    m_context, reduce_shape, inp->dtype());
+            auto reduce_shape_type =
+                    tensorShapeToShapedType(m_context, reduce_shape, inp->dtype());
             mlir::Value reduce_out = m_builder.create<mlir::MGB::Reduce>(
                     m_builder.getUnknownLoc(), reduce_shape_type,
-                    m_var2value.at(opr->input(0)), opr::Reduce::Mode::MAX,
-                    axis);
+                    m_var2value.at(opr->input(0)), opr::Reduce::Mode::MAX, axis);
             std::vector<mlir::Value> sub_inps{m_var2value.at(inp), reduce_out};
             mlir::Value elemwise_sub = m_builder.create<mlir::MGB::Elemwise>(
-                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    sub_inps, opr::Elemwise::Mode::SUB);
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out), sub_inps,
+                    opr::Elemwise::Mode::SUB);
             mlir::Value elemwise_exp = m_builder.create<mlir::MGB::Elemwise>(
-                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    elemwise_sub, opr::Elemwise::Mode::EXP);
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out), elemwise_sub,
+                    opr::Elemwise::Mode::EXP);
             mlir::Value reduce_sum = m_builder.create<mlir::MGB::Reduce>(
                     m_builder.getUnknownLoc(), reduce_shape_type, elemwise_exp,
                     opr::Reduce::Mode::SUM, axis);
@@ -1015,8 +968,7 @@ private:
                     std::vector<Value>{elemwise_exp, reduce_sum},
                     opr::Elemwise::Mode::TRUE_DIV);
             m_var2value.emplace(out, out_value);
-        } else if (auto extern_opr =
-                           opr->try_cast_final<opr::ExternCOprRunner>()) {
+        } else if (auto extern_opr = opr->try_cast_final<opr::ExternCOprRunner>()) {
             auto user_datas = MGBOprLoaderImpl::get_user_datas();
             void* extra_data = MGBOprLoaderImpl::get_extra_data();
 
@@ -1026,15 +978,15 @@ private:
             }
             CC_ASSERT(_data) << "No data related to " << opr->name() << ".\n";
             std::string data(
-                    reinterpret_cast<const char*>(static_cast<char*>(_data) +
-                                                  sizeof(size_t)),
+                    reinterpret_cast<const char*>(
+                            static_cast<char*>(_data) + sizeof(size_t)),
                     *(size_t*)(_data));
             uint32_t data_len = static_cast<uint32_t>(data.size());
             if (extra_data)
-                data += std::string(reinterpret_cast<const char*>(
-                                            static_cast<char*>(extra_data) +
-                                            sizeof(size_t)),
-                                    *(size_t*)(extra_data));
+                data += std::string(
+                        reinterpret_cast<const char*>(
+                                static_cast<char*>(extra_data) + sizeof(size_t)),
+                        *(size_t*)(extra_data));
             free(_data);
 
             std::vector<mlir::Type> v_resultTypes(opr->output().size());
@@ -1047,14 +999,14 @@ private:
 
             auto values = m_builder.create<mlir::MGB::ExternOpr>(
                     m_builder.getUnknownLoc(), v_resultTypes,
-                    var_array_to_value_array(opr->input()), opr->name(), data,
-                    data_len, nr_input, nr_output);
+                    var_array_to_value_array(opr->input()), opr->name(), data, data_len,
+                    nr_input, nr_output);
             for (int i = 0; i < opr->output().size(); ++i) {
                 m_var2value.emplace(opr->output(i), values.getResult(i));
             }
         } else {
-            CC_ABORT << "unsupported mgb operator type "
-                     << opr->dyn_typeinfo()->name << "\n";
+            CC_ABORT << "unsupported mgb operator type " << opr->dyn_typeinfo()->name
+                     << "\n";
         }
     }
 
@@ -1067,8 +1019,7 @@ private:
                 auto&& iter = input_shapes.find(i.first);
                 if (iter != input_shapes.end()) {
                     LOG_DEBUG << "replace mgb H2D tensor of name " << i.first
-                              << " to shape :" << iter->second.to_string()
-                              << "\n";
+                              << " to shape :" << iter->second.to_string() << "\n";
                     i.second->resize(iter->second);
                     used_input_shape.insert(i.first);
                 }
@@ -1106,12 +1057,10 @@ private:
         return dest_vars;
     }
 
-    SymbolVarArray append_decouple_weight_pack(
-            const SymbolVarArray& dest_vars) {
+    SymbolVarArray append_decouple_weight_pack(const SymbolVarArray& dest_vars) {
         ThinHashMap<SymbolVar, SymbolVar> varmap;
         cg::DepOprIter dep([&](cg::OperatorNodeBase* opr) {
-            if (auto mdt = opr->try_cast_final<
-                           opr::MultipleDeviceTensorHolder>()) {
+            if (auto mdt = opr->try_cast_final<opr::MultipleDeviceTensorHolder>()) {
                 std::vector<SymbolVar> sdt;
                 for (auto val : mdt->mutable_values()) {
                     sdt.push_back(opr::SharedDeviceTensor::make_const(
@@ -1142,12 +1091,11 @@ private:
                 auto param = h2d->param();
                 auto host_data = h2d->host_data();
                 auto old_shape = host_data->shape();
-                auto new_shape = TensorShape({old_shape[0], old_shape[2],
-                                              old_shape[3], old_shape[1]});
+                auto new_shape = TensorShape(
+                        {old_shape[0], old_shape[2], old_shape[3], old_shape[1]});
                 std::shared_ptr<HostTensorND> host_data_new =
-                        std::make_shared<HostTensorND>(host_data->comp_node(),
-                                                       new_shape,
-                                                       host_data->dtype());
+                        std::make_shared<HostTensorND>(
+                                host_data->comp_node(), new_shape, host_data->dtype());
                 std::string old_name = h2d->name();
                 for (auto kv : tensor_map) {
                     if (kv.second == host_data) {
@@ -1155,15 +1103,13 @@ private:
                     }
                 }
                 tensor_map[old_name] = host_data_new;
-                auto h2d_opr = opr::Host2DeviceCopy::make(*h2d->owner_graph(),
-                                                          host_data_new, param,
-                                                          h2d->config());
-                varmap[h2d->output(0)] =
-                        opr::Dimshuffle::make(h2d_opr, {0, 3, 1, 2});
-                LOG_DEBUG << "add nhwc -> nchw to h2d: " << h2d->name()
-                          << ", shape " << h2d->output(0)->shape().to_string()
-                          << ", dtype " << h2d->output(0)->dtype().name()
-                          << ", out " << h2d_opr.node()->name()
+                auto h2d_opr = opr::Host2DeviceCopy::make(
+                        *h2d->owner_graph(), host_data_new, param, h2d->config());
+                varmap[h2d->output(0)] = opr::Dimshuffle::make(h2d_opr, {0, 3, 1, 2});
+                LOG_DEBUG << "add nhwc -> nchw to h2d: " << h2d->name() << ", shape "
+                          << h2d->output(0)->shape().to_string() << ", dtype "
+                          << h2d->output(0)->dtype().name() << ", out "
+                          << h2d_opr.node()->name()
                           << "::" << h2d_opr.shape().to_string()
                           << "::" << host_data->layout().to_string() << ":-_-"
                           << new_shape.to_string() << "\n";
@@ -1184,9 +1130,8 @@ private:
         cg::DepOprIter dep([&](cg::OperatorNodeBase* opr) {
             if (auto h2d = opr->try_cast_final<opr::Host2DeviceCopy>()) {
                 auto param = h2d->param();
-                auto h2d_opr = opr::Host2DeviceCopy::make(*h2d->owner_graph(),
-                                                          h2d->host_data(),
-                                                          param, h2d->config());
+                auto h2d_opr = opr::Host2DeviceCopy::make(
+                        *h2d->owner_graph(), h2d->host_data(), param, h2d->config());
 
                 varmap[h2d->output(0)] =
                         opr::Reshape::make(h2d_opr, h2d->output(0)->shape());
@@ -1206,8 +1151,8 @@ private:
         return dest_vars;
     }
 
-    void assume_input_n_c(std::vector<TensorShape>& input_tensorshape,
-                          int& hint_n, int& hint_c) {
+    void assume_input_n_c(
+            std::vector<TensorShape>& input_tensorshape, int& hint_n, int& hint_c) {
         for (auto& shape : input_tensorshape) {
             if (shape.ndim == 4) {
                 hint_n = shape[0];
@@ -1227,41 +1172,38 @@ private:
         ThinHashMap<SymbolVar, SymbolVar> varmap;
         cg::DepOprIter dep([&](cg::OperatorNodeBase* opr) {
             if (auto wa = opr->try_cast_final<opr::WarpAffine>()) {
-                if (auto imma =
-                            wa->input()[2]
-                                    ->owner_opr()
-                                    ->try_cast_final<opr::ImmutableTensor>()) {
+                if (auto imma = wa->input()[2]
+                                        ->owner_opr()
+                                        ->try_cast_final<opr::ImmutableTensor>()) {
                     auto param = wa->param();
                     auto wa_opr = opr::WarpAffineForward::make(
-                            wa->input()[0], wa->input()[1], wa->input()[2],
-                            param, wa->config());
+                            wa->input()[0], wa->input()[1], wa->input()[2], param,
+                            wa->config());
                     auto host_val = imma->host_value();
                     CC_ASSERT(host_val.layout().total_nr_elems() == 2);
                     auto hw_shape_ptr = host_val.ptr<int32_t>();
                     int hint_n, hint_c;
                     assume_input_n_c(input_tensorshape, hint_n, hint_c);
                     TensorShape dst_shape;
-                    if (wa->param().format ==
-                        opr::WarpAffine::Param::Format::NHWC) {
-                        dst_shape = {(size_t)hint_n, (size_t)hw_shape_ptr[0],
-                                     (size_t)hw_shape_ptr[1], (size_t)hint_c};
+                    if (wa->param().format == opr::WarpAffine::Param::Format::NHWC) {
+                        dst_shape = {
+                                (size_t)hint_n, (size_t)hw_shape_ptr[0],
+                                (size_t)hw_shape_ptr[1], (size_t)hint_c};
                     } else {
-                        CC_ASSERT(wa->param().format ==
-                                  opr::WarpAffine::Param::Format::NCHW);
-                        dst_shape = {(size_t)hint_n, (size_t)hint_c,
-                                     (size_t)hw_shape_ptr[0],
-                                     (size_t)hw_shape_ptr[1]};
+                        CC_ASSERT(
+                                wa->param().format ==
+                                opr::WarpAffine::Param::Format::NCHW);
+                        dst_shape = {
+                                (size_t)hint_n, (size_t)hint_c, (size_t)hw_shape_ptr[0],
+                                (size_t)hw_shape_ptr[1]};
                     }
 
-                    LOG_WARN << "force warpaffine shape to " << hint_n
-                             << ", x, x, " << hint_c << ", this maybe a bug\n";
-                    varmap[wa->output(0)] =
-                            opr::Reshape::make(wa_opr, dst_shape);
-                    LOG_DEBUG << "add reshape to h2d: " << wa->name()
-                              << ", shape "
-                              << wa->output(0)->shape().to_string()
-                              << ", dtype " << wa->output(0)->dtype().name()
-                              << "\n";
+                    LOG_WARN << "force warpaffine shape to " << hint_n << ", x, x, "
+                             << hint_c << ", this maybe a bug\n";
+                    varmap[wa->output(0)] = opr::Reshape::make(wa_opr, dst_shape);
+                    LOG_DEBUG << "add reshape to h2d: " << wa->name() << ", shape "
+                              << wa->output(0)->shape().to_string() << ", dtype "
+                              << wa->output(0)->dtype().name() << "\n";
                 }
             }
         });
@@ -1300,8 +1242,7 @@ private:
     void process_graph(Options options) {
         OpBuilder::InsertionGuard _(m_builder);
         bool use_default_input_map = options.input_map_vec.empty();
-        size_t nr_input =
-                use_default_input_map ? 1 : options.input_map_vec.size();
+        size_t nr_input = use_default_input_map ? 1 : options.input_map_vec.size();
 
         for (size_t idx = 0; idx < nr_input; ++idx) {
             auto graph = m_loader->load(m_load_config, true);
@@ -1309,19 +1250,16 @@ private:
                 std::map<std::string, megdnn::TensorShape> default_input_map;
                 replace_h2d_in_new_shape(graph.tensor_map, default_input_map);
             } else {
-                replace_h2d_in_new_shape(graph.tensor_map,
-                                         options.input_map_vec[idx]);
+                replace_h2d_in_new_shape(graph.tensor_map, options.input_map_vec[idx]);
             }
             SymbolVarArray output_vars = graph.output_var_list;
             std::vector<TensorShape> input_tensorshape;
             output_vars = append_decouple_weight_pack(output_vars);
             output_vars = disable_h2d_mem_fwd(output_vars);
             output_vars = append_reshape_to_h2d(output_vars, input_tensorshape);
-            output_vars = append_reshape_to_warpaffine(output_vars,
-                                                       input_tensorshape);
+            output_vars = append_reshape_to_warpaffine(output_vars, input_tensorshape);
             if (options.add_nhwc2nchw_to_input) {
-                output_vars =
-                        append_nhwc2nchw_to_h2d(output_vars, graph.tensor_map);
+                output_vars = append_nhwc2nchw_to_h2d(output_vars, graph.tensor_map);
             }
 
             auto cg = output_vars[0].node()->owner_graph();
@@ -1380,8 +1318,7 @@ private:
                         break;
                     }
                 }
-                func.setArgAttr(i, "mgb.func_arg_name",
-                                m_builder.getStringAttr(name));
+                func.setArgAttr(i, "mgb.func_arg_name", m_builder.getStringAttr(name));
             }
             std::unordered_map<VarNode*, std::vector<cg::OperatorNodeBase*>>
                     varnode_to_used_opr;
@@ -1392,8 +1329,9 @@ private:
                 return true;
             });
             cg::ComputeDepOprIter dep(
-                    std::bind(&Importer::on_opr, this, std::placeholders::_1,
-                              std::placeholders::_2, idx),
+                    std::bind(
+                            &Importer::on_opr, this, std::placeholders::_1,
+                            std::placeholders::_2, idx),
                     varnode_to_used_opr);
             seq->iter_opr_seq([&](cg::OperatorNodeBase* op) {
                 dep.iter(op);
@@ -1409,8 +1347,8 @@ private:
                         break;
                     }
                 }
-                func.setResultAttr(i, "mgb.func_result_name",
-                                   m_builder.getStringAttr(name));
+                func.setResultAttr(
+                        i, "mgb.func_result_name", m_builder.getStringAttr(name));
                 results.push_back(m_var2value.at(outputs[i].node()));
             }
             m_builder.create<ReturnOp>(m_builder.getUnknownLoc(), results);
@@ -1433,16 +1371,17 @@ mlir::LogicalResult removeUnusedParam(mlir::ModuleOp module) {
     return pm.run(module);
 }
 }  // namespace
-mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
-                               MGBImporterOptions options, int hako_ver) {
+mlir::LogicalResult import_mgb(
+        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options,
+        int hako_ver) {
     LOG_DEBUG << "\n\t\t\t Begin Import MBG \t\t\t\n";
     LOG_DEBUG << "load model from " << model_path
               << " with Options:\n\tuse_static_memory_plan="
               << options.use_static_memory_plan
               << "\n\toptimize_for_inference=" << options.optimize_for_inference
               << "\n\tuse_naive_memory_plan=" << options.use_naive_memory_plan
-              << "\n\tgraph_opt_level="
-              << static_cast<int>(options.graph_opt_level) << "\n";
+              << "\n\tgraph_opt_level=" << static_cast<int>(options.graph_opt_level)
+              << "\n";
     Importer imp(module);
     auto result = imp.import_mgb(model_path, options, hako_ver);
     LOG_DEBUG << "\t\t\t End Import MBG \t\t\t\n\n";
@@ -1451,8 +1390,8 @@ mlir::LogicalResult import_mgb(mlir::ModuleOp module, std::string model_path,
     return removeUnusedParam(module);
 }
 
-mlir::LogicalResult parseInputShapes(std::string s,
-                                     mlir::MGB::MGBImporterOptions& options) {
+mlir::LogicalResult parseInputShapes(
+        std::string s, mlir::MGB::MGBImporterOptions& options) {
     if (s.empty())
         return mlir::success();
     llvm::SmallVector<llvm::StringRef> shapes_group;
@@ -1471,11 +1410,9 @@ mlir::LogicalResult parseInputShapes(std::string s,
                 return mlir::failure();
             }
             llvm::SmallVector<llvm::StringRef> dims;
-            llvm::SplitString(shapeString.drop_front(1).drop_back(1), dims,
-                              ", ");
+            llvm::SplitString(shapeString.drop_front(1).drop_back(1), dims, ", ");
             if (dims.empty() || dims.size() > megdnn::TensorShape::MAX_NDIM) {
-                llvm::errs()
-                        << "invalid dnn tensor shape " << shapeString << "\n";
+                llvm::errs() << "invalid dnn tensor shape " << shapeString << "\n";
                 return mlir::failure();
             }
             megdnn::TensorShape tshape;

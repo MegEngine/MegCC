@@ -7,13 +7,13 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "WinogradF23Strategy4x16MK4.h"
 #include <string>
 #include "Arm/Arm64/Activation.h"
 #include "Arm/Arm64/ConvKernel.h"
-#include "Utils/StringTemplate.h"
-#include "WinogradF23Strategy4x16MK4.h"
-#include "compiler/KernelGen/KernelGen.h"
 #include "Arm/Arm64/InternalKernel/InternalKernel.h"
+#include "Utils/StringTemplate.h"
+#include "compiler/KernelGen/KernelGen.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -78,17 +78,15 @@ std::string WinogradF23Strategy4x16MK4::WeightTrans(
             //! auto wd##n##1 = tmp0 + tmp1;
             //! auto wd##n##2 = tmp0 - tmp1;
             //! auto wd##n##3 = g##2##n;
-            ss << "float32x4_t " << dst << i << "0 = " << src << "0" << i
-               << ";\n";
-            ss << tmp0 << " = vmulq_n_f32(vaddq_f32(" << src << "0" << i << ", "
-               << src << "2" << i << "), 0.5f);\n";
+            ss << "float32x4_t " << dst << i << "0 = " << src << "0" << i << ";\n";
+            ss << tmp0 << " = vmulq_n_f32(vaddq_f32(" << src << "0" << i << ", " << src
+               << "2" << i << "), 0.5f);\n";
             ss << tmp1 << " = vmulq_n_f32(" << src << "1" << i << ", 0.5f);\n";
-            ss << "float32x4_t " << dst << i << "1 = vaddq_f32(" << tmp0 << ", "
-               << tmp1 << ");\n";
-            ss << "float32x4_t " << dst << i << "2 = vsubq_f32(" << tmp0 << ", "
-               << tmp1 << ");\n";
-            ss << "float32x4_t " << dst << i << "3 = " << src << "2" << i
-               << ";\n";
+            ss << "float32x4_t " << dst << i << "1 = vaddq_f32(" << tmp0 << ", " << tmp1
+               << ");\n";
+            ss << "float32x4_t " << dst << i << "2 = vsubq_f32(" << tmp0 << ", " << tmp1
+               << ");\n";
+            ss << "float32x4_t " << dst << i << "3 = " << src << "2" << i << ";\n";
         }
         return ss.str();
     };
@@ -267,7 +265,7 @@ std::string WinogradF23Strategy4x16MK4::InputFeatureTrans(
     return ss.str();
 }
 
-std::string WinogradF23Strategy4x16MK4::DependMatmulSymbol(){
+std::string WinogradF23Strategy4x16MK4::DependMatmulSymbol() {
     return MatmulM4N16MK4Kernel().GetKernelSymbol(nullptr);
 }
 
@@ -289,8 +287,7 @@ std::string WinogradF23Strategy4x16MK4::BatchedMatMul(
 
     std::stringstream ss;
     ss << StringTemplate::StringTemplateArgs()
-                    .add("MatMul",
-                        DependMatmulSymbol())
+                    .add("MatMul", DependMatmulSymbol())
                     .add("A_ptr", strs[0])
                     .add("LDA", strs[1])
                     .add("B_ptr", strs[2])
@@ -400,9 +397,8 @@ std::string WinogradF23Strategy4x16MK4::OutputFeatureTrans(
 #undef STORE
         }
     })";
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto nonline_gen = create_activation_gener_instrinsic(nonline_mode);
     auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
         return nonline_gen->GenIntrinsicFloat(str[0], str[1]);

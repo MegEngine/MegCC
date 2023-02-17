@@ -6,9 +6,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "Matmul.h"
 #include "CodeGenUtil.h"
 #include "GlobalCtx.h"
-#include "Matmul.h"
 
 #include "compiler/CodeGen/CodeGen.h"
 #include "compiler/Common/Logger.h"
@@ -68,9 +68,9 @@ std::string MatmulKernel::GetKernelSymbol(TContext* context) const {
     return ss.str();
 }
 
-void MatmulKernel::CreateCompute(Block* entryBlock, mlir::OpBuilder& op_builder,
-                                 mlir::MLIRContext* ctx,
-                                 TContext* context) const {
+void MatmulKernel::CreateCompute(
+        Block* entryBlock, mlir::OpBuilder& op_builder, mlir::MLIRContext* ctx,
+        TContext* context) const {
     Value input_a = entryBlock->getArgument(0);
     Value input_b = entryBlock->getArgument(1);
     Value output_c = entryBlock->getArgument(2);
@@ -81,14 +81,14 @@ void MatmulKernel::CreateCompute(Block* entryBlock, mlir::OpBuilder& op_builder,
     inputs_val.push_back(input_b);
     outputs_val.push_back(output_c);
 
-    op_builder.create<linalg::MatmulOp>(op_builder.getUnknownLoc(), inputs_val,
-                                        outputs_val);
+    op_builder.create<linalg::MatmulOp>(
+            op_builder.getUnknownLoc(), inputs_val, outputs_val);
     std::vector<Value> results;
     op_builder.create<ReturnOp>(op_builder.getUnknownLoc(), results);
 }
 
-void MatmulKernel::CreatePass(mlir::PassManager& pm, mlir::MLIRContext* ctx,
-                              TContext* context) const {
+void MatmulKernel::CreatePass(
+        mlir::PassManager& pm, mlir::MLIRContext* ctx, TContext* context) const {
     tosa::addTosaToLinalgPasses(pm);
     //! used to do complex math with some simple operations
     pm.addNestedPass<FuncOp>(arith::createArithmeticExpandOpsPass());

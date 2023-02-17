@@ -28,17 +28,16 @@
 
 using namespace mlir;
 using namespace llvm;
-cl::opt<std::string> InputFile(cl::Positional, cl::Required,
-                               cl::desc("<input mgb model>"));
+cl::opt<std::string> InputFile(
+        cl::Positional, cl::Required, cl::desc("<input mgb model>"));
 
-cl::opt<std::string> FindSym(cl::Positional, cl::Required,
-                             cl::desc("<input sym>"));
+cl::opt<std::string> FindSym(cl::Positional, cl::Required, cl::desc("<input sym>"));
 
-cl::opt<std::string> OutputFile(cl::NormalFormatting, cl::Optional,
-                                cl::desc("<output file path, default>"));
+cl::opt<std::string> OutputFile(
+        cl::NormalFormatting, cl::Optional, cl::desc("<output file path, default>"));
 
-static OwningOpRef<ModuleOp> parseMLIRInput(StringRef inputFilename,
-                                            MLIRContext* context) {
+static OwningOpRef<ModuleOp> parseMLIRInput(
+        StringRef inputFilename, MLIRContext* context) {
     // Set up the input file.
     std::string errorMessage;
     auto file = openInputFile(inputFilename, &errorMessage);
@@ -64,8 +63,7 @@ int main(int argc, char** argv) {
     std::vector<std::string> libs;
     auto&& mb_engine = mlir::ExecutionEngine::create(
             *module, nullptr, opt_pipeline, llvm::None,
-            std::vector<llvm::StringRef>(libs.begin(), libs.end()), true,
-            false);
+            std::vector<llvm::StringRef>(libs.begin(), libs.end()), true, false);
 
     assert(mb_engine && "Error can't create engine\n");
     std::unique_ptr<mlir::ExecutionEngine> my_engine = std::move(*mb_engine);
@@ -75,9 +73,8 @@ int main(int argc, char** argv) {
         assert(lkup_rst && "lkup_rst ");
     }
 
-    std::string dump_obj_file = OutputFile.getValue().size() > 0
-                                        ? OutputFile.getValue()
-                                        : "./dump_mlir.o";
+    std::string dump_obj_file =
+            OutputFile.getValue().size() > 0 ? OutputFile.getValue() : "./dump_mlir.o";
     my_engine->dumpToObjectFile(dump_obj_file);
     return 0;
 }

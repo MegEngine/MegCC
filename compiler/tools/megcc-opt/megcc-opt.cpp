@@ -37,10 +37,10 @@ int main(int argc, char** argv) {
 
     bufferization::registerBufferizationPasses();
     DialectRegistry registry;
-    registry.insert<StandardOpsDialect, memref::MemRefDialect, MGB::MGBDialect,
-                    bufferization::BufferizationDialect,
-                    Kernel::KernelDialect>();
-    return failed(MlirOptMain(argc, argv, "MLIR modular optimizer driver\n",
-                              registry,
-                              /*preloadDialectsInContext=*/false));
+    registry
+            .insert<StandardOpsDialect, memref::MemRefDialect, MGB::MGBDialect,
+                    bufferization::BufferizationDialect, Kernel::KernelDialect>();
+    return failed(MlirOptMain(
+            argc, argv, "MLIR modular optimizer driver\n", registry,
+            /*preloadDialectsInContext=*/false));
 }

@@ -18,8 +18,7 @@ public:
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 };
 
 class Fp32MatMulM4N8K4 : public GIKernelFunc {
@@ -27,8 +26,7 @@ public:
     bool IsAvailable(TContext* context) const override;
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 };
 
 class Fp32GevmKernel : public KernelFunc {
@@ -59,8 +57,7 @@ public:
     bool IsAvailable(TContext* context) const override;
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* ctx) const override {
         return GetWorkspaceBodyCondition(ctx, false);
     }

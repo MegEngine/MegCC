@@ -24,8 +24,7 @@ TEST(INSTRUCTION, Reshape) {
     }
     auto src_tensor = create_tensor({3, 3, 3}, TinyNN_FLOAT, data.data());
 
-    auto create_reshape = [&](Tensor* shape_tensor,
-                              std::vector<Tensor*>& inputs) {
+    auto create_reshape = [&](Tensor* shape_tensor, std::vector<Tensor*>& inputs) {
         auto reshape = std::make_shared<Reshape>();
         inputs.push_back(src_tensor.get());
         inputs.push_back(shape_tensor);

@@ -29,7 +29,6 @@
 #define TA_VERSION "1.0"
 
 /* The gpd.ta.description property */
-#define TA_DESCRIPTION \
-    "Example of OP-TEE MegCC inference World Trusted Application"
+#define TA_DESCRIPTION "Example of OP-TEE MegCC inference World Trusted Application"
 
 #endif /* USER_TA_HEADER_DEFINES_H */

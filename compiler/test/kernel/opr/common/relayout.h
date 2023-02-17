@@ -155,8 +155,7 @@ std::vector<std::pair<TensorLayout, TensorLayout>> get_relyout_common_case(
     check_args.push_back({src, dst});
     check_args.push_back({dst, src});
 
-    check_args.push_back(
-            transpose_calc({1, 7, 2, 3, 4}, {4, 0, 2, 1, 3}, dtype));
+    check_args.push_back(transpose_calc({1, 7, 2, 3, 4}, {4, 0, 2, 1, 3}, dtype));
 
     // nchw->nhwc
     src = {{1, 32, 32, 32}, {32768, 32, 1, 1024}, dtype};

@@ -19,6 +19,5 @@ using namespace mlir;
 
 int main(int argc, char** argv) {
     registerToLLVMIRTranslation();
-    return failed(
-            mlirTranslateMain(argc, argv, "MLIR Translation Testing Tool"));
+    return failed(mlirTranslateMain(argc, argv, "MLIR Translation Testing Tool"));
 }

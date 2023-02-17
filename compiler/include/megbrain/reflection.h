@@ -29,14 +29,14 @@ struct BitCombinedEnumTrait : public std::false_type {};
 
 }  // namespace detail
 
-template <typename Enum,
-          std::enable_if_t<detail::EnumTrait<Enum>::value, int> = 0>
+template <typename Enum, std::enable_if_t<detail::EnumTrait<Enum>::value, int> = 0>
 std::string nameOfEnumValue(Enum value) {
     return detail::EnumTrait<Enum>::nameof(value);
 }
 
-template <typename Enum,
-          std::enable_if_t<detail::BitCombinedEnumTrait<Enum>::value, int> = 0>
+template <
+        typename Enum,
+        std::enable_if_t<detail::BitCombinedEnumTrait<Enum>::value, int> = 0>
 std::vector<std::string> nameOfEnumValue(Enum value) {
     return detail::BitCombinedEnumTrait<Enum>::nameof(value);
 }

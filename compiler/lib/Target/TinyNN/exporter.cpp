@@ -34,13 +34,12 @@ ushort float_to_half(const float x) {
     const uint b = as_uint(x) + 0x00001000;  // round-to-nearest-even: add last
                                              // bit after truncated mantissa
     const uint e = (b & 0x7F800000) >> 23;   // exponent
-    const uint m = b & 0x007FFFFF;  // mantissa; in line below: 0x007FF000 =
+    const uint m = b & 0x007FFFFF;           // mantissa; in line below: 0x007FF000 =
                                     // 0x00800000-0x00001000 = decimal indicator
                                     // flag - initial rounding
     return (b & 0x80000000) >> 16 |
            (e > 112) * ((((e - 112) << 10) & 0x7C00) | m >> 13) |
-           ((e < 113) & (e > 101)) *
-                   ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) |
+           ((e < 113) & (e > 101)) * ((((0x007FF000 + m) >> (125 - e)) + 1) >> 1) |
            (e > 143) * 0x7FFF;  // sign : normalized : denormalized : saturate
 }
 
@@ -52,8 +51,9 @@ class Exporter {
 public:
     Exporter(ModuleOp top_module) : m_root(top_module) {}
 
-    void save_model(std::string model_path, KernelExporter& kernel_exporter,
-                    const bool save_model, bool weight_compress) {
+    void save_model(
+            std::string model_path, KernelExporter& kernel_exporter,
+            const bool save_model, bool weight_compress) {
         symbol2weight_id.clear();
 
         std::vector<Offset<MegCC::Weight>> weights;
@@ -65,28 +65,27 @@ public:
                         weights.push_back(attr_to_weight(
                                 op.value(), op.sym_name(), op.user_count(),
                                 weight_compress));
-                        symbol2weight_id[op.sym_name().str()] =
-                                weights.size() - 1;
+                        symbol2weight_id[op.sym_name().str()] = weights.size() - 1;
                     })
                     .Case([&](Kernel::RawCodeKernelDef op) {
                         if (!op.internal_call()) {
                             kernel_exporter.addKernel(
                                     op.sym_name(), op.signature(), op.body(),
                                     op.guard_begin(), op.guard_end());
-                            LOG_DEBUG << "Gen Kernel name: "
-                                      << op.sym_name().str() << " id: "
+                            LOG_DEBUG << "Gen Kernel name: " << op.sym_name().str()
+                                      << " id: "
                                       << kernel_exporter.get_kernel_id(
                                                  op.sym_name().str())
                                       << "\n";
                             kernel_exporter.addInitFunc(
                                     op.init_sym_name(), op.init_signature(),
-                                    op.init_body(), op.sym_name(),
-                                    op.guard_begin(), op.guard_end());
-                            LOG_DEBUG << "Gen Init Kernel name: "
-                                      << op.init_sym_name().str() << " id: "
-                                      << kernel_exporter.get_init_id(
-                                                 op.sym_name().str())
-                                      << "\n";
+                                    op.init_body(), op.sym_name(), op.guard_begin(),
+                                    op.guard_end());
+                            LOG_DEBUG
+                                    << "Gen Init Kernel name: "
+                                    << op.init_sym_name().str() << " id: "
+                                    << kernel_exporter.get_init_id(op.sym_name().str())
+                                    << "\n";
                             if (op.deduce_sym_name().size() > 0) {
                                 kernel_exporter.addDeduceShapeKernel(
                                         op.deduce_sym_name(), op.deduce_sig(),
@@ -131,9 +130,10 @@ public:
         llvm::raw_fd_stream model_file(model_path, EC);
         LOG_DEBUG << "open tiny model_file " << EC.message()
                   << ", size = " << m_fbs_builder.GetSize() << "\n";
-        model_file.write(static_cast<char*>(static_cast<void*>(
-                                 m_fbs_builder.GetBufferPointer())),
-                         m_fbs_builder.GetSize());
+        model_file.write(
+                static_cast<char*>(
+                        static_cast<void*>(m_fbs_builder.GetBufferPointer())),
+                m_fbs_builder.GetSize());
         llvm::raw_fd_stream model_file_meta(model_path + ".txt", EC);
         model_file_meta << "[";
         for (size_t i = 0; i < model_meta_info.size(); ++i) {
@@ -194,26 +194,24 @@ public:
             } else {
                 CC_ABORT << "invalid type of mem plan\n";
             }
-            value2typed_tensor.emplace(value.getAsOpaquePointer(),
-                                       std::make_pair(MegCC::TensorType_TENSOR,
-                                                      tensors.size() - 1));
+            value2typed_tensor.emplace(
+                    value.getAsOpaquePointer(),
+                    std::make_pair(MegCC::TensorType_TENSOR, tensors.size() - 1));
             return tensors.size() - 1;
         };
         std::vector<std::string> model_info_vec;
         for (size_t i = 0; i < func.getNumArguments(); ++i) {
             auto value = func.getArgument(i);
-            auto name =
-                    func.getArgAttrOfType<StringAttr>(i, "mgb.func_arg_name")
-                            .getValue()
-                            .str();
+            auto name = func.getArgAttrOfType<StringAttr>(i, "mgb.func_arg_name")
+                                .getValue()
+                                .str();
             if (name == "kGlobalBuffer") {
                 // global buffer used for static memory planning
                 auto memref = value.getType().dyn_cast<MemRefType>();
                 CC_ASSERT(memref.getElementTypeBitWidth() == 8);
                 tensor_memory = memref.getNumElements();
             } else {
-                if (!value2name.emplace(value.getAsOpaquePointer(), name)
-                             .second) {
+                if (!value2name.emplace(value.getAsOpaquePointer(), name).second) {
                     CC_ABORT << "duplicate input buffer\n";
                 }
                 LOG_DEBUG << "Get TinyNN model input name: " << name << "\n";
@@ -248,12 +246,10 @@ public:
                                             i, "mgb.func_result_name")
                                         .getValue()
                                         .str();
-                    if (!value2name.emplace(value.getAsOpaquePointer(), name)
-                                 .second) {
+                    if (!value2name.emplace(value.getAsOpaquePointer(), name).second) {
                         CC_ABORT << "duplicate output buffer\n";
                     }
-                    LOG_DEBUG << "Get TinyNN model output name: " << name
-                              << "\n";
+                    LOG_DEBUG << "Get TinyNN model output name: " << name << "\n";
                 }
                 break;
             }
@@ -263,11 +259,10 @@ public:
             llvm::TypeSwitch<Operation*>(&_)
                     .Case([&](memref::AllocOp op) {
                         size_t allocated = createTensor(op->getResult(0));
-                        instructions_type.push_back(
-                                MegCC::Instruction_DevMemAlloc);
-                        instructions.push_back(MegCC::CreateDevMemAlloc(
-                                                       m_fbs_builder, allocated)
-                                                       .Union());
+                        instructions_type.push_back(MegCC::Instruction_DevMemAlloc);
+                        instructions.push_back(
+                                MegCC::CreateDevMemAlloc(m_fbs_builder, allocated)
+                                        .Union());
                         LOG_DEBUG << "Add DevMemAlloc instruction.\n";
                     })
                     .Case([&](memref::DeallocOp op) {
@@ -277,8 +272,7 @@ public:
                             CC_ABORT << "apply Free on non-Tensor\n";
                         }
                         int32_t to_free = tensor.second;
-                        instructions_type.push_back(
-                                MegCC::Instruction_DevMemFree);
+                        instructions_type.push_back(MegCC::Instruction_DevMemFree);
                         instructions.push_back(
                                 MegCC::CreateDevMemFree(m_fbs_builder, to_free)
                                         .Union());
@@ -296,14 +290,14 @@ public:
 
                         std::vector<int32_t> input_tensors, output_tensors;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                         }
 
                         for (auto&& i : op.results()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             output_tensors.push_back(tensor.second);
                         }
 
@@ -312,23 +306,17 @@ public:
                         uint32_t data_len = op.data_len();
 
                         LOG_DEBUG << "Add ExternOpr instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_ExternOpr);
+                        instructions_type.push_back(MegCC::Instruction_ExternOpr);
                         instructions.push_back(
                                 MegCC::CreateExternOpr(
                                         m_fbs_builder,
-                                        m_fbs_builder.CreateVector(
-                                                input_tensors),
+                                        m_fbs_builder.CreateVector(input_tensors),
                                         m_fbs_builder.CreateString(name),
-                                        m_fbs_builder.CreateString(data),
-                                        data_len,
-                                        m_fbs_builder.CreateVector(
-                                                output_tensors))
+                                        m_fbs_builder.CreateString(data), data_len,
+                                        m_fbs_builder.CreateVector(output_tensors))
                                         .Union());
                     })
-                    .Case([&](Kernel::MemPlan op) {
-                        createTensor(op->getResult(0));
-                    })
+                    .Case([&](Kernel::MemPlan op) { createTensor(op->getResult(0)); })
                     .Case([&](Kernel::DynamicAlloc op) {
                         createTensor(op->getResult(0));
                     })
@@ -337,8 +325,8 @@ public:
                         std::vector<int8_t> input_types;
                         std::vector<int32_t> output_tensors;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
@@ -347,45 +335,40 @@ public:
                                         "tensor  and tensor type\n";
                         }
                         for (auto&& i : op.results()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             if (tensor.first != MegCC::TensorType_TENSOR) {
                                 CC_ABORT << "operator output must be "
                                             "Tensor\n";
                             }
                             output_tensors.push_back(tensor.second);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
                         auto output_tensors_ =
                                 m_fbs_builder.CreateVector(output_tensors);
-                        auto workspace_ = value_to_workspace(op.workspace(),
-                                                             op.callee().str());
-                        auto type_ =
-                                m_fbs_builder.CreateString(op.callee().str());
+                        auto workspace_ =
+                                value_to_workspace(op.workspace(), op.callee().str());
+                        auto type_ = m_fbs_builder.CreateString(op.callee().str());
                         MegCC::OprBuilder opr_builder(m_fbs_builder);
                         opr_builder.add_inputs(input_tensors_);
                         opr_builder.add_input_types(input_types_);
                         opr_builder.add_outputs(output_tensors_);
-                        opr_builder.add_kernel_id(kernel_exporter.get_kernel_id(
-                                op.callee().str()));
+                        opr_builder.add_kernel_id(
+                                kernel_exporter.get_kernel_id(op.callee().str()));
                         opr_builder.add_init_id(
                                 kernel_exporter.get_init_id(op.callee().str()));
                         if (op.dynamic_shape()) {
                             opr_builder.add_deduce_id(
-                                    kernel_exporter.get_deduce_id(
-                                            op.callee().str()));
+                                    kernel_exporter.get_deduce_id(op.callee().str()));
                         }
                         opr_builder.add_workspace(workspace_);
                         opr_builder.add_type(type_);
 
-                        LOG_DEBUG << "Add Opr to Call Kernel: "
-                                  << op.callee().str() << " inputs id is "
-                                  << input_tensors << " inputs type is "
-                                  << input_types << " output id is "
-                                  << output_tensors << "\n";
+                        LOG_DEBUG << "Add Opr to Call Kernel: " << op.callee().str()
+                                  << " inputs id is " << input_tensors
+                                  << " inputs type is " << input_types
+                                  << " output id is " << output_tensors << "\n";
                         instructions_type.push_back(MegCC::Instruction_Opr);
                         instructions.push_back(opr_builder.Finish().Union());
                     })
@@ -398,14 +381,13 @@ public:
                                         "applied on weight\n";
                         }
                         LOG_DEBUG << "Add MemForward instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_MemForward);
-                        instructions.push_back(
-                                MegCC::CreateMemForward(
-                                        m_fbs_builder, typed_tensor.second,
-                                        createTensor(op), 0,
-                                        MegCC::MemForwardType_RESHAPE)
-                                        .Union());
+                        instructions_type.push_back(MegCC::Instruction_MemForward);
+                        instructions.push_back(MegCC::CreateMemForward(
+                                                       m_fbs_builder,
+                                                       typed_tensor.second,
+                                                       createTensor(op), 0,
+                                                       MegCC::MemForwardType_RESHAPE)
+                                                       .Union());
                     })
                     .Case([&](Kernel::Subtensor op) {
                         kernel_exporter.addInst("MEMFORWARD");
@@ -415,27 +397,24 @@ public:
                             CC_ABORT << "Subtensor instruction cannot be "
                                         "applied on weight\n";
                         }
-                        auto input_memref =
-                                op.input().getType().dyn_cast<MemRefType>();
+                        auto input_memref = op.input().getType().dyn_cast<MemRefType>();
                         auto memref = op.getType().dyn_cast<MemRefType>();
                         int64_t offset_in, offset_out;
                         llvm::SmallVector<int64_t> stride_in, stride_out;
-                        if (failed(getStridesAndOffset(input_memref, stride_in,
-                                                       offset_in))) {
+                        if (failed(getStridesAndOffset(
+                                    input_memref, stride_in, offset_in))) {
                             CC_ABORT << "get offset failed\n";
                         }
-                        if (failed(getStridesAndOffset(memref, stride_out,
-                                                       offset_out))) {
+                        if (failed(getStridesAndOffset(
+                                    memref, stride_out, offset_out))) {
                             CC_ABORT << "get offset failed\n";
                         }
                         LOG_DEBUG << "Add MemForward instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_MemForward);
+                        instructions_type.push_back(MegCC::Instruction_MemForward);
                         instructions.push_back(
                                 MegCC::CreateMemForward(
                                         m_fbs_builder, typed_tensor.second,
-                                        createTensor(op),
-                                        offset_out - offset_in,
+                                        createTensor(op), offset_out - offset_in,
                                         MegCC::MemForwardType_SUBTENSOR)
                                         .Union());
                     })
@@ -445,22 +424,22 @@ public:
                         std::vector<int8_t> input_types;
                         int32_t output_tensor;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto&& tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto&& tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         if (tensor.first != MegCC::TensorType_TENSOR) {
                             CC_ABORT << "operator output must be "
                                         "Tensor\n";
                         }
                         output_tensor = tensor.second;
-                        auto descs = llvm::to_vector<4>(
-                                op.descs().getAsRange<ArrayAttr>());
-                        auto flags = llvm::to_vector<4>(
-                                op.flags().getAsRange<ArrayAttr>());
+                        auto descs =
+                                llvm::to_vector<4>(op.descs().getAsRange<ArrayAttr>());
+                        auto flags =
+                                llvm::to_vector<4>(op.flags().getAsRange<ArrayAttr>());
                         std::vector<Offset<MegCC::IndexDesc>> descs_;
                         std::vector<Offset<MegCC::IndexDesc>> flags_;
                         for (size_t idx = 0; idx < descs.size(); idx++) {
@@ -468,15 +447,12 @@ public:
                             flags_.push_back(indexdesc_to_fbs(flags[idx]));
                         }
 
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
                         auto descs_fbs = m_fbs_builder.CreateVector(descs_);
                         auto flags_fbs = m_fbs_builder.CreateVector(flags_);
 
-                        MegCC::SubTensorBuilder subtensor_builder(
-                                m_fbs_builder);
+                        MegCC::SubTensorBuilder subtensor_builder(m_fbs_builder);
                         subtensor_builder.add_inputs(input_tensors_);
                         subtensor_builder.add_input_types(input_types_);
                         subtensor_builder.add_output(output_tensor);
@@ -484,10 +460,8 @@ public:
                         subtensor_builder.add_flags(flags_fbs);
 
                         LOG_DEBUG << "Add subtensor instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_SubTensor);
-                        instructions.push_back(
-                                subtensor_builder.Finish().Union());
+                        instructions_type.push_back(MegCC::Instruction_SubTensor);
+                        instructions.push_back(subtensor_builder.Finish().Union());
                     })
                     .Case([&](Kernel::SetSubtensorIns op) {
                         kernel_exporter.addInst("SETSUBTENSOR");
@@ -495,22 +469,22 @@ public:
                         std::vector<int8_t> input_types;
                         int32_t output_tensor;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto&& tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto&& tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         if (tensor.first != MegCC::TensorType_TENSOR) {
                             CC_ABORT << "operator output must be "
                                         "Tensor\n";
                         }
                         output_tensor = tensor.second;
-                        auto descs = llvm::to_vector<4>(
-                                op.descs().getAsRange<ArrayAttr>());
-                        auto flags = llvm::to_vector<4>(
-                                op.flags().getAsRange<ArrayAttr>());
+                        auto descs =
+                                llvm::to_vector<4>(op.descs().getAsRange<ArrayAttr>());
+                        auto flags =
+                                llvm::to_vector<4>(op.flags().getAsRange<ArrayAttr>());
                         std::vector<Offset<MegCC::IndexDesc>> descs_;
                         std::vector<Offset<MegCC::IndexDesc>> flags_;
                         for (size_t idx = 0; idx < descs.size(); idx++) {
@@ -518,15 +492,12 @@ public:
                             flags_.push_back(indexdesc_to_fbs(flags[idx]));
                         }
 
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
                         auto descs_fbs = m_fbs_builder.CreateVector(descs_);
                         auto flags_fbs = m_fbs_builder.CreateVector(flags_);
 
-                        MegCC::SetSubTensorBuilder subtensor_builder(
-                                m_fbs_builder);
+                        MegCC::SetSubTensorBuilder subtensor_builder(m_fbs_builder);
                         subtensor_builder.add_inputs(input_tensors_);
                         subtensor_builder.add_input_types(input_types_);
                         subtensor_builder.add_output(output_tensor);
@@ -534,16 +505,14 @@ public:
                         subtensor_builder.add_flags(flags_fbs);
 
                         LOG_DEBUG << "Add set_subtensor instruction : \n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_SetSubTensor);
-                        instructions.push_back(
-                                subtensor_builder.Finish().Union());
+                        instructions_type.push_back(MegCC::Instruction_SetSubTensor);
+                        instructions.push_back(subtensor_builder.Finish().Union());
                     })
                     .Case([&](Kernel::GetVarShapeIns op) {
                         auto typed_tensor = value2typed_tensor.at(
                                 op->getOperand(0).getAsOpaquePointer());
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         instructions_type.push_back(MegCC::Instruction_ShapeOf);
                         instructions.push_back(
                                 MegCC::CreateShapeOf(
@@ -556,75 +525,65 @@ public:
                         std::vector<int32_t> input_tensors;
                         std::vector<int8_t> input_types;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Concat instruction.\n";
                         instructions_type.push_back(MegCC::Instruction_Concat);
-                        instructions.push_back(
-                                MegCC::CreateConcat(m_fbs_builder, op.axis(),
-                                                    input_tensors_,
-                                                    input_types_,
-                                                    out_tensor.second)
-                                        .Union());
+                        instructions.push_back(MegCC::CreateConcat(
+                                                       m_fbs_builder, op.axis(),
+                                                       input_tensors_, input_types_,
+                                                       out_tensor.second)
+                                                       .Union());
                     })
                     .Case([&](Kernel::BroadcastIns op) {
                         kernel_exporter.addInst("BROADCAST");
                         std::vector<int32_t> input_tensors;
                         std::vector<int8_t> input_types;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Broadcast instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_BroadCast);
-                        instructions.push_back(
-                                MegCC::CreateBroadCast(
-                                        m_fbs_builder, input_tensors_,
-                                        input_types_, out_tensor.second)
-                                        .Union());
+                        instructions_type.push_back(MegCC::Instruction_BroadCast);
+                        instructions.push_back(MegCC::CreateBroadCast(
+                                                       m_fbs_builder, input_tensors_,
+                                                       input_types_, out_tensor.second)
+                                                       .Union());
                     })
                     .Case([&](Kernel::ReshapeIns op) {
                         kernel_exporter.addInst("RESHAPE");
                         std::vector<int32_t> input_tensors;
                         std::vector<int8_t> input_types;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Reshape instruction with nr_input "
                                   << input_tensors.size() << "\n";
                         instructions_type.push_back(MegCC::Instruction_Reshape);
-                        instructions.push_back(
-                                MegCC::CreateReshape(
-                                        m_fbs_builder, input_tensors_,
-                                        input_types_, out_tensor.second)
-                                        .Union());
+                        instructions.push_back(MegCC::CreateReshape(
+                                                       m_fbs_builder, input_tensors_,
+                                                       input_types_, out_tensor.second)
+                                                       .Union());
                     })
                     .Case([&](Kernel::IndexingMultiAxisVecIns op) {
                         kernel_exporter.addInst("INDEXING_MULTI_AXIS");
@@ -633,8 +592,7 @@ public:
                         std::vector<int8_t> input_types;
                         for (auto axis : op.axis()) {
                             CC_ASSERT(axis.getType().isInteger(32));
-                            auto value =
-                                    axis.dyn_cast<IntegerAttr>().getValue();
+                            auto value = axis.dyn_cast<IntegerAttr>().getValue();
                             if (axis.getType().isSignedInteger()) {
                                 axis_vec.push_back(value.getSExtValue());
                             } else {
@@ -642,51 +600,46 @@ public:
                             }
                         }
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
                         auto input_axis_ = m_fbs_builder.CreateVector(axis_vec);
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Indexing instruction with nr_input "
                                   << input_tensors.size() << "\n";
                         instructions_type.push_back(
                                 MegCC::Instruction_IndexingMultiAxis);
-                        instructions.push_back(
-                                MegCC::CreateIndexingMultiAxis(
-                                        m_fbs_builder, input_axis_,
-                                        input_tensors_, input_types_,
-                                        out_tensor.second)
-                                        .Union());
+                        instructions.push_back(MegCC::CreateIndexingMultiAxis(
+                                                       m_fbs_builder, input_axis_,
+                                                       input_tensors_, input_types_,
+                                                       out_tensor.second)
+                                                       .Union());
                     })
                     .Case([&](Kernel::DimshuffleIns op) {
                         kernel_exporter.addInst("DIMSHUFFLE");
                         auto typed_tensor = value2typed_tensor.at(
                                 op->getOperand(0).getAsOpaquePointer());
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         auto pattern = op.pattern();
-                        auto member = llvm::to_vector<4>(
-                                pattern.getAsRange<IntegerAttr>());
+                        auto member =
+                                llvm::to_vector<4>(pattern.getAsRange<IntegerAttr>());
                         std::vector<int32_t> pattern_v;
                         for (size_t idx = 0; idx < member.size(); idx++) {
                             pattern_v.push_back(member[idx].getInt());
                         }
                         auto pattern_ = m_fbs_builder.CreateVector(pattern_v);
                         LOG_DEBUG << "Add Dimshuffle instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_Dimshuffle);
+                        instructions_type.push_back(MegCC::Instruction_Dimshuffle);
                         instructions.push_back(
-                                MegCC::CreateDimshuffle(m_fbs_builder, pattern_,
-                                                        typed_tensor.second,
-                                                        typed_tensor.first,
-                                                        out_tensor.second)
+                                MegCC::CreateDimshuffle(
+                                        m_fbs_builder, pattern_, typed_tensor.second,
+                                        typed_tensor.first, out_tensor.second)
                                         .Union());
                     })
                     .Case([&](Kernel::ArithmeticIns op) {
@@ -694,34 +647,30 @@ public:
                         std::vector<int32_t> input_tensors;
                         std::vector<int8_t> input_types;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         LOG_DEBUG << "Add Arithmetic instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_Arithmetic);
+                        instructions_type.push_back(MegCC::Instruction_Arithmetic);
                         instructions.push_back(
                                 MegCC::CreateArithmetic(
                                         m_fbs_builder,
                                         convert_arithmetic_mode(op.mode()),
-                                        input_tensors_, input_types_,
-                                        out_tensor.second)
+                                        input_tensors_, input_types_, out_tensor.second)
                                         .Union());
                     })
                     .Case([&](Kernel::TypeCvtIns op) {
                         kernel_exporter.addInst("TYPECVT");
                         auto typed_tensor = value2typed_tensor.at(
                                 op->getOperand(0).getAsOpaquePointer());
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
                         auto idtype = op.i_dtype().str();
                         auto odtype = op.o_dtype().str();
                         LOG_DEBUG << "Add TypeCvt instruction.\n";
@@ -740,21 +689,19 @@ public:
                         std::vector<int32_t> input_tensors;
                         std::vector<int8_t> input_types;
                         for (auto&& i : op.operands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             input_tensors.push_back(tensor.second);
                             input_types.push_back(tensor.first);
                         }
-                        auto input_tensors_ =
-                                m_fbs_builder.CreateVector(input_tensors);
-                        auto input_types_ =
-                                m_fbs_builder.CreateVector(input_types);
-                        auto&& out_tensor = value2typed_tensor.at(
-                                op.result().getAsOpaquePointer());
+                        auto input_tensors_ = m_fbs_builder.CreateVector(input_tensors);
+                        auto input_types_ = m_fbs_builder.CreateVector(input_types);
+                        auto&& out_tensor =
+                                value2typed_tensor.at(op.result().getAsOpaquePointer());
 
                         auto mat_id = op.mat_idx();
-                        auto member = llvm::to_vector<4>(
-                                mat_id.getAsRange<IntegerAttr>());
+                        auto member =
+                                llvm::to_vector<4>(mat_id.getAsRange<IntegerAttr>());
                         std::vector<int32_t> mat_id_v;
                         for (size_t idx = 0; idx < member.size(); idx++) {
                             mat_id_v.push_back(member[idx].getInt());
@@ -762,23 +709,21 @@ public:
                         auto mat_id_ = m_fbs_builder.CreateVector(mat_id_v);
 
                         LOG_DEBUG << "Add WarpPerspective instruction.\n";
-                        instructions_type.push_back(
-                                MegCC::Instruction_WarpPerspective);
+                        instructions_type.push_back(MegCC::Instruction_WarpPerspective);
                         instructions.push_back(
                                 MegCC::CreateWarpPerspective(
                                         m_fbs_builder,
                                         convert_bordermodemode_mode(op.bmode()),
                                         convert_interpolation_mode(op.imode()),
                                         convert_format(op.format()),
-                                        op.border_val().convertToFloat(),
-                                        mat_id_, input_tensors_, input_types_,
-                                        out_tensor.second)
+                                        op.border_val().convertToFloat(), mat_id_,
+                                        input_tensors_, input_types_, out_tensor.second)
                                         .Union());
                     })
                     .Case([&](ReturnOp op) {
                         for (auto&& i : op.getOperands()) {
-                            auto&& tensor = value2typed_tensor.at(
-                                    i.getAsOpaquePointer());
+                            auto&& tensor =
+                                    value2typed_tensor.at(i.getAsOpaquePointer());
                             if (tensor.first != MegCC::TensorType_TENSOR) {
                                 CC_ABORT << "network output must be "
                                             "Tensor\n";
@@ -819,8 +764,8 @@ public:
     }
 
 private:
-    static void writeModelToCFile(std::string save_path,
-                                  const FlatBufferBuilder& model) {
+    static void writeModelToCFile(
+            std::string save_path, const FlatBufferBuilder& model) {
         std::error_code EC;
         llvm::raw_fd_stream os(save_path, EC);
 
@@ -889,31 +834,26 @@ private:
                 float scale = inttype.getScale();
                 auto param = MegCC::CreateDTypeParam(m_fbs_builder, scale);
                 if (inttype.isInteger(32)) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_QInt32, param);
+                    return MegCC::CreateDType(
+                            m_fbs_builder, MegCC::DTypeEnum_QInt32, param);
                 } else if (inttype.isInteger(8) && inttype.isUnsigned()) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_QUint8, param);
+                    return MegCC::CreateDType(
+                            m_fbs_builder, MegCC::DTypeEnum_QUint8, param);
                 } else if (inttype.isInteger(8)) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_QInt8, param);
+                    return MegCC::CreateDType(
+                            m_fbs_builder, MegCC::DTypeEnum_QInt8, param);
                 } else {
-                    CC_ABORT << "unsupported dtype qint" << inttype.getWidth()
-                             << "\n";
+                    CC_ABORT << "unsupported dtype qint" << inttype.getWidth() << "\n";
                 }
             } else {
                 if (inttype.isInteger(32)) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_Int32);
+                    return MegCC::CreateDType(m_fbs_builder, MegCC::DTypeEnum_Int32);
                 } else if (inttype.isInteger(8) && inttype.isUnsigned()) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_Uint8);
+                    return MegCC::CreateDType(m_fbs_builder, MegCC::DTypeEnum_Uint8);
                 } else if (inttype.isInteger(8)) {
-                    return MegCC::CreateDType(m_fbs_builder,
-                                              MegCC::DTypeEnum_Int8);
+                    return MegCC::CreateDType(m_fbs_builder, MegCC::DTypeEnum_Int8);
                 } else {
-                    CC_ABORT << "unsupported dtype int" << inttype.getWidth()
-                             << "\n";
+                    CC_ABORT << "unsupported dtype int" << inttype.getWidth() << "\n";
                 }
             }
         } else {
@@ -930,15 +870,14 @@ private:
                 type.getShape().data(), type.getShape().size());
     }
 
-    bool check_layout(llvm::ArrayRef<int64_t> stride,
-                      llvm::ArrayRef<int64_t> shape) {
+    bool check_layout(llvm::ArrayRef<int64_t> stride, llvm::ArrayRef<int64_t> shape) {
         if (stride.size() != shape.size())
             return false;
         return true;
     }
 
-    Offset<MegCC::Workspace> value_to_workspace(mlir::Value workspace,
-                                                std::string reason) {
+    Offset<MegCC::Workspace> value_to_workspace(
+            mlir::Value workspace, std::string reason) {
         if (!workspace) {
             return MegCC::CreateWorkspace(m_fbs_builder, 0, 0);
         }
@@ -966,8 +905,8 @@ private:
         return MegCC::CreateWorkspace(m_fbs_builder, size, offset);
     }
 
-    Offset<MegCC::Tensor> memref_to_tensor(mlir::MemRefType memref,
-                                           std::string name = "") {
+    Offset<MegCC::Tensor> memref_to_tensor(
+            mlir::MemRefType memref, std::string name = "") {
         int64_t offset;
         llvm::SmallVector<int64_t> stride;
         if (failed(getStridesAndOffset(memref, stride, offset))) {
@@ -983,8 +922,8 @@ private:
                 // dims
                 shaped_type_to_vec(memref),
                 // stride
-                m_fbs_builder.CreateVectorScalarCast<int32_t>(stride.data(),
-                                                              stride.size()),
+                m_fbs_builder.CreateVectorScalarCast<int32_t>(
+                        stride.data(), stride.size()),
                 // format
                 MegCC::Format_NCHW);
 
@@ -996,32 +935,32 @@ private:
             }
         }
 
-        return MegCC::CreateTensor(m_fbs_builder,
-                                   // dtype
-                                   type_to_dtype(memref.getElementType()),
-                                   // layout
-                                   layout,
-                                   // offset
-                                   offset,
-                                   // dynamic
-                                   is_dynamic_shape,
-                                   // usecount
-                                   0,
-                                   // name
-                                   m_fbs_builder.CreateString(name));
+        return MegCC::CreateTensor(
+                m_fbs_builder,
+                // dtype
+                type_to_dtype(memref.getElementType()),
+                // layout
+                layout,
+                // offset
+                offset,
+                // dynamic
+                is_dynamic_shape,
+                // usecount
+                0,
+                // name
+                m_fbs_builder.CreateString(name));
     }
 
     Offset<MegCC::IndexDesc> indexdesc_to_fbs(ArrayAttr desc) {
         CC_ASSERT(desc.size() == 5);
         auto member = llvm::to_vector<5>(desc.getAsRange<IntegerAttr>());
-        return MegCC::CreateIndexDesc(m_fbs_builder, member[0].getInt(),
-                                      member[1].getInt(), member[2].getInt(),
-                                      member[3].getInt(), member[4].getInt());
+        return MegCC::CreateIndexDesc(
+                m_fbs_builder, member[0].getInt(), member[1].getInt(),
+                member[2].getInt(), member[3].getInt(), member[4].getInt());
     }
 
-    Offset<MegCC::Weight> attr_to_weight(Attribute attr, StringRef name,
-                                         int32_t user_count,
-                                         bool weight_compress) {
+    Offset<MegCC::Weight> attr_to_weight(
+            Attribute attr, StringRef name, int32_t user_count, bool weight_compress) {
         auto dense = attr.cast<DenseElementsAttr>();
         auto size_in_bits = dense.getType().getSizeInBits();
         if (size_in_bits & 0x7) {
@@ -1055,15 +994,17 @@ private:
                 *ptr = i;
                 ++ptr;
             }
-        } else if (dense.getType().getElementType().isInteger(8) &&
-                   dense.getType().getElementType().isSignedInteger()) {
+        } else if (
+                dense.getType().getElementType().isInteger(8) &&
+                dense.getType().getElementType().isSignedInteger()) {
             int8_t* ptr = reinterpret_cast<int8_t*>(data.data());
             for (auto&& i : dense.getValues<int8_t>()) {
                 *ptr = i;
                 ++ptr;
             }
-        } else if (dense.getType().getElementType().isInteger(8) &&
-                   dense.getType().getElementType().isUnsignedInteger()) {
+        } else if (
+                dense.getType().getElementType().isInteger(8) &&
+                dense.getType().getElementType().isUnsignedInteger()) {
             uint8_t* ptr = reinterpret_cast<uint8_t*>(data.data());
             for (auto&& i : dense.getValues<uint8_t>()) {
                 *ptr = i;
@@ -1091,8 +1032,8 @@ private:
                 // dims
                 shaped_type_to_vec(dense.getType()),
                 // stride
-                m_fbs_builder.CreateVectorScalarCast<int32_t>(stride.data(),
-                                                              stride.size()),
+                m_fbs_builder.CreateVectorScalarCast<int32_t>(
+                        stride.data(), stride.size()),
                 // format
                 MegCC::Format_NCHW);
         return MegCC::CreateWeight(
@@ -1142,8 +1083,7 @@ private:
         }
     }
 
-    MegCC::InterpolationMode convert_interpolation_mode(
-            llvm::StringRef strref) {
+    MegCC::InterpolationMode convert_interpolation_mode(llvm::StringRef strref) {
         auto str = strref.str();
         if (str == "LINEAR")
             return MegCC::InterpolationMode_LINEAR;
@@ -1180,13 +1120,12 @@ private:
                 return MegCC::Device_ARM32;
             case megcc::KernelGen::ARM64V7: {
                 //! magic str
-                if (func_name.endswith(megcc::KernelGen::DumpHelper::
-                                               ARM64V7_ARM64_POSTFIX)) {
+                if (func_name.endswith(
+                            megcc::KernelGen::DumpHelper::ARM64V7_ARM64_POSTFIX)) {
                     return MegCC::Device_ARM64;
                 } else {
-                    CC_ASSERT(
-                            func_name.endswith(megcc::KernelGen::DumpHelper::
-                                                       ARM64V7_ARMV7_POSTFIX));
+                    CC_ASSERT(func_name.endswith(
+                            megcc::KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX));
                     return MegCC::Device_ARM32;
                 }
             }
@@ -1202,14 +1141,13 @@ private:
 };
 }  // namespace
 
-void export_tinynn_model(ModuleOp top_module, std::string save_path,
-                         const bool save_model_as_symbol,
-                         KernelExporter& kernel_exporter,
-                         bool weight_compress) {
+void export_tinynn_model(
+        ModuleOp top_module, std::string save_path, const bool save_model_as_symbol,
+        KernelExporter& kernel_exporter, bool weight_compress) {
     LOG_DEBUG << "\n\t\t\t Begin Export TinyNN \t\t\t\n";
     Exporter exporter(top_module);
-    exporter.save_model(save_path, kernel_exporter, save_model_as_symbol,
-                        weight_compress);
+    exporter.save_model(
+            save_path, kernel_exporter, save_model_as_symbol, weight_compress);
     LOG_DEBUG << "\t\t\t End Export TinyNN \t\t\t\n\n";
 }
 

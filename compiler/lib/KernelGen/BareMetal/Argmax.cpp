@@ -16,7 +16,7 @@ using namespace megcc;
 using namespace KernelGen;
 using namespace BareMetal;
 namespace {
-  std::string gen_init(std::string mode, std::string dtype) {
+std::string gen_init(std::string mode, std::string dtype) {
     Utils::DtypeHelper dtype_helper(dtype);
     std::stringstream writer;
     if (mode == "MAX") {
@@ -27,8 +27,8 @@ namespace {
         CC_ABORT << "unknown argmxx mode " << mode.c_str() << "\n";
     }
     return writer.str();
-  }
-  std::string gen_comp(std::string mode) {
+}
+std::string gen_comp(std::string mode) {
     std::stringstream writer;
     if (mode == "MAX") {
         writer << "curr_val > best_val";
@@ -38,8 +38,8 @@ namespace {
         CC_ABORT << "unknown argmxx mode " << mode.c_str() << "\n";
     }
     return writer.str();
-  }
 }
+}  // namespace
 bool ArgmaxKernel::IsAvailable(TContext* context) const {
     bool ok_dtype = context->getAttrOprand("operand:0").dtype == "f32";
     return ok_dtype;
@@ -101,4 +101,4 @@ std::string ArgmaxKernel::GetKernelBody(TContext* context) const {
     // clang-format on
     return writer.str();
 }
-   // vim: syntax=cpp.doxygen
+// vim: syntax=cpp.doxygen

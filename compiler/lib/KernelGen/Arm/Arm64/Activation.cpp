@@ -13,8 +13,8 @@ using namespace megcc;
 using namespace KernelGen;
 using namespace Arm64;
 using namespace ArmCommon;
-std::shared_ptr<ActivationGenAsmBase>
-megcc::KernelGen::Arm64::create_activation_gener(std::string mode) {
+std::shared_ptr<ActivationGenAsmBase> megcc::KernelGen::Arm64::create_activation_gener(
+        std::string mode) {
     if (mode == "IDENTITY") {
         return std::make_shared<ActivationGenAsm<NonlineMode::IDENTITY>>();
     } else if (mode == "H_SWISH") {
@@ -78,9 +78,8 @@ std::string ActivationGenAsmBase::GenAsmQuantInit(
 std::string ActivationGenAsmBase::GenAsmQuantStore(
         std::vector<std::string> int_regs, std::string scale_reg,
         const std::string& output_sym, const int elem_offset,
-        const std::string dst_specifier,
-        const std::vector<std::string> args_reg, const std::string& mode,
-        bool with_store) {
+        const std::string dst_specifier, const std::vector<std::string> args_reg,
+        const std::string& mode, bool with_store) {
     std::stringstream ss;
     CC_ASSERT(int_regs.size() == 1 || int_regs.size() == 2);
     if (dst_specifier == "int8_t") {

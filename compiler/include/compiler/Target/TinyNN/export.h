@@ -39,50 +39,51 @@ public:
 
     void addInst(std::string macro_type) { used_inst.insert(macro_type); }
 
-    void addKernel(llvm::StringRef symbol, llvm::StringRef sig,
-                   llvm::StringRef body, llvm::StringRef guard_begin,
-                   llvm::StringRef guard_end) {
+    void addKernel(
+            llvm::StringRef symbol, llvm::StringRef sig, llvm::StringRef body,
+            llvm::StringRef guard_begin, llvm::StringRef guard_end) {
         if (symbol2kernel_id.find(symbol.str()) == symbol2kernel_id.end()) {
-            config.kernels.push_back({symbol.str(), sig.str(), body.str(),
-                                      guard_begin.str(), guard_end.str()});
+            config.kernels.push_back(
+                    {symbol.str(), sig.str(), body.str(), guard_begin.str(),
+                     guard_end.str()});
             symbol2kernel_id[symbol.str()] = m_kernel_cnt++;
         }
     }
 
-    void addCVKernel(llvm::StringRef symbol, llvm::StringRef sig,
-                     llvm::StringRef body) {
+    void addCVKernel(
+            llvm::StringRef symbol, llvm::StringRef sig, llvm::StringRef body) {
         config.cvkernels.push_back({symbol.str(), sig.str(), body.str()});
     }
 
-    void addInitFunc(llvm::StringRef symbol, llvm::StringRef sig,
-                     llvm::StringRef body, llvm::StringRef kern_symbol,
-                     llvm::StringRef guard_begin, llvm::StringRef guard_end) {
+    void addInitFunc(
+            llvm::StringRef symbol, llvm::StringRef sig, llvm::StringRef body,
+            llvm::StringRef kern_symbol, llvm::StringRef guard_begin,
+            llvm::StringRef guard_end) {
         if (symbol2init_id.find(kern_symbol.str()) == symbol2init_id.end()) {
-            config.inits.push_back({symbol.str(), sig.str(), body.str(),
-                                    guard_begin.str(), guard_end.str()});
+            config.inits.push_back(
+                    {symbol.str(), sig.str(), body.str(), guard_begin.str(),
+                     guard_end.str()});
             symbol2init_id[kern_symbol.str()] = m_init_cnt++;
         }
     }
 
-    void addDeduceShapeKernel(llvm::StringRef symbol, llvm::StringRef sig,
-                              llvm::StringRef body,
-                              llvm::StringRef kern_symbol) {
+    void addDeduceShapeKernel(
+            llvm::StringRef symbol, llvm::StringRef sig, llvm::StringRef body,
+            llvm::StringRef kern_symbol) {
         if (symbol2deduce_id.find(symbol.str()) == symbol2deduce_id.end()) {
-            config.deduce_shape.push_back(
-                    {symbol.str(), sig.str(), body.str()});
+            config.deduce_shape.push_back({symbol.str(), sig.str(), body.str()});
             symbol2deduce_id[symbol.str()] = m_deduce_cnt++;
         }
-        kern_symbol2deduce_id[kern_symbol.str()] =
-                symbol2deduce_id[symbol.str()];
+        kern_symbol2deduce_id[kern_symbol.str()] = symbol2deduce_id[symbol.str()];
     }
 
-    void addInternalKernel(llvm::StringRef symbol, llvm::StringRef sig,
-                           llvm::StringRef body, llvm::StringRef guard_begin,
-                           llvm::StringRef guard_end) {
+    void addInternalKernel(
+            llvm::StringRef symbol, llvm::StringRef sig, llvm::StringRef body,
+            llvm::StringRef guard_begin, llvm::StringRef guard_end) {
         if (symbol2internel_id.find(symbol.str()) == symbol2internel_id.end()) {
-            config.internal_kernels.push_back({symbol.str(), sig.str(),
-                                               body.str(), guard_begin.str(),
-                                               guard_end.str()});
+            config.internal_kernels.push_back(
+                    {symbol.str(), sig.str(), body.str(), guard_begin.str(),
+                     guard_end.str()});
             symbol2internel_id[symbol.str()] = m_internel_cnt++;
         }
     }
@@ -97,8 +98,8 @@ public:
         return symbol2init_id.at(kernel_name);
     }
     int get_deduce_id(std::string kernel_name) const {
-        CC_ASSERT(kern_symbol2deduce_id.find(kernel_name) !=
-                  kern_symbol2deduce_id.end())
+        CC_ASSERT(
+                kern_symbol2deduce_id.find(kernel_name) != kern_symbol2deduce_id.end())
                 << "can not find deduce kernel id of " << kernel_name << "\n";
         return kern_symbol2deduce_id.at(kernel_name);
     }
@@ -117,9 +118,9 @@ private:
     std::set<std::string> used_inst;
 };
 
-void export_tinynn_model(ModuleOp top_module, std::string save_path,
-                         const bool save_model_as_symbol,
-                         KernelExporter& kernel_exporter, bool weight_compress);
+void export_tinynn_model(
+        ModuleOp top_module, std::string save_path, const bool save_model_as_symbol,
+        KernelExporter& kernel_exporter, bool weight_compress);
 
 }  // namespace mlir
 

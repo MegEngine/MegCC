@@ -84,16 +84,15 @@ public:
         mLength = sizeof(CCOperand);
     }
 
-    template <typename T,
-              std::enable_if_t<std::is_integral<T>::value, bool> = true>
+    template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
     CCAttr(T value) {
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::INT;
         mLength = sizeof(T);
     }
 
-    template <typename T,
-              std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+    template <
+            typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
     CCAttr(T value) {
         mHolder = std::make_unique<AnyHolder<T>>(value);
         mType = Type::FLOAT;
@@ -131,8 +130,7 @@ public:
         T mValue;
     };
 
-    template <class T,
-              std::enable_if_t<std::is_integral<T>::value, bool> = true>
+    template <class T, std::enable_if_t<std::is_integral<T>::value, bool> = true>
     T AsInt() const {
         if (mType != Type::INT || sizeof(T) != mLength) {
             fprintf(stderr,
@@ -144,8 +142,7 @@ public:
         return static_cast<CCAttr::AnyHolder<T>*>(mHolder.get())->mValue;
     }
 
-    template <class T,
-              std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+    template <class T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
     T AsFloat() const {
         if (mType != Type::FLOAT || sizeof(T) != mLength) {
             fprintf(stderr, "get CCAttr with wrong type \n");
@@ -159,8 +156,7 @@ public:
             fprintf(stderr, "get CCAttr with wrong type \n");
             abort();
         }
-        return static_cast<CCAttr::AnyHolder<std::string>*>(mHolder.get())
-                ->mValue;
+        return static_cast<CCAttr::AnyHolder<std::string>*>(mHolder.get())->mValue;
     }
 
     CCOperand AsOperand() const {
@@ -168,8 +164,7 @@ public:
             fprintf(stderr, "get CCAttr with wrong type \n");
             abort();
         }
-        return static_cast<CCAttr::AnyHolder<CCOperand>*>(mHolder.get())
-                ->mValue;
+        return static_cast<CCAttr::AnyHolder<CCOperand>*>(mHolder.get())->mValue;
     }
 
     bool AsBool() const {

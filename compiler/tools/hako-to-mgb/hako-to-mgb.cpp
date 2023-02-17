@@ -19,10 +19,10 @@
 
 using namespace llvm;
 
-cl::opt<std::string> InputFile(cl::Positional, cl::Required,
-                               cl::desc("<input hako model>"));
-cl::opt<std::string> OutputFile(cl::Positional, cl::Required,
-                                cl::desc("<output mdl file>"));
+cl::opt<std::string> InputFile(
+        cl::Positional, cl::Required, cl::desc("<input hako model>"));
+cl::opt<std::string> OutputFile(
+        cl::Positional, cl::Required, cl::desc("<output mdl file>"));
 cl::opt<bool> Verbose("verbose", cl::desc("log more detail information"));
 llvm::cl::opt<int> hako_version(
         "hako", llvm::cl::desc("specific megface version used by hako"),

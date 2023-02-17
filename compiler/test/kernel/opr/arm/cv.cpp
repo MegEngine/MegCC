@@ -74,8 +74,9 @@ TEST(AARCH64, CVWarpAffine) {
     CVWarpAffine::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NHWC})
-        for (auto bmode : {BorderMode::WRAP, BorderMode::REFLECT,
-                           BorderMode::REPLICATE, BorderMode::CONSTANT})
+        for (auto bmode :
+             {BorderMode::WRAP, BorderMode::REFLECT, BorderMode::REPLICATE,
+              BorderMode::CONSTANT})
             for (size_t c : {1, 2, 3, 4})
                 for (size_t h : {3, 7, 8, 13, 16, 23, 32})
                     for (size_t w : {3, 7, 8, 13, 16, 23, 32}) {

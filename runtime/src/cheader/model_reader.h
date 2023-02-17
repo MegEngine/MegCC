@@ -18,115 +18,116 @@
 #define flatbuffers_extension ".bin"
 #endif
 
-
-typedef const struct MegCC_DTypeParam_table *MegCC_DTypeParam_table_t;
-typedef struct MegCC_DTypeParam_table *MegCC_DTypeParam_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_DTypeParam_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_DTypeParam_mutable_vec_t;
-typedef const struct MegCC_DType_table *MegCC_DType_table_t;
-typedef struct MegCC_DType_table *MegCC_DType_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_DType_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_DType_mutable_vec_t;
-typedef const struct MegCC_Layout_table *MegCC_Layout_table_t;
-typedef struct MegCC_Layout_table *MegCC_Layout_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Layout_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Layout_mutable_vec_t;
-typedef const struct MegCC_Tensor_table *MegCC_Tensor_table_t;
-typedef struct MegCC_Tensor_table *MegCC_Tensor_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Tensor_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Tensor_mutable_vec_t;
-typedef const struct MegCC_Workspace_table *MegCC_Workspace_table_t;
-typedef struct MegCC_Workspace_table *MegCC_Workspace_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Workspace_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Workspace_mutable_vec_t;
-typedef const struct MegCC_Weight_table *MegCC_Weight_table_t;
-typedef struct MegCC_Weight_table *MegCC_Weight_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Weight_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Weight_mutable_vec_t;
-typedef const struct MegCC_Opr_table *MegCC_Opr_table_t;
-typedef struct MegCC_Opr_table *MegCC_Opr_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Opr_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Opr_mutable_vec_t;
-typedef const struct MegCC_DevMemAlloc_table *MegCC_DevMemAlloc_table_t;
-typedef struct MegCC_DevMemAlloc_table *MegCC_DevMemAlloc_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_DevMemAlloc_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_DevMemAlloc_mutable_vec_t;
-typedef const struct MegCC_DevMemFree_table *MegCC_DevMemFree_table_t;
-typedef struct MegCC_DevMemFree_table *MegCC_DevMemFree_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_DevMemFree_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_DevMemFree_mutable_vec_t;
-typedef const struct MegCC_MemForward_table *MegCC_MemForward_table_t;
-typedef struct MegCC_MemForward_table *MegCC_MemForward_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_MemForward_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_MemForward_mutable_vec_t;
-typedef const struct MegCC_Dimshuffle_table *MegCC_Dimshuffle_table_t;
-typedef struct MegCC_Dimshuffle_table *MegCC_Dimshuffle_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Dimshuffle_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Dimshuffle_mutable_vec_t;
-typedef const struct MegCC_BroadCast_table *MegCC_BroadCast_table_t;
-typedef struct MegCC_BroadCast_table *MegCC_BroadCast_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_BroadCast_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_BroadCast_mutable_vec_t;
-typedef const struct MegCC_Reshape_table *MegCC_Reshape_table_t;
-typedef struct MegCC_Reshape_table *MegCC_Reshape_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Reshape_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Reshape_mutable_vec_t;
-typedef const struct MegCC_ExternOpr_table *MegCC_ExternOpr_table_t;
-typedef struct MegCC_ExternOpr_table *MegCC_ExternOpr_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_ExternOpr_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_ExternOpr_mutable_vec_t;
-typedef const struct MegCC_Arithmetic_table *MegCC_Arithmetic_table_t;
-typedef struct MegCC_Arithmetic_table *MegCC_Arithmetic_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Arithmetic_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Arithmetic_mutable_vec_t;
-typedef const struct MegCC_Concat_table *MegCC_Concat_table_t;
-typedef struct MegCC_Concat_table *MegCC_Concat_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Concat_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Concat_mutable_vec_t;
-typedef const struct MegCC_ShapeOf_table *MegCC_ShapeOf_table_t;
-typedef struct MegCC_ShapeOf_table *MegCC_ShapeOf_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_ShapeOf_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_ShapeOf_mutable_vec_t;
-typedef const struct MegCC_IndexDesc_table *MegCC_IndexDesc_table_t;
-typedef struct MegCC_IndexDesc_table *MegCC_IndexDesc_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_IndexDesc_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_IndexDesc_mutable_vec_t;
-typedef const struct MegCC_SubTensor_table *MegCC_SubTensor_table_t;
-typedef struct MegCC_SubTensor_table *MegCC_SubTensor_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_SubTensor_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_SubTensor_mutable_vec_t;
-typedef const struct MegCC_IndexingMultiAxis_table *MegCC_IndexingMultiAxis_table_t;
-typedef struct MegCC_IndexingMultiAxis_table *MegCC_IndexingMultiAxis_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_IndexingMultiAxis_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_IndexingMultiAxis_mutable_vec_t;
-typedef const struct MegCC_SetSubTensor_table *MegCC_SetSubTensor_table_t;
-typedef struct MegCC_SetSubTensor_table *MegCC_SetSubTensor_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_SetSubTensor_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_SetSubTensor_mutable_vec_t;
-typedef const struct MegCC_WarpPerspective_table *MegCC_WarpPerspective_table_t;
-typedef struct MegCC_WarpPerspective_table *MegCC_WarpPerspective_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_WarpPerspective_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_WarpPerspective_mutable_vec_t;
-typedef const struct MegCC_TypeCvt_table *MegCC_TypeCvt_table_t;
-typedef struct MegCC_TypeCvt_table *MegCC_TypeCvt_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_TypeCvt_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_TypeCvt_mutable_vec_t;
-typedef const struct MegCC_ArgSort_table *MegCC_ArgSort_table_t;
-typedef struct MegCC_ArgSort_table *MegCC_ArgSort_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_ArgSort_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_ArgSort_mutable_vec_t;
-typedef const struct MegCC_INSTRUCTION_TABLE_END_table *MegCC_INSTRUCTION_TABLE_END_table_t;
-typedef struct MegCC_INSTRUCTION_TABLE_END_table *MegCC_INSTRUCTION_TABLE_END_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_INSTRUCTION_TABLE_END_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_INSTRUCTION_TABLE_END_mutable_vec_t;
-typedef const struct MegCC_DeviceModel_table *MegCC_DeviceModel_table_t;
-typedef struct MegCC_DeviceModel_table *MegCC_DeviceModel_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_DeviceModel_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_DeviceModel_mutable_vec_t;
-typedef const struct MegCC_Model_table *MegCC_Model_table_t;
-typedef struct MegCC_Model_table *MegCC_Model_mutable_table_t;
-typedef const flatbuffers_uoffset_t *MegCC_Model_vec_t;
-typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
+typedef const struct MegCC_DTypeParam_table* MegCC_DTypeParam_table_t;
+typedef struct MegCC_DTypeParam_table* MegCC_DTypeParam_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_DTypeParam_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_DTypeParam_mutable_vec_t;
+typedef const struct MegCC_DType_table* MegCC_DType_table_t;
+typedef struct MegCC_DType_table* MegCC_DType_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_DType_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_DType_mutable_vec_t;
+typedef const struct MegCC_Layout_table* MegCC_Layout_table_t;
+typedef struct MegCC_Layout_table* MegCC_Layout_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Layout_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Layout_mutable_vec_t;
+typedef const struct MegCC_Tensor_table* MegCC_Tensor_table_t;
+typedef struct MegCC_Tensor_table* MegCC_Tensor_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Tensor_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Tensor_mutable_vec_t;
+typedef const struct MegCC_Workspace_table* MegCC_Workspace_table_t;
+typedef struct MegCC_Workspace_table* MegCC_Workspace_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Workspace_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Workspace_mutable_vec_t;
+typedef const struct MegCC_Weight_table* MegCC_Weight_table_t;
+typedef struct MegCC_Weight_table* MegCC_Weight_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Weight_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Weight_mutable_vec_t;
+typedef const struct MegCC_Opr_table* MegCC_Opr_table_t;
+typedef struct MegCC_Opr_table* MegCC_Opr_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Opr_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Opr_mutable_vec_t;
+typedef const struct MegCC_DevMemAlloc_table* MegCC_DevMemAlloc_table_t;
+typedef struct MegCC_DevMemAlloc_table* MegCC_DevMemAlloc_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_DevMemAlloc_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_DevMemAlloc_mutable_vec_t;
+typedef const struct MegCC_DevMemFree_table* MegCC_DevMemFree_table_t;
+typedef struct MegCC_DevMemFree_table* MegCC_DevMemFree_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_DevMemFree_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_DevMemFree_mutable_vec_t;
+typedef const struct MegCC_MemForward_table* MegCC_MemForward_table_t;
+typedef struct MegCC_MemForward_table* MegCC_MemForward_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_MemForward_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_MemForward_mutable_vec_t;
+typedef const struct MegCC_Dimshuffle_table* MegCC_Dimshuffle_table_t;
+typedef struct MegCC_Dimshuffle_table* MegCC_Dimshuffle_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Dimshuffle_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Dimshuffle_mutable_vec_t;
+typedef const struct MegCC_BroadCast_table* MegCC_BroadCast_table_t;
+typedef struct MegCC_BroadCast_table* MegCC_BroadCast_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_BroadCast_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_BroadCast_mutable_vec_t;
+typedef const struct MegCC_Reshape_table* MegCC_Reshape_table_t;
+typedef struct MegCC_Reshape_table* MegCC_Reshape_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Reshape_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Reshape_mutable_vec_t;
+typedef const struct MegCC_ExternOpr_table* MegCC_ExternOpr_table_t;
+typedef struct MegCC_ExternOpr_table* MegCC_ExternOpr_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_ExternOpr_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_ExternOpr_mutable_vec_t;
+typedef const struct MegCC_Arithmetic_table* MegCC_Arithmetic_table_t;
+typedef struct MegCC_Arithmetic_table* MegCC_Arithmetic_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Arithmetic_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Arithmetic_mutable_vec_t;
+typedef const struct MegCC_Concat_table* MegCC_Concat_table_t;
+typedef struct MegCC_Concat_table* MegCC_Concat_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Concat_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Concat_mutable_vec_t;
+typedef const struct MegCC_ShapeOf_table* MegCC_ShapeOf_table_t;
+typedef struct MegCC_ShapeOf_table* MegCC_ShapeOf_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_ShapeOf_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_ShapeOf_mutable_vec_t;
+typedef const struct MegCC_IndexDesc_table* MegCC_IndexDesc_table_t;
+typedef struct MegCC_IndexDesc_table* MegCC_IndexDesc_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_IndexDesc_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_IndexDesc_mutable_vec_t;
+typedef const struct MegCC_SubTensor_table* MegCC_SubTensor_table_t;
+typedef struct MegCC_SubTensor_table* MegCC_SubTensor_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_SubTensor_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_SubTensor_mutable_vec_t;
+typedef const struct MegCC_IndexingMultiAxis_table* MegCC_IndexingMultiAxis_table_t;
+typedef struct MegCC_IndexingMultiAxis_table* MegCC_IndexingMultiAxis_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_IndexingMultiAxis_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_IndexingMultiAxis_mutable_vec_t;
+typedef const struct MegCC_SetSubTensor_table* MegCC_SetSubTensor_table_t;
+typedef struct MegCC_SetSubTensor_table* MegCC_SetSubTensor_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_SetSubTensor_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_SetSubTensor_mutable_vec_t;
+typedef const struct MegCC_WarpPerspective_table* MegCC_WarpPerspective_table_t;
+typedef struct MegCC_WarpPerspective_table* MegCC_WarpPerspective_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_WarpPerspective_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_WarpPerspective_mutable_vec_t;
+typedef const struct MegCC_TypeCvt_table* MegCC_TypeCvt_table_t;
+typedef struct MegCC_TypeCvt_table* MegCC_TypeCvt_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_TypeCvt_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_TypeCvt_mutable_vec_t;
+typedef const struct MegCC_ArgSort_table* MegCC_ArgSort_table_t;
+typedef struct MegCC_ArgSort_table* MegCC_ArgSort_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_ArgSort_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_ArgSort_mutable_vec_t;
+typedef const struct MegCC_INSTRUCTION_TABLE_END_table*
+        MegCC_INSTRUCTION_TABLE_END_table_t;
+typedef struct MegCC_INSTRUCTION_TABLE_END_table*
+        MegCC_INSTRUCTION_TABLE_END_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_INSTRUCTION_TABLE_END_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_INSTRUCTION_TABLE_END_mutable_vec_t;
+typedef const struct MegCC_DeviceModel_table* MegCC_DeviceModel_table_t;
+typedef struct MegCC_DeviceModel_table* MegCC_DeviceModel_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_DeviceModel_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_DeviceModel_mutable_vec_t;
+typedef const struct MegCC_Model_table* MegCC_Model_table_t;
+typedef struct MegCC_Model_table* MegCC_Model_mutable_table_t;
+typedef const flatbuffers_uoffset_t* MegCC_Model_vec_t;
+typedef flatbuffers_uoffset_t* MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DTypeParam_file_identifier
 #define MegCC_DTypeParam_file_identifier flatbuffers_identifier
 #endif
@@ -134,7 +135,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DTypeParam_identifier
 #define MegCC_DTypeParam_identifier flatbuffers_identifier
 #endif
-#define MegCC_DTypeParam_type_hash ((flatbuffers_thash_t)0xfb5dd465)
+#define MegCC_DTypeParam_type_hash       ((flatbuffers_thash_t)0xfb5dd465)
 #define MegCC_DTypeParam_type_identifier "\x65\xd4\x5d\xfb"
 #ifndef MegCC_DType_file_identifier
 #define MegCC_DType_file_identifier flatbuffers_identifier
@@ -143,7 +144,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DType_identifier
 #define MegCC_DType_identifier flatbuffers_identifier
 #endif
-#define MegCC_DType_type_hash ((flatbuffers_thash_t)0x59d3ea64)
+#define MegCC_DType_type_hash       ((flatbuffers_thash_t)0x59d3ea64)
 #define MegCC_DType_type_identifier "\x64\xea\xd3\x59"
 #ifndef MegCC_Layout_file_identifier
 #define MegCC_Layout_file_identifier flatbuffers_identifier
@@ -152,7 +153,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Layout_identifier
 #define MegCC_Layout_identifier flatbuffers_identifier
 #endif
-#define MegCC_Layout_type_hash ((flatbuffers_thash_t)0xda87c566)
+#define MegCC_Layout_type_hash       ((flatbuffers_thash_t)0xda87c566)
 #define MegCC_Layout_type_identifier "\x66\xc5\x87\xda"
 #ifndef MegCC_Tensor_file_identifier
 #define MegCC_Tensor_file_identifier flatbuffers_identifier
@@ -161,7 +162,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Tensor_identifier
 #define MegCC_Tensor_identifier flatbuffers_identifier
 #endif
-#define MegCC_Tensor_type_hash ((flatbuffers_thash_t)0x67f930e9)
+#define MegCC_Tensor_type_hash       ((flatbuffers_thash_t)0x67f930e9)
 #define MegCC_Tensor_type_identifier "\xe9\x30\xf9\x67"
 #ifndef MegCC_Workspace_file_identifier
 #define MegCC_Workspace_file_identifier flatbuffers_identifier
@@ -170,7 +171,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Workspace_identifier
 #define MegCC_Workspace_identifier flatbuffers_identifier
 #endif
-#define MegCC_Workspace_type_hash ((flatbuffers_thash_t)0xe0439a9d)
+#define MegCC_Workspace_type_hash       ((flatbuffers_thash_t)0xe0439a9d)
 #define MegCC_Workspace_type_identifier "\x9d\x9a\x43\xe0"
 #ifndef MegCC_Weight_file_identifier
 #define MegCC_Weight_file_identifier flatbuffers_identifier
@@ -179,7 +180,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Weight_identifier
 #define MegCC_Weight_identifier flatbuffers_identifier
 #endif
-#define MegCC_Weight_type_hash ((flatbuffers_thash_t)0xab0e3e60)
+#define MegCC_Weight_type_hash       ((flatbuffers_thash_t)0xab0e3e60)
 #define MegCC_Weight_type_identifier "\x60\x3e\x0e\xab"
 #ifndef MegCC_Opr_file_identifier
 #define MegCC_Opr_file_identifier flatbuffers_identifier
@@ -188,7 +189,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Opr_identifier
 #define MegCC_Opr_identifier flatbuffers_identifier
 #endif
-#define MegCC_Opr_type_hash ((flatbuffers_thash_t)0x37bcc4bf)
+#define MegCC_Opr_type_hash       ((flatbuffers_thash_t)0x37bcc4bf)
 #define MegCC_Opr_type_identifier "\xbf\xc4\xbc\x37"
 #ifndef MegCC_DevMemAlloc_file_identifier
 #define MegCC_DevMemAlloc_file_identifier flatbuffers_identifier
@@ -197,7 +198,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DevMemAlloc_identifier
 #define MegCC_DevMemAlloc_identifier flatbuffers_identifier
 #endif
-#define MegCC_DevMemAlloc_type_hash ((flatbuffers_thash_t)0xe0570129)
+#define MegCC_DevMemAlloc_type_hash       ((flatbuffers_thash_t)0xe0570129)
 #define MegCC_DevMemAlloc_type_identifier "\x29\x01\x57\xe0"
 #ifndef MegCC_DevMemFree_file_identifier
 #define MegCC_DevMemFree_file_identifier flatbuffers_identifier
@@ -206,7 +207,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DevMemFree_identifier
 #define MegCC_DevMemFree_identifier flatbuffers_identifier
 #endif
-#define MegCC_DevMemFree_type_hash ((flatbuffers_thash_t)0x5f02c49a)
+#define MegCC_DevMemFree_type_hash       ((flatbuffers_thash_t)0x5f02c49a)
 #define MegCC_DevMemFree_type_identifier "\x9a\xc4\x02\x5f"
 #ifndef MegCC_MemForward_file_identifier
 #define MegCC_MemForward_file_identifier flatbuffers_identifier
@@ -215,7 +216,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_MemForward_identifier
 #define MegCC_MemForward_identifier flatbuffers_identifier
 #endif
-#define MegCC_MemForward_type_hash ((flatbuffers_thash_t)0xe68c19ce)
+#define MegCC_MemForward_type_hash       ((flatbuffers_thash_t)0xe68c19ce)
 #define MegCC_MemForward_type_identifier "\xce\x19\x8c\xe6"
 #ifndef MegCC_Dimshuffle_file_identifier
 #define MegCC_Dimshuffle_file_identifier flatbuffers_identifier
@@ -224,7 +225,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Dimshuffle_identifier
 #define MegCC_Dimshuffle_identifier flatbuffers_identifier
 #endif
-#define MegCC_Dimshuffle_type_hash ((flatbuffers_thash_t)0xd5e41b6f)
+#define MegCC_Dimshuffle_type_hash       ((flatbuffers_thash_t)0xd5e41b6f)
 #define MegCC_Dimshuffle_type_identifier "\x6f\x1b\xe4\xd5"
 #ifndef MegCC_BroadCast_file_identifier
 #define MegCC_BroadCast_file_identifier flatbuffers_identifier
@@ -233,7 +234,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_BroadCast_identifier
 #define MegCC_BroadCast_identifier flatbuffers_identifier
 #endif
-#define MegCC_BroadCast_type_hash ((flatbuffers_thash_t)0x140f7aab)
+#define MegCC_BroadCast_type_hash       ((flatbuffers_thash_t)0x140f7aab)
 #define MegCC_BroadCast_type_identifier "\xab\x7a\x0f\x14"
 #ifndef MegCC_Reshape_file_identifier
 #define MegCC_Reshape_file_identifier flatbuffers_identifier
@@ -242,7 +243,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Reshape_identifier
 #define MegCC_Reshape_identifier flatbuffers_identifier
 #endif
-#define MegCC_Reshape_type_hash ((flatbuffers_thash_t)0xe65906ba)
+#define MegCC_Reshape_type_hash       ((flatbuffers_thash_t)0xe65906ba)
 #define MegCC_Reshape_type_identifier "\xba\x06\x59\xe6"
 #ifndef MegCC_ExternOpr_file_identifier
 #define MegCC_ExternOpr_file_identifier flatbuffers_identifier
@@ -251,7 +252,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_ExternOpr_identifier
 #define MegCC_ExternOpr_identifier flatbuffers_identifier
 #endif
-#define MegCC_ExternOpr_type_hash ((flatbuffers_thash_t)0x6183fc9d)
+#define MegCC_ExternOpr_type_hash       ((flatbuffers_thash_t)0x6183fc9d)
 #define MegCC_ExternOpr_type_identifier "\x9d\xfc\x83\x61"
 #ifndef MegCC_Arithmetic_file_identifier
 #define MegCC_Arithmetic_file_identifier flatbuffers_identifier
@@ -260,7 +261,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Arithmetic_identifier
 #define MegCC_Arithmetic_identifier flatbuffers_identifier
 #endif
-#define MegCC_Arithmetic_type_hash ((flatbuffers_thash_t)0x43a4a57c)
+#define MegCC_Arithmetic_type_hash       ((flatbuffers_thash_t)0x43a4a57c)
 #define MegCC_Arithmetic_type_identifier "\x7c\xa5\xa4\x43"
 #ifndef MegCC_Concat_file_identifier
 #define MegCC_Concat_file_identifier flatbuffers_identifier
@@ -269,7 +270,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Concat_identifier
 #define MegCC_Concat_identifier flatbuffers_identifier
 #endif
-#define MegCC_Concat_type_hash ((flatbuffers_thash_t)0x1f3df088)
+#define MegCC_Concat_type_hash       ((flatbuffers_thash_t)0x1f3df088)
 #define MegCC_Concat_type_identifier "\x88\xf0\x3d\x1f"
 #ifndef MegCC_ShapeOf_file_identifier
 #define MegCC_ShapeOf_file_identifier flatbuffers_identifier
@@ -278,7 +279,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_ShapeOf_identifier
 #define MegCC_ShapeOf_identifier flatbuffers_identifier
 #endif
-#define MegCC_ShapeOf_type_hash ((flatbuffers_thash_t)0x54f07078)
+#define MegCC_ShapeOf_type_hash       ((flatbuffers_thash_t)0x54f07078)
 #define MegCC_ShapeOf_type_identifier "\x78\x70\xf0\x54"
 #ifndef MegCC_IndexDesc_file_identifier
 #define MegCC_IndexDesc_file_identifier flatbuffers_identifier
@@ -287,7 +288,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_IndexDesc_identifier
 #define MegCC_IndexDesc_identifier flatbuffers_identifier
 #endif
-#define MegCC_IndexDesc_type_hash ((flatbuffers_thash_t)0x69c980dd)
+#define MegCC_IndexDesc_type_hash       ((flatbuffers_thash_t)0x69c980dd)
 #define MegCC_IndexDesc_type_identifier "\xdd\x80\xc9\x69"
 #ifndef MegCC_SubTensor_file_identifier
 #define MegCC_SubTensor_file_identifier flatbuffers_identifier
@@ -296,7 +297,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_SubTensor_identifier
 #define MegCC_SubTensor_identifier flatbuffers_identifier
 #endif
-#define MegCC_SubTensor_type_hash ((flatbuffers_thash_t)0xa2ff31db)
+#define MegCC_SubTensor_type_hash       ((flatbuffers_thash_t)0xa2ff31db)
 #define MegCC_SubTensor_type_identifier "\xdb\x31\xff\xa2"
 #ifndef MegCC_IndexingMultiAxis_file_identifier
 #define MegCC_IndexingMultiAxis_file_identifier flatbuffers_identifier
@@ -305,7 +306,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_IndexingMultiAxis_identifier
 #define MegCC_IndexingMultiAxis_identifier flatbuffers_identifier
 #endif
-#define MegCC_IndexingMultiAxis_type_hash ((flatbuffers_thash_t)0xc56e5ae8)
+#define MegCC_IndexingMultiAxis_type_hash       ((flatbuffers_thash_t)0xc56e5ae8)
 #define MegCC_IndexingMultiAxis_type_identifier "\xe8\x5a\x6e\xc5"
 #ifndef MegCC_SetSubTensor_file_identifier
 #define MegCC_SetSubTensor_file_identifier flatbuffers_identifier
@@ -314,7 +315,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_SetSubTensor_identifier
 #define MegCC_SetSubTensor_identifier flatbuffers_identifier
 #endif
-#define MegCC_SetSubTensor_type_hash ((flatbuffers_thash_t)0x633f688b)
+#define MegCC_SetSubTensor_type_hash       ((flatbuffers_thash_t)0x633f688b)
 #define MegCC_SetSubTensor_type_identifier "\x8b\x68\x3f\x63"
 #ifndef MegCC_WarpPerspective_file_identifier
 #define MegCC_WarpPerspective_file_identifier flatbuffers_identifier
@@ -323,7 +324,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_WarpPerspective_identifier
 #define MegCC_WarpPerspective_identifier flatbuffers_identifier
 #endif
-#define MegCC_WarpPerspective_type_hash ((flatbuffers_thash_t)0x6a062c4c)
+#define MegCC_WarpPerspective_type_hash       ((flatbuffers_thash_t)0x6a062c4c)
 #define MegCC_WarpPerspective_type_identifier "\x4c\x2c\x06\x6a"
 #ifndef MegCC_TypeCvt_file_identifier
 #define MegCC_TypeCvt_file_identifier flatbuffers_identifier
@@ -332,7 +333,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_TypeCvt_identifier
 #define MegCC_TypeCvt_identifier flatbuffers_identifier
 #endif
-#define MegCC_TypeCvt_type_hash ((flatbuffers_thash_t)0x9a6a8203)
+#define MegCC_TypeCvt_type_hash       ((flatbuffers_thash_t)0x9a6a8203)
 #define MegCC_TypeCvt_type_identifier "\x03\x82\x6a\x9a"
 #ifndef MegCC_ArgSort_file_identifier
 #define MegCC_ArgSort_file_identifier flatbuffers_identifier
@@ -341,7 +342,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_ArgSort_identifier
 #define MegCC_ArgSort_identifier flatbuffers_identifier
 #endif
-#define MegCC_ArgSort_type_hash ((flatbuffers_thash_t)0xbfd1e308)
+#define MegCC_ArgSort_type_hash       ((flatbuffers_thash_t)0xbfd1e308)
 #define MegCC_ArgSort_type_identifier "\x08\xe3\xd1\xbf"
 #ifndef MegCC_INSTRUCTION_TABLE_END_file_identifier
 #define MegCC_INSTRUCTION_TABLE_END_file_identifier flatbuffers_identifier
@@ -350,7 +351,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_INSTRUCTION_TABLE_END_identifier
 #define MegCC_INSTRUCTION_TABLE_END_identifier flatbuffers_identifier
 #endif
-#define MegCC_INSTRUCTION_TABLE_END_type_hash ((flatbuffers_thash_t)0x4e569e2d)
+#define MegCC_INSTRUCTION_TABLE_END_type_hash       ((flatbuffers_thash_t)0x4e569e2d)
 #define MegCC_INSTRUCTION_TABLE_END_type_identifier "\x2d\x9e\x56\x4e"
 #ifndef MegCC_DeviceModel_file_identifier
 #define MegCC_DeviceModel_file_identifier flatbuffers_identifier
@@ -359,7 +360,7 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_DeviceModel_identifier
 #define MegCC_DeviceModel_identifier flatbuffers_identifier
 #endif
-#define MegCC_DeviceModel_type_hash ((flatbuffers_thash_t)0x676437a7)
+#define MegCC_DeviceModel_type_hash       ((flatbuffers_thash_t)0x676437a7)
 #define MegCC_DeviceModel_type_identifier "\xa7\x37\x64\x67"
 #ifndef MegCC_Model_file_identifier
 #define MegCC_Model_file_identifier flatbuffers_identifier
@@ -368,117 +369,157 @@ typedef flatbuffers_uoffset_t *MegCC_Model_mutable_vec_t;
 #ifndef MegCC_Model_identifier
 #define MegCC_Model_identifier flatbuffers_identifier
 #endif
-#define MegCC_Model_type_hash ((flatbuffers_thash_t)0x5c72e88d)
+#define MegCC_Model_type_hash       ((flatbuffers_thash_t)0x5c72e88d)
 #define MegCC_Model_type_identifier "\x8d\xe8\x72\x5c"
 
 typedef int8_t MegCC_DTypeEnum_enum_t;
 __flatbuffers_define_integer_type(MegCC_DTypeEnum, MegCC_DTypeEnum_enum_t, 8)
 #define MegCC_DTypeEnum_Float32 ((MegCC_DTypeEnum_enum_t)INT8_C(0))
 #define MegCC_DTypeEnum_Float16 ((MegCC_DTypeEnum_enum_t)INT8_C(1))
-#define MegCC_DTypeEnum_Int32 ((MegCC_DTypeEnum_enum_t)INT8_C(2))
-#define MegCC_DTypeEnum_Int8 ((MegCC_DTypeEnum_enum_t)INT8_C(3))
-#define MegCC_DTypeEnum_Int16 ((MegCC_DTypeEnum_enum_t)INT8_C(4))
-#define MegCC_DTypeEnum_Uint8 ((MegCC_DTypeEnum_enum_t)INT8_C(5))
-#define MegCC_DTypeEnum_QInt8 ((MegCC_DTypeEnum_enum_t)INT8_C(100))
-#define MegCC_DTypeEnum_QInt32 ((MegCC_DTypeEnum_enum_t)INT8_C(101))
-#define MegCC_DTypeEnum_QUint8 ((MegCC_DTypeEnum_enum_t)INT8_C(102))
+#define MegCC_DTypeEnum_Int32   ((MegCC_DTypeEnum_enum_t)INT8_C(2))
+#define MegCC_DTypeEnum_Int8    ((MegCC_DTypeEnum_enum_t)INT8_C(3))
+#define MegCC_DTypeEnum_Int16   ((MegCC_DTypeEnum_enum_t)INT8_C(4))
+#define MegCC_DTypeEnum_Uint8   ((MegCC_DTypeEnum_enum_t)INT8_C(5))
+#define MegCC_DTypeEnum_QInt8   ((MegCC_DTypeEnum_enum_t)INT8_C(100))
+#define MegCC_DTypeEnum_QInt32  ((MegCC_DTypeEnum_enum_t)INT8_C(101))
+#define MegCC_DTypeEnum_QUint8  ((MegCC_DTypeEnum_enum_t)INT8_C(102))
 
-static inline const char *MegCC_DTypeEnum_name(MegCC_DTypeEnum_enum_t value)
-{
+        static inline const char* MegCC_DTypeEnum_name(MegCC_DTypeEnum_enum_t value) {
     switch (value) {
-    case MegCC_DTypeEnum_Float32: return "Float32";
-    case MegCC_DTypeEnum_Float16: return "Float16";
-    case MegCC_DTypeEnum_Int32: return "Int32";
-    case MegCC_DTypeEnum_Int8: return "Int8";
-    case MegCC_DTypeEnum_Int16: return "Int16";
-    case MegCC_DTypeEnum_Uint8: return "Uint8";
-    case MegCC_DTypeEnum_QInt8: return "QInt8";
-    case MegCC_DTypeEnum_QInt32: return "QInt32";
-    case MegCC_DTypeEnum_QUint8: return "QUint8";
-    default: return "";
+        case MegCC_DTypeEnum_Float32:
+            return "Float32";
+        case MegCC_DTypeEnum_Float16:
+            return "Float16";
+        case MegCC_DTypeEnum_Int32:
+            return "Int32";
+        case MegCC_DTypeEnum_Int8:
+            return "Int8";
+        case MegCC_DTypeEnum_Int16:
+            return "Int16";
+        case MegCC_DTypeEnum_Uint8:
+            return "Uint8";
+        case MegCC_DTypeEnum_QInt8:
+            return "QInt8";
+        case MegCC_DTypeEnum_QInt32:
+            return "QInt32";
+        case MegCC_DTypeEnum_QUint8:
+            return "QUint8";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_DTypeEnum_is_known_value(MegCC_DTypeEnum_enum_t value)
-{
+static inline int MegCC_DTypeEnum_is_known_value(MegCC_DTypeEnum_enum_t value) {
     switch (value) {
-    case MegCC_DTypeEnum_Float32: return 1;
-    case MegCC_DTypeEnum_Float16: return 1;
-    case MegCC_DTypeEnum_Int32: return 1;
-    case MegCC_DTypeEnum_Int8: return 1;
-    case MegCC_DTypeEnum_Int16: return 1;
-    case MegCC_DTypeEnum_Uint8: return 1;
-    case MegCC_DTypeEnum_QInt8: return 1;
-    case MegCC_DTypeEnum_QInt32: return 1;
-    case MegCC_DTypeEnum_QUint8: return 1;
-    default: return 0;
+        case MegCC_DTypeEnum_Float32:
+            return 1;
+        case MegCC_DTypeEnum_Float16:
+            return 1;
+        case MegCC_DTypeEnum_Int32:
+            return 1;
+        case MegCC_DTypeEnum_Int8:
+            return 1;
+        case MegCC_DTypeEnum_Int16:
+            return 1;
+        case MegCC_DTypeEnum_Uint8:
+            return 1;
+        case MegCC_DTypeEnum_QInt8:
+            return 1;
+        case MegCC_DTypeEnum_QInt32:
+            return 1;
+        case MegCC_DTypeEnum_QUint8:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_Format_enum_t;
 __flatbuffers_define_integer_type(MegCC_Format, MegCC_Format_enum_t, 8)
-#define MegCC_Format_NCHW ((MegCC_Format_enum_t)INT8_C(0))
-#define MegCC_Format_NHWC ((MegCC_Format_enum_t)INT8_C(1))
+#define MegCC_Format_NCHW  ((MegCC_Format_enum_t)INT8_C(0))
+#define MegCC_Format_NHWC  ((MegCC_Format_enum_t)INT8_C(1))
 #define MegCC_Format_NCHW4 ((MegCC_Format_enum_t)INT8_C(2))
 #define MegCC_Format_NCHW8 ((MegCC_Format_enum_t)INT8_C(3))
-#define MegCC_Format_OIHW ((MegCC_Format_enum_t)INT8_C(4))
+#define MegCC_Format_OIHW  ((MegCC_Format_enum_t)INT8_C(4))
 
-static inline const char *MegCC_Format_name(MegCC_Format_enum_t value)
-{
+        static inline const char* MegCC_Format_name(MegCC_Format_enum_t value) {
     switch (value) {
-    case MegCC_Format_NCHW: return "NCHW";
-    case MegCC_Format_NHWC: return "NHWC";
-    case MegCC_Format_NCHW4: return "NCHW4";
-    case MegCC_Format_NCHW8: return "NCHW8";
-    case MegCC_Format_OIHW: return "OIHW";
-    default: return "";
+        case MegCC_Format_NCHW:
+            return "NCHW";
+        case MegCC_Format_NHWC:
+            return "NHWC";
+        case MegCC_Format_NCHW4:
+            return "NCHW4";
+        case MegCC_Format_NCHW8:
+            return "NCHW8";
+        case MegCC_Format_OIHW:
+            return "OIHW";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_Format_is_known_value(MegCC_Format_enum_t value)
-{
+static inline int MegCC_Format_is_known_value(MegCC_Format_enum_t value) {
     switch (value) {
-    case MegCC_Format_NCHW: return 1;
-    case MegCC_Format_NHWC: return 1;
-    case MegCC_Format_NCHW4: return 1;
-    case MegCC_Format_NCHW8: return 1;
-    case MegCC_Format_OIHW: return 1;
-    default: return 0;
+        case MegCC_Format_NCHW:
+            return 1;
+        case MegCC_Format_NHWC:
+            return 1;
+        case MegCC_Format_NCHW4:
+            return 1;
+        case MegCC_Format_NCHW8:
+            return 1;
+        case MegCC_Format_OIHW:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_Device_enum_t;
 __flatbuffers_define_integer_type(MegCC_Device, MegCC_Device_enum_t, 8)
-#define MegCC_Device_BARE_METAL ((MegCC_Device_enum_t)INT8_C(0))
-#define MegCC_Device_ARM64 ((MegCC_Device_enum_t)INT8_C(1))
-#define MegCC_Device_ARM32 ((MegCC_Device_enum_t)INT8_C(2))
-#define MegCC_Device_ARM64_V82 ((MegCC_Device_enum_t)INT8_C(3))
-#define MegCC_Device_ARM32_V82 ((MegCC_Device_enum_t)INT8_C(4))
+#define MegCC_Device_BARE_METAL  ((MegCC_Device_enum_t)INT8_C(0))
+#define MegCC_Device_ARM64       ((MegCC_Device_enum_t)INT8_C(1))
+#define MegCC_Device_ARM32       ((MegCC_Device_enum_t)INT8_C(2))
+#define MegCC_Device_ARM64_V82   ((MegCC_Device_enum_t)INT8_C(3))
+#define MegCC_Device_ARM32_V82   ((MegCC_Device_enum_t)INT8_C(4))
 #define MegCC_Device_OPENCL_MALI ((MegCC_Device_enum_t)INT8_C(5))
 
-static inline const char *MegCC_Device_name(MegCC_Device_enum_t value)
-{
+        static inline const char* MegCC_Device_name(MegCC_Device_enum_t value) {
     switch (value) {
-    case MegCC_Device_BARE_METAL: return "BARE_METAL";
-    case MegCC_Device_ARM64: return "ARM64";
-    case MegCC_Device_ARM32: return "ARM32";
-    case MegCC_Device_ARM64_V82: return "ARM64_V82";
-    case MegCC_Device_ARM32_V82: return "ARM32_V82";
-    case MegCC_Device_OPENCL_MALI: return "OPENCL_MALI";
-    default: return "";
+        case MegCC_Device_BARE_METAL:
+            return "BARE_METAL";
+        case MegCC_Device_ARM64:
+            return "ARM64";
+        case MegCC_Device_ARM32:
+            return "ARM32";
+        case MegCC_Device_ARM64_V82:
+            return "ARM64_V82";
+        case MegCC_Device_ARM32_V82:
+            return "ARM32_V82";
+        case MegCC_Device_OPENCL_MALI:
+            return "OPENCL_MALI";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_Device_is_known_value(MegCC_Device_enum_t value)
-{
+static inline int MegCC_Device_is_known_value(MegCC_Device_enum_t value) {
     switch (value) {
-    case MegCC_Device_BARE_METAL: return 1;
-    case MegCC_Device_ARM64: return 1;
-    case MegCC_Device_ARM32: return 1;
-    case MegCC_Device_ARM64_V82: return 1;
-    case MegCC_Device_ARM32_V82: return 1;
-    case MegCC_Device_OPENCL_MALI: return 1;
-    default: return 0;
+        case MegCC_Device_BARE_METAL:
+            return 1;
+        case MegCC_Device_ARM64:
+            return 1;
+        case MegCC_Device_ARM32:
+            return 1;
+        case MegCC_Device_ARM64_V82:
+            return 1;
+        case MegCC_Device_ARM32_V82:
+            return 1;
+        case MegCC_Device_OPENCL_MALI:
+            return 1;
+        default:
+            return 0;
     }
 }
 
@@ -487,623 +528,1021 @@ __flatbuffers_define_integer_type(MegCC_TensorType, MegCC_TensorType_enum_t, 8)
 #define MegCC_TensorType_TENSOR ((MegCC_TensorType_enum_t)INT8_C(0))
 #define MegCC_TensorType_WEIGHT ((MegCC_TensorType_enum_t)INT8_C(1))
 
-static inline const char *MegCC_TensorType_name(MegCC_TensorType_enum_t value)
-{
+        static inline const char* MegCC_TensorType_name(MegCC_TensorType_enum_t value) {
     switch (value) {
-    case MegCC_TensorType_TENSOR: return "TENSOR";
-    case MegCC_TensorType_WEIGHT: return "WEIGHT";
-    default: return "";
+        case MegCC_TensorType_TENSOR:
+            return "TENSOR";
+        case MegCC_TensorType_WEIGHT:
+            return "WEIGHT";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_TensorType_is_known_value(MegCC_TensorType_enum_t value)
-{
+static inline int MegCC_TensorType_is_known_value(MegCC_TensorType_enum_t value) {
     switch (value) {
-    case MegCC_TensorType_TENSOR: return 1;
-    case MegCC_TensorType_WEIGHT: return 1;
-    default: return 0;
+        case MegCC_TensorType_TENSOR:
+            return 1;
+        case MegCC_TensorType_WEIGHT:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_MemForwardType_enum_t;
 __flatbuffers_define_integer_type(MegCC_MemForwardType, MegCC_MemForwardType_enum_t, 8)
-#define MegCC_MemForwardType_RESHAPE ((MegCC_MemForwardType_enum_t)INT8_C(0))
+#define MegCC_MemForwardType_RESHAPE   ((MegCC_MemForwardType_enum_t)INT8_C(0))
 #define MegCC_MemForwardType_SUBTENSOR ((MegCC_MemForwardType_enum_t)INT8_C(1))
 
-static inline const char *MegCC_MemForwardType_name(MegCC_MemForwardType_enum_t value)
-{
+        static inline const
+        char* MegCC_MemForwardType_name(MegCC_MemForwardType_enum_t value) {
     switch (value) {
-    case MegCC_MemForwardType_RESHAPE: return "RESHAPE";
-    case MegCC_MemForwardType_SUBTENSOR: return "SUBTENSOR";
-    default: return "";
+        case MegCC_MemForwardType_RESHAPE:
+            return "RESHAPE";
+        case MegCC_MemForwardType_SUBTENSOR:
+            return "SUBTENSOR";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_MemForwardType_is_known_value(MegCC_MemForwardType_enum_t value)
-{
+static inline int MegCC_MemForwardType_is_known_value(
+        MegCC_MemForwardType_enum_t value) {
     switch (value) {
-    case MegCC_MemForwardType_RESHAPE: return 1;
-    case MegCC_MemForwardType_SUBTENSOR: return 1;
-    default: return 0;
+        case MegCC_MemForwardType_RESHAPE:
+            return 1;
+        case MegCC_MemForwardType_SUBTENSOR:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_ArithMode_enum_t;
 __flatbuffers_define_integer_type(MegCC_ArithMode, MegCC_ArithMode_enum_t, 8)
-#define MegCC_ArithMode_ROUND ((MegCC_ArithMode_enum_t)INT8_C(0))
-#define MegCC_ArithMode_NEGATE ((MegCC_ArithMode_enum_t)INT8_C(1))
-#define MegCC_ArithMode_SUB ((MegCC_ArithMode_enum_t)INT8_C(2))
-#define MegCC_ArithMode_ADD ((MegCC_ArithMode_enum_t)INT8_C(3))
-#define MegCC_ArithMode_MUL ((MegCC_ArithMode_enum_t)INT8_C(4))
-#define MegCC_ArithMode_Max ((MegCC_ArithMode_enum_t)INT8_C(5))
-#define MegCC_ArithMode_Min ((MegCC_ArithMode_enum_t)INT8_C(6))
-#define MegCC_ArithMode_LT ((MegCC_ArithMode_enum_t)INT8_C(7))
-#define MegCC_ArithMode_LEQ ((MegCC_ArithMode_enum_t)INT8_C(8))
+#define MegCC_ArithMode_ROUND    ((MegCC_ArithMode_enum_t)INT8_C(0))
+#define MegCC_ArithMode_NEGATE   ((MegCC_ArithMode_enum_t)INT8_C(1))
+#define MegCC_ArithMode_SUB      ((MegCC_ArithMode_enum_t)INT8_C(2))
+#define MegCC_ArithMode_ADD      ((MegCC_ArithMode_enum_t)INT8_C(3))
+#define MegCC_ArithMode_MUL      ((MegCC_ArithMode_enum_t)INT8_C(4))
+#define MegCC_ArithMode_Max      ((MegCC_ArithMode_enum_t)INT8_C(5))
+#define MegCC_ArithMode_Min      ((MegCC_ArithMode_enum_t)INT8_C(6))
+#define MegCC_ArithMode_LT       ((MegCC_ArithMode_enum_t)INT8_C(7))
+#define MegCC_ArithMode_LEQ      ((MegCC_ArithMode_enum_t)INT8_C(8))
 #define MegCC_ArithMode_FLOORDIV ((MegCC_ArithMode_enum_t)INT8_C(9))
 #define MegCC_ArithMode_TRUE_DIV ((MegCC_ArithMode_enum_t)INT8_C(10))
 
-static inline const char *MegCC_ArithMode_name(MegCC_ArithMode_enum_t value)
-{
+        static inline const char* MegCC_ArithMode_name(MegCC_ArithMode_enum_t value) {
     switch (value) {
-    case MegCC_ArithMode_ROUND: return "ROUND";
-    case MegCC_ArithMode_NEGATE: return "NEGATE";
-    case MegCC_ArithMode_SUB: return "SUB";
-    case MegCC_ArithMode_ADD: return "ADD";
-    case MegCC_ArithMode_MUL: return "MUL";
-    case MegCC_ArithMode_Max: return "Max";
-    case MegCC_ArithMode_Min: return "Min";
-    case MegCC_ArithMode_LT: return "LT";
-    case MegCC_ArithMode_LEQ: return "LEQ";
-    case MegCC_ArithMode_FLOORDIV: return "FLOORDIV";
-    case MegCC_ArithMode_TRUE_DIV: return "TRUE_DIV";
-    default: return "";
+        case MegCC_ArithMode_ROUND:
+            return "ROUND";
+        case MegCC_ArithMode_NEGATE:
+            return "NEGATE";
+        case MegCC_ArithMode_SUB:
+            return "SUB";
+        case MegCC_ArithMode_ADD:
+            return "ADD";
+        case MegCC_ArithMode_MUL:
+            return "MUL";
+        case MegCC_ArithMode_Max:
+            return "Max";
+        case MegCC_ArithMode_Min:
+            return "Min";
+        case MegCC_ArithMode_LT:
+            return "LT";
+        case MegCC_ArithMode_LEQ:
+            return "LEQ";
+        case MegCC_ArithMode_FLOORDIV:
+            return "FLOORDIV";
+        case MegCC_ArithMode_TRUE_DIV:
+            return "TRUE_DIV";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_ArithMode_is_known_value(MegCC_ArithMode_enum_t value)
-{
+static inline int MegCC_ArithMode_is_known_value(MegCC_ArithMode_enum_t value) {
     switch (value) {
-    case MegCC_ArithMode_ROUND: return 1;
-    case MegCC_ArithMode_NEGATE: return 1;
-    case MegCC_ArithMode_SUB: return 1;
-    case MegCC_ArithMode_ADD: return 1;
-    case MegCC_ArithMode_MUL: return 1;
-    case MegCC_ArithMode_Max: return 1;
-    case MegCC_ArithMode_Min: return 1;
-    case MegCC_ArithMode_LT: return 1;
-    case MegCC_ArithMode_LEQ: return 1;
-    case MegCC_ArithMode_FLOORDIV: return 1;
-    case MegCC_ArithMode_TRUE_DIV: return 1;
-    default: return 0;
+        case MegCC_ArithMode_ROUND:
+            return 1;
+        case MegCC_ArithMode_NEGATE:
+            return 1;
+        case MegCC_ArithMode_SUB:
+            return 1;
+        case MegCC_ArithMode_ADD:
+            return 1;
+        case MegCC_ArithMode_MUL:
+            return 1;
+        case MegCC_ArithMode_Max:
+            return 1;
+        case MegCC_ArithMode_Min:
+            return 1;
+        case MegCC_ArithMode_LT:
+            return 1;
+        case MegCC_ArithMode_LEQ:
+            return 1;
+        case MegCC_ArithMode_FLOORDIV:
+            return 1;
+        case MegCC_ArithMode_TRUE_DIV:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_InterpolationMode_enum_t;
-__flatbuffers_define_integer_type(MegCC_InterpolationMode, MegCC_InterpolationMode_enum_t, 8)
-#define MegCC_InterpolationMode_NEAREST ((MegCC_InterpolationMode_enum_t)INT8_C(0))
-#define MegCC_InterpolationMode_LINEAR ((MegCC_InterpolationMode_enum_t)INT8_C(1))
-#define MegCC_InterpolationMode_AREA ((MegCC_InterpolationMode_enum_t)INT8_C(2))
-#define MegCC_InterpolationMode_CUBIC ((MegCC_InterpolationMode_enum_t)INT8_C(3))
+__flatbuffers_define_integer_type(
+        MegCC_InterpolationMode, MegCC_InterpolationMode_enum_t, 8)
+#define MegCC_InterpolationMode_NEAREST  ((MegCC_InterpolationMode_enum_t)INT8_C(0))
+#define MegCC_InterpolationMode_LINEAR   ((MegCC_InterpolationMode_enum_t)INT8_C(1))
+#define MegCC_InterpolationMode_AREA     ((MegCC_InterpolationMode_enum_t)INT8_C(2))
+#define MegCC_InterpolationMode_CUBIC    ((MegCC_InterpolationMode_enum_t)INT8_C(3))
 #define MegCC_InterpolationMode_LANCZOS4 ((MegCC_InterpolationMode_enum_t)INT8_C(4))
 
-static inline const char *MegCC_InterpolationMode_name(MegCC_InterpolationMode_enum_t value)
-{
+        static inline const
+        char* MegCC_InterpolationMode_name(MegCC_InterpolationMode_enum_t value) {
     switch (value) {
-    case MegCC_InterpolationMode_NEAREST: return "NEAREST";
-    case MegCC_InterpolationMode_LINEAR: return "LINEAR";
-    case MegCC_InterpolationMode_AREA: return "AREA";
-    case MegCC_InterpolationMode_CUBIC: return "CUBIC";
-    case MegCC_InterpolationMode_LANCZOS4: return "LANCZOS4";
-    default: return "";
+        case MegCC_InterpolationMode_NEAREST:
+            return "NEAREST";
+        case MegCC_InterpolationMode_LINEAR:
+            return "LINEAR";
+        case MegCC_InterpolationMode_AREA:
+            return "AREA";
+        case MegCC_InterpolationMode_CUBIC:
+            return "CUBIC";
+        case MegCC_InterpolationMode_LANCZOS4:
+            return "LANCZOS4";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_InterpolationMode_is_known_value(MegCC_InterpolationMode_enum_t value)
-{
+static inline int MegCC_InterpolationMode_is_known_value(
+        MegCC_InterpolationMode_enum_t value) {
     switch (value) {
-    case MegCC_InterpolationMode_NEAREST: return 1;
-    case MegCC_InterpolationMode_LINEAR: return 1;
-    case MegCC_InterpolationMode_AREA: return 1;
-    case MegCC_InterpolationMode_CUBIC: return 1;
-    case MegCC_InterpolationMode_LANCZOS4: return 1;
-    default: return 0;
+        case MegCC_InterpolationMode_NEAREST:
+            return 1;
+        case MegCC_InterpolationMode_LINEAR:
+            return 1;
+        case MegCC_InterpolationMode_AREA:
+            return 1;
+        case MegCC_InterpolationMode_CUBIC:
+            return 1;
+        case MegCC_InterpolationMode_LANCZOS4:
+            return 1;
+        default:
+            return 0;
     }
 }
 
 typedef int8_t MegCC_BorderModeMode_enum_t;
 __flatbuffers_define_integer_type(MegCC_BorderModeMode, MegCC_BorderModeMode_enum_t, 8)
-#define MegCC_BorderModeMode_REPLICATE ((MegCC_BorderModeMode_enum_t)INT8_C(0))
-#define MegCC_BorderModeMode_REFLECT ((MegCC_BorderModeMode_enum_t)INT8_C(1))
+#define MegCC_BorderModeMode_REPLICATE   ((MegCC_BorderModeMode_enum_t)INT8_C(0))
+#define MegCC_BorderModeMode_REFLECT     ((MegCC_BorderModeMode_enum_t)INT8_C(1))
 #define MegCC_BorderModeMode_REFLECT_101 ((MegCC_BorderModeMode_enum_t)INT8_C(2))
-#define MegCC_BorderModeMode_WRAP ((MegCC_BorderModeMode_enum_t)INT8_C(3))
-#define MegCC_BorderModeMode_CONSTANT ((MegCC_BorderModeMode_enum_t)INT8_C(4))
+#define MegCC_BorderModeMode_WRAP        ((MegCC_BorderModeMode_enum_t)INT8_C(3))
+#define MegCC_BorderModeMode_CONSTANT    ((MegCC_BorderModeMode_enum_t)INT8_C(4))
 #define MegCC_BorderModeMode_TRANSPARENT ((MegCC_BorderModeMode_enum_t)INT8_C(5))
-#define MegCC_BorderModeMode_ISOLATED ((MegCC_BorderModeMode_enum_t)INT8_C(6))
+#define MegCC_BorderModeMode_ISOLATED    ((MegCC_BorderModeMode_enum_t)INT8_C(6))
 
-static inline const char *MegCC_BorderModeMode_name(MegCC_BorderModeMode_enum_t value)
-{
+        static inline const
+        char* MegCC_BorderModeMode_name(MegCC_BorderModeMode_enum_t value) {
     switch (value) {
-    case MegCC_BorderModeMode_REPLICATE: return "REPLICATE";
-    case MegCC_BorderModeMode_REFLECT: return "REFLECT";
-    case MegCC_BorderModeMode_REFLECT_101: return "REFLECT_101";
-    case MegCC_BorderModeMode_WRAP: return "WRAP";
-    case MegCC_BorderModeMode_CONSTANT: return "CONSTANT";
-    case MegCC_BorderModeMode_TRANSPARENT: return "TRANSPARENT";
-    case MegCC_BorderModeMode_ISOLATED: return "ISOLATED";
-    default: return "";
+        case MegCC_BorderModeMode_REPLICATE:
+            return "REPLICATE";
+        case MegCC_BorderModeMode_REFLECT:
+            return "REFLECT";
+        case MegCC_BorderModeMode_REFLECT_101:
+            return "REFLECT_101";
+        case MegCC_BorderModeMode_WRAP:
+            return "WRAP";
+        case MegCC_BorderModeMode_CONSTANT:
+            return "CONSTANT";
+        case MegCC_BorderModeMode_TRANSPARENT:
+            return "TRANSPARENT";
+        case MegCC_BorderModeMode_ISOLATED:
+            return "ISOLATED";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_BorderModeMode_is_known_value(MegCC_BorderModeMode_enum_t value)
-{
+static inline int MegCC_BorderModeMode_is_known_value(
+        MegCC_BorderModeMode_enum_t value) {
     switch (value) {
-    case MegCC_BorderModeMode_REPLICATE: return 1;
-    case MegCC_BorderModeMode_REFLECT: return 1;
-    case MegCC_BorderModeMode_REFLECT_101: return 1;
-    case MegCC_BorderModeMode_WRAP: return 1;
-    case MegCC_BorderModeMode_CONSTANT: return 1;
-    case MegCC_BorderModeMode_TRANSPARENT: return 1;
-    case MegCC_BorderModeMode_ISOLATED: return 1;
-    default: return 0;
+        case MegCC_BorderModeMode_REPLICATE:
+            return 1;
+        case MegCC_BorderModeMode_REFLECT:
+            return 1;
+        case MegCC_BorderModeMode_REFLECT_101:
+            return 1;
+        case MegCC_BorderModeMode_WRAP:
+            return 1;
+        case MegCC_BorderModeMode_CONSTANT:
+            return 1;
+        case MegCC_BorderModeMode_TRANSPARENT:
+            return 1;
+        case MegCC_BorderModeMode_ISOLATED:
+            return 1;
+        default:
+            return 0;
     }
 }
 
-
-
-struct MegCC_DTypeParam_table { uint8_t unused__; };
+struct MegCC_DTypeParam_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_DTypeParam_vec_len(MegCC_DTypeParam_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_DTypeParam_table_t MegCC_DTypeParam_vec_at(MegCC_DTypeParam_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_DTypeParam_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_DTypeParam)
+        __flatbuffers_vec_len(vec) static inline MegCC_DTypeParam_table_t
+        MegCC_DTypeParam_vec_at(MegCC_DTypeParam_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_DTypeParam_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_DTypeParam)
 
-__flatbuffers_define_scalar_field(0, MegCC_DTypeParam, scale, flatbuffers_float, float, 1.00000000f)
-__flatbuffers_define_scalar_field(1, MegCC_DTypeParam, zero_point, flatbuffers_uint8, uint8_t, UINT8_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_DTypeParam, scale, flatbuffers_float,
+                                        float, 1.00000000f)
+                                        __flatbuffers_define_scalar_field(
+                                                1, MegCC_DTypeParam, zero_point,
+                                                flatbuffers_uint8, uint8_t, UINT8_C(0))
 
-struct MegCC_DType_table { uint8_t unused__; };
+                                                struct MegCC_DType_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_DType_vec_len(MegCC_DType_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_DType_table_t MegCC_DType_vec_at(MegCC_DType_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_DType_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_DType)
+        __flatbuffers_vec_len(vec) static inline MegCC_DType_table_t
+        MegCC_DType_vec_at(MegCC_DType_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_DType_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_DType)
 
-__flatbuffers_define_scalar_field(0, MegCC_DType, type, MegCC_DTypeEnum, MegCC_DTypeEnum_enum_t, INT8_C(0))
-__flatbuffers_define_table_field(1, MegCC_DType, param, MegCC_DTypeParam_table_t, 0)
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_DType, type, MegCC_DTypeEnum,
+                                        MegCC_DTypeEnum_enum_t, INT8_C(0))
+                                        __flatbuffers_define_table_field(
+                                                1, MegCC_DType, param,
+                                                MegCC_DTypeParam_table_t, 0)
 
-struct MegCC_Layout_table { uint8_t unused__; };
+                                                struct MegCC_Layout_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Layout_vec_len(MegCC_Layout_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Layout_table_t MegCC_Layout_vec_at(MegCC_Layout_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Layout_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Layout)
+        __flatbuffers_vec_len(vec) static inline MegCC_Layout_table_t
+        MegCC_Layout_vec_at(MegCC_Layout_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Layout_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Layout)
 
-__flatbuffers_define_vector_field(0, MegCC_Layout, dims, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(1, MegCC_Layout, stride, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_Layout, format, MegCC_Format, MegCC_Format_enum_t, INT8_C(0))
+                                __flatbuffers_define_vector_field(
+                                        0, MegCC_Layout, dims, flatbuffers_int32_vec_t,
+                                        0)
+                                        __flatbuffers_define_vector_field(
+                                                1, MegCC_Layout, stride,
+                                                flatbuffers_int32_vec_t, 0)
+                                                __flatbuffers_define_scalar_field(
+                                                        2, MegCC_Layout, format,
+                                                        MegCC_Format,
+                                                        MegCC_Format_enum_t, INT8_C(0))
 
-struct MegCC_Tensor_table { uint8_t unused__; };
+                                                        struct MegCC_Tensor_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Tensor_vec_len(MegCC_Tensor_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Tensor_table_t MegCC_Tensor_vec_at(MegCC_Tensor_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Tensor_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Tensor)
+        __flatbuffers_vec_len(vec) static inline MegCC_Tensor_table_t
+        MegCC_Tensor_vec_at(MegCC_Tensor_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_Tensor_table_t, vec, i,
+                0) __flatbuffers_table_as_root(MegCC_Tensor)
 
-__flatbuffers_define_table_field(0, MegCC_Tensor, dtype, MegCC_DType_table_t, 0)
-__flatbuffers_define_table_field(1, MegCC_Tensor, layout, MegCC_Layout_table_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_Tensor, offset, flatbuffers_int64, int64_t, INT64_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_Tensor, dynamic, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-__flatbuffers_define_scalar_field(4, MegCC_Tensor, use_count, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_string_field(5, MegCC_Tensor, name, 0)
+                __flatbuffers_define_table_field(
+                        0, MegCC_Tensor, dtype, MegCC_DType_table_t, 0)
+                        __flatbuffers_define_table_field(
+                                1, MegCC_Tensor, layout, MegCC_Layout_table_t, 0)
+                                __flatbuffers_define_scalar_field(
+                                        2, MegCC_Tensor, offset, flatbuffers_int64,
+                                        int64_t, INT64_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                3, MegCC_Tensor, dynamic,
+                                                flatbuffers_bool, flatbuffers_bool_t,
+                                                UINT8_C(0))
+                                                __flatbuffers_define_scalar_field(
+                                                        4, MegCC_Tensor, use_count,
+                                                        flatbuffers_int32, int32_t,
+                                                        INT32_C(0))
+                                                        __flatbuffers_define_string_field(
+                                                                5, MegCC_Tensor, name,
+                                                                0)
 
-struct MegCC_Workspace_table { uint8_t unused__; };
+                                                                struct
+        MegCC_Workspace_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Workspace_vec_len(MegCC_Workspace_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Workspace_table_t MegCC_Workspace_vec_at(MegCC_Workspace_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Workspace_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Workspace)
+        __flatbuffers_vec_len(vec) static inline MegCC_Workspace_table_t
+        MegCC_Workspace_vec_at(MegCC_Workspace_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Workspace_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Workspace)
 
-__flatbuffers_define_scalar_field(0, MegCC_Workspace, size, flatbuffers_int64, int64_t, INT64_C(0))
-__flatbuffers_define_scalar_field(1, MegCC_Workspace, offset, flatbuffers_int64, int64_t, INT64_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_Workspace, size, flatbuffers_int64,
+                                        int64_t, INT64_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                1, MegCC_Workspace, offset,
+                                                flatbuffers_int64, int64_t, INT64_C(0))
 
-struct MegCC_Weight_table { uint8_t unused__; };
+                                                struct MegCC_Weight_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Weight_vec_len(MegCC_Weight_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Weight_table_t MegCC_Weight_vec_at(MegCC_Weight_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Weight_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Weight)
+        __flatbuffers_vec_len(vec) static inline MegCC_Weight_table_t
+        MegCC_Weight_vec_at(MegCC_Weight_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_Weight_table_t, vec, i,
+                0) __flatbuffers_table_as_root(MegCC_Weight)
 
-__flatbuffers_define_table_field(0, MegCC_Weight, dtype, MegCC_DType_table_t, 0)
-__flatbuffers_define_table_field(1, MegCC_Weight, layout, MegCC_Layout_table_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_Weight, use_count, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_vector_field(3, MegCC_Weight, data, flatbuffers_int8_vec_t, 0)
-__flatbuffers_define_string_field(4, MegCC_Weight, name, 0)
-__flatbuffers_define_scalar_field(5, MegCC_Weight, checksum, flatbuffers_uint32, uint32_t, UINT32_C(0))
-__flatbuffers_define_scalar_field(6, MegCC_Weight, compressed, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
+                __flatbuffers_define_table_field(
+                        0, MegCC_Weight, dtype, MegCC_DType_table_t, 0)
+                        __flatbuffers_define_table_field(
+                                1, MegCC_Weight, layout, MegCC_Layout_table_t, 0)
+                                __flatbuffers_define_scalar_field(
+                                        2, MegCC_Weight, use_count, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+                                        __flatbuffers_define_vector_field(
+                                                3, MegCC_Weight, data,
+                                                flatbuffers_int8_vec_t, 0)
+                                                __flatbuffers_define_string_field(
+                                                        4, MegCC_Weight, name, 0)
+                                                        __flatbuffers_define_scalar_field(
+                                                                5, MegCC_Weight,
+                                                                checksum,
+                                                                flatbuffers_uint32,
+                                                                uint32_t, UINT32_C(0))
+                                                                __flatbuffers_define_scalar_field(
+                                                                        6, MegCC_Weight,
+                                                                        compressed,
+                                                                        flatbuffers_bool,
+                                                                        flatbuffers_bool_t,
+                                                                        UINT8_C(0))
 
-struct MegCC_Opr_table { uint8_t unused__; };
+                                                                        struct
+        MegCC_Opr_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Opr_vec_len(MegCC_Opr_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Opr_table_t MegCC_Opr_vec_at(MegCC_Opr_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Opr_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Opr)
+        __flatbuffers_vec_len(vec) static inline MegCC_Opr_table_t
+        MegCC_Opr_vec_at(MegCC_Opr_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_Opr_table_t, vec, i, 0) __flatbuffers_table_as_root(MegCC_Opr)
 
-__flatbuffers_define_string_field(0, MegCC_Opr, name, 0)
-__flatbuffers_define_string_field(1, MegCC_Opr, type, 0)
-__flatbuffers_define_vector_field(2, MegCC_Opr, inputs, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(3, MegCC_Opr, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_vector_field(4, MegCC_Opr, outputs, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_table_field(5, MegCC_Opr, workspace, MegCC_Workspace_table_t, 0)
-__flatbuffers_define_scalar_field(6, MegCC_Opr, init_id, flatbuffers_int32, int32_t, INT32_C(-1))
-__flatbuffers_define_scalar_field(7, MegCC_Opr, kernel_id, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(8, MegCC_Opr, workspace_id, flatbuffers_int32, int32_t, INT32_C(-1))
-__flatbuffers_define_scalar_field(9, MegCC_Opr, deduce_id, flatbuffers_int32, int32_t, INT32_C(-1))
+                __flatbuffers_define_string_field(0, MegCC_Opr, name, 0) __flatbuffers_define_string_field(
+                        1, MegCC_Opr, type,
+                        0) __flatbuffers_define_vector_field(2, MegCC_Opr, inputs, flatbuffers_int32_vec_t, 0)
+                        __flatbuffers_define_vector_field(
+                                3, MegCC_Opr, input_types, MegCC_TensorType_vec_t, 0)
+                                __flatbuffers_define_vector_field(
+                                        4, MegCC_Opr, outputs, flatbuffers_int32_vec_t,
+                                        0)
+                                        __flatbuffers_define_table_field(
+                                                5, MegCC_Opr, workspace,
+                                                MegCC_Workspace_table_t, 0)
+                                                __flatbuffers_define_scalar_field(
+                                                        6, MegCC_Opr, init_id,
+                                                        flatbuffers_int32, int32_t,
+                                                        INT32_C(-1))
+                                                        __flatbuffers_define_scalar_field(
+                                                                7, MegCC_Opr, kernel_id,
+                                                                flatbuffers_int32,
+                                                                int32_t, INT32_C(0))
+                                                                __flatbuffers_define_scalar_field(
+                                                                        8, MegCC_Opr,
+                                                                        workspace_id,
+                                                                        flatbuffers_int32,
+                                                                        int32_t,
+                                                                        INT32_C(-1))
+                                                                        __flatbuffers_define_scalar_field(
+                                                                                9,
+                                                                                MegCC_Opr,
+                                                                                deduce_id,
+                                                                                flatbuffers_int32,
+                                                                                int32_t,
+                                                                                INT32_C(-1))
 
-struct MegCC_DevMemAlloc_table { uint8_t unused__; };
+                                                                                struct
+        MegCC_DevMemAlloc_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_DevMemAlloc_vec_len(MegCC_DevMemAlloc_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_DevMemAlloc_table_t MegCC_DevMemAlloc_vec_at(MegCC_DevMemAlloc_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_DevMemAlloc_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_DevMemAlloc)
+        __flatbuffers_vec_len(vec) static inline MegCC_DevMemAlloc_table_t
+        MegCC_DevMemAlloc_vec_at(MegCC_DevMemAlloc_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_DevMemAlloc_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_DevMemAlloc)
 
-__flatbuffers_define_scalar_field(0, MegCC_DevMemAlloc, tensor, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_DevMemAlloc, tensor, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
 
-struct MegCC_DevMemFree_table { uint8_t unused__; };
+                                        struct MegCC_DevMemFree_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_DevMemFree_vec_len(MegCC_DevMemFree_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_DevMemFree_table_t MegCC_DevMemFree_vec_at(MegCC_DevMemFree_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_DevMemFree_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_DevMemFree)
+        __flatbuffers_vec_len(vec) static inline MegCC_DevMemFree_table_t
+        MegCC_DevMemFree_vec_at(MegCC_DevMemFree_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_DevMemFree_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_DevMemFree)
 
-__flatbuffers_define_scalar_field(0, MegCC_DevMemFree, tensor, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_DevMemFree, tensor, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
 
-struct MegCC_MemForward_table { uint8_t unused__; };
+                                        struct MegCC_MemForward_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_MemForward_vec_len(MegCC_MemForward_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_MemForward_table_t MegCC_MemForward_vec_at(MegCC_MemForward_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_MemForward_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_MemForward)
+        __flatbuffers_vec_len(vec) static inline MegCC_MemForward_table_t
+        MegCC_MemForward_vec_at(MegCC_MemForward_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(
+                        MegCC_MemForward_table_t, vec, i,
+                        0) __flatbuffers_table_as_root(MegCC_MemForward)
 
-__flatbuffers_define_scalar_field(0, MegCC_MemForward, input, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(1, MegCC_MemForward, output, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(2, MegCC_MemForward, offset, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_MemForward, type, MegCC_MemForwardType, MegCC_MemForwardType_enum_t, INT8_C(0))
+                        __flatbuffers_define_scalar_field(
+                                0, MegCC_MemForward, input, flatbuffers_int32, int32_t,
+                                INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        1, MegCC_MemForward, output, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                2, MegCC_MemForward, offset,
+                                                flatbuffers_int32, int32_t, INT32_C(0))
+                                                __flatbuffers_define_scalar_field(
+                                                        3, MegCC_MemForward, type,
+                                                        MegCC_MemForwardType,
+                                                        MegCC_MemForwardType_enum_t,
+                                                        INT8_C(0))
 
-struct MegCC_Dimshuffle_table { uint8_t unused__; };
+                                                        struct MegCC_Dimshuffle_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Dimshuffle_vec_len(MegCC_Dimshuffle_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Dimshuffle_table_t MegCC_Dimshuffle_vec_at(MegCC_Dimshuffle_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Dimshuffle_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Dimshuffle)
+        __flatbuffers_vec_len(vec) static inline MegCC_Dimshuffle_table_t
+        MegCC_Dimshuffle_vec_at(MegCC_Dimshuffle_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Dimshuffle_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Dimshuffle)
 
-__flatbuffers_define_vector_field(0, MegCC_Dimshuffle, pattern, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_scalar_field(1, MegCC_Dimshuffle, input, flatbuffers_int32, int32_t, INT32_C(0))
-/**  input tensor type */
-__flatbuffers_define_scalar_field(2, MegCC_Dimshuffle, input_type, MegCC_TensorType, MegCC_TensorType_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_Dimshuffle, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_vector_field(
+                                        0, MegCC_Dimshuffle, pattern,
+                                        flatbuffers_int32_vec_t, 0)
+                                        __flatbuffers_define_scalar_field(
+                                                1, MegCC_Dimshuffle, input,
+                                                flatbuffers_int32, int32_t, INT32_C(0))
+        /**  input tensor type */
+        __flatbuffers_define_scalar_field(
+                2, MegCC_Dimshuffle, input_type, MegCC_TensorType,
+                MegCC_TensorType_enum_t, INT8_C(0))
+                __flatbuffers_define_scalar_field(
+                        3, MegCC_Dimshuffle, output, flatbuffers_int32, int32_t,
+                        INT32_C(0))
 
-struct MegCC_BroadCast_table { uint8_t unused__; };
+                        struct MegCC_BroadCast_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_BroadCast_vec_len(MegCC_BroadCast_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_BroadCast_table_t MegCC_BroadCast_vec_at(MegCC_BroadCast_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_BroadCast_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_BroadCast)
+        __flatbuffers_vec_len(vec) static inline MegCC_BroadCast_table_t
+        MegCC_BroadCast_vec_at(MegCC_BroadCast_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_BroadCast_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_BroadCast)
 
-__flatbuffers_define_vector_field(0, MegCC_BroadCast, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(1, MegCC_BroadCast, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_BroadCast, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_vector_field(
+                                        0, MegCC_BroadCast, inputs,
+                                        flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                1, MegCC_BroadCast, input_types, MegCC_TensorType_vec_t, 0)
+                __flatbuffers_define_scalar_field(
+                        2, MegCC_BroadCast, output, flatbuffers_int32, int32_t,
+                        INT32_C(0))
 
-struct MegCC_Reshape_table { uint8_t unused__; };
+                        struct MegCC_Reshape_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Reshape_vec_len(MegCC_Reshape_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Reshape_table_t MegCC_Reshape_vec_at(MegCC_Reshape_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Reshape_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Reshape)
+        __flatbuffers_vec_len(vec) static inline MegCC_Reshape_table_t
+        MegCC_Reshape_vec_at(MegCC_Reshape_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Reshape_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Reshape)
 
-__flatbuffers_define_vector_field(0, MegCC_Reshape, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(1, MegCC_Reshape, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_Reshape, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_vector_field(
+                                        0, MegCC_Reshape, inputs,
+                                        flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                1, MegCC_Reshape, input_types, MegCC_TensorType_vec_t, 0)
+                __flatbuffers_define_scalar_field(
+                        2, MegCC_Reshape, output, flatbuffers_int32, int32_t,
+                        INT32_C(0))
 
-struct MegCC_ExternOpr_table { uint8_t unused__; };
+                        struct MegCC_ExternOpr_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_ExternOpr_vec_len(MegCC_ExternOpr_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_ExternOpr_table_t MegCC_ExternOpr_vec_at(MegCC_ExternOpr_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_ExternOpr_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_ExternOpr)
+        __flatbuffers_vec_len(vec) static inline MegCC_ExternOpr_table_t
+        MegCC_ExternOpr_vec_at(MegCC_ExternOpr_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(
+                        MegCC_ExternOpr_table_t, vec, i,
+                        0) __flatbuffers_table_as_root(MegCC_ExternOpr)
 
-__flatbuffers_define_vector_field(0, MegCC_ExternOpr, input, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_string_field(1, MegCC_ExternOpr, name, 0)
-__flatbuffers_define_string_field(2, MegCC_ExternOpr, data, 0)
-__flatbuffers_define_scalar_field(3, MegCC_ExternOpr, data_len, flatbuffers_uint32, uint32_t, UINT32_C(0))
-__flatbuffers_define_vector_field(4, MegCC_ExternOpr, output, flatbuffers_int32_vec_t, 0)
+                        __flatbuffers_define_vector_field(
+                                0, MegCC_ExternOpr, input, flatbuffers_int32_vec_t, 0)
+                                __flatbuffers_define_string_field(
+                                        1, MegCC_ExternOpr, name, 0)
+                                        __flatbuffers_define_string_field(
+                                                2, MegCC_ExternOpr, data, 0)
+                                                __flatbuffers_define_scalar_field(
+                                                        3, MegCC_ExternOpr, data_len,
+                                                        flatbuffers_uint32, uint32_t,
+                                                        UINT32_C(0))
+                                                        __flatbuffers_define_vector_field(
+                                                                4, MegCC_ExternOpr,
+                                                                output,
+                                                                flatbuffers_int32_vec_t,
+                                                                0)
 
-struct MegCC_Arithmetic_table { uint8_t unused__; };
+                                                                struct
+        MegCC_Arithmetic_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Arithmetic_vec_len(MegCC_Arithmetic_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Arithmetic_table_t MegCC_Arithmetic_vec_at(MegCC_Arithmetic_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Arithmetic_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Arithmetic)
+        __flatbuffers_vec_len(vec) static inline MegCC_Arithmetic_table_t
+        MegCC_Arithmetic_vec_at(MegCC_Arithmetic_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Arithmetic_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Arithmetic)
 
-__flatbuffers_define_scalar_field(0, MegCC_Arithmetic, mode, MegCC_ArithMode, MegCC_ArithMode_enum_t, INT8_C(0))
-__flatbuffers_define_vector_field(1, MegCC_Arithmetic, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(2, MegCC_Arithmetic, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(3, MegCC_Arithmetic, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_Arithmetic, mode, MegCC_ArithMode,
+                                        MegCC_ArithMode_enum_t, INT8_C(0))
+                                        __flatbuffers_define_vector_field(
+                                                1, MegCC_Arithmetic, inputs,
+                                                flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                2, MegCC_Arithmetic, input_types, MegCC_TensorType_vec_t, 0)
+                __flatbuffers_define_scalar_field(
+                        3, MegCC_Arithmetic, output, flatbuffers_int32, int32_t,
+                        INT32_C(0))
 
-struct MegCC_Concat_table { uint8_t unused__; };
+                        struct MegCC_Concat_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Concat_vec_len(MegCC_Concat_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Concat_table_t MegCC_Concat_vec_at(MegCC_Concat_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Concat_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Concat)
+        __flatbuffers_vec_len(vec) static inline MegCC_Concat_table_t
+        MegCC_Concat_vec_at(MegCC_Concat_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_Concat_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_Concat)
 
-__flatbuffers_define_scalar_field(0, MegCC_Concat, axis, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_vector_field(1, MegCC_Concat, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(2, MegCC_Concat, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(3, MegCC_Concat, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_Concat, axis, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+                                        __flatbuffers_define_vector_field(
+                                                1, MegCC_Concat, inputs,
+                                                flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                2, MegCC_Concat, input_types, MegCC_TensorType_vec_t, 0)
+                __flatbuffers_define_scalar_field(
+                        3, MegCC_Concat, output, flatbuffers_int32, int32_t, INT32_C(0))
 
-struct MegCC_ShapeOf_table { uint8_t unused__; };
+                        struct MegCC_ShapeOf_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_ShapeOf_vec_len(MegCC_ShapeOf_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_ShapeOf_table_t MegCC_ShapeOf_vec_at(MegCC_ShapeOf_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_ShapeOf_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_ShapeOf)
+        __flatbuffers_vec_len(vec) static inline MegCC_ShapeOf_table_t
+        MegCC_ShapeOf_vec_at(MegCC_ShapeOf_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_ShapeOf_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_ShapeOf)
 
-__flatbuffers_define_scalar_field(0, MegCC_ShapeOf, input, flatbuffers_int32, int32_t, INT32_C(0))
-/**  input tensor type */
-__flatbuffers_define_scalar_field(1, MegCC_ShapeOf, input_type, MegCC_TensorType, MegCC_TensorType_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(2, MegCC_ShapeOf, output, flatbuffers_int32, int32_t, INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        0, MegCC_ShapeOf, input, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+        /**  input tensor type */
+        __flatbuffers_define_scalar_field(
+                1, MegCC_ShapeOf, input_type, MegCC_TensorType, MegCC_TensorType_enum_t,
+                INT8_C(0))
+                __flatbuffers_define_scalar_field(
+                        2, MegCC_ShapeOf, output, flatbuffers_int32, int32_t,
+                        INT32_C(0))
 
-struct MegCC_IndexDesc_table { uint8_t unused__; };
+                        struct MegCC_IndexDesc_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_IndexDesc_vec_len(MegCC_IndexDesc_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_IndexDesc_table_t MegCC_IndexDesc_vec_at(MegCC_IndexDesc_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_IndexDesc_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_IndexDesc)
+        __flatbuffers_vec_len(vec) static inline MegCC_IndexDesc_table_t
+        MegCC_IndexDesc_vec_at(MegCC_IndexDesc_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(
+                        MegCC_IndexDesc_table_t, vec, i,
+                        0) __flatbuffers_table_as_root(MegCC_IndexDesc)
 
-__flatbuffers_define_scalar_field(0, MegCC_IndexDesc, axis, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(1, MegCC_IndexDesc, start, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(2, MegCC_IndexDesc, end, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_IndexDesc, step, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(4, MegCC_IndexDesc, index, flatbuffers_int32, int32_t, INT32_C(0))
+                        __flatbuffers_define_scalar_field(
+                                0, MegCC_IndexDesc, axis, flatbuffers_int32, int32_t,
+                                INT32_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        1, MegCC_IndexDesc, start, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                2, MegCC_IndexDesc, end,
+                                                flatbuffers_int32, int32_t, INT32_C(0))
+                                                __flatbuffers_define_scalar_field(
+                                                        3, MegCC_IndexDesc, step,
+                                                        flatbuffers_int32, int32_t,
+                                                        INT32_C(0))
+                                                        __flatbuffers_define_scalar_field(
+                                                                4, MegCC_IndexDesc,
+                                                                index,
+                                                                flatbuffers_int32,
+                                                                int32_t, INT32_C(0))
 
-struct MegCC_SubTensor_table { uint8_t unused__; };
+                                                                struct
+        MegCC_SubTensor_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_SubTensor_vec_len(MegCC_SubTensor_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_SubTensor_table_t MegCC_SubTensor_vec_at(MegCC_SubTensor_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_SubTensor_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_SubTensor)
+        __flatbuffers_vec_len(vec) static inline MegCC_SubTensor_table_t
+        MegCC_SubTensor_vec_at(MegCC_SubTensor_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_SubTensor_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_SubTensor)
 
-/**  descs is the arrary of subtensor param start, end, step, index */
-__flatbuffers_define_vector_field(0, MegCC_SubTensor, descs, MegCC_IndexDesc_vec_t, 0)
-/**  flags the corresponding of subtensor param start, end, step, index
- *  if -1, mean it is not exist
- *  if 0, mean the corresponding items is static value
- *  if 1, mean the corresponding items is dynamic, and items store the index
- *  of input */
-__flatbuffers_define_vector_field(1, MegCC_SubTensor, flags, MegCC_IndexDesc_vec_t, 0)
-/**  the inputs tensor idx */
-__flatbuffers_define_vector_field(2, MegCC_SubTensor, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(3, MegCC_SubTensor, input_types, MegCC_TensorType_vec_t, 0)
-/**  the output tensor idx */
-__flatbuffers_define_scalar_field(4, MegCC_SubTensor, output, flatbuffers_int32, int32_t, INT32_C(0))
+        /**  descs is the array of subtensor param start, end, step, index */
+        __flatbuffers_define_vector_field(
+                0, MegCC_SubTensor, descs, MegCC_IndexDesc_vec_t, 0)
+        /**  flags the corresponding of subtensor param start, end, step, index
+         *  if -1, mean it is not exist
+         *  if 0, mean the corresponding items is static value
+         *  if 1, mean the corresponding items is dynamic, and items store the index
+         *  of input */
+        __flatbuffers_define_vector_field(
+                1, MegCC_SubTensor, flags, MegCC_IndexDesc_vec_t, 0)
+        /**  the inputs tensor idx */
+        __flatbuffers_define_vector_field(
+                2, MegCC_SubTensor, inputs, flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                3, MegCC_SubTensor, input_types, MegCC_TensorType_vec_t, 0)
+        /**  the output tensor idx */
+        __flatbuffers_define_scalar_field(
+                4, MegCC_SubTensor, output, flatbuffers_int32, int32_t, INT32_C(0))
 
-struct MegCC_IndexingMultiAxis_table { uint8_t unused__; };
+                struct MegCC_IndexingMultiAxis_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_IndexingMultiAxis_vec_len(MegCC_IndexingMultiAxis_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_IndexingMultiAxis_table_t MegCC_IndexingMultiAxis_vec_at(MegCC_IndexingMultiAxis_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_IndexingMultiAxis_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_IndexingMultiAxis)
+        __flatbuffers_vec_len(vec) static inline MegCC_IndexingMultiAxis_table_t
+        MegCC_IndexingMultiAxis_vec_at(MegCC_IndexingMultiAxis_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_IndexingMultiAxis_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_IndexingMultiAxis)
 
-/**  axis list used  */
-__flatbuffers_define_vector_field(0, MegCC_IndexingMultiAxis, axis, flatbuffers_int32_vec_t, 0)
-/**  the inputs tensor idx */
-__flatbuffers_define_vector_field(1, MegCC_IndexingMultiAxis, inputs, flatbuffers_int32_vec_t, 0)
-/**  input tensor type */
-__flatbuffers_define_vector_field(2, MegCC_IndexingMultiAxis, input_types, MegCC_TensorType_vec_t, 0)
-/**  the output tensor idx */
-__flatbuffers_define_scalar_field(3, MegCC_IndexingMultiAxis, output, flatbuffers_int32, int32_t, INT32_C(0))
+        /**  axis list used  */
+        __flatbuffers_define_vector_field(
+                0, MegCC_IndexingMultiAxis, axis, flatbuffers_int32_vec_t, 0)
+        /**  the inputs tensor idx */
+        __flatbuffers_define_vector_field(
+                1, MegCC_IndexingMultiAxis, inputs, flatbuffers_int32_vec_t, 0)
+        /**  input tensor type */
+        __flatbuffers_define_vector_field(
+                2, MegCC_IndexingMultiAxis, input_types, MegCC_TensorType_vec_t, 0)
+        /**  the output tensor idx */
+        __flatbuffers_define_scalar_field(
+                3, MegCC_IndexingMultiAxis, output, flatbuffers_int32, int32_t,
+                INT32_C(0))
 
-struct MegCC_SetSubTensor_table { uint8_t unused__; };
+                struct MegCC_SetSubTensor_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_SetSubTensor_vec_len(MegCC_SetSubTensor_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_SetSubTensor_table_t MegCC_SetSubTensor_vec_at(MegCC_SetSubTensor_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_SetSubTensor_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_SetSubTensor)
+        __flatbuffers_vec_len(vec) static inline MegCC_SetSubTensor_table_t
+        MegCC_SetSubTensor_vec_at(MegCC_SetSubTensor_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(MegCC_SetSubTensor_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_SetSubTensor)
 
-/**  iterms is the arrary of subtensor param start, end, step, index */
-__flatbuffers_define_vector_field(0, MegCC_SetSubTensor, descs, MegCC_IndexDesc_vec_t, 0)
-/**  flags the corresponding of subtensor param start, end, step, index
- *  if -1, mean it is not exist
- *  if 0, mean the corresponding items is static value
- *  if 1, mean the corresponding items is dynamic, and items store the index
- *  of input */
-__flatbuffers_define_vector_field(1, MegCC_SetSubTensor, flags, MegCC_IndexDesc_vec_t, 0)
-__flatbuffers_define_vector_field(2, MegCC_SetSubTensor, inputs, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(3, MegCC_SetSubTensor, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(4, MegCC_SetSubTensor, output, flatbuffers_int32, int32_t, INT32_C(0))
+        /**  iterms is the array of subtensor param start, end, step, index */
+        __flatbuffers_define_vector_field(
+                0, MegCC_SetSubTensor, descs, MegCC_IndexDesc_vec_t, 0)
+        /**  flags the corresponding of subtensor param start, end, step, index
+         *  if -1, mean it is not exist
+         *  if 0, mean the corresponding items is static value
+         *  if 1, mean the corresponding items is dynamic, and items store the index
+         *  of input */
+        __flatbuffers_define_vector_field(
+                1, MegCC_SetSubTensor, flags, MegCC_IndexDesc_vec_t, 0)
+                __flatbuffers_define_vector_field(
+                        2, MegCC_SetSubTensor, inputs, flatbuffers_int32_vec_t, 0)
+                        __flatbuffers_define_vector_field(
+                                3, MegCC_SetSubTensor, input_types,
+                                MegCC_TensorType_vec_t, 0)
+                                __flatbuffers_define_scalar_field(
+                                        4, MegCC_SetSubTensor, output,
+                                        flatbuffers_int32, int32_t, INT32_C(0))
 
-struct MegCC_WarpPerspective_table { uint8_t unused__; };
+                                        struct MegCC_WarpPerspective_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_WarpPerspective_vec_len(MegCC_WarpPerspective_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_WarpPerspective_table_t MegCC_WarpPerspective_vec_at(MegCC_WarpPerspective_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_WarpPerspective_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_WarpPerspective)
+        __flatbuffers_vec_len(vec) static inline MegCC_WarpPerspective_table_t
+        MegCC_WarpPerspective_vec_at(MegCC_WarpPerspective_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_WarpPerspective_table_t, vec, i,
+                0) __flatbuffers_table_as_root(MegCC_WarpPerspective)
 
-__flatbuffers_define_scalar_field(0, MegCC_WarpPerspective, bmode, MegCC_BorderModeMode, MegCC_BorderModeMode_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(1, MegCC_WarpPerspective, imode, MegCC_InterpolationMode, MegCC_InterpolationMode_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(2, MegCC_WarpPerspective, format, MegCC_Format, MegCC_Format_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_WarpPerspective, bval, flatbuffers_float, float, 0.00000000f)
-__flatbuffers_define_vector_field(4, MegCC_WarpPerspective, mat_id, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(5, MegCC_WarpPerspective, inputs, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(6, MegCC_WarpPerspective, input_types, MegCC_TensorType_vec_t, 0)
-__flatbuffers_define_scalar_field(7, MegCC_WarpPerspective, output, flatbuffers_int32, int32_t, INT32_C(0))
+                __flatbuffers_define_scalar_field(
+                        0, MegCC_WarpPerspective, bmode, MegCC_BorderModeMode,
+                        MegCC_BorderModeMode_enum_t, INT8_C(0))
+                        __flatbuffers_define_scalar_field(
+                                1, MegCC_WarpPerspective, imode,
+                                MegCC_InterpolationMode, MegCC_InterpolationMode_enum_t,
+                                INT8_C(0))
+                                __flatbuffers_define_scalar_field(
+                                        2, MegCC_WarpPerspective, format, MegCC_Format,
+                                        MegCC_Format_enum_t, INT8_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                3, MegCC_WarpPerspective, bval,
+                                                flatbuffers_float, float, 0.00000000f)
+                                                __flatbuffers_define_vector_field(
+                                                        4, MegCC_WarpPerspective,
+                                                        mat_id, flatbuffers_int32_vec_t,
+                                                        0)
+                                                        __flatbuffers_define_vector_field(
+                                                                5,
+                                                                MegCC_WarpPerspective,
+                                                                inputs,
+                                                                flatbuffers_int32_vec_t,
+                                                                0)
+                                                                __flatbuffers_define_vector_field(
+                                                                        6,
+                                                                        MegCC_WarpPerspective,
+                                                                        input_types,
+                                                                        MegCC_TensorType_vec_t,
+                                                                        0)
+                                                                        __flatbuffers_define_scalar_field(
+                                                                                7,
+                                                                                MegCC_WarpPerspective,
+                                                                                output,
+                                                                                flatbuffers_int32,
+                                                                                int32_t,
+                                                                                INT32_C(0))
 
-struct MegCC_TypeCvt_table { uint8_t unused__; };
+                                                                                struct
+        MegCC_TypeCvt_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_TypeCvt_vec_len(MegCC_TypeCvt_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_TypeCvt_table_t MegCC_TypeCvt_vec_at(MegCC_TypeCvt_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_TypeCvt_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_TypeCvt)
+        __flatbuffers_vec_len(vec) static inline MegCC_TypeCvt_table_t
+        MegCC_TypeCvt_vec_at(
+                MegCC_TypeCvt_vec_t vec,
+                size_t i) __flatbuffers_offset_vec_at(MegCC_TypeCvt_table_t, vec, i, 0)
+                __flatbuffers_table_as_root(MegCC_TypeCvt)
 
-__flatbuffers_define_string_field(0, MegCC_TypeCvt, idtype, 0)
-__flatbuffers_define_string_field(1, MegCC_TypeCvt, odtype, 0)
-__flatbuffers_define_scalar_field(2, MegCC_TypeCvt, input, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_TypeCvt, input_type, MegCC_TensorType, MegCC_TensorType_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(4, MegCC_TypeCvt, output, flatbuffers_int32, int32_t, INT32_C(0))
+                        __flatbuffers_define_string_field(0, MegCC_TypeCvt, idtype, 0)
+                                __flatbuffers_define_string_field(
+                                        1, MegCC_TypeCvt, odtype, 0)
+                                        __flatbuffers_define_scalar_field(
+                                                2, MegCC_TypeCvt, input,
+                                                flatbuffers_int32, int32_t, INT32_C(0))
+                                                __flatbuffers_define_scalar_field(
+                                                        3, MegCC_TypeCvt, input_type,
+                                                        MegCC_TensorType,
+                                                        MegCC_TensorType_enum_t,
+                                                        INT8_C(0))
+                                                        __flatbuffers_define_scalar_field(
+                                                                4, MegCC_TypeCvt,
+                                                                output,
+                                                                flatbuffers_int32,
+                                                                int32_t, INT32_C(0))
 
-struct MegCC_ArgSort_table { uint8_t unused__; };
+                                                                struct
+        MegCC_ArgSort_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_ArgSort_vec_len(MegCC_ArgSort_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_ArgSort_table_t MegCC_ArgSort_vec_at(MegCC_ArgSort_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_ArgSort_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_ArgSort)
+        __flatbuffers_vec_len(vec) static inline MegCC_ArgSort_table_t
+        MegCC_ArgSort_vec_at(
+                MegCC_ArgSort_vec_t vec,
+                size_t i) __flatbuffers_offset_vec_at(MegCC_ArgSort_table_t, vec, i, 0)
+                __flatbuffers_table_as_root(MegCC_ArgSort)
 
-__flatbuffers_define_string_field(0, MegCC_ArgSort, order, 0)
-__flatbuffers_define_scalar_field(1, MegCC_ArgSort, input, flatbuffers_int32, int32_t, INT32_C(0))
-__flatbuffers_define_scalar_field(2, MegCC_ArgSort, input_type, MegCC_TensorType, MegCC_TensorType_enum_t, INT8_C(0))
-__flatbuffers_define_scalar_field(3, MegCC_ArgSort, output, flatbuffers_int32, int32_t, INT32_C(0))
+                        __flatbuffers_define_string_field(0, MegCC_ArgSort, order, 0)
+                                __flatbuffers_define_scalar_field(
+                                        1, MegCC_ArgSort, input, flatbuffers_int32,
+                                        int32_t, INT32_C(0))
+                                        __flatbuffers_define_scalar_field(
+                                                2, MegCC_ArgSort, input_type,
+                                                MegCC_TensorType,
+                                                MegCC_TensorType_enum_t, INT8_C(0))
+                                                __flatbuffers_define_scalar_field(
+                                                        3, MegCC_ArgSort, output,
+                                                        flatbuffers_int32, int32_t,
+                                                        INT32_C(0))
 
-struct MegCC_INSTRUCTION_TABLE_END_table { uint8_t unused__; };
+                                                        struct
+        MegCC_INSTRUCTION_TABLE_END_table {
+    uint8_t unused__;
+};
 
-static inline size_t MegCC_INSTRUCTION_TABLE_END_vec_len(MegCC_INSTRUCTION_TABLE_END_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_INSTRUCTION_TABLE_END_table_t MegCC_INSTRUCTION_TABLE_END_vec_at(MegCC_INSTRUCTION_TABLE_END_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_INSTRUCTION_TABLE_END_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_INSTRUCTION_TABLE_END)
+static inline size_t MegCC_INSTRUCTION_TABLE_END_vec_len(
+        MegCC_INSTRUCTION_TABLE_END_vec_t vec)
+        __flatbuffers_vec_len(vec) static inline MegCC_INSTRUCTION_TABLE_END_table_t
+        MegCC_INSTRUCTION_TABLE_END_vec_at(
+                MegCC_INSTRUCTION_TABLE_END_vec_t vec, size_t i)
+                __flatbuffers_offset_vec_at(
+                        MegCC_INSTRUCTION_TABLE_END_table_t, vec, i, 0)
+                        __flatbuffers_table_as_root(MegCC_INSTRUCTION_TABLE_END)
 
-typedef uint8_t MegCC_Instruction_union_type_t;
+                                typedef uint8_t MegCC_Instruction_union_type_t;
 __flatbuffers_define_integer_type(MegCC_Instruction, MegCC_Instruction_union_type_t, 8)
-__flatbuffers_define_union(flatbuffers_, MegCC_Instruction)
-#define MegCC_Instruction_NONE ((MegCC_Instruction_union_type_t)UINT8_C(0))
-#define MegCC_Instruction_Opr ((MegCC_Instruction_union_type_t)UINT8_C(1))
-#define MegCC_Instruction_DevMemAlloc ((MegCC_Instruction_union_type_t)UINT8_C(2))
-#define MegCC_Instruction_DevMemFree ((MegCC_Instruction_union_type_t)UINT8_C(3))
-#define MegCC_Instruction_MemForward ((MegCC_Instruction_union_type_t)UINT8_C(4))
-#define MegCC_Instruction_Dimshuffle ((MegCC_Instruction_union_type_t)UINT8_C(5))
-#define MegCC_Instruction_BroadCast ((MegCC_Instruction_union_type_t)UINT8_C(6))
-#define MegCC_Instruction_Arithmetic ((MegCC_Instruction_union_type_t)UINT8_C(7))
-#define MegCC_Instruction_Concat ((MegCC_Instruction_union_type_t)UINT8_C(8))
-#define MegCC_Instruction_SubTensor ((MegCC_Instruction_union_type_t)UINT8_C(9))
-#define MegCC_Instruction_SetSubTensor ((MegCC_Instruction_union_type_t)UINT8_C(10))
-#define MegCC_Instruction_ShapeOf ((MegCC_Instruction_union_type_t)UINT8_C(11))
+        __flatbuffers_define_union(flatbuffers_, MegCC_Instruction)
+#define MegCC_Instruction_NONE            ((MegCC_Instruction_union_type_t)UINT8_C(0))
+#define MegCC_Instruction_Opr             ((MegCC_Instruction_union_type_t)UINT8_C(1))
+#define MegCC_Instruction_DevMemAlloc     ((MegCC_Instruction_union_type_t)UINT8_C(2))
+#define MegCC_Instruction_DevMemFree      ((MegCC_Instruction_union_type_t)UINT8_C(3))
+#define MegCC_Instruction_MemForward      ((MegCC_Instruction_union_type_t)UINT8_C(4))
+#define MegCC_Instruction_Dimshuffle      ((MegCC_Instruction_union_type_t)UINT8_C(5))
+#define MegCC_Instruction_BroadCast       ((MegCC_Instruction_union_type_t)UINT8_C(6))
+#define MegCC_Instruction_Arithmetic      ((MegCC_Instruction_union_type_t)UINT8_C(7))
+#define MegCC_Instruction_Concat          ((MegCC_Instruction_union_type_t)UINT8_C(8))
+#define MegCC_Instruction_SubTensor       ((MegCC_Instruction_union_type_t)UINT8_C(9))
+#define MegCC_Instruction_SetSubTensor    ((MegCC_Instruction_union_type_t)UINT8_C(10))
+#define MegCC_Instruction_ShapeOf         ((MegCC_Instruction_union_type_t)UINT8_C(11))
 #define MegCC_Instruction_WarpPerspective ((MegCC_Instruction_union_type_t)UINT8_C(12))
-#define MegCC_Instruction_TypeCvt ((MegCC_Instruction_union_type_t)UINT8_C(13))
-#define MegCC_Instruction_IndexingMultiAxis ((MegCC_Instruction_union_type_t)UINT8_C(14))
-#define MegCC_Instruction_ArgSort ((MegCC_Instruction_union_type_t)UINT8_C(15))
-#define MegCC_Instruction_Reshape ((MegCC_Instruction_union_type_t)UINT8_C(16))
+#define MegCC_Instruction_TypeCvt         ((MegCC_Instruction_union_type_t)UINT8_C(13))
+#define MegCC_Instruction_IndexingMultiAxis \
+    ((MegCC_Instruction_union_type_t)UINT8_C(14))
+#define MegCC_Instruction_ArgSort   ((MegCC_Instruction_union_type_t)UINT8_C(15))
+#define MegCC_Instruction_Reshape   ((MegCC_Instruction_union_type_t)UINT8_C(16))
 #define MegCC_Instruction_ExternOpr ((MegCC_Instruction_union_type_t)UINT8_C(17))
-#define MegCC_Instruction_INSTRUCTION_TABLE_END ((MegCC_Instruction_union_type_t)UINT8_C(18))
+#define MegCC_Instruction_INSTRUCTION_TABLE_END \
+    ((MegCC_Instruction_union_type_t)UINT8_C(18))
 
-static inline const char *MegCC_Instruction_type_name(MegCC_Instruction_union_type_t type)
-{
+                static inline const
+        char* MegCC_Instruction_type_name(MegCC_Instruction_union_type_t type) {
     switch (type) {
-    case MegCC_Instruction_NONE: return "NONE";
-    case MegCC_Instruction_Opr: return "Opr";
-    case MegCC_Instruction_DevMemAlloc: return "DevMemAlloc";
-    case MegCC_Instruction_DevMemFree: return "DevMemFree";
-    case MegCC_Instruction_MemForward: return "MemForward";
-    case MegCC_Instruction_Dimshuffle: return "Dimshuffle";
-    case MegCC_Instruction_BroadCast: return "BroadCast";
-    case MegCC_Instruction_Arithmetic: return "Arithmetic";
-    case MegCC_Instruction_Concat: return "Concat";
-    case MegCC_Instruction_SubTensor: return "SubTensor";
-    case MegCC_Instruction_SetSubTensor: return "SetSubTensor";
-    case MegCC_Instruction_ShapeOf: return "ShapeOf";
-    case MegCC_Instruction_WarpPerspective: return "WarpPerspective";
-    case MegCC_Instruction_TypeCvt: return "TypeCvt";
-    case MegCC_Instruction_IndexingMultiAxis: return "IndexingMultiAxis";
-    case MegCC_Instruction_ArgSort: return "ArgSort";
-    case MegCC_Instruction_Reshape: return "Reshape";
-    case MegCC_Instruction_ExternOpr: return "ExternOpr";
-    case MegCC_Instruction_INSTRUCTION_TABLE_END: return "INSTRUCTION_TABLE_END";
-    default: return "";
+        case MegCC_Instruction_NONE:
+            return "NONE";
+        case MegCC_Instruction_Opr:
+            return "Opr";
+        case MegCC_Instruction_DevMemAlloc:
+            return "DevMemAlloc";
+        case MegCC_Instruction_DevMemFree:
+            return "DevMemFree";
+        case MegCC_Instruction_MemForward:
+            return "MemForward";
+        case MegCC_Instruction_Dimshuffle:
+            return "Dimshuffle";
+        case MegCC_Instruction_BroadCast:
+            return "BroadCast";
+        case MegCC_Instruction_Arithmetic:
+            return "Arithmetic";
+        case MegCC_Instruction_Concat:
+            return "Concat";
+        case MegCC_Instruction_SubTensor:
+            return "SubTensor";
+        case MegCC_Instruction_SetSubTensor:
+            return "SetSubTensor";
+        case MegCC_Instruction_ShapeOf:
+            return "ShapeOf";
+        case MegCC_Instruction_WarpPerspective:
+            return "WarpPerspective";
+        case MegCC_Instruction_TypeCvt:
+            return "TypeCvt";
+        case MegCC_Instruction_IndexingMultiAxis:
+            return "IndexingMultiAxis";
+        case MegCC_Instruction_ArgSort:
+            return "ArgSort";
+        case MegCC_Instruction_Reshape:
+            return "Reshape";
+        case MegCC_Instruction_ExternOpr:
+            return "ExternOpr";
+        case MegCC_Instruction_INSTRUCTION_TABLE_END:
+            return "INSTRUCTION_TABLE_END";
+        default:
+            return "";
     }
 }
 
-static inline int MegCC_Instruction_is_known_type(MegCC_Instruction_union_type_t type)
-{
+static inline int MegCC_Instruction_is_known_type(MegCC_Instruction_union_type_t type) {
     switch (type) {
-    case MegCC_Instruction_NONE: return 1;
-    case MegCC_Instruction_Opr: return 1;
-    case MegCC_Instruction_DevMemAlloc: return 1;
-    case MegCC_Instruction_DevMemFree: return 1;
-    case MegCC_Instruction_MemForward: return 1;
-    case MegCC_Instruction_Dimshuffle: return 1;
-    case MegCC_Instruction_BroadCast: return 1;
-    case MegCC_Instruction_Arithmetic: return 1;
-    case MegCC_Instruction_Concat: return 1;
-    case MegCC_Instruction_SubTensor: return 1;
-    case MegCC_Instruction_SetSubTensor: return 1;
-    case MegCC_Instruction_ShapeOf: return 1;
-    case MegCC_Instruction_WarpPerspective: return 1;
-    case MegCC_Instruction_TypeCvt: return 1;
-    case MegCC_Instruction_IndexingMultiAxis: return 1;
-    case MegCC_Instruction_ArgSort: return 1;
-    case MegCC_Instruction_Reshape: return 1;
-    case MegCC_Instruction_ExternOpr: return 1;
-    case MegCC_Instruction_INSTRUCTION_TABLE_END: return 1;
-    default: return 0;
+        case MegCC_Instruction_NONE:
+            return 1;
+        case MegCC_Instruction_Opr:
+            return 1;
+        case MegCC_Instruction_DevMemAlloc:
+            return 1;
+        case MegCC_Instruction_DevMemFree:
+            return 1;
+        case MegCC_Instruction_MemForward:
+            return 1;
+        case MegCC_Instruction_Dimshuffle:
+            return 1;
+        case MegCC_Instruction_BroadCast:
+            return 1;
+        case MegCC_Instruction_Arithmetic:
+            return 1;
+        case MegCC_Instruction_Concat:
+            return 1;
+        case MegCC_Instruction_SubTensor:
+            return 1;
+        case MegCC_Instruction_SetSubTensor:
+            return 1;
+        case MegCC_Instruction_ShapeOf:
+            return 1;
+        case MegCC_Instruction_WarpPerspective:
+            return 1;
+        case MegCC_Instruction_TypeCvt:
+            return 1;
+        case MegCC_Instruction_IndexingMultiAxis:
+            return 1;
+        case MegCC_Instruction_ArgSort:
+            return 1;
+        case MegCC_Instruction_Reshape:
+            return 1;
+        case MegCC_Instruction_ExternOpr:
+            return 1;
+        case MegCC_Instruction_INSTRUCTION_TABLE_END:
+            return 1;
+        default:
+            return 0;
     }
 }
 
-
-struct MegCC_DeviceModel_table { uint8_t unused__; };
+struct MegCC_DeviceModel_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_DeviceModel_vec_len(MegCC_DeviceModel_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_DeviceModel_table_t MegCC_DeviceModel_vec_at(MegCC_DeviceModel_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_DeviceModel_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_DeviceModel)
+        __flatbuffers_vec_len(vec) static inline MegCC_DeviceModel_table_t
+        MegCC_DeviceModel_vec_at(MegCC_DeviceModel_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_DeviceModel_table_t, vec, i,
+                0) __flatbuffers_table_as_root(MegCC_DeviceModel)
 
-__flatbuffers_define_scalar_field(0, MegCC_DeviceModel, device, MegCC_Device, MegCC_Device_enum_t, INT8_C(0))
-__flatbuffers_define_vector_field(1, MegCC_DeviceModel, tensor_pool, MegCC_Tensor_vec_t, 0)
-__flatbuffers_define_union_vector_field(flatbuffers_, 3, MegCC_DeviceModel, instructions, MegCC_Instruction, 0)
-__flatbuffers_define_scalar_field(4, MegCC_DeviceModel, tensor_memory, flatbuffers_uint64, uint64_t, UINT64_C(0))
-__flatbuffers_define_vector_field(5, MegCC_DeviceModel, inputs, flatbuffers_int32_vec_t, 0)
-__flatbuffers_define_vector_field(6, MegCC_DeviceModel, outputs, flatbuffers_int32_vec_t, 0)
+                __flatbuffers_define_scalar_field(
+                        0, MegCC_DeviceModel, device, MegCC_Device, MegCC_Device_enum_t,
+                        INT8_C(0))
+                        __flatbuffers_define_vector_field(
+                                1, MegCC_DeviceModel, tensor_pool, MegCC_Tensor_vec_t,
+                                0)
+                                __flatbuffers_define_union_vector_field(
+                                        flatbuffers_, 3, MegCC_DeviceModel,
+                                        instructions, MegCC_Instruction, 0)
+                                        __flatbuffers_define_scalar_field(
+                                                4, MegCC_DeviceModel, tensor_memory,
+                                                flatbuffers_uint64, uint64_t,
+                                                UINT64_C(0))
+                                                __flatbuffers_define_vector_field(
+                                                        5, MegCC_DeviceModel, inputs,
+                                                        flatbuffers_int32_vec_t, 0)
+                                                        __flatbuffers_define_vector_field(
+                                                                6, MegCC_DeviceModel,
+                                                                outputs,
+                                                                flatbuffers_int32_vec_t,
+                                                                0)
 
-struct MegCC_Model_table { uint8_t unused__; };
+                                                                struct
+        MegCC_Model_table {
+    uint8_t unused__;
+};
 
 static inline size_t MegCC_Model_vec_len(MegCC_Model_vec_t vec)
-__flatbuffers_vec_len(vec)
-static inline MegCC_Model_table_t MegCC_Model_vec_at(MegCC_Model_vec_t vec, size_t i)
-__flatbuffers_offset_vec_at(MegCC_Model_table_t, vec, i, 0)
-__flatbuffers_table_as_root(MegCC_Model)
+        __flatbuffers_vec_len(vec) static inline MegCC_Model_table_t
+        MegCC_Model_vec_at(MegCC_Model_vec_t vec, size_t i) __flatbuffers_offset_vec_at(
+                MegCC_Model_table_t, vec, i, 0) __flatbuffers_table_as_root(MegCC_Model)
 
-__flatbuffers_define_vector_field(0, MegCC_Model, weight_pool, MegCC_Weight_vec_t, 0)
-__flatbuffers_define_vector_field(1, MegCC_Model, device_models, MegCC_DeviceModel_vec_t, 0)
-__flatbuffers_define_scalar_field(2, MegCC_Model, const_shape, flatbuffers_bool, flatbuffers_bool_t, UINT8_C(0))
-__flatbuffers_define_string_field(3, MegCC_Model, name, 0)
-__flatbuffers_define_scalar_field(4, MegCC_Model, model_id, flatbuffers_uint64, uint64_t, UINT64_C(0))
-
+                __flatbuffers_define_vector_field(
+                        0, MegCC_Model, weight_pool, MegCC_Weight_vec_t, 0)
+                        __flatbuffers_define_vector_field(
+                                1, MegCC_Model, device_models, MegCC_DeviceModel_vec_t,
+                                0)
+                                __flatbuffers_define_scalar_field(
+                                        2, MegCC_Model, const_shape, flatbuffers_bool,
+                                        flatbuffers_bool_t, UINT8_C(0))
+                                        __flatbuffers_define_string_field(
+                                                3, MegCC_Model, name, 0)
+                                                __flatbuffers_define_scalar_field(
+                                                        4, MegCC_Model, model_id,
+                                                        flatbuffers_uint64, uint64_t,
+                                                        UINT64_C(0))
 
 #include "flatcc/flatcc_epilogue.h"
 #endif /* MODEL_READER_H */

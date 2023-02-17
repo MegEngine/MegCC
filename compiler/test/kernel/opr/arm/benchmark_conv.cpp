@@ -13,14 +13,13 @@ using namespace megcc::test;
 using namespace megcc::KernelGen;
 #ifdef ENABLE_KERNEL_BENCHMARK
 
-static void run_conv(size_t n, size_t ic, size_t hw, size_t oc,
-                     size_t filter_size, int stride, int pad,
-                     std::string cc_algo_name, std::string dnn_algo_name,
-                     ConvBiasForward::Param::Format fmt =
-                             ConvBiasForward::Param::Format::NCHW,
-                     bool qint8 = false,
-                     ConvBiasForward::Param::NonlineMode noline =
-                             ConvBiasForward::Param::NonlineMode::IDENTITY) {
+static void run_conv(
+        size_t n, size_t ic, size_t hw, size_t oc, size_t filter_size, int stride,
+        int pad, std::string cc_algo_name, std::string dnn_algo_name,
+        ConvBiasForward::Param::Format fmt = ConvBiasForward::Param::Format::NCHW,
+        bool qint8 = false,
+        ConvBiasForward::Param::NonlineMode noline =
+                ConvBiasForward::Param::NonlineMode::IDENTITY) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
     if (!cc_algo_name.empty()) {
         benchmarker.set_kernel_symbol(cc_algo_name);
@@ -43,20 +42,21 @@ static void run_conv(size_t n, size_t ic, size_t hw, size_t oc,
     benchmarker.set_param(param);
     if (!dnn_algo_name.empty()) {
         benchmarker.set_before_exec_callback(
-                megdnn::test::AlgoChecker<ConvBiasForward>(
-                        dnn_algo_name.c_str()));
+                megdnn::test::AlgoChecker<ConvBiasForward>(dnn_algo_name.c_str()));
     }
     PerformanceResultPair result;
     if (fmt == ConvBiasForward::Param::Format::NCHW) {
-        result = benchmarker.execs({{n, ic, hw, hw},
-                                    {oc, ic, filter_size, filter_size},
-                                    {1, oc, 1, 1},
-                                    {},
-                                    {}});
+        result = benchmarker.execs(
+                {{n, ic, hw, hw},
+                 {oc, ic, filter_size, filter_size},
+                 {1, oc, 1, 1},
+                 {},
+                 {}});
 
     } else {
-        mgb_assert(fmt == ConvBiasForward::Param::Format::NCHW44 ||
-                   fmt == ConvBiasForward::Param::Format::NCHW44_DOT);
+        mgb_assert(
+                fmt == ConvBiasForward::Param::Format::NCHW44 ||
+                fmt == ConvBiasForward::Param::Format::NCHW44_DOT);
         mgb_assert(oc % 4 == 0);
         mgb_assert(ic % 4 == 0);
         result = benchmarker.execs(
@@ -72,16 +72,18 @@ static void run_conv(size_t n, size_t ic, size_t hw, size_t oc,
 TEST(AARCH64, BenchmarkConv1x1NCHW4) {
     std::string cc_algo = "";
     std::string dnn_algo = "";
-    run_conv(1, 32, 32, 32, 1, 1, 0, cc_algo, dnn_algo,
-             ConvBiasForward::Param::Format::NCHW44);
+    run_conv(
+            1, 32, 32, 32, 1, 1, 0, cc_algo, dnn_algo,
+            ConvBiasForward::Param::Format::NCHW44);
 }
 
 TEST(AARCH64, BenchmarkConv1x1NCHW4Dot) {
     std::string cc_algo = "Arm64_kernel_dot_conv2d_conv1x1_.*";
     std::string dnn_algo = "";
-    run_conv(1, 120, 120, 96, 1, 1, 0, cc_algo, dnn_algo,
-             ConvBiasForward::Param::Format::NCHW44_DOT, true,
-             ConvBiasForward::Param ::NonlineMode::RELU);
+    run_conv(
+            1, 120, 120, 96, 1, 1, 0, cc_algo, dnn_algo,
+            ConvBiasForward::Param::Format::NCHW44_DOT, true,
+            ConvBiasForward::Param ::NonlineMode::RELU);
 }
 
 TEST(AARCH64, BenchmarkChannelWiseNCHW4) {
@@ -97,18 +99,17 @@ TEST(AARCH64, BenchmarkChannelWiseNCHW4) {
     benchmarker.set_param(param);
 
     benchmarker.set_before_exec_callback(
-            megdnn::test::AlgoChecker<ConvBiasForward>(
-                    "F32_CHANNEL_WISE_NCHW44"));
+            megdnn::test::AlgoChecker<ConvBiasForward>("F32_CHANNEL_WISE_NCHW44"));
     for (size_t k : {3, 5})
         for (size_t h : {112, 56, 28, 14}) {
             for (size_t channel : {32, 64}) {
-                auto result = benchmarker.execs({{1, channel, h, h, 4},
-                                                 {channel, 1, 1, k, k, 4},
-                                                 {1, channel, 1, 1, 4},
-                                                 {},
-                                                 {}});
-                printf("Bench kernel %zu channel=%zu, hxw=%zux%zu\n", k,
-                       channel, h, h);
+                auto result = benchmarker.execs(
+                        {{1, channel, h, h, 4},
+                         {channel, 1, 1, k, k, 4},
+                         {1, channel, 1, 1, 4},
+                         {},
+                         {}});
+                printf("Bench kernel %zu channel=%zu, hxw=%zux%zu\n", k, channel, h, h);
                 result.print();
             }
         }
@@ -124,8 +125,7 @@ TEST(AARCH64, BenchmarkConvNCHWNCHW44) {
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = ConvBiasForward::Param::Format::NCHW44;
     benchmarker.set_param(param);
-    benchmarker
-            .execs({{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}})
+    benchmarker.execs({{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}})
             .print();
 }
 
@@ -146,14 +146,12 @@ TEST(AARCH64, BenchmarkConvF32Winograd) {
             {".*_winograd_f63", "WINOGRAD_NCHW44:AARCH64_F32_MK4_4x16:4:6:16"}};
 
     for (auto algo : algo_pairs) {
-        printf("megcc algo: %s VS megdnn algo: %s\n", algo[0].c_str(),
-               algo[1].c_str());
+        printf("megcc algo: %s VS megdnn algo: %s\n", algo[0].c_str(), algo[1].c_str());
         for (size_t Channel : {32, 256}) {
             for (size_t HW : {56, 28, 14}) {
                 benchmarker.set_kernel_symbol(algo[0]);
                 benchmarker.set_before_exec_callback(
-                        megdnn::test::AlgoChecker<ConvBiasForward>(
-                                algo[1].c_str()));
+                        megdnn::test::AlgoChecker<ConvBiasForward>(algo[1].c_str()));
 
                 auto result = benchmarker.execs(
                         {{1, Channel / 4, HW, HW, 4},

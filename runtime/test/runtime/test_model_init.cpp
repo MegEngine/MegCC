@@ -25,8 +25,9 @@ void load_kernel_init_function() {
 }
 
 namespace {
-TinyNNStatus Init0(Tensor** inputs, int nr_input, Tensor* out_weights,
-                   int* nr_out_weight, const RuntimeOpt* opt) {
+TinyNNStatus Init0(
+        Tensor** inputs, int nr_input, Tensor* out_weights, int* nr_out_weight,
+        const RuntimeOpt* opt) {
     if (out_weights == NULL && nr_out_weight != NULL) {
         *nr_out_weight = 1;
         return TinyNN_SUCCESS;
@@ -52,8 +53,9 @@ TinyNNStatus Init0(Tensor** inputs, int nr_input, Tensor* out_weights,
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus Init1(Tensor** inputs, int nr_input, Tensor* out_weights,
-                   int* nr_out_weight, const RuntimeOpt* opt) {
+TinyNNStatus Init1(
+        Tensor** inputs, int nr_input, Tensor* out_weights, int* nr_out_weight,
+        const RuntimeOpt* opt) {
     if (out_weights == NULL && nr_out_weight != NULL) {
         *nr_out_weight = 1;
         return TinyNN_SUCCESS;

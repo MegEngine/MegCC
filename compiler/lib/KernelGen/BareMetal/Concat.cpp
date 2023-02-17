@@ -22,8 +22,7 @@ bool ConcatKernel::IsAvailable(TContext* context) const {
 //! kernel gen
 std::string ConcatKernel::GetKernelSymbol(TContext* context) const {
     std::stringstream ss;
-    auto dtype_size =
-            Utils::get_dtype_size(context->getAttrOprand("operand:0").dtype);
+    auto dtype_size = Utils::get_dtype_size(context->getAttrOprand("operand:0").dtype);
 
     ss << "kernel_concat_byte_" << dtype_size << "_axis_"
        << context->getAttrInt("axis");
@@ -33,8 +32,7 @@ std::string ConcatKernel::GetKernelSymbol(TContext* context) const {
 std::string ConcatKernel::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     int axis = context->getAttrInt("axis");
-    int dtype_size =
-            Utils::get_dtype_size(context->getAttrOprand("operand:0").dtype);
+    int dtype_size = Utils::get_dtype_size(context->getAttrOprand("operand:0").dtype);
     std::string ctype = Utils::get_common_dtype_specifier(dtype_size);
     writer << R"(
       #include "tensor_util.h"

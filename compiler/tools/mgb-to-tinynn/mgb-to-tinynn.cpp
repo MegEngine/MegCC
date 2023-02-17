@@ -29,32 +29,30 @@
 
 using namespace llvm;
 
-cl::opt<std::string> InputFile(cl::Positional, cl::Optional,
-                               cl::desc("<input megengine cpp model>"));
+cl::opt<std::string> InputFile(
+        cl::Positional, cl::Optional, cl::desc("<input megengine cpp model>"));
 cl::opt<std::string> OutputDir(
         cl::Positional, cl::Optional,
         cl::desc("<output dir for tinynn model and generated kernels>"));
-cl::opt<std::string> dumpDir("dump", cl::Optional,
-                             cl::desc("<override output dir in json for tinynn "
-                                      "model and generated kernels>"));
+cl::opt<std::string> dumpDir(
+        "dump", cl::Optional,
+        cl::desc("<override output dir in json for tinynn "
+                 "model and generated kernels>"));
 cl::opt<std::string> InputShapes(
         "input-shapes", cl::Optional, cl::desc("modify input shapes"),
         cl::value_desc("name0=(xx0,yy0);name1=(xx1,yy1,zz1)"));
 cl::opt<bool> Verbose(
         "verbose", cl::desc("log more detail information when compiler model"));
 cl::opt<bool> EnableNchw44("enable_nchw44", cl::desc("enable nchw44 trans"));
-cl::opt<bool> EnableNchw44Dot("enable_nchw44_dot",
-                              cl::desc("enable nchw44-dot trans"));
-cl::opt<bool> MGBFuseKernel("mgb_fuse_kernel",
-                            cl::desc("fuse mgb kernel as possible"));
+cl::opt<bool> EnableNchw44Dot("enable_nchw44_dot", cl::desc("enable nchw44-dot trans"));
+cl::opt<bool> MGBFuseKernel("mgb_fuse_kernel", cl::desc("fuse mgb kernel as possible"));
 cl::opt<bool> SaveModel("save-model", cl::desc("save model to c"));
 cl::opt<bool> Add_nhwc2nchw_to_input(
-        "add_nhwc2nchw_to_input",
-        cl::desc("add nhwc2nchw dimshuffle to input"));
+        "add_nhwc2nchw_to_input", cl::desc("add nhwc2nchw dimshuffle to input"));
 
-cl::opt<std::string> JsonFile("json", cl::Optional,
-                              cl::desc("config app by json"),
-                              cl::value_desc("<path/to/json/file>"));
+cl::opt<std::string> JsonFile(
+        "json", cl::Optional, cl::desc("config app by json"),
+        cl::value_desc("<path/to/json/file>"));
 
 cl::opt<bool> EnableCompressWeightToFp16(
         "enable_compress_fp16",
@@ -80,8 +78,7 @@ struct DumpJson {
             for (auto& kv : res.str_options) {
                 auto key = kv.first;
                 auto value = obj.getString(key);
-                CC_ASSERT(value)
-                        << "need models/model/" << key << " string value\n";
+                CC_ASSERT(value) << "need models/model/" << key << " string value\n";
                 res.str_options[key] = value.getValue().str();
             }
             for (auto& kv : res.bool_options) {
@@ -124,8 +121,7 @@ struct DumpJson {
 
     std::string to_string() const {
         std::stringstream ss;
-        ss << "dump " << models.size() << " models to dump_dir:" << dump_dir
-           << "\n";
+        ss << "dump " << models.size() << " models to dump_dir:" << dump_dir << "\n";
         for (auto& model : models) {
             ss << "{\n" << model.to_string() << "}\n";
         }
@@ -167,8 +163,7 @@ struct DumpJson {
                 std::vector<std::string> dtype_vec;
                 if (cv_dtypes) {
                     for (auto& dtype : *cv_dtypes) {
-                        dtype_vec.push_back(
-                                dtype.getAsString().getValue().str());
+                        dtype_vec.push_back(dtype.getAsString().getValue().str());
                     }
                 }
                 if (dtype_vec.size() > 0) {
@@ -196,9 +191,7 @@ public:
         m_name2gen["roicopy"] = {GenKerns::RoiCopyKernel, 2};
         m_name2gen["rotate"] = {GenKerns::RotateKernel, 2};
         m_name2gen["resize_linear"] = {
-                GenKerns::ResizeKernel,
-                2,
-                {{"imode", "LINEAR"}, {"format", "NHWC"}}};
+                GenKerns::ResizeKernel, 2, {{"imode", "LINEAR"}, {"format", "NHWC"}}};
         m_name2gen["flip"] = {GenKerns::FlipKernel, 2};
         m_name2gen["warp_affine_replicate_linear"] = {
                 GenKerns::WarpAffineKernel,
@@ -206,21 +199,15 @@ public:
                 {{"imode", "LINEAR"},
                  {"format", "NHWC"},
                  {"border_mode", "REPLICATE"}}};
-        m_name2gen["warp_affine_replicate_linear"].flt_param["border_val"] =
-                0.f;
+        m_name2gen["warp_affine_replicate_linear"].flt_param["border_val"] = 0.f;
         m_name2gen["warp_affine_constant_linear"] = {
                 GenKerns::WarpAffineKernel,
                 4,
-                {{"imode", "LINEAR"},
-                 {"format", "NHWC"},
-                 {"border_mode", "CONSTANT"}}};
+                {{"imode", "LINEAR"}, {"format", "NHWC"}, {"border_mode", "CONSTANT"}}};
         m_name2gen["warp_affine_constant_linear"].flt_param["border_val"] = 0.f;
-        m_name2gen["rgb2bgr"] = {
-                GenKerns::CvtColorKernel, 2, {{"mode", "RGB2BGR"}}};
-        m_name2gen["rgb2yuv"] = {
-                GenKerns::CvtColorKernel, 2, {{"mode", "RGB2YUV"}}};
-        m_name2gen["rgb2gray"] = {
-                GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
+        m_name2gen["rgb2bgr"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2BGR"}}};
+        m_name2gen["rgb2yuv"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2YUV"}}};
+        m_name2gen["rgb2gray"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
         m_name2gen["yuv2bgr_nv21"] = {
                 GenKerns::CvtColorKernel, 2, {{"mode", "YUV2BGR_NV21"}}};
     }
@@ -229,14 +216,12 @@ public:
         CC_ASSERT(m_name2gen.find(cv_name) != m_name2gen.end())
                 << "can not find cv " << cv_name << "\n";
         auto kernel_type = m_name2gen[cv_name].kernel_type;
-        auto kernels = megcc::KernelGen::KernelPack::GetKernel(kernel_type,
-                                                               target_arch)
-                               .first;
+        auto kernels =
+                megcc::KernelGen::KernelPack::GetKernel(kernel_type, target_arch).first;
         {
-            auto bare_kernels =
-                    megcc::KernelGen::KernelPack::GetKernel(
-                            kernel_type, megcc::KernelGen::Arch::BAREMETAL)
-                            .first;
+            auto bare_kernels = megcc::KernelGen::KernelPack::GetKernel(
+                                        kernel_type, megcc::KernelGen::Arch::BAREMETAL)
+                                        .first;
             for (auto x : bare_kernels) {
                 kernels.push_back(x);
             }
@@ -272,20 +257,19 @@ static inline std::unordered_map<std::string, megcc::CCAttr> get_attr_map(
     return attr_map;
 }
 
-static void export_cv_one_dtype(mlir::KernelExporter& kernel_exporter,
-                                std::string& cv_name, std::string& cv_dtype) {
+static void export_cv_one_dtype(
+        mlir::KernelExporter& kernel_exporter, std::string& cv_name,
+        std::string& cv_dtype) {
     static DumpCVHelper dump_cv_helper;
     auto kernels = dump_cv_helper.get_kerns(cv_name, target_arch);
     CC_ASSERT(kernels.size() > 0) << "export " << cv_name << "failed";
-    auto attr_map =
-            get_attr_map(dump_cv_helper.get_kern_config(cv_name), cv_dtype);
+    auto attr_map = get_attr_map(dump_cv_helper.get_kern_config(cv_name), cv_dtype);
     megcc::CodeGenContext ctx(attr_map);
     std::function<void(std::vector<megcc::KernelGen::KernelObj>&)> reg_dep =
             [&](std::vector<megcc::KernelGen::KernelObj>& deps) {
                 for (auto& dep_kern : deps) {
-                    kernel_exporter.addInternalKernel(dep_kern.kernel_symbol,
-                                                      "", dep_kern.kernel_body,
-                                                      "", "");
+                    kernel_exporter.addInternalKernel(
+                            dep_kern.kernel_symbol, "", dep_kern.kernel_body, "", "");
                     reg_dep(dep_kern.kernel_dep);
                 }
             };
@@ -337,8 +321,7 @@ int main(int argc, char** argv) {
         model_json.str_options["model_path"] = InputFile.getValue();
         model_json.str_options["input_shape_str"] = InputShapes.getValue();
         model_json.bool_options["enable_nchw44"] = EnableNchw44.getValue();
-        model_json.bool_options["enable_nchw44_dot"] =
-                EnableNchw44Dot.getValue();
+        model_json.bool_options["enable_nchw44_dot"] = EnableNchw44Dot.getValue();
         model_json.bool_options["add_nhwc2nchw_to_input"] =
                 Add_nhwc2nchw_to_input.getValue();
         model_json.bool_options["mgb_fuse_kernel"] = MGBFuseKernel.getValue();
@@ -361,8 +344,7 @@ int main(int argc, char** argv) {
         if (Verbose) {
             megcc::SetLogLevel(megcc::LogLevel::DEBUG);
         }
-        if (failed(parseInputShapes(model.str_options["input_shape_str"],
-                                    options))) {
+        if (failed(parseInputShapes(model.str_options["input_shape_str"], options))) {
             return -1;
         }
         auto model_name = model.str_options.at("model_name");
@@ -379,8 +361,8 @@ int main(int argc, char** argv) {
         llvm::outs() << "Import mgb/mge model from " << model_input << "\n";
         mlir::OwningOpRef<mlir::ModuleOp> mod =
                 mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
-        auto status = mlir::MGB::import_mgb(mod.get(), model_input, options
-        , model.int_options["hako_ver"]);
+        auto status = mlir::MGB::import_mgb(
+                mod.get(), model_input, options, model.int_options["hako_ver"]);
         if (mlir::failed(status)) {
             llvm::outs() << "import megengine model failed\n";
             return -1;
@@ -404,14 +386,12 @@ int main(int argc, char** argv) {
         if (failed(pm.run(mod.get()))) {
             return -1;
         }
-        llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir
-                     << "\n";
+        llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir << "\n";
         mlir::export_tinynn_model(
-                mod.get(), dump_dir + "/" + options.module_name + ".tiny",
-                SaveModel, kernel_exporter,
-                model.bool_options.at("enable_compress_fp16"));
-        llvm::outs() << "Mgb/mge model convert to tinynn model "
-                     << options.module_name << " done.\n";
+                mod.get(), dump_dir + "/" + options.module_name + ".tiny", SaveModel,
+                kernel_exporter, model.bool_options.at("enable_compress_fp16"));
+        llvm::outs() << "Mgb/mge model convert to tinynn model " << options.module_name
+                     << " done.\n";
     }
     export_cv_opr(kernel_exporter, dump_info->cv_impl);
     kernel_exporter.write(dump_dir);

@@ -7,9 +7,9 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "KernelPack.h"
 #include <memory>
 #include "ElemwiseKernel.h"
-#include "KernelPack.h"
 #include "MatmulKernel.h"
 
 using namespace megcc;
@@ -24,8 +24,7 @@ struct AllAutoKernel {
                 std::make_shared<AutoBareMetal::MatmulKernel>()};
     }
 
-    std::unordered_map<KernelPack::KernType,
-                       std::vector<std::shared_ptr<KernelFunc>>>
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
 };
 }  // namespace

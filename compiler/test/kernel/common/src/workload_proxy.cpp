@@ -30,8 +30,8 @@ static inline size_t get_conv_compute_workload(
             fw = filter_layout[4];
         }
     } else {
-        mgb_assert(format == Param::Format::NCHW44 ||
-                   format == Param::Format::NCHW44_DOT);
+        mgb_assert(
+                format == Param::Format::NCHW44 || format == Param::Format::NCHW44_DOT);
         if (sparse == Param::Sparse::DENSE) {
             if (src_layout.ndim == 5) {
                 icpg = filter_layout[1] * 4;
@@ -61,8 +61,8 @@ size_t WorkloadOprProxy<megdnn::ConvBiasForward>::get_compute_workload(
     auto src_layout = tensors[0].layout;
     auto filter_layout = tensors[1].layout;
     auto dst_layout = tensors[4].layout;
-    return get_conv_compute_workload(src_layout, filter_layout, dst_layout,
-                                     param.format, param.sparse);
+    return get_conv_compute_workload(
+            src_layout, filter_layout, dst_layout, param.format, param.sparse);
 }
 template <>
 size_t WorkloadOprProxy<megdnn::ConvolutionForward>::get_compute_workload(
@@ -71,16 +71,15 @@ size_t WorkloadOprProxy<megdnn::ConvolutionForward>::get_compute_workload(
     auto src_layout = tensors[0].layout;
     auto filter_layout = tensors[1].layout;
     auto dst_layout = tensors[2].layout;
-    return get_conv_compute_workload(src_layout, filter_layout, dst_layout,
-                                     param.format, param.sparse);
+    return get_conv_compute_workload(
+            src_layout, filter_layout, dst_layout, param.format, param.sparse);
 }
 template <>
 size_t WorkloadOprProxy<megdnn::PoolingForward>::get_compute_workload(
         megdnn::PoolingForward* opr, const TensorNDArray& tensors) {
     auto param = opr->param();
     auto dst_layout = tensors[1].layout;
-    float computation =
-            dst_layout.total_nr_elems() * param.window_h * param.window_w;
+    float computation = dst_layout.total_nr_elems() * param.window_h * param.window_w;
     return computation;
 }
 
@@ -170,8 +169,8 @@ template <>
 size_t WorkloadOprProxy<megdnn::ReduceForward>::get_compute_workload(
         megdnn::ReduceForward* opr, const TensorNDArray& tensors) {
     auto dst_layout = tensors[tensors.size() - 1].layout;
-    auto src_layout = tensors[0].layout; 
-    float computation = dst_layout.total_nr_elems()+ src_layout.total_nr_elems();
+    auto src_layout = tensors[0].layout;
+    float computation = dst_layout.total_nr_elems() + src_layout.total_nr_elems();
     return computation;
 }
 template <>
@@ -181,8 +180,8 @@ size_t WorkloadOprProxy<megdnn::ConvolutionBackwardData>::get_compute_workload(
     auto src_layout = tensors[0].layout;
     auto filter_layout = tensors[1].layout;
     auto dst_layout = tensors[2].layout;
-    return get_conv_compute_workload(src_layout, filter_layout, dst_layout,
-                                     param.format, param.sparse);
+    return get_conv_compute_workload(
+            src_layout, filter_layout, dst_layout, param.format, param.sparse);
 }
 }  // namespace test
 }  // namespace megcc

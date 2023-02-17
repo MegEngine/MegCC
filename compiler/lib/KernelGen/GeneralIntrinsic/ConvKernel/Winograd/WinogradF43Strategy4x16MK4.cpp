@@ -68,27 +68,26 @@ std::string WinogradF43Strategy4x16MK4::WeightTrans(
         std::string tmp1 = strs[4];
         std::stringstream ss;
         for (int i = 0; i < times; i++) {
-            ss << "GI_FLOAT32_t " << dst << i << "0 = GiMultiplyScalerFloat32("
-               << src << "0" << i << ", 0.25f);\n";
-            ss << tmp0 << " = GiMultiplyScalerFloat32(GiAddFloat32(" << src
-               << "0" << i << ", " << src << "2" << i << "), (-1.0/6));\n";
+            ss << "GI_FLOAT32_t " << dst << i << "0 = GiMultiplyScalerFloat32(" << src
+               << "0" << i << ", 0.25f);\n";
+            ss << tmp0 << " = GiMultiplyScalerFloat32(GiAddFloat32(" << src << "0" << i
+               << ", " << src << "2" << i << "), (-1.0/6));\n";
             ss << tmp1 << " = GiMultiplyScalerFloat32(" << src << "1" << i
                << ", (-1.0/6));\n";
-            ss << "GI_FLOAT32_t " << dst << i << "1 = GiAddFloat32(" << tmp0
+            ss << "GI_FLOAT32_t " << dst << i << "1 = GiAddFloat32(" << tmp0 << ", "
+               << tmp1 << ");\n";
+            ss << "GI_FLOAT32_t " << dst << i << "2 = GiSubtractFloat32(" << tmp0
                << ", " << tmp1 << ");\n";
-            ss << "GI_FLOAT32_t " << dst << i << "2 = GiSubtractFloat32("
-               << tmp0 << ", " << tmp1 << ");\n";
-            ss << tmp0 << " = GiAddFloat32(GiMultiplyScalerFloat32(" << src
-               << "0" << i << ", 1.0/24), GiMultiplyScalerFloat32(" << src
-               << "2" << i << ", 1.0/6));\n";
+            ss << tmp0 << " = GiAddFloat32(GiMultiplyScalerFloat32(" << src << "0" << i
+               << ", 1.0/24), GiMultiplyScalerFloat32(" << src << "2" << i
+               << ", 1.0/6));\n";
             ss << tmp1 << " = GiMultiplyScalerFloat32(" << src << "1" << i
                << ", 1.0/12);\n";
-            ss << "GI_FLOAT32_t " << dst << i << "3 = GiAddFloat32(" << tmp0
+            ss << "GI_FLOAT32_t " << dst << i << "3 = GiAddFloat32(" << tmp0 << ", "
+               << tmp1 << ");\n";
+            ss << "GI_FLOAT32_t " << dst << i << "4 = GiSubtractFloat32(" << tmp0
                << ", " << tmp1 << ");\n";
-            ss << "GI_FLOAT32_t " << dst << i << "4 = GiSubtractFloat32("
-               << tmp0 << ", " << tmp1 << ");\n";
-            ss << "GI_FLOAT32_t " << dst << i << "5 = " << src << "2" << i
-               << ";\n";
+            ss << "GI_FLOAT32_t " << dst << i << "5 = " << src << "2" << i << ";\n";
         }
         return ss.str();
     };
@@ -1035,9 +1034,8 @@ if(num_valid_oh >m){ \
 #undef MADD
         }
     })";
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto nonline_gen = create_activation_gener_instrinsic(nonline_mode);
     auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
         return nonline_gen->GenIntrinsicFloat(str[0], str[1]);

@@ -6,8 +6,8 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
-#include "test/kernel/common/dnn_helper.h"
 #include "test/kernel/common/workspace_wrapper.h"
+#include "test/kernel/common/dnn_helper.h"
 namespace megdnn {
 namespace test {
 
@@ -35,8 +35,8 @@ void WorkspaceWrapper::update(size_t size_in_bytes) {
         // alloc new workspace
         m_workspace.size = size_in_bytes;
         if (m_workspace.size > 0) {
-            m_workspace.raw_ptr = static_cast<dt_byte*>(
-                    megdnn_malloc(m_handle, size_in_bytes));
+            m_workspace.raw_ptr =
+                    static_cast<dt_byte*>(megdnn_malloc(m_handle, size_in_bytes));
         } else {
             m_workspace.raw_ptr = nullptr;
         }

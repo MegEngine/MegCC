@@ -16,8 +16,7 @@
 using namespace megcc;
 using namespace KernelGen;
 using namespace Arm64;
-std::shared_ptr<TContext> Int8DotMatMulM8N12K4::GetInnerCtx(
-        TContext* ctx) const {
+std::shared_ptr<TContext> Int8DotMatMulM8N12K4::GetInnerCtx(TContext* ctx) const {
     auto inner_ctx = std::make_shared<CodeGenContext>();
     inner_ctx->setAttr("format", "MK4_DOT");
     inner_ctx->setAttr("with_bias", false);
@@ -28,10 +27,9 @@ std::shared_ptr<TContext> Int8DotMatMulM8N12K4::GetInnerCtx(
 }
 
 bool Int8DotMatMulM8N12K4::IsAvailable(TContext* context) const {
-    bool ok_dtype =
-            Utils::is_int_dtype(context->getAttrOprand("operand:0").dtype, 8) &&
-            Utils::is_int_dtype(context->getAttrOprand("operand:1").dtype, 8) &&
-            Utils::is_int_dtype(context->getAttrOprand("operand:2").dtype, 32);
+    bool ok_dtype = Utils::is_int_dtype(context->getAttrOprand("operand:0").dtype, 8) &&
+                    Utils::is_int_dtype(context->getAttrOprand("operand:1").dtype, 8) &&
+                    Utils::is_int_dtype(context->getAttrOprand("operand:2").dtype, 32);
     bool ok_mode = context->getAttrStr("format") == "MK4_DOT" &&
                    context->getAttrStr("compute_mode") == "DEFAULT";
     bool ok_shape = context->getAttrOprand("operand:0").shape.size() == 4 &&
@@ -61,15 +59,16 @@ std::vector<KernelObj> Int8DotMatMulM8N12K4::GetDependInternalSymbol(
         TContext* context) const {
     auto matmul_kernel = MatmulInt8DotM8N12MK4Kernel();
     auto inner_ctx = GetInnerCtx(context);
-    return {{matmul_kernel.GetKernelSymbol(inner_ctx.get()),
+    return {
+            {matmul_kernel.GetKernelSymbol(inner_ctx.get()),
              matmul_kernel.GetKernelBody(inner_ctx.get()),
              matmul_kernel.GetBodyGuardBegin(inner_ctx.get()),
              matmul_kernel.GetBodyGuardEnd(inner_ctx.get()),
              matmul_kernel.GetDependInternalSymbol(inner_ctx.get())}};
 }
 
-std::string Int8DotMatMulM8N12K4::GetWorkspaceBodyCondition(TContext* ctx,
-                                                            bool jit) const {
+std::string Int8DotMatMulM8N12K4::GetWorkspaceBodyCondition(
+        TContext* ctx, bool jit) const {
     std::stringstream ss;
     auto inner_ctx = GetInnerCtx(ctx);
     auto matmul_kernel = MatmulInt8DotM8N12MK4Kernel();
@@ -77,11 +76,9 @@ std::string Int8DotMatMulM8N12K4::GetWorkspaceBodyCondition(TContext* ctx,
         ss << matmul_kernel.GetPackAWorkspaceBody(inner_ctx.get()) << ";\n";
         ss << matmul_kernel.GetPackBWorkspaceBody(inner_ctx.get()) << ";\n";
     } else {
-        ss << "extern "
-           << matmul_kernel.GetPackAWorkspaceSignature(inner_ctx.get())
+        ss << "extern " << matmul_kernel.GetPackAWorkspaceSignature(inner_ctx.get())
            << ";\n";
-        ss << "extern "
-           << matmul_kernel.GetPackBWorkspaceSignature(inner_ctx.get())
+        ss << "extern " << matmul_kernel.GetPackBWorkspaceSignature(inner_ctx.get())
            << ";\n";
     }
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
@@ -110,8 +107,7 @@ std::string Int8DotMatMulM8N12K4::GetKernelBody(TContext* context) const {
     auto matmul_kernel = MatmulInt8DotM8N12MK4Kernel();
     auto inner_ctx = GetInnerCtx(context);
     writer << "#include <arm_neon.h>\n";
-    writer << "extern " << matmul_kernel.GetKernelSignature(inner_ctx.get())
-           << ";\n";
+    writer << "extern " << matmul_kernel.GetKernelSignature(inner_ctx.get()) << ";\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context);
     std::string body_temp = R"({

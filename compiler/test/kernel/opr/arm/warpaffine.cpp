@@ -25,10 +25,10 @@ TEST(AARCH64, WarpAffine) {
     WarpAffineForward::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NCHW, Format::NHWC})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 1.25;
             param.border_mode = bmode;
@@ -49,10 +49,10 @@ TEST(AARCH64, WarpAffineU8) {
     WarpAffineForward::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NHWC})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 3;
             param.border_mode = bmode;
@@ -75,13 +75,10 @@ TEST(AARCH64, BenchmarkWarpAffine) {
     benchmarker.set_dtype(0, dtype::Uint8());
     benchmarker.set_dtype(2, dtype::Uint8());
 
-    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}}).print();
 }
 #endif

@@ -21,8 +21,7 @@ public:
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 };
 
 class Fp32MatMulM4N12K4 : public Armv7KernelFunc {
@@ -30,12 +29,11 @@ public:
     bool IsAvailable(TContext* context) const override;
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* ctx) const override {
         return GetWorkspaceBodyCondition(ctx, false);
     }
-    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override{
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
         return GetWorkspaceBodyCondition(ctx, true);
     }
 
@@ -49,8 +47,7 @@ public:
     bool IsAvailable(TContext* context) const override;
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 };
 }  // namespace Armv7
 }  // namespace KernelGen

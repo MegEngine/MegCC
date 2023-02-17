@@ -26,8 +26,8 @@ struct ActivationGenIntrinsicBase {
     virtual std::string GenIntrinsicInitFloat() const = 0;
 
     //! compute the input neon data and write to the output neon
-    virtual std::string GenIntrinsicFloat(const std::string& input,
-                                          const std::string& output) const = 0;
+    virtual std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const = 0;
     //! compute the input neon data and write to the output ptr
     virtual std::string GenIntrinsicFloatStore(
             const std::string& input, const std::string& outptr) const = 0;
@@ -45,16 +45,14 @@ public:
     virtual std::string GenIntrinsicInitFloat() const override { return ""; }
 
     //! compute the input neon data and write to the output neon
-    virtual std::string GenIntrinsicFloat(const std::string& input,
-                                          const std::string& output) const override {
+    virtual std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
         std::stringstream writer;
-        writer << "\n"
-               << output << " = " << input << ";";
+        writer << "\n" << output << " = " << input << ";";
         return writer.str();
     };
     std::string GenIntrinsicFloatStore(
-            const std::string& input,
-            const std::string& outptr) const override {
+            const std::string& input, const std::string& outptr) const override {
         std::stringstream writer;
         writer << "\n GiStoreFloat32(" << outptr << ", " << input << ");";
         return writer.str();
@@ -78,27 +76,24 @@ public:
 };
 
 template <>
-struct ActivationGenIntrinsic<NonlineMode::RELU>
-        : public ActivationGenIntrinsicBase {
+struct ActivationGenIntrinsic<NonlineMode::RELU> : public ActivationGenIntrinsicBase {
 public:
     std::string GenIntrinsicInitFloat() const override {
         std::stringstream writer;
         writer << "\nGI_FLOAT32_t vzero = GiBroadcastFloat32(0.f);";
         return writer.str();
     }
-    std::string GenIntrinsicFloat(const std::string& input,
-                                  const std::string& output) const override {
+    std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
         std::stringstream writer;
-        writer << "\n"
-               << output << " = GiMaximumFloat32(" << input << ", vzero);";
+        writer << "\n" << output << " = GiMaximumFloat32(" << input << ", vzero);";
         return writer.str();
     }
     std::string GenIntrinsicFloatStore(
-            const std::string& input,
-            const std::string& outptr) const override {
+            const std::string& input, const std::string& outptr) const override {
         std::stringstream writer;
-        writer << "\n GiStoreFloat32(" << outptr << ", GiMaximumFloat32("
-               << input << ", vzero));";
+        writer << "\n GiStoreFloat32(" << outptr << ", GiMaximumFloat32(" << input
+               << ", vzero));";
         return writer.str();
     }
     std::string GenIntrinsicQuantStore(
@@ -131,42 +126,36 @@ public:
         writer << "\n GI_FLOAT32_t inv6_v = GiBroadcastFloat32(1/6.f);";
         return writer.str();
     }
-    std::string GenIntrinsicFloat(const std::string& input,
-                                  const std::string& output) const override {
+    std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
         std::stringstream writer;
         auto input_temp = "hswish_temp";
         writer << "\n{";
         writer << "GI_FLOAT32_t " << input_temp << " = GiAddFloat32(" << input
                << ", f3_v);\n";
-        writer << input_temp << " = GiMaximumFloat32(" << input_temp
-               << ", vzero);\n";
-        writer << input_temp << " = GiMinimumFloat32(" << input_temp
-               << ", f6_v);\n";
-        writer << input_temp << " = GiMultiplyFloat32(" << input << ", "
-               << input_temp << ");\n";
+        writer << input_temp << " = GiMaximumFloat32(" << input_temp << ", vzero);\n";
+        writer << input_temp << " = GiMinimumFloat32(" << input_temp << ", f6_v);\n";
+        writer << input_temp << " = GiMultiplyFloat32(" << input << ", " << input_temp
+               << ");\n";
         writer << "\n"
-               << output << " = GiMultiplyFloat32(" << input_temp
-               << ", inv6_v);";
+               << output << " = GiMultiplyFloat32(" << input_temp << ", inv6_v);";
         writer << "\n}";
         return writer.str();
     }
     std::string GenIntrinsicFloatStore(
-            const std::string& input,
-            const std::string& outptr) const override {
+            const std::string& input, const std::string& outptr) const override {
         std::stringstream writer;
 
         auto input_temp = "hswish_temp";
         writer << "\n{";
         writer << "GI_FLOAT32_t " << input_temp << " = GiAddFloat32(" << input
                << ", f3_v);\n";
-        writer << input_temp << " = GiMaximumFloat32(" << input_temp
-               << ", vzero);\n";
-        writer << input_temp << " = GiMinimumFloat32(" << input_temp
-               << ", f6_v);\n";
-        writer << input_temp << " = GiMultiplyFloat32(" << input << ", "
-               << input_temp << ");\n";
-        writer << "\n GiStoreFloat32(" << outptr << ", GiMultiplyFloat32("
-               << input_temp << ", inv6_v));";
+        writer << input_temp << " = GiMaximumFloat32(" << input_temp << ", vzero);\n";
+        writer << input_temp << " = GiMinimumFloat32(" << input_temp << ", f6_v);\n";
+        writer << input_temp << " = GiMultiplyFloat32(" << input << ", " << input_temp
+               << ");\n";
+        writer << "\n GiStoreFloat32(" << outptr << ", GiMultiplyFloat32(" << input_temp
+               << ", inv6_v));";
         writer << "\n}";
         return writer.str();
     }

@@ -89,8 +89,9 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
     if (context->getAttrInt("nr_operands") == 2) {
         auto op0 = context->getAttrOprand("operand:0");
         auto dst = context->getAttrOprand("operand:1");
-        CC_ASSERT(Utils::is_quant_dtype(op0.dtype, 8) &&
-                  Utils::is_quant_dtype(dst.dtype, 8));
+        CC_ASSERT(
+                Utils::is_quant_dtype(op0.dtype, 8) &&
+                Utils::is_quant_dtype(dst.dtype, 8));
         auto op0_specifier = Utils::cvt_dtype_specifier(op0.dtype);
         auto dst_specifier = Utils::cvt_dtype_specifier(dst.dtype);
         std::string binary_str = R"({
@@ -124,9 +125,10 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
         auto op0 = context->getAttrOprand("operand:0");
         auto op1 = context->getAttrOprand("operand:1");
         auto dst = context->getAttrOprand("operand:2");
-        CC_ASSERT(Utils::is_quant_dtype(op0.dtype, 8) &&
-                  Utils::is_quant_dtype(op1.dtype, 8) &&
-                  Utils::is_quant_dtype(dst.dtype, 8));
+        CC_ASSERT(
+                Utils::is_quant_dtype(op0.dtype, 8) &&
+                Utils::is_quant_dtype(op1.dtype, 8) &&
+                Utils::is_quant_dtype(dst.dtype, 8));
         CC_ASSERT(op0.shape == op1.shape) << "no support broadcast\n";
         auto op0_specifier = Utils::cvt_dtype_specifier(op0.dtype);
         auto op1_specifier = Utils::cvt_dtype_specifier(op1.dtype);
@@ -164,8 +166,8 @@ std::string ElemwiseMultiTypeKernel::GetKernelBody(TContext* context) const {
                           .add("act", gen_binary(mode))
                           .render(binary_str);
     } else {
-        CC_ABORT << "not support operands size "
-                 << context->getAttrInt("nr_operands") << "\n";
+        CC_ABORT << "not support operands size " << context->getAttrInt("nr_operands")
+                 << "\n";
     }
     return writer.str();
 }

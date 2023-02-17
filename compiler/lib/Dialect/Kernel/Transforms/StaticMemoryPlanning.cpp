@@ -29,9 +29,7 @@ class StaticMemoryPlanning : BufferPlacementTransformationBase {
 
 public:
     StaticMemoryPlanning(FuncOp op)
-            : BufferPlacementTransformationBase(op),
-              func(op),
-              postDominators(op) {}
+            : BufferPlacementTransformationBase(op), func(op), postDominators(op) {}
 
     void makePlan() {
         std::vector<Value> allocValues;
@@ -42,8 +40,7 @@ public:
 
 private:
     std::unique_ptr<Solver> constructProblem(std::vector<Value>& allocValues) {
-        std::unique_ptr<Solver> solver =
-                Solver::make(Solver::AllocatorAlgo::PUSHDOWN);
+        std::unique_ptr<Solver> solver = Solver::make(Solver::AllocatorAlgo::PUSHDOWN);
         std::unordered_map<Operation*, size_t> op2idx;
         size_t curIdx = 0;
         for (auto&& op : func.getBody().front()) {
@@ -51,8 +48,7 @@ private:
         }
         for (const BufferPlacementAllocs::AllocEntry& entry : allocs) {
             Value alloc = std::get<0>(entry);
-            if (alloc.getType().dyn_cast<ShapedType>().getNumDynamicDims() >
-                0) {
+            if (alloc.getType().dyn_cast<ShapedType>().getNumDynamicDims() > 0) {
                 continue;
             }
             auto aliasesSet = aliases.resolve(alloc);
@@ -102,12 +98,9 @@ private:
             } */
             size_t begin = op2idx.at(alloc.getDefiningOp()),
                    end = op2idx.at(endOperation) + 1,
-                   sizeInBits = alloc.getType()
-                                        .dyn_cast<ShapedType>()
-                                        .getSizeInBits();
+                   sizeInBits = alloc.getType().dyn_cast<ShapedType>().getSizeInBits();
             CC_ASSERT((sizeInBits & 7) == 0);
-            solver->add(begin, end, sizeInBits >> 3,
-                        alloc.getAsOpaquePointer());
+            solver->add(begin, end, sizeInBits >> 3, alloc.getAsOpaquePointer());
             allocValues.push_back(alloc);
         }
         return solver;
@@ -122,22 +115,21 @@ private:
         CC_ASSERT(oldOffset == 0);
         return MemRefType::get(
                 oldMemRef.getShape(), oldMemRef.getElementType(),
-                makeStridedLinearLayoutMap(oldStride, newOffset,
-                                           oldMemRef.getContext()));
+                makeStridedLinearLayoutMap(
+                        oldStride, newOffset, oldMemRef.getContext()));
     }
 
     void applySolution(Solver& solver, const std::vector<Value>& allocValues) {
         // add global buffer to block argument
-        Type globalBufferType =
-                MemRefType::get({static_cast<int64_t>(solver.tot_alloc())},
-                                IntegerType::get(func.getContext(), 8));
+        Type globalBufferType = MemRefType::get(
+                {static_cast<int64_t>(solver.tot_alloc())},
+                IntegerType::get(func.getContext(), 8));
         OpBuilder func_builder(func);
-        func.getBody().front().addArgument(globalBufferType,
-                                           func_builder.getUnknownLoc());
+        func.getBody().front().addArgument(
+                globalBufferType, func_builder.getUnknownLoc());
         Value globalBuffer = func.getArguments().back();
         for (auto allocated : allocValues) {
-            size_t offset =
-                    solver.get_start_addr(allocated.getAsOpaquePointer());
+            size_t offset = solver.get_start_addr(allocated.getAsOpaquePointer());
             memref::AllocOp alloc = allocated.getDefiningOp<memref::AllocOp>();
             OpBuilder builder(alloc);
             auto oldMemRef = allocated.getType().dyn_cast<MemRefType>();
@@ -154,14 +146,13 @@ private:
         FunctionType oldFuncType = func.type().dyn_cast<FunctionType>();
         std::vector<Type> ArgumentsType = oldFuncType.getInputs();
         ArgumentsType.push_back(globalBufferType);
-        auto returnOp =
-                llvm::dyn_cast<ReturnOp>(&func.getBody().front().back());
+        auto returnOp = llvm::dyn_cast<ReturnOp>(&func.getBody().front().back());
         auto ResultsType = returnOp.getOperandTypes();
         function_interface_impl::setFunctionType(
-                func, FunctionType::get(func.getContext(), ArgumentsType,
-                                        ResultsType));
-        func.setArgAttr(func.getNumArguments() - 1, "mgb.func_arg_name",
-                        StringAttr::get(func.getContext(), "kGlobalBuffer"));
+                func, FunctionType::get(func.getContext(), ArgumentsType, ResultsType));
+        func.setArgAttr(
+                func.getNumArguments() - 1, "mgb.func_arg_name",
+                StringAttr::get(func.getContext(), "kGlobalBuffer"));
     }
 
     void removeUnusedMemFwd() {

@@ -22,20 +22,17 @@ const int warmup = 10;
 void MGEBenchmarker::load_model() {
     std::unique_ptr<serialization::InputFile> inp_file =
             serialization::InputFile::make_fs(m_model_path.c_str());
-    auto format =
-            serialization::GraphLoader::identify_graph_dump_format(*inp_file);
+    auto format = serialization::GraphLoader::identify_graph_dump_format(*inp_file);
     mgb_assert(format.valid(), "invalid model: unknown model format");
-    auto loader =
-            serialization::GraphLoader::make(std::move(inp_file), format.val());
+    auto loader = serialization::GraphLoader::make(std::move(inp_file), format.val());
     if (m_log_level == 0) {
-        m_profiler = std::move(std::make_unique<mgb::GraphProfiler>(
-                m_load_config.comp_graph.get()));
+        m_profiler = std::move(
+                std::make_unique<mgb::GraphProfiler>(m_load_config.comp_graph.get()));
     } else {
         m_load_config.comp_graph->options().comp_node_seq_record_level = 1;
     }
     m_load_config.comp_graph->options().var_sanity_check_first_run = false;
-    m_load_config.comp_graph->options()
-            .graph_opt.enable_fuse_conv_bias_nonlinearity();
+    m_load_config.comp_graph->options().graph_opt.enable_fuse_conv_bias_nonlinearity();
     m_load_config.comp_graph->options().graph_opt.enable_weight_preprocess();
 
     m_model = loader->load(m_load_config, false);
@@ -45,8 +42,7 @@ void MGEBenchmarker::profile() {
     //! optimize for inference
     auto& output_vars = m_model.output_var_list;
 
-    using Strategy =
-            mgb::opr::mixin::AlgoChooserHelper::ExecutionPolicy::Strategy;
+    using Strategy = mgb::opr::mixin::AlgoChooserHelper::ExecutionPolicy::Strategy;
     auto strategy = static_cast<Strategy>(0);
     strategy = Strategy::PROFILE | Strategy::OPTIMIZED | strategy;
     mgb::gopt::modify_opr_algo_strategy_inplace(output_vars, strategy);
@@ -63,8 +59,7 @@ void MGEBenchmarker::profile() {
 #endif
     size_t nr_output = output_vars.size();
 
-    output_vars =
-            mgb::gopt::optimize_for_inference(output_vars, opt_for_inference);
+    output_vars = mgb::gopt::optimize_for_inference(output_vars, opt_for_inference);
     std::vector<std::map<std::string, megdnn::TensorShape>> input_map_vec;
     auto cg = m_model.output_var_list[0].node()->owner_graph();
     for (auto&& i : output_vars) {

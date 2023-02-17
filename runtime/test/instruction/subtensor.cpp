@@ -32,26 +32,22 @@ TEST(INSTRUCTION, SubTensorTest) {
         inputs.clear();
         inputs.push_back(src_tensor.get());
         if (flag->start == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->end == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->step == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->index == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
@@ -69,8 +65,7 @@ TEST(INSTRUCTION, SubTensorTest) {
         return subtensor;
     };
     VM* vm = create_vm();
-    auto test_subtensor = [&](IndexDesc* index, IndexDesc* flag,
-                              const Tensor& expect,
+    auto test_subtensor = [&](IndexDesc* index, IndexDesc* flag, const Tensor& expect,
                               std::vector<uint32_t> input_idx = {}) {
         auto subtensor = create_subtensor(index, flag, input_idx);
         Instruction inst;
@@ -108,8 +103,7 @@ TEST(INSTRUCTION, SubTensorTest) {
                 if (j < 4 || j >= 8)
                     continue;
                 for (size_t k = 0; k < 20; k++) {
-                    truth[i * 4 * 20 + (j - 4) * 20 + k] =
-                            i * 20 * 20 + j * 20 + k;
+                    truth[i * 4 * 20 + (j - 4) * 20 + k] = i * 20 * 20 + j * 20 + k;
                 }
             }
         }

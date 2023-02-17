@@ -24,12 +24,12 @@ bool PoolingKernel::IsAvailable(TContext* context) const {
     bool mode_ok = context->getAttrStr("format") == "NCHW";
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     auto dst_dtype = context->getAttrOprand("operand:1").dtype;
-    bool dtype_ok =
-            (src_dtype == dst_dtype) && (Utils::is_float_dtype(src_dtype) ||
-                                         Utils::is_quant_dtype(src_dtype));
+    bool dtype_ok = (src_dtype == dst_dtype) && (Utils::is_float_dtype(src_dtype) ||
+                                                 Utils::is_quant_dtype(src_dtype));
     if (Utils::is_quant_dtype(src_dtype)) {
-        CC_ASSERT(context->getAttrOprand("operand:0").scale ==
-                  context->getAttrOprand("operand:1").scale)
+        CC_ASSERT(
+                context->getAttrOprand("operand:0").scale ==
+                context->getAttrOprand("operand:1").scale)
                 << "quant pooling only support same scale\n";
     }
     return mode_ok && dtype_ok;
@@ -40,8 +40,7 @@ std::string PoolingImpl::GetKernelSymbol(TContext* context) const {
     ss << "kernel_pooling";
     ss << "_" << context->getAttrStr("mode");
     ss << "_" << context->getAttrStr("format");
-    ss << "_p" << context->getAttrInt("pad_h") << "x"
-       << context->getAttrInt("pad_w");
+    ss << "_p" << context->getAttrInt("pad_h") << "x" << context->getAttrInt("pad_w");
     ss << "_s" << context->getAttrInt("stride_h") << "x"
        << context->getAttrInt("stride_w");
     ss << "_w" << context->getAttrInt("window_h") << "x"
@@ -52,8 +51,8 @@ std::string PoolingImpl::GetKernelSymbol(TContext* context) const {
 
 namespace {
 
-std::string get_acc_dtype_specifier(const std::string& src_dtype,
-                                    const std::string& mode) {
+std::string get_acc_dtype_specifier(
+        const std::string& src_dtype, const std::string& mode) {
     if (Utils::is_float_dtype(src_dtype)) {
         return "float";
     } else if (Utils::is_quant_dtype(src_dtype, 8)) {
@@ -63,8 +62,8 @@ std::string get_acc_dtype_specifier(const std::string& src_dtype,
             return "int";
         }
     } else {
-        CC_ASSERT(false) << "not support dtype and mode " << src_dtype << ","
-                         << mode << "\n";
+        CC_ASSERT(false) << "not support dtype and mode " << src_dtype << "," << mode
+                         << "\n";
     }
     return "InvalidType";
 }
@@ -131,8 +130,8 @@ static inline ${acc_specifier} max(${acc_specifier} a, ${acc_specifier} b){
             return "";
         } else if (m_mode == "AVERAGE") {
             if (m_acc_specifier == "int") {
-                return "sum = roundf((float)sum / " +
-                       std::to_string(m_windows_cnt) + ");";
+                return "sum = roundf((float)sum / " + std::to_string(m_windows_cnt) +
+                       ");";
             } else {
                 return "sum /= " + std::to_string(m_windows_cnt) + ";";
             }
@@ -182,8 +181,7 @@ std::string PoolingKernel::GetKernelBody(TContext* context) const {
 )";
     ss << pooler.gen_dep();
     ss << GenFormatIter::gen_inline_format_iter_body(format_str);
-    auto format_iter_symbol =
-            GenFormatIter::gen_inline_format_iter_symbol(format_str);
+    auto format_iter_symbol = GenFormatIter::gen_inline_format_iter_symbol(format_str);
     ss << GenCommonRet() << " " << GetKernelSignature(context) << "{\n";
 
     std::string body_temp = R"(
@@ -259,8 +257,8 @@ std::string PoolingKernel::GetKernelBody(TContext* context) const {
                     .add_ctx_int("window_w")
                     .add("pool_init_str", pooler.gen_init_str())
                     .add("format_iter_symbol", format_iter_symbol)
-                    .add("gen_feed_str", StringTemplate::object_bind(
-                                                 &Pooler::gen_feed_str, pooler))
+                    .add("gen_feed_str",
+                         StringTemplate::object_bind(&Pooler::gen_feed_str, pooler))
                     .add("gen_final_str", pooler.gen_final_str())
                     .add("get_result_str", pooler.get_result_str())
                     .add("src_specifier", src_specifier)

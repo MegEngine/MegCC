@@ -50,9 +50,7 @@ public:
     PerformanceResultPair exec(TensorLayoutArray layouts);
 
     //! explicitly require argument to be TensorShape
-    PerformanceResultPair execs(const TensorShapeArray& shapes) {
-        return exec(shapes);
-    }
+    PerformanceResultPair execs(const TensorShapeArray& shapes) { return exec(shapes); }
 
     //! explicitly require argument to be TensorLayout
     PerformanceResultPair execl(const TensorLayoutArray& layouts) {

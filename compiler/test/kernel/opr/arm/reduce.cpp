@@ -14,8 +14,8 @@ using namespace megcc::KernelGen;
 using Mode = ReduceForward::Param::Mode;
 TEST(AARCH64, Reduce) {
     Checker<Reduce> checker(Arch::ARM64);
-    for (auto mode : {Mode::SUM, Mode::MEAN, Mode::MAX, Mode::MIN,
-                      Mode::PRODUCT, Mode::SUM_SQR})
+    for (auto mode :
+         {Mode::SUM, Mode::MEAN, Mode::MAX, Mode::MIN, Mode::PRODUCT, Mode::SUM_SQR})
         for (auto src : {TensorShape{2, 3}, {3, 4, 5}, {4, 5, 6, 7}})
             for (size_t axis = 0; axis < 4; ++axis) {
                 if (axis < src.ndim) {

@@ -22,10 +22,10 @@ TEST(NAIVE, WarpAffine) {
     WarpAffineForward::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NCHW, Format::NHWC})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 1.25;
             param.border_mode = bmode;

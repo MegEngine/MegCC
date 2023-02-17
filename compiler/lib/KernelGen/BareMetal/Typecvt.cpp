@@ -21,15 +21,14 @@ using namespace KernelGen;
 using namespace BareMetal;
 
 bool TypecvtKernel::IsAvailable(TContext* context) const {
-    auto src_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
-    bool ok_type = !(!Utils::is_quant_dtype(src_dtype) &&
-                     !Utils::is_quant_dtype(dst_dtype) &&
-                     Utils::is_int_dtype(dst_dtype)) ||
-                   (Utils::is_float_dtype(src_dtype, 32) &&
-                    Utils::is_int_dtype(dst_dtype, 8));
+    auto src_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
+    bool ok_type =
+            !(!Utils::is_quant_dtype(src_dtype) && !Utils::is_quant_dtype(dst_dtype) &&
+              Utils::is_int_dtype(dst_dtype)) ||
+            (Utils::is_float_dtype(src_dtype, 32) && Utils::is_int_dtype(dst_dtype, 8));
     if (Utils::is_quant_dtype(src_dtype)) {
         CC_ASSERT(context->getAttrOprand("operand:0").scale > 0);
     }
@@ -74,48 +73,43 @@ std::string gen_staturate(const std::string& dst_dtype) {
     return naive_body_temp;
 }
 
-std::string gen_act(const std::string& src_dtype, const std::string& dst_dtype,
-                    const std::string& src_specifier,
-                    const std::string& dst_specifier) {
+std::string gen_act(
+        const std::string& src_dtype, const std::string& dst_dtype,
+        const std::string& src_specifier, const std::string& dst_specifier) {
     std::string naive_body_temp;
-    if (!Utils::is_quant_dtype(src_dtype) &&
-        !Utils::is_quant_dtype(dst_dtype)) {
+    if (!Utils::is_quant_dtype(src_dtype) && !Utils::is_quant_dtype(dst_dtype)) {
         naive_body_temp = R"(
              static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
                  return val;
              }
          )";
-    } else if (!Utils::is_quant_dtype(src_dtype) &&
-               Utils::is_quant_dtype(dst_dtype)) {
+    } else if (!Utils::is_quant_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype)) {
         naive_body_temp = R"(
              static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
                  return staturate(val / dst_scale);
              }
          )";
-    } else if (Utils::is_quant_dtype(src_dtype) &&
-               !Utils::is_quant_dtype(dst_dtype)) {
+    } else if (Utils::is_quant_dtype(src_dtype) && !Utils::is_quant_dtype(dst_dtype)) {
         naive_body_temp = R"(
              static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
                  return val * src_scale;
              }
          )";
-    } else if (Utils::is_quant_dtype(src_dtype) &&
-               Utils::is_quant_dtype(dst_dtype)) {
+    } else if (Utils::is_quant_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype)) {
         naive_body_temp = R"(
              static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
                  return staturate(val * src_scale / dst_scale );
              }
          )";
-    } else if (Utils::is_float_dtype(src_dtype, 32) &&
-               Utils::is_int_dtype(dst_dtype, 8)) {
+    } else if (
+            Utils::is_float_dtype(src_dtype, 32) && Utils::is_int_dtype(dst_dtype, 8)) {
         naive_body_temp = R"(
              static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
                  return staturate(val * src_scale / dst_scale );
              }
          )";
     } else {
-        CC_ABORT << "not support cvt " << src_dtype << "->" << dst_dtype
-                 << "\n";
+        CC_ABORT << "not support cvt " << src_dtype << "->" << dst_dtype << "\n";
     }
     return StringTemplate::StringTemplateArgs()
             .add("src_specifier", src_specifier)
@@ -127,10 +121,10 @@ std::string gen_act(const std::string& src_dtype, const std::string& dst_dtype,
 
 std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     std::stringstream ss;
-    auto src_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:0").dtype);
-    auto dst_dtype_str = SymbolHelper::gen_valid_dtype(
-            context->getAttrOprand("operand:1").dtype);
+    auto src_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
+    auto dst_dtype_str =
+            SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     std::string src_specifier = Utils::cvt_dtype_specifier(src_dtype_str);
     std::string dst_specifier = Utils::cvt_dtype_specifier(dst_dtype_str);
     ss << R"(

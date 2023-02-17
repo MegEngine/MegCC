@@ -28,7 +28,7 @@ TEST(ARMV7, BenchmarkFP32GEMM) {
     if (param.transposeB) {
         b0 = n, b1 = k;
     }
-   benchmarker.execs({{a0, a1}, {b0, b1}, {}}).print();
+    benchmarker.execs({{a0, a1}, {b0, b1}, {}}).print();
 }
 
 TEST(ARMV7, BenchmarkFP32GEMMNCHW44) {
@@ -47,15 +47,14 @@ TEST(ARMV7, BenchmarkFP32GEMMNCHW44) {
     if (param.transposeB) {
         b0 = n, b1 = k;
     }
-    benchmarker.execs({{a0/4, a1/4, 4, 4}, {b0/4, b1, 4}, {}}).print();
+    benchmarker.execs({{a0 / 4, a1 / 4, 4, 4}, {b0 / 4, b1, 4}, {}}).print();
 }
 
 TEST(ARMV7, BenchmarkFP32M4N8K4) {
     Benchmarker<MatrixMulForward> benchmarker(Arch::ARMV7);
     benchmarker.set_kernel_symbol("Armv7_kernel_fp32_matmul_4x8mk4_.*");
     benchmarker.set_before_exec_callback(
-            megdnn::test::AlgoChecker<MatrixMulForward>(
-                    "ARMV7_F32_MK4_4x8"));
+            megdnn::test::AlgoChecker<MatrixMulForward>("ARMV7_F32_MK4_4x8"));
     for (size_t m : {64, 128})
         for (size_t n : {256, 384})
             for (size_t k : {128, 256}) {
@@ -64,8 +63,7 @@ TEST(ARMV7, BenchmarkFP32M4N8K4) {
                 param.transposeB = false;
                 param.format = param::MatrixMul::Format::MK4;
                 benchmarker.set_param(param);
-                benchmarker.execs(
-                        {{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}}).print();
+                benchmarker.execs({{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}}).print();
             }
 }
 

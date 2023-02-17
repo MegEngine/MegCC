@@ -18,8 +18,8 @@
 #include "mlir/Dialect/Utils/StructuredOpsUtils.h"
 #include "mlir/IR/BuiltinOps.h"
 
-static inline mlir::Type dtype_to_type(mlir::MLIRContext* context,
-                                       const std::string& dtype) {
+static inline mlir::Type dtype_to_type(
+        mlir::MLIRContext* context, const std::string& dtype) {
     if ("f32" == dtype) {
         return mlir::FloatType::getF32(context);
     } else {
@@ -28,8 +28,7 @@ static inline mlir::Type dtype_to_type(mlir::MLIRContext* context,
     return mlir::Type();
 }
 
-static inline std::string print_mlir_module(
-        mlir::OwningOpRef<mlir::ModuleOp>& op) {
+static inline std::string print_mlir_module(mlir::OwningOpRef<mlir::ModuleOp>& op) {
     std::string type_name;
     llvm::raw_string_ostream raw_os(type_name);
     op->print(raw_os);
@@ -41,8 +40,7 @@ static inline mlir::ShapedType operand_to_shaped_type(
     auto tensor = op_ctx->getAttrOprand("operand:" + std::to_string(idx));
     std::vector<int64_t> dims(tensor.shape.begin(), tensor.shape.end());
 
-    return mlir::RankedTensorType::get(dims,
-                                       dtype_to_type(mlir_ctx, tensor.dtype));
+    return mlir::RankedTensorType::get(dims, dtype_to_type(mlir_ctx, tensor.dtype));
 }
 
 static inline mlir::MemRefType operand_to_memref_type(
@@ -75,9 +73,8 @@ static inline mlir::MemRefType operand_to_dynamic_memref_type(
     return mlir::MemRefType::get(dims, dtype_to_type(mlir_ctx, tensor.dtype));
 }
 
-static inline mlir::FunctionType get_func_type(megcc::TContext* op_ctx,
-                                               mlir::MLIRContext* mlir_ctx,
-                                               int result_start_idx) {
+static inline mlir::FunctionType get_func_type(
+        megcc::TContext* op_ctx, mlir::MLIRContext* mlir_ctx, int result_start_idx) {
     std::vector<mlir::Type> input_type_vec;
     std::vector<mlir::Type> output_type_vec;
     int nr_operand = op_ctx->getAttrInt("nr_operands");
@@ -93,21 +90,19 @@ static inline mlir::FunctionType get_func_type_memref(
     std::vector<mlir::Type> input_type_vec;
     int nr_operand = op_ctx->getAttrInt("nr_operands");
     for (int i = 0; i < nr_operand; ++i)
-        input_type_vec.push_back(
-                operand_to_dynamic_memref_type(op_ctx, i, mlir_ctx));
+        input_type_vec.push_back(operand_to_dynamic_memref_type(op_ctx, i, mlir_ctx));
 
     return mlir::FunctionType::get(mlir_ctx, input_type_vec, {});
 }
 
-static inline mlir::AffineMap get_affine_map(mlir::MemRefType type,
-                                             mlir::MLIRContext* mlir_ctx) {
+static inline mlir::AffineMap get_affine_map(
+        mlir::MemRefType type, mlir::MLIRContext* mlir_ctx) {
     mlir::SmallVector<mlir::AffineExpr, 4> affineExprs;
     for (auto it : llvm::enumerate(type.getShape())) {
         affineExprs.push_back(mlir::getAffineDimExpr(it.index(), mlir_ctx));
     }
     return mlir::AffineMap::get(
-            /*dimCount=*/type.getRank(), /*symbolCount=*/0, affineExprs,
-            mlir_ctx);
+            /*dimCount=*/type.getRank(), /*symbolCount=*/0, affineExprs, mlir_ctx);
 }
 
 static inline mlir::SmallVector<mlir::StringRef> getNParallelLoopsAttrs(

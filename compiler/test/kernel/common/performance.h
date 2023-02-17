@@ -42,8 +42,7 @@ struct PerformanceResultPair {
                megcc_performance.compute_throughput_gops,
                megcc_performance.memory_throughput_mbps, speed_up);
         printf("dnn result time = %f ms, throughput %f Gops, %f mbps\n",
-               dnn_performance.kernel_time_ms,
-               dnn_performance.compute_throughput_gops,
+               dnn_performance.kernel_time_ms, dnn_performance.compute_throughput_gops,
                dnn_performance.memory_throughput_mbps);
     }
 };

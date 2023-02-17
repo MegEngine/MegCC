@@ -109,14 +109,12 @@ std::string Fp32MatMulM4N12::GetKernelBody(TContext* context) const {
     }
     auto gemm_kernel = MatmulM4N12Kernel();
     auto inner_ctx = GetInnerCtx(context);
-    writer << "extern " << gemm_kernel.GetPackASignature(inner_ctx.get())
-           << ";\n";
-    writer << "extern " << gemm_kernel.GetPackBSignature(inner_ctx.get())
-           << ";\n";
+    writer << "extern " << gemm_kernel.GetPackASignature(inner_ctx.get()) << ";\n";
+    writer << "extern " << gemm_kernel.GetPackBSignature(inner_ctx.get()) << ";\n";
     writer << "extern " << gemm_kernel.GetNakedKernelSignature(inner_ctx.get())
            << ";\n";
-    writer << "extern "
-           << gemm_kernel.GetPackAWorkspaceSignature(inner_ctx.get()) << ";\n";
+    writer << "extern " << gemm_kernel.GetPackAWorkspaceSignature(inner_ctx.get())
+           << ";\n";
     auto trans_a_func = gemm_kernel.GetPackASymbol(inner_ctx.get());
     auto trans_b_func = gemm_kernel.GetPackBSymbol(inner_ctx.get());
     auto kern_func = gemm_kernel.GetNakedKernelSymbol(inner_ctx.get());
@@ -171,7 +169,8 @@ std::vector<KernelObj> Fp32MatMulM4N12::GetDependInternalSymbol(
         TContext* context) const {
     auto gemm_kernel = MatmulM4N12Kernel();
     auto inner_ctx = GetInnerCtx(context);
-    return {{gemm_kernel.GetKernelSymbol(inner_ctx.get()),
+    return {
+            {gemm_kernel.GetKernelSymbol(inner_ctx.get()),
              gemm_kernel.GetKernelBody(inner_ctx.get()),
              gemm_kernel.GetBodyGuardBegin(inner_ctx.get()),
              gemm_kernel.GetBodyGuardEnd(inner_ctx.get())}};

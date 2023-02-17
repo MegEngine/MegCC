@@ -25,10 +25,8 @@ bool ConvFloatNCHWNCHW443x3s2::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
             ctx->getAttrUInt("kernel_h") == ctx->getAttrUInt("kernel_w") &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_w") == 2 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
-            ctx->getAttrUInt("dilate_w") == 1;
+            ctx->getAttrUInt("stride_w") == 2 && ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
                          ctx->getAttrStr("format") == "NCHW44" &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
@@ -43,8 +41,7 @@ bool ConvFloatNCHWNCHW443x3s2::IsAvailable(TContext* ctx) const {
     bool layout_ok =
             ctx->getAttrOprand("operand:0").shape.size() == 4 &&
             ctx->getAttrOprand(
-                       "operand:" +
-                       std::to_string(ctx->getAttrInt("nr_operands") - 1))
+                       "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1))
                             .shape.size() == 5;
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
@@ -119,8 +116,7 @@ std::string ConvFloatNCHWNCHW443x3s2::GetInitBody(TContext* ctx) const {
     return writer.str();
 }
 
-std::string ConvFloatNCHWNCHW443x3s2::GetWorkspaceBody(
-        TContext* context) const {
+std::string ConvFloatNCHWNCHW443x3s2::GetWorkspaceBody(TContext* context) const {
     std::stringstream ss;
     ss << R"(
         static inline int round_up(int x, int d){
@@ -157,17 +153,17 @@ std::string render_init(int c_idx, int nr_ow, bool with_bias) {
     std::stringstream ss;
     for (int src_idx = 0; src_idx < nr_ow; ++src_idx) {
         if (with_bias) {
-            ss << "c[" << c_idx << "][" << src_idx
-               << "] = vld1q_f32(bias_ptr + " << c_idx << " * 4);";
+            ss << "c[" << c_idx << "][" << src_idx << "] = vld1q_f32(bias_ptr + "
+               << c_idx << " * 4);";
         } else {
             ss << "c[" << c_idx << "][" << src_idx << "] = vdupq_n_f32(0.f);";
         }
     }
     return ss.str();
 }
-std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
-                        int ld_weight_fw, int ld_weight_oc, int simd_len,
-                        int nr_ow, int stride, bool remain_n) {
+std::string render_core(
+        int src_reg_size, int filter_size, bool is_big_oc, int ld_weight_fw,
+        int ld_weight_oc, int simd_len, int nr_ow, int stride, bool remain_n) {
     using Rendor = StringTemplate::StringTemplateArgs;
     std::stringstream fw_ss;
     if (remain_n) {
@@ -178,15 +174,15 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
     } else {
         for (int src_idx = 0; src_idx < src_reg_size; ++src_idx) {
             fw_ss << "src[" << src_idx
-                  << "] = vld1q_f32(src_ptr + ${fh_idx} * packed_iw + "
-                  << src_idx << "* ${simd_len});\n";
+                  << "] = vld1q_f32(src_ptr + ${fh_idx} * packed_iw + " << src_idx
+                  << "* ${simd_len});\n";
         }
     }
 
     for (int fw_idx = 0; fw_idx < filter_size; ++fw_idx) {
         fw_ss << "weight[0][" << fw_idx
-              << "] = vld1q_f32(filter_ptr + ${fh_idx} * ${ld_weight_fw} + "
-              << fw_idx << " * ${simd_len});\n";
+              << "] = vld1q_f32(filter_ptr + ${fh_idx} * ${ld_weight_fw} + " << fw_idx
+              << " * ${simd_len});\n";
     }
     if (is_big_oc) {
         for (int fw_idx = 0; fw_idx < filter_size; ++fw_idx) {
@@ -200,10 +196,9 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
         auto src_idx = fw_idx;
         auto weight_idx = fw_idx;
         for (int i = 0; i < nr_ow; ++i) {
-            fw_ss << "c[0][" << i << "] = vfmaq_laneq_f32(c[0][" << i
-                  << "], weight[0][" << weight_idx << "],  src[(" << i
-                  << " * ${stride} + " << src_idx << ") / 4], (" << i
-                  << " * ${stride} + " << src_idx << ") % 4);";
+            fw_ss << "c[0][" << i << "] = vfmaq_laneq_f32(c[0][" << i << "], weight[0]["
+                  << weight_idx << "],  src[(" << i << " * ${stride} + " << src_idx
+                  << ") / 4], (" << i << " * ${stride} + " << src_idx << ") % 4);";
             if (is_big_oc) {
                 fw_ss << "c[1][" << i << "] = vfmaq_laneq_f32(c[1][" << i
                       << "], weight[1][" << weight_idx << "],  src[(" << i
@@ -224,15 +219,15 @@ std::string render_core(int src_reg_size, int filter_size, bool is_big_oc,
     }
     return res_ss.str();
 }
-std::string render_store(int nr_ow, int c_idx, const std::string& store_offset,
-                         const ActivationGenIntrinsicBase& act) {
+std::string render_store(
+        int nr_ow, int c_idx, const std::string& store_offset,
+        const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     for (int ow_idx = 0; ow_idx < nr_ow; ++ow_idx) {
-        ss << act.GenIntrinsicFloatStore("c[" + std::to_string(c_idx) + "][" +
-                                                 std::to_string(ow_idx) + "]",
-                                         "dst_ptr + " + store_offset + " + " +
-                                                 std::to_string(ow_idx) +
-                                                 " * simd_len");
+        ss << act.GenIntrinsicFloatStore(
+                "c[" + std::to_string(c_idx) + "][" + std::to_string(ow_idx) + "]",
+                "dst_ptr + " + store_offset + " + " + std::to_string(ow_idx) +
+                        " * simd_len");
     }
     return ss.str();
 }
@@ -243,9 +238,8 @@ std::string render_kernel(TContext* ctx) {
                                         float* dst_ptr, const int packed_iw, const int packed_ic_stride, const int ld_dst_oc);   
     )";
 
-    std::string mode = ctx->haveAttr("nonlineMode")
-                               ? ctx->getAttrStr("nonlineMode")
-                               : "IDENTITY";
+    std::string mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
 
     auto activate_gen = create_activation_gener_instrinsic(mode);
 
@@ -284,8 +278,7 @@ std::string render_kernel(TContext* ctx) {
             .add("filter_size", filter_size)
             .add("activate_init",
                  [=](std::vector<std::string> args) {
-                     CC_ASSERT(args.size() == 0)
-                             << "args size = " << args.size();
+                     CC_ASSERT(args.size() == 0) << "args size = " << args.size();
 
                      auto str = activate_gen->GenIntrinsicInitFloat();
                      return str;
@@ -296,16 +289,13 @@ std::string render_kernel(TContext* ctx) {
                      return render_init(c_idx, ow_step, with_bias);
                  })
             .add("render_store",
-                 [=](const std::string& cidx_str,
-                     const std::string& store_offset) {
+                 [=](const std::string& cidx_str, const std::string& store_offset) {
                      int c_idx = std::atoi(cidx_str.c_str());
-                     return render_store(ow_step, c_idx, store_offset,
-                                         *activate_gen);
+                     return render_store(ow_step, c_idx, store_offset, *activate_gen);
                  })
             .add("activate", [=](std::vector<std::string> args) {
                 CC_ASSERT(args.size() == 2) << "args size = " << args.size();
-                auto str =
-                        activate_gen->GenIntrinsicFloatStore(args[0], args[1]);
+                auto str = activate_gen->GenIntrinsicFloatStore(args[0], args[1]);
                 return str;
             });
     std::string kernel_temp = R"(    
@@ -506,10 +496,9 @@ std::string render_kernel(TContext* ctx) {
     ss << kernel_render
                     .add("render_core",
                          [=]() {
-                             return render_core(src_reg_size, filter_size,
-                                                false, ld_weight_fw,
-                                                ld_weight_oc, simd_len, ow_step,
-                                                stride, true);
+                             return render_core(
+                                     src_reg_size, filter_size, false, ld_weight_fw,
+                                     ld_weight_oc, simd_len, ow_step, stride, true);
                          })
                     .render(kernel_remain_temp);
     return ss.str();
@@ -637,14 +626,13 @@ static inline void copy_pad_src(float* sptr_dst, const float* sptr_origin,
             (ow_step * stride + filter_size - stride + simd_len - 1) / simd_len;
     const int ld_weight_fw = packed_oc * filter_size;
 
-    std::string main_kern =
-            "armv7_nchw_nchw44_s2_" + std::to_string(filter_size) + "x" +
-            std::to_string(filter_size) + "_kernel_" + std::to_string(ow_step) +
-            "_oc" + std::to_string(big_oc_step);
-    std::string main_kern_remain =
-            "nchw_nchw44_s2_" + std::to_string(filter_size) + "x" +
-            std::to_string(filter_size) + "_kernel_remain_oc" +
-            std::to_string(big_oc_step);
+    std::string main_kern = "armv7_nchw_nchw44_s2_" + std::to_string(filter_size) +
+                            "x" + std::to_string(filter_size) + "_kernel_" +
+                            std::to_string(ow_step) + "_oc" +
+                            std::to_string(big_oc_step);
+    std::string main_kern_remain = "nchw_nchw44_s2_" + std::to_string(filter_size) +
+                                   "x" + std::to_string(filter_size) +
+                                   "_kernel_remain_oc" + std::to_string(big_oc_step);
     writer << StringTemplate::StringTemplateArgs(ctx)
                       .add_ctx_int("pad_h")
                       .add_ctx_int("pad_w")

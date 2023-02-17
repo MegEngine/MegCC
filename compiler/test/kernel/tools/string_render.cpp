@@ -47,8 +47,7 @@ TEST(TOOLS, RenderStrFunc) {
     )";
 
     StringTemplate::FuncMap func_map;
-    func_map["add"] =
-            [](const std::vector<std::string>& str_vec) -> std::string {
+    func_map["add"] = [](const std::vector<std::string>& str_vec) -> std::string {
         std::stringstream ss;
         for (size_t i = 0; i < str_vec.size(); ++i) {
             ss << str_vec[i];
@@ -85,8 +84,7 @@ TEST(TOOLS, RenderStrFuncStream) {
     auto res = StringTemplate::StringTemplateArgs()
                        .add("var_0", 3)
                        .add("add",
-                            [](const std::vector<std::string>& str_vec)
-                                    -> std::string {
+                            [](const std::vector<std::string>& str_vec) -> std::string {
                                 std::stringstream ss;
                                 for (size_t i = 0; i < str_vec.size(); ++i) {
                                     ss << str_vec[i];

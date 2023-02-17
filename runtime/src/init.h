@@ -59,8 +59,7 @@ static inline size_t tensor_length_in_byte(const Tensor* tensor) {
     Layout layout = tensor->layout;
     size_t length = layout.nr_dim > 0 ? 1 : 0;
     for (int i = 0; i < layout.nr_dim; i++) {
-        int stride =
-                layout.stride[i] > 0 ? layout.stride[i] : -layout.stride[i];
+        int stride = layout.stride[i] > 0 ? layout.stride[i] : -layout.stride[i];
         length += stride * (layout.dims[i] - 1);
     }
     length *= dtype_length((tensor)->dtype.type_enum, NULL);

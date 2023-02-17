@@ -7,8 +7,8 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "test/kernel/common/benchmark.h"
 #include "megbrain/reflection.h"
+#include "test/kernel/common/benchmark.h"
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
@@ -19,7 +19,9 @@ TEST(GI, ElementwiseUnique_BMK) {
     benchmarker.set_kernel_symbol("GI_kernel_elementwise.+");
     ElemwiseForward::Param param;
     for (auto mode : {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::H_SWISH}) {
-        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
+        printf("mode=%s\n",
+               mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode)
+                       .c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         benchmarker.execs({{10000}, {}}).print();
@@ -35,9 +37,11 @@ TEST(GI, ElementwiseBinary_BMK) {
     benchmarker.set_rng(0, &rng);
     benchmarker.set_rng(1, &rng);
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
-                      MODE::TRUE_DIV}) {
-        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::TRUE_DIV}) {
+        printf("mode=%s\n",
+               mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode)
+                       .c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         benchmarker.execs({{10000}, {10000}, {}}).print();
@@ -54,36 +58,26 @@ TEST(GI, ElementwiseTernary_BMK) {
     ElemwiseForward::Param param;
     benchmarker.set_kernel_symbol("GI_kernel_elementwise.+");
     for (auto mode : {MODE::FUSE_MUL_ADD3}) {
-        printf("mode=%s\n", mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode).c_str());
+        printf("mode=%s\n",
+               mgb::reflection::nameOfEnumValue<ElemwiseForward::Param::Mode>(mode)
+                       .c_str());
         param.mode = mode;
         benchmarker.set_param(param);
         //! vec_vec
         benchmarker.execs({{1, 13000}, {1, 13000}, {1, 13000}, {}}).print();
-        benchmarker
-                .execs({{2, 3, 400, 500},
-                        {2, 3, 400, 500},
-                        {2, 3, 400, 500},
-                        {}})
+        benchmarker.execs({{2, 3, 400, 500}, {2, 3, 400, 500}, {2, 3, 400, 500}, {}})
                 .print();
         //! vec_bcast101_vec
-        benchmarker
-                .execs({{2, 3, 400, 500}, {2, 3, 1, 1}, {2, 3, 400, 500}, {}})
+        benchmarker.execs({{2, 3, 400, 500}, {2, 3, 1, 1}, {2, 3, 400, 500}, {}})
                 .print();
-        benchmarker
-                .execs({{5, 6, 700, 800}, {1, 6, 700, 1}, {5, 6, 700, 800}, {}})
+        benchmarker.execs({{5, 6, 700, 800}, {1, 6, 700, 1}, {5, 6, 700, 800}, {}})
                 .print();
         //! vec_bcast101x4_vec
         benchmarker
-                .execs({{2, 3, 400, 500, 4},
-                        {1, 3, 1, 1, 4},
-                        {2, 3, 400, 500, 4},
-                        {}})
+                .execs({{2, 3, 400, 500, 4}, {1, 3, 1, 1, 4}, {2, 3, 400, 500, 4}, {}})
                 .print();
         benchmarker
-                .execs({{5, 6, 700, 800, 4},
-                        {5, 6, 1, 1, 4},
-                        {5, 6, 700, 800, 4},
-                        {}})
+                .execs({{5, 6, 700, 800, 4}, {5, 6, 1, 1, 4}, {5, 6, 700, 800, 4}, {}})
                 .print();
     }
 }

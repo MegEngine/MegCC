@@ -61,12 +61,13 @@ void CCBenchmarker::load_model() {
 #if TINYNN_CALLBACK_ENABLE
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
 #endif
-    LITE_CAPI_CHECK(LITE_make_network(&m_model, *default_config(),
-                                      *default_network_io()),
-                    "create model error. \n");
+    LITE_CAPI_CHECK(
+            LITE_make_network(&m_model, *default_config(), *default_network_io()),
+            "create model error. \n");
 
-    LITE_CAPI_CHECK(LITE_load_model_from_path(m_model, m_model_path.c_str()),
-                    "load model error. \n");
+    LITE_CAPI_CHECK(
+            LITE_load_model_from_path(m_model, m_model_path.c_str()),
+            "load model error. \n");
 }
 
 void CCBenchmarker::profile() {

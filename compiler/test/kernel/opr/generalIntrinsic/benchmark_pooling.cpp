@@ -17,8 +17,7 @@ TEST(GI, BenchmarkPoolingNCHW44) {
     Benchmarker<PoolingForward> benchmarker(Arch::BAREMETAL);
     benchmarker.set_kernel_symbol("GI_kernel_pooling.*");
     PoolingForward::Param param;
-    for (auto mode :
-         {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING}) {
+    for (auto mode : {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING}) {
         printf("pooling mode=%d\n", mode);
         param.mode = mode;
         param.pad_h = 1;
@@ -36,8 +35,7 @@ TEST(GI, BenchmarkPoolingNchw44QInt8) {
     Benchmarker<PoolingForward> benchmarker(Arch::BAREMETAL);
     benchmarker.set_kernel_symbol("GI_kernel_pooling.*");
     PoolingForward::Param param;
-    for (auto mode :
-         {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING}) {
+    for (auto mode : {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING}) {
         printf("pooling mode=%d\n", mode);
         param.mode = mode;
         param.pad_h = 1;

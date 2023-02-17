@@ -7,10 +7,10 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "Reduce.h"
 #include "../Utils/StringTemplate.h"
 #include "../Utils/SymbolHelper.h"
 #include "../Utils/Utils.h"
-#include "Reduce.h"
 #include "compiler/Common/Logger.h"
 
 using namespace megcc;
@@ -25,8 +25,8 @@ std::string gen_helper(std::string mode, std::string dtype) {
         writer << dtype_helper.inline_max_func();
     } else if (mode == "MIN") {
         writer << dtype_helper.inline_min_func();
-    } else if (mode == "SUM" || mode == "MEAN" || mode == "PRODUCT" ||
-               mode == "SUM_SQR") {
+    } else if (
+            mode == "SUM" || mode == "MEAN" || mode == "PRODUCT" || mode == "SUM_SQR") {
     } else {
         CC_ABORT << "unknown reduce mode " << mode.c_str() << "\n";
     }
@@ -83,8 +83,7 @@ bool ReduceKernel::IsAvailable(TContext* context) const {
     auto data_type = context->getAttrStr("data_type");
     bool ok_data_type = data_type == "DEFAULT";
     auto dtype = context->getAttrOprand("operand:0").dtype;
-    bool ok_dtype =
-            Utils::is_float_dtype(dtype, 32) || Utils::is_int_dtype(dtype, 32);
+    bool ok_dtype = Utils::is_float_dtype(dtype, 32) || Utils::is_int_dtype(dtype, 32);
     return ok_data_type && ok_dtype;
 }
 
@@ -114,8 +113,7 @@ std::string ReduceKernel::GetKernelBody(TContext* context) const {
                       .add("specifier", specifier)
                       .add("gen_init", gen_init(mode, dtype))
                       .add("gen_apply",
-                           gen_apply(mode, "acc",
-                                     "input_data[i * B * C + j * C + k]"))
+                           gen_apply(mode, "acc", "input_data[i * B * C + j * C + k]"))
                       .add("gen_write", gen_write(mode, "acc", "B"))
                       .render(R"(
         ${specifier}* input_data = (${specifier}*)inputs[0]->ptr;

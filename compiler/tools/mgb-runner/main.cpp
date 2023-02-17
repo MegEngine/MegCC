@@ -23,27 +23,23 @@
 using namespace llvm;
 using namespace mgb;
 
-cl::opt<std::string> InputFile(cl::Positional, cl::Required,
-                               cl::desc("<input mgb model>"));
-cl::opt<std::string> OutputDir(cl::Positional, cl::Required,
-                               cl::desc("<output dir>"));
-cl::opt<bool> verboseOpt("verbose", cl::Optional,
-                         cl::desc("enable verbose output"));
-cl::opt<bool> EnableNchw44("enable_nchw44", cl::Optional,
-                           cl::desc("enable nchw44 trans"));
-cl::opt<bool> BinDumpOpt("bin_dump", cl::Optional,
-                         cl::desc("enable bin_dump output"));
+cl::opt<std::string> InputFile(
+        cl::Positional, cl::Required, cl::desc("<input mgb model>"));
+cl::opt<std::string> OutputDir(cl::Positional, cl::Required, cl::desc("<output dir>"));
+cl::opt<bool> verboseOpt("verbose", cl::Optional, cl::desc("enable verbose output"));
+cl::opt<bool> EnableNchw44(
+        "enable_nchw44", cl::Optional, cl::desc("enable nchw44 trans"));
+cl::opt<bool> BinDumpOpt("bin_dump", cl::Optional, cl::desc("enable bin_dump output"));
 cl::opt<bool> Add_nhwc2nchw_to_input(
-        "add_nhwc2nchw_to_input",
-        cl::desc("add nhwc2nchw dimshuffle to input"));
+        "add_nhwc2nchw_to_input", cl::desc("add nhwc2nchw dimshuffle to input"));
 
 cl::opt<std::string> InputShapes(
         "input-shapes", cl::Required, cl::desc("modify input shapes"),
         cl::value_desc("name0=(xx0,yy0);name1=(xx1,yy1,zz1)"));
 
-cl::opt<std::string> InputData("input-data", cl::Required,
-                               cl::desc("feed input data with raw binary"),
-                               cl::value_desc("img=filename0;lmk=filename1"));
+cl::opt<std::string> InputData(
+        "input-data", cl::Required, cl::desc("feed input data with raw binary"),
+        cl::value_desc("img=filename0;lmk=filename1"));
 
 SymbolVarArray append_nhwc2nchw_to_h2d(const SymbolVarArray& dest_vars) {
     ThinHashMap<SymbolVar, SymbolVar> varmap;
@@ -59,13 +55,11 @@ SymbolVarArray append_nhwc2nchw_to_h2d(const SymbolVarArray& dest_vars) {
             auto new_shape = TensorShape(
                     {old_shape[0], old_shape[2], old_shape[3], old_shape[1]});
             std::shared_ptr<HostTensorND> host_data_new =
-                    std::make_shared<HostTensorND>(host_data->comp_node(),
-                                                   new_shape,
-                                                   host_data->dtype());
+                    std::make_shared<HostTensorND>(
+                            host_data->comp_node(), new_shape, host_data->dtype());
             auto h2d_opr = opr::Host2DeviceCopy::make(
                     *h2d->owner_graph(), host_data_new, param, h2d->config());
-            varmap[h2d->output(0)] =
-                    opr::Dimshuffle::make(h2d_opr, {0, 3, 1, 2});
+            varmap[h2d->output(0)] = opr::Dimshuffle::make(h2d_opr, {0, 3, 1, 2});
         }
     });
     for (auto&& i : dest_vars)
@@ -97,11 +91,9 @@ bool parseInputShapes(
                 return false;
             }
             llvm::SmallVector<llvm::StringRef> dims;
-            llvm::SplitString(shapeString.drop_front(1).drop_back(1), dims,
-                              ", ");
+            llvm::SplitString(shapeString.drop_front(1).drop_back(1), dims, ", ");
             if (dims.empty() || dims.size() > megdnn::TensorShape::MAX_NDIM) {
-                llvm::errs()
-                        << "invalid dnn tensor shape " << shapeString << "\n";
+                llvm::errs() << "invalid dnn tensor shape " << shapeString << "\n";
                 return false;
             }
             megdnn::TensorShape tshape;
@@ -135,8 +127,8 @@ bool parseInputShapes(
     return true;
 }
 
-bool parseInputData(std::string s,
-                    std::vector<std::map<std::string, std::string>>& map_vec) {
+bool parseInputData(
+        std::string s, std::vector<std::map<std::string, std::string>>& map_vec) {
     if (s.empty())
         return false;
     llvm::SmallVector<llvm::StringRef> data_group;
@@ -170,8 +162,7 @@ void run(const serialization::GraphLoader::LoadResult& graph, bool verbose) {
     HostTensorND output[nr_output];
     std::vector<std::map<std::string, megdnn::TensorShape>> input_map_vec;
     if (!parseInputShapes(InputShapes.getValue(), input_map_vec)) {
-        mgb_assert(0, "parseInputShapes error %s\n",
-                   InputShapes.getValue().c_str());
+        mgb_assert(0, "parseInputShapes error %s\n", InputShapes.getValue().c_str());
         return;
     }
     std::vector<std::map<std::string, std::string>> data_map_vec;
@@ -188,8 +179,7 @@ void run(const serialization::GraphLoader::LoadResult& graph, bool verbose) {
     if (Add_nhwc2nchw_to_input) {
         output_vars = append_nhwc2nchw_to_h2d(output_vars);
     }
-    output_vars =
-            mgb::gopt::optimize_for_inference(output_vars, opt_for_inference);
+    output_vars = mgb::gopt::optimize_for_inference(output_vars, opt_for_inference);
     for (int i = 0; i < output_vars.size(); ++i) {
         auto&& opr = output_vars[i];
         output_spec.push_back({opr, [&output, i](const DeviceTensorND& res) {
@@ -223,18 +213,19 @@ void run(const serialization::GraphLoader::LoadResult& graph, bool verbose) {
             func->execute().wait();
         }
         for (int i = 0; i < output_vars.size(); ++i) {
-            auto out_path = OutputDir + "/" + output_vars[i].node()->name() +
-                            "_" + std::to_string(inst_cnt);
+            auto out_path = OutputDir + "/" + output_vars[i].node()->name() + "_" +
+                            std::to_string(inst_cnt);
             std::unique_ptr<serialization::OutputFile> output_file =
                     serialization::OutputFile::make_fs(out_path.c_str());
             if (output[i].dtype() == dtype::Float32()) {
-                output_file->write(output[i].ptr<float>(),
-                                   output[i].layout().span().high_byte);
+                output_file->write(
+                        output[i].ptr<float>(), output[i].layout().span().high_byte);
             } else {
-                mgb_assert(output[i].dtype() == dtype::Int32(),
-                           "invalid output type (non float32 neither int32)");
-                output_file->write(output[i].ptr<int>(),
-                                   output[i].layout().span().high_byte);
+                mgb_assert(
+                        output[i].dtype() == dtype::Int32(),
+                        "invalid output type (non float32 neither int32)");
+                output_file->write(
+                        output[i].ptr<int>(), output[i].layout().span().high_byte);
             }
         }
         ++inst_cnt;
@@ -248,11 +239,9 @@ int main(int argc, char** argv) {
     std::string model_path = InputFile.getValue();
     std::unique_ptr<serialization::InputFile> inp_file =
             serialization::InputFile::make_fs(model_path.c_str());
-    auto format =
-            serialization::GraphLoader::identify_graph_dump_format(*inp_file);
+    auto format = serialization::GraphLoader::identify_graph_dump_format(*inp_file);
     mgb_assert(format.valid(), "invalid model: unknown model format");
-    auto loader =
-            serialization::GraphLoader::make(std::move(inp_file), format.val());
+    auto loader = serialization::GraphLoader::make(std::move(inp_file), format.val());
     serialization::GraphLoadConfig load_config;
     auto result = loader->load(load_config, false);
     run(result, verboseOpt.getValue());

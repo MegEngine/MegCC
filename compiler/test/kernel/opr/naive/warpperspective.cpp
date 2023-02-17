@@ -24,10 +24,10 @@ TEST(NAIVE, WarpPerspective) {
     WarpPerspectiveForward::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NCHW})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 5;
             param.bmode = bmode;
@@ -41,10 +41,10 @@ TEST(NAIVE, WarpPerspective) {
 
     checker.set_epsilon(1e-4);
     for (auto fmt : {Format::NCHW, Format::NHWC})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 1.25;
             param.bmode = bmode;
@@ -68,10 +68,10 @@ TEST(NAIVE, WarpPerspectiveCv) {
     WarpPerspectiveForward::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NCHW})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 5;
             param.bmode = bmode;
@@ -82,10 +82,10 @@ TEST(NAIVE, WarpPerspectiveCv) {
             checker.execs({{3, 7, 22, 17}, {5, 3, 3}, {5}, {5, 7, 7, 33}});
         }
     for (auto fmt : {Format::NCHW, Format::NHWC})
-        for (auto bmode : {WarpPerspective::BorderMode::WRAP,
-                           WarpPerspective::BorderMode::REFLECT,
-                           WarpPerspective::BorderMode::REPLICATE,
-                           WarpPerspective::BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
+              WarpPerspective::BorderMode::REPLICATE,
+              WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 1.25;
             param.bmode = bmode;

@@ -6,22 +6,20 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
-#include <sstream>
 #include "FormatHelper.h"
+#include <sstream>
 
 using namespace megcc;
 using namespace KernelGen;
 using namespace BareMetal;
 
-std::string GenFormatIter::gen_inline_format_iter_symbol(
-        std::string format_str) {
+std::string GenFormatIter::gen_inline_format_iter_symbol(std::string format_str) {
     return "get_linear_addr_" + format_str;
 }
 
 std::string GenFormatIter::gen_inline_format_iter_body(std::string format_str) {
     std::stringstream ss;
-    ss << R"(static inline size_t )"
-       << gen_inline_format_iter_symbol(format_str);
+    ss << R"(static inline size_t )" << gen_inline_format_iter_symbol(format_str);
     ss << R"((const int n, const int c, const int h,
                                      const int w, const int* stride,
                                      const bool is_output) {)";

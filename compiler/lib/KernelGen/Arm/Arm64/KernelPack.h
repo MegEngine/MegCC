@@ -16,8 +16,7 @@ namespace KernelGen {
 namespace Arm64 {
 
 struct ArchKernelPack {
-    static std::vector<const KernelFunc*> GetKernel(
-            KernelPack::KernType kernel_type);
+    static std::vector<const KernelFunc*> GetKernel(KernelPack::KernType kernel_type);
 };
 
 }  // namespace Arm64

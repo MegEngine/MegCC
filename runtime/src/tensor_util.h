@@ -62,8 +62,7 @@ static inline bool is_contiguous(Layout layout) {
     return stride != 0;
 }
 
-static inline void broadcast_layout(Layout* layout_in,
-                                    const Layout layout_dst) {
+static inline void broadcast_layout(Layout* layout_in, const Layout layout_dst) {
     uint32_t diff_dim = layout_dst.nr_dim - layout_in->nr_dim;
     //! move old shape to end
     for (uint32_t j = 0; j < layout_in->nr_dim; j++) {

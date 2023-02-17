@@ -14,19 +14,18 @@
 #include <unordered_map>
 #include <vector>
 
-typedef TinyNNStatus(KernelCall)(Tensor** inputs, int nr_input,
-                                 Tensor** outputs, int nr_output,
-                                 const Workspace* workspace,
-                                 const RuntimeOpt* opt);
-typedef TinyNNStatus(KernelInitCall)(Tensor** inputs, int nr_input,
-                                     Tensor* out_weights, int* nr_out_weight,
-                                     const RuntimeOpt* opt);
+typedef TinyNNStatus(KernelCall)(
+        Tensor** inputs, int nr_input, Tensor** outputs, int nr_output,
+        const Workspace* workspace, const RuntimeOpt* opt);
+typedef TinyNNStatus(KernelInitCall)(
+        Tensor** inputs, int nr_input, Tensor* out_weights, int* nr_out_weight,
+        const RuntimeOpt* opt);
 
-typedef TinyNNStatus(KernelWorkspaceCall)(Tensor** inputs, int nr_input,
-                                          int nr_thread, size_t* workspace);
+typedef TinyNNStatus(KernelWorkspaceCall)(
+        Tensor** inputs, int nr_input, int nr_thread, size_t* workspace);
 
-typedef TinyNNStatus(KernelDeduceCall)(Tensor** inputs, int nr_input,
-                                       Tensor** outputs, int nr_output);
+typedef TinyNNStatus(KernelDeduceCall)(
+        Tensor** inputs, int nr_input, Tensor** outputs, int nr_output);
 
 using StdKernelCall = std::function<KernelCall>;
 using StdKernelInitCall = std::function<KernelInitCall>;
@@ -38,19 +37,19 @@ class TargetModule {
 public:
     bool exist(const std::string& sig) const;
     bool exist_internal_function(const std::string& sig) const;
-    void add(const std::string& sig, const std::string& body,
-             const std::string& init_sig, const std::string& init_body,
-             const std::string& workspace_sig,
-             const std::string& workspace_body, const std::string& deduce_sig,
-             const std::string& deduce_body);
+    void add(
+            const std::string& sig, const std::string& body,
+            const std::string& init_sig, const std::string& init_body,
+            const std::string& workspace_sig, const std::string& workspace_body,
+            const std::string& deduce_sig, const std::string& deduce_body);
 
-    void add_workspace_size(const std::string& workspace_size_symbol,
-                            size_t workspace_size);
+    void add_workspace_size(
+            const std::string& workspace_size_symbol, size_t workspace_size);
 
     void add_binary(const std::string& sig, const std::vector<uint8_t>& vec);
 
-    void add_cv(const std::string& sym, const std::string& sig,
-                const std::string& body);
+    void add_cv(
+            const std::string& sym, const std::string& sig, const std::string& body);
     void add_internal_func(const std::string& sig, const std::string& body);
     std::string get_core_module_str() const;
     std::string get_helper_module_str() const;
@@ -79,7 +78,7 @@ private:
     //! run
     std::unordered_map<std::string, size_t> m_jit_workspace_size_map;
 
-    std::unordered_map<std::string, std::vector<uint8_t> > m_kern_bin_map;
+    std::unordered_map<std::string, std::vector<uint8_t>> m_kern_bin_map;
 };
 
 }  // namespace test

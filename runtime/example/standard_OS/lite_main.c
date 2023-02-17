@@ -57,10 +57,9 @@ static void write_file(const char* file_name, void* ptr, size_t length) {
     fclose(fout);
 }
 
-static inline void run_model(LiteNetwork model, const char* output_dir,
-                             int instance_cnt, const int print_out,
-                             const size_t warmup_count,
-                             const size_t iter_count) {
+static inline void run_model(
+        LiteNetwork model, const char* output_dir, int instance_cnt,
+        const int print_out, const size_t warmup_count, const size_t iter_count) {
     size_t number = iter_count;
     size_t warmup = warmup_count;
 #if TINYNN_DUMP_TENSOR || DEBUG_MODE
@@ -89,28 +88,32 @@ static inline void run_model(LiteNetwork model, const char* output_dir,
             1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec;
     printf("every iter use time: %fms\n", ((float)diff) / number / 1000);
     size_t nr_output = 0;
-    LITE_CAPI_CHECK(LITE_get_all_output_name(model, &nr_output, NULL),
-                    "get output number failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_output_name(model, &nr_output, NULL),
+            "get output number failed\n");
     char* output_name_ptr[nr_output];
-    LITE_CAPI_CHECK(LITE_get_all_output_name(model, NULL,
-                                             (const char**)&output_name_ptr),
-                    "get output name failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_output_name(model, NULL, (const char**)&output_name_ptr),
+            "get output name failed\n");
 
     for (size_t i = 0; i < nr_output; ++i) {
         LiteTensor output;
-        LITE_CAPI_CHECK(LITE_get_io_tensor(model, output_name_ptr[i],
-                                           LITE_OUTPUT, &output),
-                        "get output tensor failed\n");
+        LITE_CAPI_CHECK(
+                LITE_get_io_tensor(model, output_name_ptr[i], LITE_OUTPUT, &output),
+                "get output tensor failed\n");
         float* output_ptr = NULL;
-        LITE_CAPI_CHECK(LITE_get_tensor_memory(output, (void**)&output_ptr),
-                        "get output tensor memory failed\n");
+        LITE_CAPI_CHECK(
+                LITE_get_tensor_memory(output, (void**)&output_ptr),
+                "get output tensor memory failed\n");
         size_t length = 0;
-        LITE_CAPI_CHECK(LITE_get_tensor_total_size_in_byte(output, &length),
-                        "get output tensor size failed\n");
+        LITE_CAPI_CHECK(
+                LITE_get_tensor_total_size_in_byte(output, &length),
+                "get output tensor size failed\n");
         char path_buffer[200];
         if (output_dir) {
-            snprintf(path_buffer, 200, "%s/%s_%d", output_dir,
-                     output_name_ptr[i], instance_cnt);
+            snprintf(
+                    path_buffer, 200, "%s/%s_%d", output_dir, output_name_ptr[i],
+                    instance_cnt);
             write_file(path_buffer, output_ptr, length);
         }
         if (print_out) {
@@ -130,12 +133,11 @@ static inline void run_model(LiteNetwork model, const char* output_dir,
             }
         }
         LiteLayout layout;
-        LITE_CAPI_CHECK(LITE_get_tensor_layout(output, &layout),
-                        "get layout failed\n");
+        LITE_CAPI_CHECK(LITE_get_tensor_layout(output, &layout), "get layout failed\n");
         printf("\nsum =%f, max=%f, ptr=%p, dim %zu, shape %zu %zu %zu "
                "%zu\n",
-               sum, max, output_ptr, layout.ndim, layout.shapes[0],
-               layout.shapes[1], layout.shapes[2], layout.shapes[3]);
+               sum, max, output_ptr, layout.ndim, layout.shapes[0], layout.shapes[1],
+               layout.shapes[2], layout.shapes[3]);
         LITE_CAPI_CHECK(LITE_destroy_tensor(output), "destory output tensor");
     }
 }
@@ -289,27 +291,26 @@ int main(int argc, char** argv) {
             LITE_make_network(&model, *default_config(), *default_network_io()),
             "create model error. \n");
 
-    LITE_CAPI_CHECK(LITE_load_model_from_path(model, model_path),
-                    "load model error. \n");
+    LITE_CAPI_CHECK(
+            LITE_load_model_from_path(model, model_path), "load model error. \n");
 
     size_t nr_input = 0;
-    LITE_CAPI_CHECK(LITE_get_all_input_name(model, &nr_input, NULL),
-                    "get input number failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_input_name(model, &nr_input, NULL),
+            "get input number failed\n");
     char* input_name_ptr[nr_input];
-    LITE_CAPI_CHECK(LITE_get_all_input_name(model, NULL,
-                                            (const char**)(&input_name_ptr)),
-                    "get input name failed\n");
+    LITE_CAPI_CHECK(
+            LITE_get_all_input_name(model, NULL, (const char**)(&input_name_ptr)),
+            "get input name failed\n");
     printf("input %zu\n", nr_input);
     int instance_cnt = 0;
     char* data_instance_remain_str = NULL;
     char* data_instance =
-            data_str ? strtok_r(data_str, ":", &data_instance_remain_str)
-                     : NULL;
+            data_str ? strtok_r(data_str, ":", &data_instance_remain_str) : NULL;
     char* instance_shape_remain_str = NULL;
     char* shape_instance = NULL;
     if (data_shape_str) {
-        shape_instance =
-                strtok_r(data_shape_str, ":", &instance_shape_remain_str);
+        shape_instance = strtok_r(data_shape_str, ":", &instance_shape_remain_str);
     }
     while (data_instance) {
         char* data_remain_str = NULL;
@@ -328,26 +329,27 @@ int main(int argc, char** argv) {
                     data[i] = read_file(data_path);
                     EXAMPLE_ASSERT(data[i] != NULL, "can not read input file");
                     LiteTensor input;
-                    LITE_CAPI_CHECK(LITE_get_io_tensor(model, data_name,
-                                                       LITE_INPUT, &input),
-                                    "get input tensor failed\n");
+                    LITE_CAPI_CHECK(
+                            LITE_get_io_tensor(model, data_name, LITE_INPUT, &input),
+                            "get input tensor failed\n");
                     if (shape_name) {
                         LiteLayout layout;
-                        LITE_CAPI_CHECK(LITE_get_tensor_layout(input, &layout),
-                                        "get input tensor layout failed\n");
-                        char* shape_list_str =
-                                strtok_r(NULL, "=;", &shape_remain_str);
+                        LITE_CAPI_CHECK(
+                                LITE_get_tensor_layout(input, &layout),
+                                "get input tensor layout failed\n");
+                        char* shape_list_str = strtok_r(NULL, "=;", &shape_remain_str);
                         char* shape_val_remain = NULL;
-                        char* shape_val = strtok_r(shape_list_str, "(),",
-                                                   &shape_val_remain);
+                        char* shape_val =
+                                strtok_r(shape_list_str, "(),", &shape_val_remain);
                         int dim_cnt = 0;
                         while (shape_val) {
                             layout.shapes[dim_cnt++] = atoi(shape_val);
                             shape_val = strtok_r(NULL, ",", &shape_val_remain);
                         }
                         layout.ndim = dim_cnt;
-                        LITE_CAPI_CHECK(LITE_set_tensor_layout(input, layout),
-                                        "get input tensor failed\n");
+                        LITE_CAPI_CHECK(
+                                LITE_set_tensor_layout(input, layout),
+                                "get input tensor failed\n");
                         shape_name = strtok_r(NULL, "=;", &shape_remain_str);
                     }
                     size_t length;
@@ -357,8 +359,7 @@ int main(int argc, char** argv) {
                     LITE_CAPI_CHECK(
                             LITE_reset_tensor_memory(input, data[i], length),
                             "set input ptr failed\n");
-                    LITE_CAPI_CHECK(LITE_destroy_tensor(input),
-                                    "destory input tensor");
+                    LITE_CAPI_CHECK(LITE_destroy_tensor(input), "destory input tensor");
                     ++input_cnt;
                 } else {
                     printf("invalid data %s\n", data_name);
@@ -371,8 +372,7 @@ int main(int argc, char** argv) {
                        nr_input, input_cnt);
             }
         }
-        run_model(model, output_dir, instance_cnt, print_out, warmup_count,
-                  iter);
+        run_model(model, output_dir, instance_cnt, print_out, warmup_count, iter);
         for (size_t i = 0; i < nr_input; ++i) {
             free(data[i]);
         }
@@ -384,8 +384,7 @@ int main(int argc, char** argv) {
     }
     //! if no input data set, just run the model with random input data
     if (instance_cnt == 0) {
-        run_model(model, output_dir, instance_cnt, print_out, warmup_count,
-                  iter);
+        run_model(model, output_dir, instance_cnt, print_out, warmup_count, iter);
     }
 
     LITE_CAPI_CHECK(LITE_destroy_network(model), "delete model failed\n");

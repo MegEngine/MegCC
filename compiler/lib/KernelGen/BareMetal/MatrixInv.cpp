@@ -22,9 +22,8 @@ using namespace BareMetal;
 bool MatrixInvKernel::IsAvailable(TContext* context) const {
     bool ok_dtype = context->getAttrOprand("operand:0").dtype == "f32";
     auto src_shape = context->getAttrOprand("operand:0").shape;
-    bool ok_shape =
-            src_shape.size() >= 2 &&
-            src_shape[src_shape.size() - 1] == src_shape[src_shape.size() - 2];
+    bool ok_shape = src_shape.size() >= 2 &&
+                    src_shape[src_shape.size() - 1] == src_shape[src_shape.size() - 2];
     return ok_dtype && ok_shape;
 }
 

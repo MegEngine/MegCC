@@ -7,20 +7,21 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "test/kernel/common/target_module.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include "compiler/KernelGen/KernelGen.h"
 #include "megcc_test_config.h"
-#include "test/kernel/common/target_module.h"
 
 namespace megcc {
 using namespace KernelGen;
 namespace test {
 namespace {
-void write_map(const std::unordered_map<std::string, std::string>& map,
-               const std::string& dir, bool is_cv = false) {
+void write_map(
+        const std::unordered_map<std::string, std::string>& map, const std::string& dir,
+        bool is_cv = false) {
     for (auto& kv : map) {
         auto file_path = dir + "/" + kv.first + ".c";
         std::ofstream out_file(file_path);
@@ -35,8 +36,9 @@ void write_map(const std::unordered_map<std::string, std::string>& map,
     }
 }
 
-void write_map(const std::unordered_map<std::string, std::vector<uint8_t>>& map,
-               const std::string& dir) {
+void write_map(
+        const std::unordered_map<std::string, std::vector<uint8_t>>& map,
+        const std::string& dir) {
     for (auto& kv : map) {
         auto file_path = dir + "/" + kv.first + ".o";
         std::ofstream out_file(file_path, std::ios::binary);
@@ -51,13 +53,11 @@ bool TargetModule::exist(const std::string& sig) const {
     return m_kern_map.count(sig) != 0;
 }
 
-void TargetModule::add(const std::string& sig, const std::string& body,
-                       const std::string& init_sig,
-                       const std::string& init_body,
-                       const std::string& workspace_sig,
-                       const std::string& workspace_body,
-                       const std::string& deduce_sig,
-                       const std::string& deduce_body) {
+void TargetModule::add(
+        const std::string& sig, const std::string& body, const std::string& init_sig,
+        const std::string& init_body, const std::string& workspace_sig,
+        const std::string& workspace_body, const std::string& deduce_sig,
+        const std::string& deduce_body) {
     if (m_kern_map.count(sig) == 0) {
         m_kern_map[sig] = body;
     }
@@ -67,28 +67,26 @@ void TargetModule::add(const std::string& sig, const std::string& body,
     if (m_kern_workspace_map.count(workspace_sig) == 0) {
         m_kern_workspace_map[workspace_sig] = workspace_body;
     }
-    if (m_kern_deduce_layout_map.count(deduce_sig) == 0 &&
-        deduce_sig.size() > 0) {
+    if (m_kern_deduce_layout_map.count(deduce_sig) == 0 && deduce_sig.size() > 0) {
         m_kern_deduce_layout_map[deduce_sig] = deduce_body;
     }
 }
 
-void TargetModule::add_workspace_size(const std::string& workspace_size_symbol,
-                                      size_t workspace_size) {
+void TargetModule::add_workspace_size(
+        const std::string& workspace_size_symbol, size_t workspace_size) {
     if (m_jit_workspace_size_map.count(workspace_size_symbol) == 0) {
         m_jit_workspace_size_map[workspace_size_symbol] = workspace_size;
     }
 }
 
-void TargetModule::add_binary(const std::string& sig,
-                              const std::vector<uint8_t>& vec) {
+void TargetModule::add_binary(const std::string& sig, const std::vector<uint8_t>& vec) {
     if (m_kern_bin_map.find(sig) == m_kern_bin_map.end()) {
         m_kern_bin_map[sig] = vec;
     }
 }
 
-void TargetModule::add_cv(const std::string& sym, const std::string& sig,
-                          const std::string& body) {
+void TargetModule::add_cv(
+        const std::string& sym, const std::string& sig, const std::string& body) {
     if (m_cv_kern_map.count(sym) == 0) {
         m_cv_kern_map[sym] = body;
         m_cv_sig_map[sym] = sig;
@@ -99,8 +97,7 @@ bool TargetModule::exist_internal_function(const std::string& sig) const {
     return m_internal_kern_map.count(sig) != 0;
 }
 
-void TargetModule::add_internal_func(const std::string& sig,
-                                     const std::string& body) {
+void TargetModule::add_internal_func(const std::string& sig, const std::string& body) {
     if (m_internal_kern_map.count(sig) == 0) {
         m_internal_kern_map[sig] = body;
     }
@@ -130,8 +127,8 @@ std::string TargetModule::get_helper_module_str() const {
     ss << "#include \"test/kernel/common/target_module.h\"\n";
     ss << GenCommonInclude() << "\n";
     for (auto& kv : m_kern_map) {
-        ss << "extern \"C\" " << GenCommonRet() << " " << kv.first
-           << GenCommonCall() << ";\n";
+        ss << "extern \"C\" " << GenCommonRet() << " " << kv.first << GenCommonCall()
+           << ";\n";
     }
     for (auto& kv : m_kern_init_map) {
         ss << "extern \"C\" " << GenCommonRet() << " " << kv.first
@@ -236,10 +233,8 @@ StdKernelInitCall TargetModule::get_kernel_init(std::string& sig) const {
     return nullptr;
 #endif
 }
-extern std::unordered_map<std::string, StdKernelWorkspaceCall>
-        g_str_2_kern_workspace;
-StdKernelWorkspaceCall TargetModule::get_kernel_workspace(
-        std::string& sig) const {
+extern std::unordered_map<std::string, StdKernelWorkspaceCall> g_str_2_kern_workspace;
+StdKernelWorkspaceCall TargetModule::get_kernel_workspace(std::string& sig) const {
 #if !MEGCC_TEST_GEN
     auto res = g_str_2_kern_workspace.find(sig);
     if (res == g_str_2_kern_workspace.end()) {

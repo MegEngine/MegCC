@@ -35,8 +35,7 @@ std::string ResizeKernel::GetKernelSymbol(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     auto fmt = context->getAttrStr("format");
     auto imode = context->getAttrStr("imode");
-    ss << "ArmCommon_kernel_resize_linear_" << fmt << "_" << imode << "_"
-       << src_dtype;
+    ss << "ArmCommon_kernel_resize_linear_" << fmt << "_" << imode << "_" << src_dtype;
     return ss.str();
 }
 
@@ -109,8 +108,7 @@ std::string ResizeKernel::GetCVKernelSubSymbol(TContext* context) const {
 }
 
 std::string ResizeKernel::GetCVKernelSignature(TContext* context) const {
-    return GetCVKernelSymbol(context) +
-           "(const TinyMat* src, const TinyMat* dst)";
+    return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 
 std::string ResizeKernel::GetCVKernelBody(TContext* context) const {

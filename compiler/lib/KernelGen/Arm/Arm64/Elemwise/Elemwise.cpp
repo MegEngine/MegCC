@@ -21,8 +21,7 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
     int nr_operands = ctx->getAttrInt("nr_operands");
     bool type_ok = true;
     for (int i = 0; i < nr_operands; i++) {
-        type_ok &= (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype ==
-                    "f32");
+        type_ok &= (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype == "f32");
     }
     auto mode = ctx->getAttrStr("mode");
     bool mode_ok = mode == "SIGMOID";
@@ -124,13 +123,12 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     return ss.str();
 }
 
-std::vector<KernelObj> ElemwiseKernel::GetDependInternalSymbol(
-        TContext* ctx) const {
+std::vector<KernelObj> ElemwiseKernel::GetDependInternalSymbol(TContext* ctx) const {
     std::vector<KernelObj> depends;
     ArmCommon::ExpNeonKernel kern;
-    depends.emplace_back(kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
-                         kern.GetBodyGuardBegin(ctx),
-                         kern.GetBodyGuardEnd(ctx));
+    depends.emplace_back(
+            kern.GetKernelSymbol(ctx), kern.GetKernelBody(ctx),
+            kern.GetBodyGuardBegin(ctx), kern.GetBodyGuardEnd(ctx));
     return depends;
 }
 

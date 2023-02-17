@@ -468,8 +468,7 @@ std::string MatmulM8N8MK8Kernel::GetKernelSymbol(TContext*) const {
 
 std::string MatmulM8N8MK8Kernel::GetKernelSignature(TContext* ctx) const {
     std::stringstream writer;
-    writer << "void " << GetKernelSymbol(ctx)
-           << R"((const gi_float16_t* A, size_t LDA,
+    writer << "void " << GetKernelSymbol(ctx) << R"((const gi_float16_t* A, size_t LDA,
                             const gi_float16_t* B, size_t LDB, gi_float16_t* C,
                             size_t LDC, size_t M, size_t N, size_t K))";
     return writer.str();

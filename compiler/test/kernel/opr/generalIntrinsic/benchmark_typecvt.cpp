@@ -26,8 +26,7 @@ TEST(GI, BENCHMARK_TYPECVT) {
         for (auto type : types) {
             benchmarker.set_dtype(0, type.first);
             benchmarker.set_dtype(1, type.second);
-            benchmarker.execs({{1, 16, 1024, 1024}, {1, 16, 1024, 1024}})
-                    .print();
+            benchmarker.execs({{1, 16, 1024, 1024}, {1, 16, 1024, 1024}}).print();
         }
     }
 }

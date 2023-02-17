@@ -72,8 +72,8 @@ std::string WinogradFrameNchw44::GenGetWorkSpaceCode(
     return ss.str();
 }
 
-std::string WinogradFrameNchw44::GenInitCode(TContext*,
-                                             WinogradStrategyBase* strategy) {
+std::string WinogradFrameNchw44::GenInitCode(
+        TContext*, WinogradStrategyBase* strategy) {
     uint32_t nr_out_weight = 1;
     std::string common_def = R"(
     int PACK_C_SIZE = 4;
@@ -97,8 +97,7 @@ std::string WinogradFrameNchw44::GenInitCode(TContext*,
     std::stringstream common_writer;
     common_writer << StringTemplate::StringTemplateArgs()
                              .add("KernelSize", strategy->GetKernelSize())
-                             .add("OutputBlockSize",
-                                  strategy->GetOutputBlockSize())
+                             .add("OutputBlockSize", strategy->GetOutputBlockSize())
                              .render(common_def);
     common_def = common_writer.str();
 
@@ -133,8 +132,8 @@ std::string WinogradFrameNchw44::GenInitCode(TContext*,
     fill_weight_transform = transform_writer.str();
 
     std::stringstream ss;
-    ss << StringTemplate::render_init_body(nr_out_weight, fill_weight_attr,
-                                           fill_weight_transform, common_def);
+    ss << StringTemplate::render_init_body(
+            nr_out_weight, fill_weight_attr, fill_weight_transform, common_def);
 
     return ss.str();
 }

@@ -29,8 +29,8 @@ bool ElmwiseKernel::IsAvailable(TContext* context) const {
     bool mode_ok_binary = false;
     bool mode_ok_other = false;
     bool mode_kern_ok = auto_kern->IsAvailable(context);
-    return nr_operands_ok &&
-           (mode_ok_unary || mode_ok_binary || mode_ok_other) && mode_kern_ok;
+    return nr_operands_ok && (mode_ok_unary || mode_ok_binary || mode_ok_other) &&
+           mode_kern_ok;
 }
 
 std::string ElmwiseKernel::GetKernelSymbol(TContext* context) const {
@@ -125,8 +125,7 @@ std::string ElmwiseKernel::GetKernelBody(TContext* context) const {
     return writer.str();
 }
 
-std::vector<KernelObj> ElmwiseKernel::GetDependInternalSymbol(
-        TContext* context) const {
+std::vector<KernelObj> ElmwiseKernel::GetDependInternalSymbol(TContext* context) const {
     auto rst = codegen::GenCode(KernelPack::KernType::ElemwiseKernel);
     return {rst->GetKernelObj(context)};
 }

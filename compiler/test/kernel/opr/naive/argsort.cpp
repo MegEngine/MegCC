@@ -17,8 +17,9 @@ TEST(NAIVE, Argsort) {
     checker.set_kernel_symbol("kernel_.*");
     checker.set_dynamic_megcc(true);
     ArgsortForward::Param param;
-    for (auto order : {ArgsortForward::Param::Order::ASCENDING,
-                       ArgsortForward::Param::Order::DESCENDING})
+    for (auto order :
+         {ArgsortForward::Param::Order::ASCENDING,
+          ArgsortForward::Param::Order::DESCENDING})
         for (size_t batch_size : {1, 3, 4})
             for (size_t vec_len = 1; vec_len < 77; vec_len++) {
                 param.order = order;

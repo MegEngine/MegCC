@@ -39,8 +39,7 @@ private:
         auto* kernelFunc = iter->second;
         if (!kernelFunc)
             return 0;
-        return megcc::KernelGen::JitExec::jit_exec_and_get_workspace(kernelFunc,
-                                                                     ctx);
+        return megcc::KernelGen::JitExec::jit_exec_and_get_workspace(kernelFunc, ctx);
     }
 
     Registry* registry;
@@ -62,9 +61,8 @@ std::vector<RawCodeKernelTemplate*> KernelTemplateRegistry::getCandidates(
     return candidates;
 }
 
-Operation* RawCodeKernelTemplate::instantiate(OpBuilder& builder,
-                                              TContext* context,
-                                              bool is_internal_func) {
+Operation* RawCodeKernelTemplate::instantiate(
+        OpBuilder& builder, TContext* context, bool is_internal_func) {
     if (kernelFunc->IsAvailable(context)) {
         instantiateInternalKernel(builder, context);
         auto symbolName = kernelFunc->GetKernelSymbol(context);
@@ -87,9 +85,8 @@ Operation* RawCodeKernelTemplate::instantiate(OpBuilder& builder,
             }
             kernel = builder.create<RawCodeKernelDef>(
                     builder.getUnknownLoc(), symbolName, signature, body,
-                    initSymbolName, initSignature, initBody, guard_begin,
-                    guard_end, deduce_symbol, deduce_sig, deduce_body,
-                    is_internal_func);
+                    initSymbolName, initSignature, initBody, guard_begin, guard_end,
+                    deduce_symbol, deduce_sig, deduce_body, is_internal_func);
             owner->symbol2kernelDef->operator[](symbolName) = kernel;
             owner->symbol2kernelFunc->operator[](symbolName) = kernelFunc;
             if (!is_internal_func) {
@@ -107,39 +104,37 @@ Operation* RawCodeKernelTemplate::instantiate(OpBuilder& builder,
     return nullptr;
 }
 
-void RawCodeKernelTemplate::instantiateInternalKernel(OpBuilder& builder,
-                                                    megcc::TContext* context) {
+void RawCodeKernelTemplate::instantiateInternalKernel(
+        OpBuilder& builder, megcc::TContext* context) {
     auto depends = kernelFunc->GetDependInternalSymbol(context);
-    std::function<void(const std::vector<megcc::KernelGen::KernelObj>&,
-                       std::map<std::string, Operation*>&, OpBuilder&)>
+    std::function<void(
+            const std::vector<megcc::KernelGen::KernelObj>&,
+            std::map<std::string, Operation*>&, OpBuilder&)>
             init_dep_kern;
 
-    init_dep_kern =
-            [&init_dep_kern](
-                    const std::vector<megcc::KernelGen::KernelObj>& depends_in,
-                    std::map<std::string, Operation*>& symbol2kernelDef,
-                    OpBuilder& builder) {
-                for (auto& kernel_obj : depends_in) {
-                    auto symbolName = kernel_obj.kernel_symbol;
-                    if (symbol2kernelDef.count(symbolName) <= 0) {
-                        auto kernel = builder.create<RawCodeKernelDef>(
-                                builder.getUnknownLoc(), symbolName, "",
-                                kernel_obj.kernel_body, "", "", "",
-                                kernel_obj.guard_begin, kernel_obj.guard_end,
-                                "", "", "", true);
-                        symbol2kernelDef[symbolName] = kernel;
-                        if (kernel_obj.kernel_dep.size() > 0) {
-                            init_dep_kern(kernel_obj.kernel_dep,
-                                          symbol2kernelDef, builder);
-                        }
-                    }
+    init_dep_kern = [&init_dep_kern](
+                            const std::vector<megcc::KernelGen::KernelObj>& depends_in,
+                            std::map<std::string, Operation*>& symbol2kernelDef,
+                            OpBuilder& builder) {
+        for (auto& kernel_obj : depends_in) {
+            auto symbolName = kernel_obj.kernel_symbol;
+            if (symbol2kernelDef.count(symbolName) <= 0) {
+                auto kernel = builder.create<RawCodeKernelDef>(
+                        builder.getUnknownLoc(), symbolName, "", kernel_obj.kernel_body,
+                        "", "", "", kernel_obj.guard_begin, kernel_obj.guard_end, "",
+                        "", "", true);
+                symbol2kernelDef[symbolName] = kernel;
+                if (kernel_obj.kernel_dep.size() > 0) {
+                    init_dep_kern(kernel_obj.kernel_dep, symbol2kernelDef, builder);
                 }
-            };
+            }
+        }
+    };
     init_dep_kern(depends, *owner->symbol2kernelDef, builder);
 }
 
-void addBuiltinTemplates(KernelTemplateRegistry& registry,
-                         KernelGen::Arch target_arch) {
+void addBuiltinTemplates(
+        KernelTemplateRegistry& registry, KernelGen::Arch target_arch) {
     addBuiltinTemplatesByOperator(registry, target_arch);
     if (target_arch != megcc::KernelGen::BAREMETAL) {
         addBuiltinTemplatesByOperator(registry, megcc::KernelGen::BAREMETAL);

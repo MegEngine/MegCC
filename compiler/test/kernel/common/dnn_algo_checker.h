@@ -8,16 +8,16 @@
  */
 #pragma once
 
-#include "megdnn/basic_types.h"
-#include "./dnn_proxy_algo.h"
 #include "./dnn_proxy.h"
+#include "./dnn_proxy_algo.h"
+#include "megdnn/basic_types.h"
 
 #include <memory>
 #include <regex>
 #include <unordered_map>
 
-namespace megdnn{
-namespace test{
+namespace megdnn {
+namespace test {
 
 using TensorNDArray = megdnn::SmallVector<megdnn::TensorND>;
 using TensorLayoutArray = megdnn::SmallVector<megdnn::TensorLayout>;
@@ -30,8 +30,7 @@ struct ExecutionPolicyAlgoName {
     ExecutionPolicyAlgoName(const char* name) : name{name} {}
 
     ExecutionPolicyAlgoName(
-            const char* name,
-            const std::vector<ExecutionPolicyAlgoName>& sub_policy)
+            const char* name, const std::vector<ExecutionPolicyAlgoName>& sub_policy)
             : name{name}, sub_policy_names{sub_policy} {}
 };
 /*!
@@ -57,8 +56,7 @@ public:
         ExecutionPolicy ret;
         mgb_assert(layouts.size() == OprTrait<Opr>::arity);
         auto opr = handle->create_operator<Opr>();
-        opr->param() =
-                Algorithm::deserialize_read_pod<typename Opr::Param>(param);
+        opr->param() = Algorithm::deserialize_read_pod<typename Opr::Param>(param);
         for (auto algo_info :
              AlgoProxy<Opr, OprTrait<Opr>::arity>::get_all_algorithms_info(
                      opr.get(), layouts)) {
@@ -83,8 +81,8 @@ public:
             FOREACH_OPR_TYPE_DISPATCH(sub_items, {
                 ExecutionPolicy policy =
                         AlgoChecker<_Opr>::construct_execution_policy_from_name(
-                                policy_name.sub_policy_names[_item_idx],
-                                _item.layouts, _item.param, handle);
+                                policy_name.sub_policy_names[_item_idx], _item.layouts,
+                                _item.param, handle);
                 ret.sub_policy.push_back(policy);
             });
             return ret;
@@ -106,10 +104,10 @@ public:
                     << "algorithm " << m_policy_name.name << " not found";
         }
         if (m_require_algo && *m_require_algo) {
-            auto algo =
-                    OprAlgoProxy::get_algorithm_info_heuristic(opr, layouts);
-            ASSERT_STREQ(opr->get_algorithm_from_desc(m_policy.algo)->name(),
-                         algo.desc.name.c_str());
+            auto algo = OprAlgoProxy::get_algorithm_info_heuristic(opr, layouts);
+            ASSERT_STREQ(
+                    opr->get_algorithm_from_desc(m_policy.algo)->name(),
+                    algo.desc.name.c_str());
         } else {
             opr->execution_policy() = m_policy;
         }
@@ -123,17 +121,17 @@ private:
 };
 
 template <typename Opr>
-void construct_sub_execution_policy_heuristic(ExecutionPolicy& policy,
-                                              const TensorLayoutArray& layouts,
-                                              const std::string& param,
-                                              Handle* handle) {
+void construct_sub_execution_policy_heuristic(
+        ExecutionPolicy& policy, const TensorLayoutArray& layouts,
+        const std::string& param, Handle* handle) {
     megdnn_assert(layouts.size() == OprTrait<Opr>::arity);
     auto opr = handle->create_operator<Opr>();
     opr->param() = Algorithm::deserialize_read_pod<typename Opr::Param>(param);
     if (!policy.algo.valid()) {
-        policy.algo = AlgoProxy<Opr, OprTrait<Opr>::arity>::
-                              get_algorithm_info_heuristic(opr.get(), layouts)
-                                      .desc;
+        policy.algo =
+                AlgoProxy<Opr, OprTrait<Opr>::arity>::get_algorithm_info_heuristic(
+                        opr.get(), layouts)
+                        .desc;
     }
 
     Algorithm* algo = opr->get_algorithm_from_desc(policy.algo);

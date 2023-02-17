@@ -32,17 +32,16 @@ template <typename Opr>
 struct CCOprProxy {
     PerformanceResult exec(
             Opr* opr, const TensorNDArray& tensors, KernelGen::Arch arch,
-            const BenchmarkOption& benchmark_option,
-            const std::string& kernel_symbol,
+            const BenchmarkOption& benchmark_option, const std::string& kernel_symbol,
             const std::unordered_map<std::string, CCAttr>& proxy_attr,
             bool gen_dynamic);
 
     OutputScope get_output_idx(Opr*);
 };
 
-void fused_elemwise_exec(const TensorNDArray& tensors, KernelGen::Arch arch,
-                         std::unordered_map<std::string, CCAttr>& proxy_attr,
-                         const std::string& symbol);
+void fused_elemwise_exec(
+        const TensorNDArray& tensors, KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& proxy_attr, const std::string& symbol);
 
 }  // namespace test
 }  // namespace megcc

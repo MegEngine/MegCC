@@ -46,8 +46,7 @@ static inline bool is_any_op_dynamic(TContext* ctx) {
     return false;
 }
 
-static inline bool is_float_dtype(const std::string& dtype,
-                                  int bit_width = -1) {
+static inline bool is_float_dtype(const std::string& dtype, int bit_width = -1) {
     if (bit_width == 32 && dtype == "f32") {
         return true;
     } else if (bit_width == 16 && dtype == "f16") {
@@ -66,16 +65,16 @@ static inline bool is_float_dtype(const std::string& dtype,
 static inline bool is_int_dtype(const std::string& dtype, int bit_width = -1) {
     if (bit_width == 8 && (dtype == "i8" || dtype == "si8" || dtype == "ui8")) {
         return true;
-    } else if (bit_width == 32 &&
-               (dtype == "i32" || dtype == "si32" || dtype == "qsi32")) {
+    } else if (
+            bit_width == 32 &&
+            (dtype == "i32" || dtype == "si32" || dtype == "qsi32")) {
         return true;
     } else if (bit_width == 16 && (dtype == "i16" || dtype == "ui16")) {
         return true;
     } else if (bit_width != -1) {
         return false;
     } else {
-        if (dtype == "i32" || dtype == "i8" || dtype == "si8" ||
-            dtype == "ui8") {
+        if (dtype == "i32" || dtype == "i8" || dtype == "si8" || dtype == "ui8") {
             return true;
         } else {
             return false;
@@ -83,8 +82,7 @@ static inline bool is_int_dtype(const std::string& dtype, int bit_width = -1) {
     }
 }
 
-static inline bool is_quant_dtype(const std::string& dtype,
-                                  int bit_width = -1) {
+static inline bool is_quant_dtype(const std::string& dtype, int bit_width = -1) {
     const std::string q_prefix = "qsi";
     if (dtype.size() > 3 && dtype.substr(0, 3) == q_prefix) {
         if (bit_width > 0) {
@@ -195,15 +193,14 @@ static inline bool is_test_mode(TContext* ctx) {
     return false;
 }
 
-static inline void cv_kern_sym_add_prefix(TContext* ctx, std::string prefix,
-                                          std::stringstream& ss) {
+static inline void cv_kern_sym_add_prefix(
+        TContext* ctx, std::string prefix, std::stringstream& ss) {
     if (is_test_mode(ctx)) {
         ss << prefix << "_";
     }
 }
 
-std::string ssprintf(const char* fmt, ...)
-        __attribute__((format(printf, 1, 2)));
+std::string ssprintf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 
 class DtypeHelper {
 public:

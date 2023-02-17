@@ -35,8 +35,7 @@ public:
 
     //! Gen the naive C elemwise compute code, and the degree of unroll is
     //! specific by first param
-    virtual std::string GenKernelNaiveUnroll(
-            std::vector<std::string>) const = 0;
+    virtual std::string GenKernelNaiveUnroll(std::vector<std::string>) const = 0;
 
     virtual ~ElemwiseGenBase() {}
 };
@@ -50,8 +49,9 @@ public:
     std::unique_ptr<GISimdHelper> m_src_simd;
     std::unique_ptr<GISimdHelper> m_dst_simd;
     bool m_i32_to_qs8;
-    ElemwiseGenUnary(std::string src_dtype = "f32",
-                     std::string dst_dtype = "f32", bool inline_mode = false)
+    ElemwiseGenUnary(
+            std::string src_dtype = "f32", std::string dst_dtype = "f32",
+            bool inline_mode = false)
             : m_src_dtype(src_dtype),
               m_dst_dtype(dst_dtype),
               m_inline_mode(inline_mode) {
@@ -78,13 +78,12 @@ public:
     std::string GenCodeBody(std::vector<std::string>) const override;
 
     //! get the BcastType of the elemwise compute
-    static BcastType GetBcastType(const CCOperand& operand0,
-                                  const CCOperand& operand1);
+    static BcastType GetBcastType(const CCOperand& operand0, const CCOperand& operand1);
 
     //! whether the inputs should reverse, such scalar_vec should reverse to
     //! vec_scalar
-    static bool WhetherShouldReverse(const CCOperand& operand0,
-                                     const CCOperand& operand1);
+    static bool WhetherShouldReverse(
+            const CCOperand& operand0, const CCOperand& operand1);
 };
 
 //! The Ternary elemwise kernel base
@@ -93,16 +92,17 @@ class ElemwiseGenTernary : public ElemwiseGenBase {
     BcastType m_bcast_type;
 
 public:
-    ElemwiseGenTernary(const CCOperand& operand0, const CCOperand& operand1,
-                       const CCOperand& operand2) {
+    ElemwiseGenTernary(
+            const CCOperand& operand0, const CCOperand& operand1,
+            const CCOperand& operand2) {
         m_bcast_type = GetBcastType(operand0, operand1, operand2);
     }
     std::string GenCodeBody(std::vector<std::string>) const override;
 
     //! get the BcastType of the elemwise compute
-    static BcastType GetBcastType(const CCOperand& operand0,
-                                  const CCOperand& operand1,
-                                  const CCOperand& operand2);
+    static BcastType GetBcastType(
+            const CCOperand& operand0, const CCOperand& operand1,
+            const CCOperand& operand2);
     static bool is_available(BcastType bcast_type);
 };
 
@@ -115,27 +115,24 @@ struct ElemwiseHelperFunc {
 
 /************************************Unary***********************************/
 
-#define DEFINE_UNARY_OP(_name)                                               \
-    class _name : public ElemwiseGenUnary {                                  \
-    public:                                                                  \
-        _name(std::string src_dtype = "f32", std::string dst_dtype = "f32",  \
-              bool inline_mode = false)                                      \
-                : ElemwiseGenUnary(SymbolHelper::gen_valid_dtype(src_dtype), \
-                                   SymbolHelper::gen_valid_dtype(dst_dtype), \
-                                   inline_mode),                             \
-                  m_src_dtype(src_dtype),                                    \
-                  m_dst_dtype(dst_dtype) {}                                  \
-        std::string GenKernelSimdInit(                                       \
-                std::vector<std::string>) const override;                    \
-        std::string GenKernelSimdUnroll(                                     \
-                std::vector<std::string>) const override;                    \
-        std::string GenKernelNaiveUnroll(                                    \
-                std::vector<std::string>) const override;                    \
-        std::string GenInlineName() const override;                          \
-                                                                             \
-    private:                                                                 \
-        std::string m_src_dtype;                                             \
-        std::string m_dst_dtype;                                             \
+#define DEFINE_UNARY_OP(_name)                                                     \
+    class _name : public ElemwiseGenUnary {                                        \
+    public:                                                                        \
+        _name(std::string src_dtype = "f32", std::string dst_dtype = "f32",        \
+              bool inline_mode = false)                                            \
+                : ElemwiseGenUnary(                                                \
+                          SymbolHelper::gen_valid_dtype(src_dtype),                \
+                          SymbolHelper::gen_valid_dtype(dst_dtype), inline_mode),  \
+                  m_src_dtype(src_dtype),                                          \
+                  m_dst_dtype(dst_dtype) {}                                        \
+        std::string GenKernelSimdInit(std::vector<std::string>) const override;    \
+        std::string GenKernelSimdUnroll(std::vector<std::string>) const override;  \
+        std::string GenKernelNaiveUnroll(std::vector<std::string>) const override; \
+        std::string GenInlineName() const override;                                \
+                                                                                   \
+    private:                                                                       \
+        std::string m_src_dtype;                                                   \
+        std::string m_dst_dtype;                                                   \
     };
 
 DEFINE_UNARY_OP(ElemwiseGenUnaryRelu)
@@ -145,17 +142,14 @@ DEFINE_UNARY_OP(ElemwiseGenUnaryHswish)
 #undef DEFINE_UNARY_OP
 
 /************************************Binary***********************************/
-#define DEFINE_BINARY_OP(_name)                                     \
-    class _name : public ElemwiseGenBinary {                        \
-    public:                                                         \
-        _name(const CCOperand& operand0, const CCOperand& operand1) \
-                : ElemwiseGenBinary(operand0, operand1) {}          \
-        std::string GenKernelSimdInit(                              \
-                std::vector<std::string>) const override;           \
-        std::string GenKernelSimdUnroll(                            \
-                std::vector<std::string>) const override;           \
-        std::string GenKernelNaiveUnroll(                           \
-                std::vector<std::string>) const override;           \
+#define DEFINE_BINARY_OP(_name)                                                    \
+    class _name : public ElemwiseGenBinary {                                       \
+    public:                                                                        \
+        _name(const CCOperand& operand0, const CCOperand& operand1)                \
+                : ElemwiseGenBinary(operand0, operand1) {}                         \
+        std::string GenKernelSimdInit(std::vector<std::string>) const override;    \
+        std::string GenKernelSimdUnroll(std::vector<std::string>) const override;  \
+        std::string GenKernelNaiveUnroll(std::vector<std::string>) const override; \
     };
 
 DEFINE_BINARY_OP(ElemwiseGenBinaryAdd)
@@ -169,18 +163,15 @@ DEFINE_BINARY_OP(ElemwiseGenBinaryMin)
 //! TODO: add more binary elemwise here
 /************************************Ternary***********************************/
 
-#define DEFINE_TERNARY_OP(_name)                                      \
-    class _name : public ElemwiseGenTernary {                         \
-    public:                                                           \
-        _name(const CCOperand& operand0, const CCOperand& operand1,   \
-              const CCOperand& operand2)                              \
-                : ElemwiseGenTernary(operand0, operand1, operand2) {} \
-        std::string GenKernelSimdInit(                                \
-                std::vector<std::string>) const override;             \
-        std::string GenKernelSimdUnroll(                              \
-                std::vector<std::string>) const override;             \
-        std::string GenKernelNaiveUnroll(                             \
-                std::vector<std::string>) const override;             \
+#define DEFINE_TERNARY_OP(_name)                                                   \
+    class _name : public ElemwiseGenTernary {                                      \
+    public:                                                                        \
+        _name(const CCOperand& operand0, const CCOperand& operand1,                \
+              const CCOperand& operand2)                                           \
+                : ElemwiseGenTernary(operand0, operand1, operand2) {}              \
+        std::string GenKernelSimdInit(std::vector<std::string>) const override;    \
+        std::string GenKernelSimdUnroll(std::vector<std::string>) const override;  \
+        std::string GenKernelNaiveUnroll(std::vector<std::string>) const override; \
     };
 
 DEFINE_TERNARY_OP(ElemwiseGenTernaryFuseMulAdd3)

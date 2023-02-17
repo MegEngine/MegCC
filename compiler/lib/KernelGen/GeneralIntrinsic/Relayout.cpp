@@ -23,14 +23,13 @@ std::vector<KernelObj> RelayoutKernel::GetDependInternalSymbol(
         TContext* context) const {
     GeneralIntrinsic::CommonTransposeKernel common_tran;
     auto dtype_str = context->getAttrOprand("operand:0").dtype;
-    std::shared_ptr<CodeGenContext> tran_ctx =
-            std::make_shared<CodeGenContext>();
+    std::shared_ptr<CodeGenContext> tran_ctx = std::make_shared<CodeGenContext>();
     int32_t type_size = Utils::get_dtype_size(dtype_str);
     tran_ctx->setAttr("type_size", CCAttr(type_size));
     auto ctx = std::static_pointer_cast<TContext>(tran_ctx).get();
-    return {{common_tran.GetKernelSymbol(ctx), common_tran.GetKernelBody(ctx),
-             common_tran.GetBodyGuardBegin(ctx),
-             common_tran.GetBodyGuardEnd(ctx),
+    return {
+            {common_tran.GetKernelSymbol(ctx), common_tran.GetKernelBody(ctx),
+             common_tran.GetBodyGuardBegin(ctx), common_tran.GetBodyGuardEnd(ctx),
              common_tran.GetDependInternalSymbol(ctx)}};
 }
 
@@ -50,8 +49,7 @@ bool RelayoutKernel::IsAvailable(TContext* context) const {
 std::string RelayoutKernel::GetKernelSymbol(TContext* context) const {
     std::stringstream ss;
     ss << "GI_kernel_relayout_"
-       << SymbolHelper::gen_valid_dtype(
-                  context->getAttrOprand("operand:0").dtype);
+       << SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:0").dtype);
     return ss.str();
 }
 
@@ -67,14 +65,12 @@ std::string RelayoutKernel::GetKernelBody(TContext* context) const {
 
     )";
     GeneralIntrinsic::CommonTransposeKernel common_tran;
-    std::shared_ptr<TContext> tran_ctx =
-            std::make_shared<CodeGenContext>();
+    std::shared_ptr<TContext> tran_ctx = std::make_shared<CodeGenContext>();
     int32_t type_size = Utils::get_dtype_size(src_dtype_str);
     tran_ctx->setAttr("type_size", CCAttr(type_size));
     ss << RelayoutHelper::GetLayoutHelper();
     ss << RelayoutHelper::GetTransposeModule(
-            specifier, type_size,
-            common_tran.GetKernelSignature(tran_ctx.get()));
+            specifier, type_size, common_tran.GetKernelSignature(tran_ctx.get()));
     ss << RelayoutHelper::GetNonconMemcpyModule(specifier);
 
     ss << GenCommonRet() << " " << GetKernelSignature(context);

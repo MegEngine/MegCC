@@ -57,9 +57,8 @@ static inline bool good_float(int) {
 
 template <typename ctype>
 ::testing::AssertionResult assert_tensor_eq_with_dtype(
-        const char* expr0, const char* expr1, const Tensor& v0,
-        const Tensor& v1, float maxerr, float maxerr_avg,
-        float maxerr_avg_biased) {
+        const char* expr0, const char* expr1, const Tensor& v0, const Tensor& v1,
+        float maxerr, float maxerr_avg, float maxerr_avg_biased) {
     size_t nr_elem = 1;
     for (int i = 0; i < v0.layout.nr_dim; ++i) {
         nr_elem *= v0.layout.dims[i];
@@ -75,36 +74,34 @@ template <typename ctype>
         error_sum_biased += err;
         if (!good_float(iv0) || !good_float(iv1) || std::abs(err) > maxerr) {
             return ::testing::AssertionFailure()
-                   << "Unequal value\n"
-                   << "Value of: " << expr1 << "\n"
-                   << "  Actual: " << (iv1 + 0) << "\n"
-                   << "Expected: " << expr0 << "\n"
-                   << "Which is: " << (iv0 + 0) << "\n"
-                   << "At index: " << i << "\n"
-                   << "tensor v0 layout : " << layout_to_string(v0.layout)
-                   << "\n"
-                   << "tensor v1 layout : " << layout_to_string(v1.layout)
-                   << "\n";
+                << "Unequal value\n"
+                << "Value of: " << expr1 << "\n"
+                << "  Actual: " << (iv1 + 0) << "\n"
+                << "Expected: " << expr0 << "\n"
+                << "Which is: " << (iv0 + 0) << "\n"
+                << "At index: " << i << "\n"
+                << "tensor v0 layout : " << layout_to_string(v0.layout) << "\n"
+                << "tensor v1 layout : " << layout_to_string(v1.layout) << "\n";
         }
     }
     float error_avg = error_sum / nr_elem;
     if (error_avg > maxerr_avg) {
         return ::testing::AssertionFailure()
-               << "Average error exceeds the upper limit\n"
-               << "Value of: " << expr1 << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Average error: " << error_avg << "/" << maxerr_avg << "\n"
-               << "Num of elements: " << nr_elem;
+            << "Average error exceeds the upper limit\n"
+            << "Value of: " << expr1 << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Average error: " << error_avg << "/" << maxerr_avg << "\n"
+            << "Num of elements: " << nr_elem;
     }
     float error_avg_biased = error_sum_biased / nr_elem;
     if (std::abs(error_avg_biased) > maxerr_avg_biased) {
         return ::testing::AssertionFailure()
-               << "Average biased error exceeds the upper limit\n"
-               << "Value of: " << expr1 << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Average biased error: " << error_avg_biased << "/"
-               << maxerr_avg_biased << "\n"
-               << "Num of elements: " << nr_elem;
+            << "Average biased error exceeds the upper limit\n"
+            << "Value of: " << expr1 << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Average biased error: " << error_avg_biased << "/" << maxerr_avg_biased
+            << "\n"
+            << "Num of elements: " << nr_elem;
     }
     return ::testing::AssertionSuccess();
 }
@@ -116,16 +113,15 @@ template <typename ctype>
         float maxerr_avg_biased) {
     if (!equal_layout(v0.layout, v1.layout)) {
         return ::testing::AssertionFailure()
-               << "Layout mismatch\n"
-               << "Value of: " << expr1 << "\n"
-               << "  Actual: " << layout_to_string(v1.layout) << "\n"
-               << "Expected: " << expr0 << "\n"
-               << "Which is: " << layout_to_string(v0.layout) << "\n";
+            << "Layout mismatch\n"
+            << "Value of: " << expr1 << "\n"
+            << "  Actual: " << layout_to_string(v1.layout) << "\n"
+            << "Expected: " << expr0 << "\n"
+            << "Which is: " << layout_to_string(v0.layout) << "\n";
     }
     if (v0.dtype.type_enum != v1.dtype.type_enum) {
-        return ::testing::AssertionFailure()
-               << "Dtype mismatch " << v0.dtype.type_enum << " vs "
-               << v1.dtype.type_enum << "\n ";
+        return ::testing::AssertionFailure() << "Dtype mismatch " << v0.dtype.type_enum
+                                             << " vs " << v1.dtype.type_enum << "\n ";
     }
     switch (v0.dtype.type_enum) {
 #define CASE(enum_, ctype_)                                                   \
@@ -147,17 +143,17 @@ template <typename ctype>
 
 }  // namespace
 
-void test::check_tensor(const Tensor& computed, const Tensor& expected,
-                        float epsilon, float max_avg_error,
-                        float max_avg_biased_error) {
+void test::check_tensor(
+        const Tensor& computed, const Tensor& expected, float epsilon,
+        float max_avg_error, float max_avg_biased_error) {
     if (expected.layout.nr_dim == 0)
         return;
-    ASSERT_TENSOR_EQ_EPS_AVG(computed, expected, epsilon, max_avg_error,
-                             max_avg_biased_error);
+    ASSERT_TENSOR_EQ_EPS_AVG(
+            computed, expected, epsilon, max_avg_error, max_avg_biased_error);
 }
 
-std::shared_ptr<Tensor> test::create_tensor(std::vector<uint32_t> shape,
-                                            TinyNNDType dtype_enum, void* ptr) {
+std::shared_ptr<Tensor> test::create_tensor(
+        std::vector<uint32_t> shape, TinyNNDType dtype_enum, void* ptr) {
     auto tensor = std::make_shared<Tensor>();
     tensor->is_dynamic = true;
     DType dtype;
@@ -170,8 +166,7 @@ std::shared_ptr<Tensor> test::create_tensor(std::vector<uint32_t> shape,
     }
     layout.stride[layout.nr_dim - 1] = 1;
     for (int index = layout.nr_dim - 2; index >= 0; index--) {
-        layout.stride[index] =
-                layout.dims[index + 1] * layout.stride[index + 1];
+        layout.stride[index] = layout.dims[index + 1] * layout.stride[index + 1];
     }
     tensor->layout = layout;
     tensor->ptr = ptr;
@@ -212,8 +207,7 @@ VM* test::create_vm() {
 
 //! fake function to pass the link
 void register_op(VM* vm) {
-    LOG_DEBUG(
-            "Just register a fake op instruction, can't be used to test op.\n");
+    LOG_DEBUG("Just register a fake op instruction, can't be used to test op.\n");
 }
 
 // vim: syntax=cpp.doxygen

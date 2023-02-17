@@ -63,8 +63,8 @@ static int get_ins_nr_processed_weights(Opr* opr, DeviceModel* model) {
 
 //! update the opr weights index with the init weight, if
 //! origin weights is no need, share it or free it
-static void postprocess_weight_memory(Opr* opr, DeviceModel* model,
-                                      Tensor* new_weight) {
+static void postprocess_weight_memory(
+        Opr* opr, DeviceModel* model, Tensor* new_weight) {
     for (int j = 0; j < opr->nr_input; j++) {
         Tensor* old_weight = (Tensor*)(*(opr->inputs + j));
         //! FIXME: maybe name is not suitable
@@ -98,8 +98,8 @@ static void postprocess_weight_memory(Opr* opr, DeviceModel* model,
     }
 }
 
-static size_t get_opr_weights_process_size(Opr* opr, DeviceModel* model,
-                                           Tensor* weight) {
+static size_t get_opr_weights_process_size(
+        Opr* opr, DeviceModel* model, Tensor* weight) {
     //! get the information and allocate memory
     int init_index = opr->init_func;
     if (init_index >= NR_INIT) {
@@ -123,8 +123,9 @@ static void init_ins_weights(Opr* opr, DeviceModel* model, Tensor* weight) {
     size_t weight_length = get_opr_weights_process_size(opr, model, weight);
     InitFunc init = init_kernels[init_index];
     if (weight_length > 0 && init_index >= 0) {
-        LOG_DEBUG("opr symbol %s preprocess weight need memory:%zu\n",
-                  opr->type, weight_length);
+        LOG_DEBUG(
+                "opr symbol %s preprocess weight need memory:%zu\n", opr->type,
+                weight_length);
         weight->ptr = model->device.malloc(weight_length);
         weight->size = weight_length;
         weight->is_weight = 1;
@@ -132,13 +133,12 @@ static void init_ins_weights(Opr* opr, DeviceModel* model, Tensor* weight) {
         //! call the init function
         LOG_DEBUG("opr symbol %s preprocess weights.\n", opr->type);
         int nr_processed_weight = 1;
-        init(opr->inputs, opr->nr_input, weight, &nr_processed_weight,
-             &model->opt);
+        init(opr->inputs, opr->nr_input, weight, &nr_processed_weight, &model->opt);
     }
 }
 
-static int count_total_processed_weights_number(CombineModel* combo_model,
-                                                   int model_id) {
+static int count_total_processed_weights_number(
+        CombineModel* combo_model, int model_id) {
     DeviceModel* model = combo_model->device_models[model_id];
     //! run opr init function
     int nr_instruction = model->nr_instruction;
@@ -159,18 +159,15 @@ static int count_total_processed_weights_number(CombineModel* combo_model,
 static TinyNNStatus init_signle_device_model(CombineModel* combo_model) {
     DeviceModel* model = combo_model->device_models[0];
     int nr_instruction = model->nr_instruction;
-    int total_processed_weights =
-            count_total_processed_weights_number(combo_model, 0);
+    int total_processed_weights = count_total_processed_weights_number(combo_model, 0);
     LOG_DEBUG("calc total_processed_weights done\n");
     if (total_processed_weights < 1) {
         return TinyNN_SUCCESS;
     }
     //! allocate the processed memory
     model->nr_processed_weight = total_processed_weights;
-    model->processed_weights =
-            tinynn_malloc(total_processed_weights * sizeof(Tensor));
-    memset(model->processed_weights, 0,
-           total_processed_weights * sizeof(Tensor));
+    model->processed_weights = tinynn_malloc(total_processed_weights * sizeof(Tensor));
+    memset(model->processed_weights, 0, total_processed_weights * sizeof(Tensor));
 
     int processed_weights_index = 0;
     for (int i = 0; i < nr_instruction; i++) {
@@ -179,23 +176,20 @@ static TinyNNStatus init_signle_device_model(CombineModel* combo_model) {
             Opr* opr = &inst->workload.opr;
             int size = get_ins_nr_processed_weights(opr, model);
             if (size == 1) {
-                Tensor* weight =
-                        model->processed_weights + processed_weights_index;
+                Tensor* weight = model->processed_weights + processed_weights_index;
                 init_ins_weights(opr, model, weight);
                 postprocess_weight_memory(opr, model, weight);
                 processed_weights_index += size;
             } else {
-                TINYNN_ASSERT_MSG(size == 0,
-                                  "Now only support one processed weigh.\n");
+                TINYNN_ASSERT_MSG(size == 0, "Now only support one processed weigh.\n");
             }
         }
     }
     return TinyNN_SUCCESS;
 }
 
-static void broadcast_postprocess_weight_memory(int opr_id,
-                                                CombineModel* combo_model,
-                                                Tensor* weight) {
+static void broadcast_postprocess_weight_memory(
+        int opr_id, CombineModel* combo_model, Tensor* weight) {
     DeviceModel* model = combo_model->device_models[0];
     Instruction* ins = model->instructions + opr_id;
     Opr* opr = &(ins->workload.opr);
@@ -231,8 +225,7 @@ static void broadcast_postprocess_weight_memory(int opr_id,
         }
     }
     //! broad cast the new weights to other device model
-    for (int model_idx = 1; model_idx < combo_model->nr_device_model;
-         ++model_idx) {
+    for (int model_idx = 1; model_idx < combo_model->nr_device_model; ++model_idx) {
         DeviceModel* model = combo_model->device_models[model_idx];
         Instruction* ins = model->instructions + opr_id;
         Opr* opr = &(ins->workload.opr);
@@ -257,8 +250,7 @@ static void broadcast_postprocess_weight_memory(int opr_id,
  */
 static int is_likely_multi_device_model(CombineModel* combo_model) {
     //! compute the tensor memory ptr
-    for (int model_idx = 1; model_idx < combo_model->nr_device_model;
-         ++model_idx) {
+    for (int model_idx = 1; model_idx < combo_model->nr_device_model; ++model_idx) {
         DeviceModel* model = combo_model->device_models[model_idx];
         DeviceModel* model0 = combo_model->device_models[0];
         //! if instruction is not equal, return 0
@@ -287,8 +279,7 @@ static int is_likely_multi_device_model(CombineModel* combo_model) {
                     Tensor tmp_weights0, tmp_weights;
                     init(opr0->inputs, opr0->nr_input, &tmp_weights0, NULL,
                          &model->opt);
-                    init(opr->inputs, opr->nr_input, &tmp_weights, NULL,
-                         &model->opt);
+                    init(opr->inputs, opr->nr_input, &tmp_weights, NULL, &model->opt);
                     if (!is_equal_tensor_layout(&tmp_weights, &tmp_weights0)) {
                         return 0;
                     }
@@ -296,8 +287,7 @@ static int is_likely_multi_device_model(CombineModel* combo_model) {
                 if (opr0->nr_input != opr->nr_input) {
                     return 0;
                 }
-                for (int input_idx = 0; input_idx < opr0->nr_input;
-                     input_idx++) {
+                for (int input_idx = 0; input_idx < opr0->nr_input; input_idx++) {
                     if (!opr0->inputs[input_idx]->is_weight) {
                         continue;
                     } else {
@@ -316,16 +306,14 @@ static int is_likely_multi_device_model(CombineModel* combo_model) {
 static TinyNNStatus init_multi_likely_device_model(CombineModel* combo_model) {
     DeviceModel* model = combo_model->device_models[0];
     int nr_instruction = model->nr_instruction;
-    int total_processed_weights =
-            count_total_processed_weights_number(combo_model, 0);
+    int total_processed_weights = count_total_processed_weights_number(combo_model, 0);
     LOG_DEBUG("calc total_processed_weights done\n");
     if (total_processed_weights < 1) {
         return TinyNN_SUCCESS;
     }
     //! allocate the processed memory
 
-    for (int model_idx = 0; model_idx < combo_model->nr_device_model;
-         ++model_idx) {
+    for (int model_idx = 0; model_idx < combo_model->nr_device_model; ++model_idx) {
         if (model_idx == 0) {
             DeviceModel* model = combo_model->device_models[model_idx];
             model->nr_processed_weight = total_processed_weights;
@@ -347,8 +335,7 @@ static TinyNNStatus init_multi_likely_device_model(CombineModel* combo_model) {
             Opr* opr = &inst->workload.opr;
             int size = get_ins_nr_processed_weights(opr, model);
             if (size == 1) {
-                Tensor* weight =
-                        model->processed_weights + processed_weights_index;
+                Tensor* weight = model->processed_weights + processed_weights_index;
                 init_ins_weights(opr, model, weight);
                 broadcast_postprocess_weight_memory(i, combo_model, weight);
                 processed_weights_index += size;
@@ -369,14 +356,13 @@ TinyNNStatus init_model_weights(CombineModel* combo_model) {
         init_multi_likely_device_model(combo_model);
     } else {
         //! compute the tensor memory ptr
-        for (int model_idx = 0; model_idx < combo_model->nr_device_model;
-             ++model_idx) {
+        for (int model_idx = 0; model_idx < combo_model->nr_device_model; ++model_idx) {
             DeviceModel* model = combo_model->device_models[model_idx];
             //! run opr init function
             int nr_instruction = model->nr_instruction;
             LOG_DEBUG("execute weight preprocess\n");
-            int total_processed_weights = count_total_processed_weights_number(
-                    combo_model, model_idx);
+            int total_processed_weights =
+                    count_total_processed_weights_number(combo_model, model_idx);
             LOG_DEBUG("calc total_processed_weights done\n");
             if (total_processed_weights < 1) {
                 continue;
@@ -396,10 +382,10 @@ TinyNNStatus init_model_weights(CombineModel* combo_model) {
                     int nr_weights = get_ins_nr_processed_weights(opr, model);
 
                     if (nr_weights > 0) {
-                        Tensor* new_weight = model->processed_weights +
-                                             processed_weights_index;
-                        size_t weight_length = get_opr_weights_process_size(
-                                opr, model, new_weight);
+                        Tensor* new_weight =
+                                model->processed_weights + processed_weights_index;
+                        size_t weight_length =
+                                get_opr_weights_process_size(opr, model, new_weight);
                         int size = 0;
                         LOG_DEBUG(
                                 "opr symbol %s preprocess weight id %d "
@@ -413,8 +399,7 @@ TinyNNStatus init_model_weights(CombineModel* combo_model) {
                         processed_weights_index++;
 
                         //! call the init function
-                        LOG_DEBUG("opr symbol %s preprocess weights.\n",
-                                  opr->type);
+                        LOG_DEBUG("opr symbol %s preprocess weights.\n", opr->type);
 
                         int init_index = opr->init_func;
                         InitFunc init = init_kernels[init_index];
@@ -465,14 +450,12 @@ TinyNNStatus init_model_memory(CombineModel* combo_model) {
     }
     if (!combo_model->max_tensor_memroy->ptr) {
         DeviceModel* model =
-                combo_model
-                        ->device_models[combo_model->active_device_model_idx];
-        combo_model->max_tensor_memroy->ptr = model->device.malloc(
-                combo_model->max_tensor_memroy->length_in_byte);
+                combo_model->device_models[combo_model->active_device_model_idx];
+        combo_model->max_tensor_memroy->ptr =
+                model->device.malloc(combo_model->max_tensor_memroy->length_in_byte);
     }
     //! compute the tensor memory ptr
-    for (int model_idx = 0; model_idx < combo_model->nr_device_model;
-         ++model_idx) {
+    for (int model_idx = 0; model_idx < combo_model->nr_device_model; ++model_idx) {
         DeviceModel* model = combo_model->device_models[model_idx];
         int8_t* tensor_memory = combo_model->max_tensor_memroy->ptr;
         TINYNN_ASSERT(tensor_memory);

@@ -17,29 +17,27 @@
 #include "mlir/Transforms/DialectConversion.h"
 
 namespace mlir {
-#define GetParamRename(name_, new_name_)                      \
-    if (direct_attr.get(name_)) {                             \
-        attrs.push_back({StringAttr::get(context, new_name_), \
-                         direct_attr.get(name_)});            \
+#define GetParamRename(name_, new_name_)                                        \
+    if (direct_attr.get(name_)) {                                               \
+        attrs.push_back(                                                        \
+                {StringAttr::get(context, new_name_), direct_attr.get(name_)}); \
     }
 
-#define GetParam(name_)                                                     \
-    if (direct_attr.get(name_)) {                                           \
-        attrs.push_back(                                                    \
-                {StringAttr::get(context, name_), direct_attr.get(name_)}); \
+#define GetParam(name_)                                                             \
+    if (direct_attr.get(name_)) {                                                   \
+        attrs.push_back({StringAttr::get(context, name_), direct_attr.get(name_)}); \
     }
 
-#define GetParamEnum(type_, name_)                                       \
-    if (direct_attr.get(name_)) {                                        \
-        auto attr = mgb::reflection::nameOfEnumValue(static_cast<type_>( \
-                direct_attr.getAs<mlir::IntegerAttr>(name_).getInt()));  \
-        attrs.push_back({StringAttr::get(context, name_),                \
-                         StringAttr::get(context, attr)});               \
+#define GetParamEnum(type_, name_)                                                  \
+    if (direct_attr.get(name_)) {                                                   \
+        auto attr = mgb::reflection::nameOfEnumValue(static_cast<type_>(            \
+                direct_attr.getAs<mlir::IntegerAttr>(name_).getInt()));             \
+        attrs.push_back(                                                            \
+                {StringAttr::get(context, name_), StringAttr::get(context, attr)}); \
     }
 
-SmallVector<NamedAttribute, 4> ConvertConvLikeAttr(DictionaryAttr direct_attr,
-                                               Value weight,
-                                               MLIRContext* context) {
+SmallVector<NamedAttribute, 4> ConvertConvLikeAttr(
+        DictionaryAttr direct_attr, Value weight, MLIRContext* context) {
     using Mode = ::megdnn::param::Convolution::Mode;
     using Sparse = ::megdnn::param::Convolution::Sparse;
     using Format = ::megdnn::param::Convolution::Format;
@@ -107,10 +105,8 @@ SmallVector<NamedAttribute, 4> ConvertConvLikeAttr(DictionaryAttr direct_attr,
     Sparse sparse = static_cast<Sparse>(
             direct_attr.getAs<mlir::IntegerAttr>("sparse").getInt());
     GetKernelSize(format, weight, kh, kw, sparse);
-    auto khAttr =
-            IntegerAttr::get(IntegerType::get(context, 32), APInt(32, kh));
-    auto kwAttr =
-            IntegerAttr::get(IntegerType::get(context, 32), APInt(32, kw));
+    auto khAttr = IntegerAttr::get(IntegerType::get(context, 32), APInt(32, kh));
+    auto kwAttr = IntegerAttr::get(IntegerType::get(context, 32), APInt(32, kw));
     attrs.push_back({StringAttr::get(context, "kernel_h"), khAttr});
     attrs.push_back({StringAttr::get(context, "kernel_w"), kwAttr});
 
@@ -118,8 +114,8 @@ SmallVector<NamedAttribute, 4> ConvertConvLikeAttr(DictionaryAttr direct_attr,
 }
 
 template <class Opr>
-SmallVector<NamedAttribute, 4> ConvertAttr(DictionaryAttr direct_attr,
-                                           MLIRContext* context);
+SmallVector<NamedAttribute, 4> ConvertAttr(
+        DictionaryAttr direct_attr, MLIRContext* context);
 
 template <>
 SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Pooling>(
@@ -315,10 +311,10 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::TypeCvt>(
     idtype.print(raw_os_idtype);
     odtype.print(raw_os_odtype);
 
-    attrs.push_back({StringAttr::get(context, "i_dtype"),
-                     StringAttr::get(context, idtype_s)});
-    attrs.push_back({StringAttr::get(context, "o_dtype"),
-                     StringAttr::get(context, odtype_s)});
+    attrs.push_back(
+            {StringAttr::get(context, "i_dtype"), StringAttr::get(context, idtype_s)});
+    attrs.push_back(
+            {StringAttr::get(context, "o_dtype"), StringAttr::get(context, odtype_s)});
     return attrs;
 }
 
@@ -395,22 +391,21 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Dimshuffle>(
 }
 
 template <>
-SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Broadcast>(DictionaryAttr,
-                                                           MLIRContext*) {
+SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Broadcast>(
+        DictionaryAttr, MLIRContext*) {
     SmallVector<NamedAttribute, 4> attrs;
     return attrs;
 }
 
 template <>
-SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Reshape>(DictionaryAttr,
-                                                         MLIRContext*) {
+SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Reshape>(DictionaryAttr, MLIRContext*) {
     SmallVector<NamedAttribute, 4> attrs;
     return attrs;
 }
 
-ArrayAttr MakeConcatArrayAttr(size_t axis, size_t& start, Value input,
-                              Value output,
-                              ConversionPatternRewriter& rewriter) {
+ArrayAttr MakeConcatArrayAttr(
+        size_t axis, size_t& start, Value input, Value output,
+        ConversionPatternRewriter& rewriter) {
     auto inputType = input.getType().dyn_cast<ShapedType>();
     auto ouputType = output.getType().dyn_cast<ShapedType>();
     auto axis_size = inputType.getDimSize(axis);

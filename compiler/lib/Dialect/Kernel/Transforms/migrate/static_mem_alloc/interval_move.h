@@ -66,8 +66,8 @@ class StaticMemAllocIntervalMove final : public StaticMemAllocImplHelper {
      *
      * \return start address, peak_incr
      */
-    std::pair<size_t, size_t> find_best_fit(const IntervalPtrArray& conflict,
-                                            size_t dest_size);
+    std::pair<size_t, size_t> find_best_fit(
+            const IntervalPtrArray& conflict, size_t dest_size);
 
     void do_solve() override;
 

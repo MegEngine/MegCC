@@ -106,8 +106,7 @@ std::string ResizeKernel::GetCVKernelSubSymbol(TContext* context) const {
 }
 
 std::string ResizeKernel::GetCVKernelSignature(TContext* context) const {
-    return GetCVKernelSymbol(context) +
-           "(const TinyMat* src, const TinyMat* dst)";
+    return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 
 std::string ResizeKernel::GetCVKernelBody(TContext* context) const {

@@ -21,9 +21,7 @@ namespace Armv7 {
     std::string GetBodyGuardBegin(TContext* ctx) const override { \
         return "\n#if defined(__arm__)\n";                        \
     }                                                             \
-    std::string GetBodyGuardEnd(TContext* ctx) const override {   \
-        return "\n#endif\n";                                      \
-    }
+    std::string GetBodyGuardEnd(TContext* ctx) const override { return "\n#endif\n"; }
 
 class Armv7MatmulInternal : public ArmCommon::MatmulInternal {
 public:

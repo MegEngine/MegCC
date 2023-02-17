@@ -15,8 +15,7 @@ using namespace mlir;
 using namespace mlir::Kernel;
 
 KernelDialect::KernelDialect(MLIRContext* context)
-        : Dialect(getDialectNamespace(), context,
-                  TypeID::get<KernelDialect>()) {
+        : Dialect(getDialectNamespace(), context, TypeID::get<KernelDialect>()) {
     addOperations<
 #define GET_OP_LIST
 #include "compiler/Dialect/Kernel/IR/KernelDialect.cpp.inc"
@@ -97,8 +96,7 @@ MemRefType Reshape::memoryForward(MemRefType inpType) {
         }
         oupLayout.stride[oupShape.ndim - 1] = 1;
         for (int32_t i = oupShape.ndim - 2; i >= 0; i--) {
-            oupLayout.stride[i] =
-                    oupLayout.shape[i + 1] * oupLayout.stride[i + 1];
+            oupLayout.stride[i] = oupLayout.shape[i + 1] * oupLayout.stride[i + 1];
         }
     }
     return MGB::tensorLayoutToMemref(inpType.getContext(), oupLayout, offset);
@@ -110,14 +108,13 @@ MemRefType Dimshuffle::memoryForward(MemRefType input) {
     if (failed(getStridesAndOffset(input, stride, offset))) {
         return {};
     }
-    auto pattern =
-            llvm::to_vector<4>(this->pattern().getAsRange<IntegerAttr>());
+    auto pattern = llvm::to_vector<4>(this->pattern().getAsRange<IntegerAttr>());
     llvm::SmallVector<int64_t> newStride(pattern.size());
     //! pattern with -1 means add axis
     for (size_t i = 0; i < pattern.size(); ++i) {
         if (pattern[i].getInt() < 0) {
-            newStride[i] = i > 0 ? newStride[i - 1]
-                                 : newStride[0] * input.getShape()[0];
+            newStride[i] =
+                    i > 0 ? newStride[i - 1] : newStride[0] * input.getShape()[0];
         } else {
             newStride[i] = stride[pattern[i].getInt()];
         }
@@ -127,8 +124,9 @@ MemRefType Dimshuffle::memoryForward(MemRefType input) {
         return {};
     }
     auto ctx = output.getContext();
-    return MemRefType::get(output.getShape(), output.getElementType(),
-                           makeStridedLinearLayoutMap(newStride, offset, ctx));
+    return MemRefType::get(
+            output.getShape(), output.getElementType(),
+            makeStridedLinearLayoutMap(newStride, offset, ctx));
 }
 
 MemRefType Subtensor::memoryForward(MemRefType inpType) {
@@ -183,8 +181,7 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
     }
     //! sort in reverse order, so slice would work from low dim to high dim, to
     //! make it contiguous on shape-1 axes
-    auto compare = [](const std::vector<int32_t>& v1,
-                      const std::vector<int32_t>& v2) {
+    auto compare = [](const std::vector<int32_t>& v1, const std::vector<int32_t>& v2) {
         auto a0 = v1[0];
         auto a1 = v2[0];
         return (a0 < 0) == (a1 < 0) ? a0 > a1 : a0 < 0;
@@ -195,8 +192,7 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
     auto merge = [&](const std::vector<int32_t>& desc) {
         int32_t axis = desc[0] < 0 ? desc[0] + input_dim : desc[0];
         int32_t begin = desc[1] < 0 ? desc[1] + inpLayout.shape[axis] : desc[1];
-        int32_t end =
-                desc[2] < 0 ? desc[2] + inpLayout.shape[axis] + 1 : desc[2];
+        int32_t end = desc[2] < 0 ? desc[2] + inpLayout.shape[axis] + 1 : desc[2];
         auto step = desc[3];
         auto index = desc[4];
         //! reverse big end,
@@ -222,8 +218,7 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
         if (dst_layout.shape[axis] == 1) {
             auto stride = dst_layout.stride[axis] =
                     axis + 1 < static_cast<int>(dst_layout.ndim)
-                            ? dst_layout.stride[axis + 1] *
-                                      dst_layout.shape[axis + 1]
+                            ? dst_layout.stride[axis + 1] * dst_layout.shape[axis + 1]
                             : 1;
 
             for (int i = axis - 1; i >= 0; --i) {
@@ -234,8 +229,7 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
                 }
             }
         }
-        dst_offset +=
-                dst_layout.is_empty() ? 0 : origin_stride * begin * dtype_size;
+        dst_offset += dst_layout.is_empty() ? 0 : origin_stride * begin * dtype_size;
     };
 
     for (auto&& desc : std_desc) {

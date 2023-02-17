@@ -20,9 +20,9 @@
 
 namespace {
 struct LoaderInfo {
-    std::unordered_map<std::string,
-                       std::pair<std::vector<std::vector<uint32_t>>,
-                                 std::vector<uint32_t>>>
+    std::unordered_map<
+            std::string,
+            std::pair<std::vector<std::vector<uint32_t>>, std::vector<uint32_t>>>
             m_name_2_outputinfo;
     std::unordered_map<std::string, std::string> m_envs;
     std::pair<std::string, std::string> m_loader_path_with_interface;
@@ -30,8 +30,8 @@ struct LoaderInfo {
 static LoaderInfo loaderInfo;
 
 class MGBOprDescImpl {
-    static inline const std::pair<std::vector<std::vector<uint32_t>>,
-                                  std::vector<uint32_t>>&
+    static inline const std::pair<
+            std::vector<std::vector<uint32_t>>, std::vector<uint32_t>>&
     get_output_info(const std::string& loader_name) {
         const auto& name2outputinfo = loaderInfo.m_name_2_outputinfo;
         auto&& iter = name2outputinfo.find(loader_name);
@@ -40,9 +40,8 @@ class MGBOprDescImpl {
         else if (name2outputinfo.size() == 1)
             return name2outputinfo.begin()->second;
         else {
-            CC_ASSERT(0)
-                    << "Please check loader name in command line args whether "
-                       "consistent with loader name in dumped model.\n";
+            CC_ASSERT(0) << "Please check loader name in command line args whether "
+                            "consistent with loader name in dumped model.\n";
             return {};
         }
     }
@@ -61,15 +60,16 @@ class MGBOprDescImpl {
         return 1;
     }
 
-    static void execute(const MGBOprDesc* self, const MGBTensor* input,
-                        const MGBTensor* output) {
+    static void execute(
+            const MGBOprDesc* self, const MGBTensor* input, const MGBTensor* output) {
         CC_ABORT << "The function 'execute' is part of the dummy loader, just "
                     "for "
                     "compile but should NOT be called.\n";
     }
 
-    static void infer_shape(const MGBOprDesc* self, const MGBTensorShape* input,
-                            MGBTensorShape* output) {
+    static void infer_shape(
+            const MGBOprDesc* self, const MGBTensorShape* input,
+            MGBTensorShape* output) {
         auto&& output_shapes =
                 get_output_info(reinterpret_cast<char*>(self->user_data)).first;
         for (size_t i = 0; i < self->nr_output; ++i) {
@@ -79,11 +79,10 @@ class MGBOprDescImpl {
         }
     }
 
-    static void infer_dtype(const struct MGBOprDesc* self,
-                            const MGBDType* input, MGBDType* output) {
+    static void infer_dtype(
+            const struct MGBOprDesc* self, const MGBDType* input, MGBDType* output) {
         auto&& output_dtypes =
-                get_output_info(reinterpret_cast<char*>(self->user_data))
-                        .second;
+                get_output_info(reinterpret_cast<char*>(self->user_data)).second;
         for (size_t i = 0; i < self->nr_output; ++i)
             output[i] = static_cast<MGBDType>(output_dtypes[i]);
     }
@@ -127,8 +126,7 @@ class MGBOprLoaderImpl {
             len += sizeof(env_len) + env_len + sizeof(value_len) +
                    value_len;  // ENV_len_x + ENV_x + VALUE_len_x + VALUE_x
         }
-        len += sizeof(size_t) +
-               loaderInfo.m_loader_path_with_interface.first.size() +
+        len += sizeof(size_t) + loaderInfo.m_loader_path_with_interface.first.size() +
                sizeof(size_t) +
                loaderInfo.m_loader_path_with_interface.second
                        .size();  // loader_path_len + loader_path +
@@ -162,8 +160,7 @@ class MGBOprLoaderImpl {
                 loaderInfo.m_loader_path_with_interface.second.size());
     }
 
-    static MGBOprDesc* create_desc(size_t nr_input, const void* buf,
-                                   size_t buf_len) {
+    static MGBOprDesc* create_desc(size_t nr_input, const void* buf, size_t buf_len) {
         std::string name((char*)buf + sizeof(size_t), *(size_t*)buf);
         size_t data_len = buf_len - sizeof(size_t) - *(size_t*)buf;
         void* user_data = malloc(sizeof(size_t) + data_len);

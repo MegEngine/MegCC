@@ -27,18 +27,18 @@ static inline char* get_string(const char* in) {
     return ret;
 }
 
-TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor,
-                          int tensor_id);
+TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor, int tensor_id);
 
-TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
-                          Device* host_dev);
+TinyNNStatus parse_weight(
+        Tensor* weight, ns(Weight_table_t) fbs_weight, Device* host_dev);
 
-TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
-                                ns(DeviceModel_table_t) device_model);
+TinyNNStatus parse_device_model(
+        DeviceModel* model, CombineModel* c_model,
+        ns(DeviceModel_table_t) device_model);
 
 //! all resource are allocate here
-TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
-                         int share_weights);
+TinyNNStatus parse_model(
+        void* buffer, size_t size, CombineModel* model, int share_weights);
 
 #endif
 

@@ -41,8 +41,7 @@ std::string gen_filter_stride(std::string format_str, std::string sparse) {
 std::string gen_inline_addr(std::string format_str, std::string sparse) {
     std::stringstream ss;
     ss << GenFormatIter::gen_inline_format_iter_body(format_str);
-    ss << R"(static inline size_t get_filter_addr_)" << format_str << "_"
-       << sparse;
+    ss << R"(static inline size_t get_filter_addr_)" << format_str << "_" << sparse;
     ss << R"((const int group, const int ocpg,
                                      const int icpg, const int fh, const int fw,
                                      const int* stride) {)";
@@ -111,8 +110,7 @@ bool ConvBackDataGeneral::IsAvailable(TContext* ctx) const {
 std::string ConvBackDataGeneral::GetKernelSymbol(TContext* ctx) const {
     std::stringstream extra_ss;
     extra_ss << "_" << SymbolHelper::gen_io_str(ctx);
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         extra_ss << "_" << ctx->getAttrStr("nonlineMode");
     }
     std::string name_temp =
@@ -137,8 +135,8 @@ std::string ConvBackDataGeneral::GetKernelSymbol(TContext* ctx) const {
 std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
     std::stringstream ss;
     std::string noline_mode = context->haveAttr("nonlineMode")
-                                      ? context->getAttrStr("nonlineMode")
-                                      : "IDENTITY";
+                                    ? context->getAttrStr("nonlineMode")
+                                    : "IDENTITY";
     auto sparse_str = context->getAttrStr("sparse");
     auto filter_format_str = get_format(context);
     auto src_format_str = get_src_foramt(filter_format_str);
@@ -306,14 +304,11 @@ std::string ConvBackDataGeneral::GetKernelBody(TContext* context) const {
                     .add("filter_stride",
                          gen_filter_stride(filter_format_str, sparse_str))
                     .add("src_layout_iter_symbol",
-                         GenFormatIter::gen_inline_format_iter_symbol(
-                                 src_format_str))
+                         GenFormatIter::gen_inline_format_iter_symbol(src_format_str))
                     .add("dst_layout_iter_symbol",
-                         GenFormatIter::gen_inline_format_iter_symbol(
-                                 dst_format_str))
-                    .add("filter_iter_symbol", "get_filter_addr_" +
-                                                       filter_format_str + "_" +
-                                                       sparse_str)
+                         GenFormatIter::gen_inline_format_iter_symbol(dst_format_str))
+                    .add("filter_iter_symbol",
+                         "get_filter_addr_" + filter_format_str + "_" + sparse_str)
                     .add("src_specifier", src_specifier)
                     .add("flt_specifier", flt_specifier)
                     .add("dst_specifier", dst_specifier)

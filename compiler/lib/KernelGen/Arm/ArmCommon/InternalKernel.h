@@ -64,12 +64,10 @@ public:
         return "void " + GetNakedKernelSymbol(ctx) + GenNakedKernelCall(ctx);
     }
     virtual std::string GetPackAWorkspaceSignature(TContext* ctx) const {
-        return "size_t " + GetPackAWorkspaceSymbol(ctx) +
-               m_packa_workspace_call;
+        return "size_t " + GetPackAWorkspaceSymbol(ctx) + m_packa_workspace_call;
     }
     virtual std::string GetPackBWorkspaceSignature(TContext* ctx) const {
-        return "size_t " + GetPackBWorkspaceSymbol(ctx) +
-               m_packb_workspace_call;
+        return "size_t " + GetPackBWorkspaceSymbol(ctx) + m_packb_workspace_call;
     }
     virtual bool need_post_process(TContext*) const { return false; }
     static std::string GenKernelCall(TContext* ctx);

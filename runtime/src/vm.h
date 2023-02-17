@@ -18,8 +18,8 @@ struct VM;
 
 typedef TinyNNStatus (*InstructionCall)(Instruction*, struct VM*);
 
-typedef TinyNNStatus (*InstructionLoad)(flatbuffers_generic_t, Instruction*,
-                                        struct VM*);
+typedef TinyNNStatus (*InstructionLoad)(
+        flatbuffers_generic_t, Instruction*, struct VM*);
 
 typedef TinyNNStatus (*InstructionDestruct)(struct VM*, Instruction*);
 
@@ -58,23 +58,23 @@ TinyNNStatus vm_attach(CombineModel* model);
 TinyNNStatus vm_instruction_call(VM* vm, Instruction* inst);
 
 //! load instruction from flatbuffers model
-TinyNNStatus vm_instruction_load(VM* vm, flatbuffers_union_t fbs_union,
-                                 Instruction* inst);
+TinyNNStatus vm_instruction_load(
+        VM* vm, flatbuffers_union_t fbs_union, Instruction* inst);
 
 //! load instruction from flatbuffers model
 TinyNNStatus vm_instruction_destruct(VM* vm, Instruction* inst);
 
 //! register instruction caller corresponding to given instruction type
-TinyNNStatus vm_register_instruction_call(VM* vm, InstructionType type,
-                                          InstructionCall func);
+TinyNNStatus vm_register_instruction_call(
+        VM* vm, InstructionType type, InstructionCall func);
 
 //! register instruction loader corresponding to given flatbuffers type
-TinyNNStatus vm_register_instruction_load(VM* vm, flatbuffers_union_type_t type,
-                                          InstructionLoad func);
+TinyNNStatus vm_register_instruction_load(
+        VM* vm, flatbuffers_union_type_t type, InstructionLoad func);
 
 //! register instruction destructor corresponding to given flatbuffers type
-TinyNNStatus vm_register_instruction_destruct(VM* vm, InstructionType type,
-                                              InstructionDestruct func);
+TinyNNStatus vm_register_instruction_destruct(
+        VM* vm, InstructionType type, InstructionDestruct func);
 
 #endif  // VM_H
 

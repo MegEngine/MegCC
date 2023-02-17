@@ -39,8 +39,7 @@ public:
     //! 6: PW, the param of the transform
     //! 7: tile_id, the start tile id
     //! 8: nr_tiles_in_loop, the number of tile in the loop
-    virtual std::string InputFeatureTrans(
-            const std::vector<std::string>& strs) = 0;
+    virtual std::string InputFeatureTrans(const std::vector<std::string>& strs) = 0;
 
     //! the batched matmul conduct on the transformed input and weight, with
     //! input strings:
@@ -57,8 +56,8 @@ public:
     //! 5: OC,
     //! 6: tile_id, the start tile id
     //! 7: nr_tiles_in_loop, the number of tile in the loop
-    virtual std::string OutputFeatureTrans(const std::vector<std::string>& strs,
-                                           TContext*) = 0;
+    virtual std::string OutputFeatureTrans(
+            const std::vector<std::string>& strs, TContext*) = 0;
 
     virtual std::string DependMatmulSymbol() = 0;
 };

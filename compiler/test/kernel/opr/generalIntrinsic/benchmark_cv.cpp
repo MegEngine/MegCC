@@ -83,14 +83,11 @@ TEST(GI, CVBenchmarkWarpAffine) {
     benchmarker.set_dtype(0, dtype::Uint8());
     benchmarker.set_dtype(2, dtype::Uint8());
 
-    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 3}, {1, 2, 3}, {1, 720, 1280, 3}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 1}, {1, 2, 3}, {1, 720, 1280, 1}}).print();
 
-    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}})
-            .print();
+    benchmarker.execs({{1, 1080, 1920, 2}, {1, 2, 3}, {1, 720, 1280, 2}}).print();
 }
 
 TEST(GI, CVBenchmarkCvtColor) {

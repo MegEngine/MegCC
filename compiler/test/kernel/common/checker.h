@@ -46,8 +46,9 @@ public:
     //! explicitly require argument to be TensorShape
     void execs(const TensorShapeArray& shapes) {
         if (m_run_cc_only) {
-            mgb_assert(shapes.back().ndim != 0,
-                       "only run megcc test should give all shapes");
+            mgb_assert(
+                    shapes.back().ndim != 0,
+                    "only run megcc test should give all shapes");
         }
         exec(shapes);
     }
@@ -55,8 +56,9 @@ public:
     //! explicitly require argument to be TensorLayout
     void execl(const TensorLayoutArray& layouts) {
         if (m_run_cc_only) {
-            mgb_assert(layouts.back().ndim != 0,
-                       "only run megcc test should give all shapes");
+            mgb_assert(
+                    layouts.back().ndim != 0,
+                    "only run megcc test should give all shapes");
         }
         exec(layouts);
     }
@@ -139,9 +141,9 @@ public:
         return *this;
     }
 
-    void check_tensors(const TensorNDArray& expected,
-                       const TensorNDArray& computed, float epsilon,
-                       float max_avg_error, float max_avg_biased_error);
+    void check_tensors(
+            const TensorNDArray& expected, const TensorNDArray& computed, float epsilon,
+            float max_avg_error, float max_avg_biased_error);
 
 private:
     bool m_run_cc_only = false;

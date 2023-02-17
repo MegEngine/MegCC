@@ -15,8 +15,10 @@ using Mode = ReduceForward::Param::Mode;
 TEST(GI, Reduce) {
     Checker<Reduce> checker(Arch::BAREMETAL);
     checker.set_kernel_symbol("GI_kernel_reduce.*");
-    for (auto mode : {Mode::MIN, Mode::MAX, Mode::SUM, Mode::SUM_SQR, Mode::MEAN, Mode::PRODUCT})
-        for (auto src : {TensorShape{2, 3}, TensorShape{3, 4, 5}, TensorShape{4, 5, 6, 7}})
+    for (auto mode :
+         {Mode::MIN, Mode::MAX, Mode::SUM, Mode::SUM_SQR, Mode::MEAN, Mode::PRODUCT})
+        for (auto src :
+             {TensorShape{2, 3}, TensorShape{3, 4, 5}, TensorShape{4, 5, 6, 7}})
             for (size_t axis = 0; axis < 4; ++axis) {
                 if (axis < src.ndim) {
                     ReduceForward::Param param;

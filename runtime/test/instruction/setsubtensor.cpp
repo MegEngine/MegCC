@@ -30,37 +30,31 @@ TEST(INSTRUCTION, SetSubTensorTest) {
     for (size_t i = 0; i < 20 * 20 * 20; i++) {
         data_ret[i] = i;
     }
-    auto result_tensor =
-            create_tensor({20, 20, 20}, TinyNN_FLOAT, data_ret.data());
+    auto result_tensor = create_tensor({20, 20, 20}, TinyNN_FLOAT, data_ret.data());
 
-    auto create_setsubtensor = [&](Tensor* value, IndexDesc* index,
-                                   IndexDesc* flag,
+    auto create_setsubtensor = [&](Tensor* value, IndexDesc* index, IndexDesc* flag,
                                    std::vector<uint32_t> scaler_value = {}) {
         auto subtensor = std::make_shared<SubTensor>();
         inputs.clear();
         inputs.push_back(src_tensor.get());
         inputs.push_back(value);
         if (flag->start == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->end == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->step == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
         if (flag->index == 1) {
-            in_tensors.push_back(
-                    create_scalar_tensor(scaler_value[0], TinyNN_INT));
+            in_tensors.push_back(create_scalar_tensor(scaler_value[0], TinyNN_INT));
             inputs.push_back(in_tensors.back().get());
             scaler_value.erase(scaler_value.begin());
         }
@@ -97,8 +91,7 @@ TEST(INSTRUCTION, SetSubTensorTest) {
             for (size_t j = 0; j < 20; j++) {
                 if (j >= 10) {
                     for (size_t k = 0; k < 20; k++) {
-                        data_ret[i * 20 * 20 + j * 20 + k] =
-                                i * 20 * 20 + j * 20 + k;
+                        data_ret[i * 20 * 20 + j * 20 + k] = i * 20 * 20 + j * 20 + k;
                     }
                 } else {
                     for (size_t k = 0; k < 20; k++) {
@@ -121,8 +114,7 @@ TEST(INSTRUCTION, SetSubTensorTest) {
             for (size_t j = 0; j < 20; j++) {
                 if (j < 4 || j >= 8) {
                     for (size_t k = 0; k < 20; k++) {
-                        data_ret[i * 20 * 20 + j * 20 + k] =
-                                i * 20 * 20 + j * 20 + k;
+                        data_ret[i * 20 * 20 + j * 20 + k] = i * 20 * 20 + j * 20 + k;
                     }
                 } else {
                     for (size_t k = 0; k < 20; k++) {
@@ -133,8 +125,7 @@ TEST(INSTRUCTION, SetSubTensorTest) {
             }
         }
         auto value = create_tensor({20, 4, 20}, TinyNN_FLOAT, v.data());
-        test_subtensor(value.get(), &index, &flag, *result_tensor,
-                       scaler_value);
+        test_subtensor(value.get(), &index, &flag, *result_tensor, scaler_value);
     }
 
     //! item = [1, 0, 8, 1, 2], flag =[ 0, -1, -1, -1, 1]
@@ -145,8 +136,7 @@ TEST(INSTRUCTION, SetSubTensorTest) {
             for (size_t j = 0; j < 20; j++) {
                 if (j != 1) {
                     for (size_t k = 0; k < 20; k++) {
-                        data_ret[i * 20 * 20 + j * 20 + k] =
-                                i * 20 * 20 + j * 20 + k;
+                        data_ret[i * 20 * 20 + j * 20 + k] = i * 20 * 20 + j * 20 + k;
                     }
                 } else {
                     for (size_t k = 0; k < 20; k++) {

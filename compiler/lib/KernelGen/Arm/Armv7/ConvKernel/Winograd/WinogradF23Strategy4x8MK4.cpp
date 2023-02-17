@@ -72,17 +72,15 @@ std::string WinogradF23Strategy4x8MK4::WeightTrans(
         std::string tmp1 = strs[4];
         std::stringstream ss;
         for (int i = 0; i < times; i++) {
-            ss << "float32x4_t " << dst << i << "0 = " << src << "0" << i
-               << ";\n";
-            ss << tmp0 << " = vmulq_n_f32(vaddq_f32(" << src << "0" << i << ", "
-               << src << "2" << i << "), 0.5f);\n";
+            ss << "float32x4_t " << dst << i << "0 = " << src << "0" << i << ";\n";
+            ss << tmp0 << " = vmulq_n_f32(vaddq_f32(" << src << "0" << i << ", " << src
+               << "2" << i << "), 0.5f);\n";
             ss << tmp1 << " = vmulq_n_f32(" << src << "1" << i << ", 0.5f);\n";
-            ss << "float32x4_t " << dst << i << "1 = vaddq_f32(" << tmp0 << ", "
-               << tmp1 << ");\n";
-            ss << "float32x4_t " << dst << i << "2 = vsubq_f32(" << tmp0 << ", "
-               << tmp1 << ");\n";
-            ss << "float32x4_t " << dst << i << "3 = " << src << "2" << i
-               << ";\n";
+            ss << "float32x4_t " << dst << i << "1 = vaddq_f32(" << tmp0 << ", " << tmp1
+               << ");\n";
+            ss << "float32x4_t " << dst << i << "2 = vsubq_f32(" << tmp0 << ", " << tmp1
+               << ");\n";
+            ss << "float32x4_t " << dst << i << "3 = " << src << "2" << i << ";\n";
         }
         return ss.str();
     };
@@ -388,9 +386,8 @@ std::string WinogradF23Strategy4x8MK4::OutputFeatureTrans(
 #undef STORE
         }
     })";
-    std::string nonline_mode = ctx->haveAttr("nonlineMode")
-                                       ? ctx->getAttrStr("nonlineMode")
-                                       : "IDENTITY";
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto nonline_gen = create_activation_gener_instrinsic(nonline_mode);
     auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
         return nonline_gen->GenIntrinsicFloat(str[0], str[1]);

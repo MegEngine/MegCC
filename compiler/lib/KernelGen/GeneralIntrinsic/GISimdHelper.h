@@ -18,8 +18,7 @@ class GISimdHelper {
     using Enum = Utils::DtypeEnum;
 
 public:
-    GISimdHelper(std::string dtype)
-            : m_dtype_enum(Utils::get_dtype_enum(dtype)){};
+    GISimdHelper(std::string dtype) : m_dtype_enum(Utils::get_dtype_enum(dtype)){};
     std::string get_dtype_sym() {
         switch (m_dtype_enum) {
             case Enum::float32:

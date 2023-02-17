@@ -39,13 +39,11 @@ int main(int argc, char** argv) {
     }
     std::vector<std::shared_ptr<Benchmarker>> benchmarkers;
     if (framework == "megcc") {
-        benchmarkers.push_back(
-                std::make_shared<CCBenchmarker>(model_path, log_level));
+        benchmarkers.push_back(std::make_shared<CCBenchmarker>(model_path, log_level));
     }
 #if ENABLE_MEGENGINE_FRAMEWORK
     else if (framework == "mge") {
-        benchmarkers.push_back(
-                std::make_shared<MGEBenchmarker>(model_path, log_level));
+        benchmarkers.push_back(std::make_shared<MGEBenchmarker>(model_path, log_level));
     }
 #endif
     else {

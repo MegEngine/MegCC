@@ -20,8 +20,7 @@ MGBDialect::MGBDialect(MLIRContext* context)
     allowUnknownTypes();
 }
 
-LogicalResult ParamProvider::verifySymbolUses(
-        SymbolTableCollection& symbolTable) {
+LogicalResult ParamProvider::verifySymbolUses(SymbolTableCollection& symbolTable) {
     // TODO
     return success();
 }

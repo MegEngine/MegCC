@@ -47,8 +47,7 @@ public:
      * \brief allocate to overwrite an existing interval
      * \param dest interval to be overwritten, which would be freed
      */
-    AllocResult alloc_overwrite(AllocResult& dest, size_t offset,
-                                Interval* interval);
+    AllocResult alloc_overwrite(AllocResult& dest, size_t offset, Interval* interval);
 
     void free(AllocResult& alloc_rst);
 
@@ -86,8 +85,7 @@ private:
         bool allocated() const { return interval; }
 
     private:
-        IncompleteObjStorageMock<FreeBySizeIter, std::set<int>::iterator>
-                m_fs_iter;
+        IncompleteObjStorageMock<FreeBySizeIter, std::set<int>::iterator> m_fs_iter;
     };
 
     struct FreeBlockBySizeItem {
@@ -110,8 +108,7 @@ private:
         bool operator<(const FreeBlockBySizeItem& rhs) const {
             return size < rhs.size ||
                    (size == rhs.size &&
-                    (!blk_iter_valid ||
-                     (rhs.blk_iter_valid && obj_idx < rhs.obj_idx)));
+                    (!blk_iter_valid || (rhs.blk_iter_valid && obj_idx < rhs.obj_idx)));
         }
     };
 
@@ -141,9 +138,8 @@ StaticMemAllocPushdown::BestfitPrealloc::MemBlock::MemBlock() = default;
 
 #define PREALLOC_MEM(ret) ret StaticMemAllocPushdown::BestfitPrealloc
 
-#define PREALLOC_MEM_TR(ret)                     \
-    StaticMemAllocPushdown::BestfitPrealloc::ret \
-            StaticMemAllocPushdown::BestfitPrealloc
+#define PREALLOC_MEM_TR(ret) \
+    StaticMemAllocPushdown::BestfitPrealloc::ret StaticMemAllocPushdown::BestfitPrealloc
 
 /*!
  * \brief proxy class to extract information from allocation results
@@ -203,8 +199,8 @@ PREALLOC_MEM_TR(AllocResult)::alloc(Interval* interval) {
     return make_alloc_result(blkpos, interval);
 }
 
-PREALLOC_MEM_TR(AllocResult)::alloc_overwrite(AllocResult& dest, size_t offset,
-                                              Interval* interval) {
+PREALLOC_MEM_TR(AllocResult)::alloc_overwrite(
+        AllocResult& dest, size_t offset, Interval* interval) {
     auto iter = dest.m_iter;
     CC_ASSERT(dest.m_valid && iter->allocated());
     insert_free_blk_before(iter, offset);
@@ -214,8 +210,7 @@ PREALLOC_MEM_TR(AllocResult)::alloc_overwrite(AllocResult& dest, size_t offset,
     return make_alloc_result(iter, interval);
 }
 
-PREALLOC_MEM_TR(AllocResult)::make_alloc_result(MemBlockIter pos,
-                                                Interval* interval) {
+PREALLOC_MEM_TR(AllocResult)::make_alloc_result(MemBlockIter pos, Interval* interval) {
     pos->interval = interval;
     pos->fsiter() = {};
     pos->size = 0;
@@ -309,9 +304,7 @@ void StaticMemAllocPushdown::init_topo_order() {
     std::vector<BestfitPrealloc::AllocResult> alloc_result(m_interval.size());
 
     BestFitHelper helper;
-    helper.alloc = [&](Interval* p) {
-        alloc_result.at(p->id) = prealloc.alloc(p);
-    };
+    helper.alloc = [&](Interval* p) { alloc_result.at(p->id) = prealloc.alloc(p); };
     helper.alloc_overwrite = [&](Interval* dest, size_t offset, Interval* p) {
         alloc_result.at(p->id) =
                 prealloc.alloc_overwrite(alloc_result.at(dest->id), offset, p);
@@ -338,9 +331,8 @@ size_t StaticMemAllocPushdown::get_interval_addr_end(Interval* interval) {
     if (interval->addr_begin != INVALID)
         return interval->addr_end();
 
-    auto ow_root = interval->is_overwrite_root()
-                           ? interval
-                           : interval->overwrite_dest_root();
+    auto ow_root =
+            interval->is_overwrite_root() ? interval : interval->overwrite_dest_root();
     CC_ASSERT(!ow_root->offset_in_overwrite_dest_root());
     size_t addr = 0;
     for (auto i = ow_root; i; i = i->overwrite_src()) {

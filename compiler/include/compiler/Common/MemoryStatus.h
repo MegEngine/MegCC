@@ -43,9 +43,7 @@ struct MemoryStatus {
 
     explicit operator uint64_t() const { return status; }
 
-    bool operator==(const MemoryStatus& other) {
-        return status == other.status;
-    }
+    bool operator==(const MemoryStatus& other) { return status == other.status; }
 
 private:
     /* layout of memory status
@@ -65,9 +63,7 @@ private:
         DynamicAllocation = 3
     };
 
-    bool kindof(Kind kind) {
-        return static_cast<Kind>(status & kindMask) == kind;
-    }
+    bool kindof(Kind kind) { return static_cast<Kind>(status & kindMask) == kind; }
 
     void setKind(Kind kind) {
         status = (status & (~kindMask)) | static_cast<uint64_t>(kind);

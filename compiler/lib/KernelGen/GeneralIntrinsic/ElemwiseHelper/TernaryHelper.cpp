@@ -66,8 +66,8 @@ std::string TernaryCode<VEC_VEC_VEC>() {
     return body;
 }
 
-std::string bvbv_calc(std::string bvbv_vec_name, std::string src_layout,
-                      std::string dst_layout) {
+std::string bvbv_calc(
+        std::string bvbv_vec_name, std::string src_layout, std::string dst_layout) {
     std::string body = R"(
         {
             int bvb_idx = 0;
@@ -225,11 +225,10 @@ std::string ElemwiseGenTernaryFuseMulAdd3::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GI_FLOAT32_t tmp" << i << " = GiMlaqFloat32("
-               << strs[str_id + 2] << "," << strs[str_id + 0] << ","
-               << strs[str_id + 1] << ");";
-        writer << "\n GiStoreFloat32((" << dst << " + 4 * " << i << "), tmp"
-               << i << ");";
+        writer << "\n GI_FLOAT32_t tmp" << i << " = GiMlaqFloat32(" << strs[str_id + 2]
+               << "," << strs[str_id + 0] << "," << strs[str_id + 1] << ");";
+        writer << "\n GiStoreFloat32((" << dst << " + 4 * " << i << "), tmp" << i
+               << ");";
         str_id += 3;
     }
     return writer.str();
@@ -244,8 +243,8 @@ std::string ElemwiseGenTernaryFuseMulAdd3::GenKernelNaiveUnroll(
     for (int i = 0; i < unroll; i++) {
         writer << "\n"
                << "float tmp = (" << strs[str_id + 0] << ")[" << i << "] * ("
-               << strs[str_id + 1] << ")[" << i << "] + (" << strs[str_id + 2]
-               << ")[" << i << "];";
+               << strs[str_id + 1] << ")[" << i << "] + (" << strs[str_id + 2] << ")["
+               << i << "];";
         writer << "\n"
                << dst << "[" << i << "] = "
                << " tmp;";
@@ -254,8 +253,7 @@ std::string ElemwiseGenTernaryFuseMulAdd3::GenKernelNaiveUnroll(
     return writer.str();
 }
 
-std::string ElemwiseGenTernary::GenCodeBody(
-        std::vector<std::string> strs) const {
+std::string ElemwiseGenTernary::GenCodeBody(std::vector<std::string> strs) const {
     CC_ASSERT(strs.size() == 4);
     auto input0 = strs[0];
     auto input1 = strs[1];
@@ -287,9 +285,9 @@ std::string ElemwiseGenTernary::GenCodeBody(
     return ss.str();
 }
 
-BcastType ElemwiseGenTernary::GetBcastType(const CCOperand& operand0,
-                                           const CCOperand& operand1,
-                                           const CCOperand& operand2) {
+BcastType ElemwiseGenTernary::GetBcastType(
+        const CCOperand& operand0, const CCOperand& operand1,
+        const CCOperand& operand2) {
     return GetTernaryBcastType(operand0, operand1, operand2);
 }
 

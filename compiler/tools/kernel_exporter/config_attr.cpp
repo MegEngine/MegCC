@@ -24,14 +24,14 @@
 #include "megdnn/oprs/nn_int.h"
 #include "utils.h"
 
-#define megcore_check(expr)                                            \
-    do {                                                               \
-        megcoreStatus_t _err = (expr);                                 \
-        if (_err != megcoreSuccess) {                                  \
-            fprintf(stderr, "mgb failed : line=%d %s:%d\n", (int)_err, \
-                    __FILE__, __LINE__);                               \
-            abort();                                                   \
-        }                                                              \
+#define megcore_check(expr)                                                      \
+    do {                                                                         \
+        megcoreStatus_t _err = (expr);                                           \
+        if (_err != megcoreSuccess) {                                            \
+            fprintf(stderr, "mgb failed : line=%d %s:%d\n", (int)_err, __FILE__, \
+                    __LINE__);                                                   \
+            abort();                                                             \
+        }                                                                        \
     } while (0)
 
 namespace {
@@ -131,10 +131,8 @@ class ParamHelper {
 public:
     using Param = typename Opr::Param;
     ParamHelper() {
-        megcore_check(megcoreCreateDeviceHandle(&m_device_handle,
-                                                megcorePlatformCPU));
-        megcore_check(megcoreCreateComputingHandle(&m_compute_handle,
-                                                   m_device_handle));
+        megcore_check(megcoreCreateDeviceHandle(&m_device_handle, megcorePlatformCPU));
+        megcore_check(megcoreCreateComputingHandle(&m_compute_handle, m_device_handle));
         m_dnn_handle = megdnn::Handle::make(m_compute_handle, 2);
     }
 
@@ -154,8 +152,8 @@ protected:
     std::unique_ptr<megdnn::Handle> m_dnn_handle;
 };
 
-std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
-                                               bool use_default_attr) {
+std::vector<megcc::CodeGenContext> config_attr(
+        KPT k_type, std::string k_name, bool use_default_attr) {
 #define DEC_DTYPE()                                              \
     auto dtypes = support_dtype();                               \
     llvm::outs() << "please config \"src type\" "                \
@@ -200,8 +198,8 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 auto int_input = get_int();
                 attr_map["k"] = megcc::CCAttr(int_input);
 
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "KTH_ONLY"},
                             {1, "VALUE_IDX_NOSORT"},
@@ -315,8 +313,8 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
 
                 DEC_FORMAT();
                 param.format = static_cast<ConvParam::Format>(format_input);
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "MAX"},
                             {1, "AVERAGE"},
@@ -334,8 +332,7 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.mode =
-                        static_cast<megdnn::param::PoolingV0::Mode>(mode_enum);
+                param.mode = static_cast<megdnn::param::PoolingV0::Mode>(mode_enum);
             }
             FILL_MAP(attr_map, param, stride_h);
             FILL_MAP(attr_map, param, stride_w);
@@ -364,8 +361,7 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 param.transposeA = false;
                 param.transposeB = false;
                 param.format = megdnn::param::MatrixMul::Format::DEFAULT;
-                param.compute_mode =
-                        megdnn::param::MatrixMul::ComputeMode::DEFAULT;
+                param.compute_mode = megdnn::param::MatrixMul::ComputeMode::DEFAULT;
                 FILL_MAP(attr_map, param, transposeA);
                 FILL_MAP(attr_map, param, transposeB);
 
@@ -385,12 +381,10 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                              << "\n";
                 int_input = get_int();
                 param.transposeB = int_input;
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
-                    std::map<int, std::string> enum2mode{{0, "DEFAULT"},
-                                                         {1, "MK4"},
-                                                         {2, "MK8"},
-                                                         {3, "MK4_DOT"}};
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
+                    std::map<int, std::string> enum2mode{
+                            {0, "DEFAULT"}, {1, "MK4"}, {2, "MK8"}, {3, "MK4_DOT"}};
 
                     return {support_map_to_msg(enum2mode), enum2mode};
                 };
@@ -403,8 +397,7 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.format = static_cast<megdnn::param::MatrixMul::Format>(
-                        mode_enum);
+                param.format = static_cast<megdnn::param::MatrixMul::Format>(mode_enum);
                 param.compute_mode =
                         static_cast<megdnn::param::MatrixMul::ComputeMode>(0);
             }
@@ -450,11 +443,11 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                              << "\n";
                 auto int_input = get_int();
                 param.axis = int_input;
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
-                    std::map<int, std::string> enum2mode{
-                            {0, "SUM"}, {1, "SUM_SQR"}, {2, "PRODUCT"},
-                            {3, "MIN"}, {4, "MAX"},     {5, "MEAN"}};
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
+                    std::map<int, std::string> enum2mode{{0, "SUM"},     {1, "SUM_SQR"},
+                                                         {2, "PRODUCT"}, {3, "MIN"},
+                                                         {4, "MAX"},     {5, "MEAN"}};
 
                     return {support_map_to_msg(enum2mode), enum2mode};
                 };
@@ -467,10 +460,8 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.mode =
-                        static_cast<megdnn::param::Reduce::Mode>(mode_enum);
-                param.data_type =
-                        static_cast<megdnn::param::Reduce::DataType>(0);
+                param.mode = static_cast<megdnn::param::Reduce::Mode>(mode_enum);
+                param.data_type = static_cast<megdnn::param::Reduce::DataType>(0);
             }
 
             FILL_MAP(attr_map, param, axis);
@@ -526,18 +517,17 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 //! init default attr
                 res.dtype = "f32";
                 param.border_val = 0.1;
-                param.bmode = megdnn::param::WarpPerspective::BorderMode::
-                        BORDER_CONSTANT;
-                param.imode =
-                        megdnn::param::WarpPerspective::InterpolationMode::AREA;
+                param.bmode =
+                        megdnn::param::WarpPerspective::BorderMode::BORDER_CONSTANT;
+                param.imode = megdnn::param::WarpPerspective::InterpolationMode::AREA;
                 param.format = megdnn::param::WarpPerspective::Format::NCHW;
             } else {
                 DEC_DTYPE();
                 res.dtype = dtype_input;
 
                 param.border_val = 0.1;
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "REPLICATE/BORDER_REPLICATE"},
                             {1, "REFLECT/BORDER_REFLECT"},
@@ -559,15 +549,12 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.bmode =
-                        megdnn::param::WarpPerspective::BorderMode(mode_enum);
-                auto support_imode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                param.bmode = megdnn::param::WarpPerspective::BorderMode(mode_enum);
+                auto support_imode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
-                            {0, "NEAREST/INTER_NEAREST"},
-                            {1, "LINEAR/INTER_LINEAR"},
-                            {2, "AREA/INTER_AREA"},
-                            {3, "CUBIC/INTER_CUBIC"},
+                            {0, "NEAREST/INTER_NEAREST"},   {1, "LINEAR/INTER_LINEAR"},
+                            {2, "AREA/INTER_AREA"},         {3, "CUBIC/INTER_CUBIC"},
                             {4, "LANCZOS4/INTER_LANCZOS4"},
                     };
 
@@ -582,11 +569,10 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.imode = megdnn::param::WarpPerspective::InterpolationMode(
-                        imode_enum);
+                param.imode =
+                        megdnn::param::WarpPerspective::InterpolationMode(imode_enum);
                 DEC_FORMAT();
-                param.format =
-                        megdnn::param::WarpPerspective::Format(format_input);
+                param.format = megdnn::param::WarpPerspective::Format(format_input);
             }
 
             FILL_MAP(attr_map, param, border_val);
@@ -608,16 +594,15 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 param.border_val = 0.1;
                 param.border_mode =
                         megdnn::param::WarpAffine::BorderMode::BORDER_CONSTANT;
-                param.imode =
-                        megdnn::param::WarpAffine::InterpolationMode::AREA;
+                param.imode = megdnn::param::WarpAffine::InterpolationMode::AREA;
                 param.format = megdnn::param::WarpAffine::Format::NCHW;
             } else {
                 DEC_DTYPE();
                 res.dtype = dtype_input;
 
                 param.border_val = 0.1;
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "REPLICATE/BORDER_REPLICATE"},
                             {1, "REFLECT/BORDER_REFLECT"},
@@ -639,15 +624,12 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.border_mode =
-                        megdnn::param::WarpAffine::BorderMode(mode_enum);
-                auto support_imode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                param.border_mode = megdnn::param::WarpAffine::BorderMode(mode_enum);
+                auto support_imode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
-                            {0, "NEAREST/INTER_NEAREST"},
-                            {1, "LINEAR/INTER_LINEAR"},
-                            {2, "AREA/INTER_AREA"},
-                            {3, "CUBIC/INTER_CUBIC"},
+                            {0, "NEAREST/INTER_NEAREST"},   {1, "LINEAR/INTER_LINEAR"},
+                            {2, "AREA/INTER_AREA"},         {3, "CUBIC/INTER_CUBIC"},
                             {4, "LANCZOS4/INTER_LANCZOS4"},
                     };
 
@@ -662,8 +644,7 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.imode = megdnn::param::WarpAffine::InterpolationMode(
-                        imode_enum);
+                param.imode = megdnn::param::WarpAffine::InterpolationMode(imode_enum);
                 DEC_FORMAT();
                 param.format = megdnn::param::WarpAffine::Format(format_input);
             }
@@ -765,13 +746,11 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 DEC_DTYPE();
                 res.dtype = dtype_input;
 
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
-                            {0, "NEAREST/INTER_NEAREST"},
-                            {1, "LINEAR/INTER_LINEAR"},
-                            {2, "AREA/INTER_AREA"},
-                            {3, "CUBIC/INTER_CUBIC"},
+                            {0, "NEAREST/INTER_NEAREST"},   {1, "LINEAR/INTER_LINEAR"},
+                            {2, "AREA/INTER_AREA"},         {3, "CUBIC/INTER_CUBIC"},
                             {4, "LANCZOS4/INTER_LANCZOS4"},
                     };
                     return {support_map_to_msg(enum2mode), enum2mode};
@@ -785,8 +764,7 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                                  << "\n";
                     abort();
                 }
-                param.imode =
-                        megdnn::param::Resize::InterpolationMode(mode_enum);
+                param.imode = megdnn::param::Resize::InterpolationMode(mode_enum);
                 DEC_FORMAT();
                 param.format = megdnn::param::Resize::Format(format_input);
             }
@@ -871,8 +849,8 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 DEC_DTYPE();
                 res.dtype = dtype_input;
 
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "RGB2GRAY"},  {1, "RGB2YUV"},  {2, "YUV2RGB"},
                             {3, "YUV2RGB"},   {4, "RGBA2RGB"}, {5, "RGBA2BGR"},
@@ -910,10 +888,10 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 DEC_DTYPE();
                 res.dtype = dtype_input;
 
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
-                    std::map<int, std::string> enum2mode{{0, "ASCENDING"},
-                                                         {1, "DESCENDING"}};
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
+                    std::map<int, std::string> enum2mode{
+                            {0, "ASCENDING"}, {1, "DESCENDING"}};
 
                     return {support_map_to_msg(enum2mode), enum2mode};
                 };
@@ -1020,8 +998,8 @@ std::vector<megcc::CodeGenContext> config_attr(KPT k_type, std::string k_name,
                 CB(param.dilate_h);
                 CB(param.dilate_w);
 #undef CB
-                auto support_mode = [&]()
-                        -> std::pair<std::string, std::map<int, std::string>> {
+                auto support_mode =
+                        [&]() -> std::pair<std::string, std::map<int, std::string>> {
                     std::map<int, std::string> enum2mode{
                             {0, "DENSE"},
                             {1, "GROUP"},

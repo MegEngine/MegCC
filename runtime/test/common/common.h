@@ -18,20 +18,18 @@ extern "C" {
 #include "vm/instruction.h"
 #include "vm/registry.h"
 }
-#include <sstream>
 #include <memory>
+#include <sstream>
 
-#define ASSERT_TENSOR_EQ_EPS_AVG(v0, v1, maxerr, maxerr_avg,          \
-                                 maxerr_avg_biased)                   \
-    ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, \
-                        maxerr_avg_biased)
+#define ASSERT_TENSOR_EQ_EPS_AVG(v0, v1, maxerr, maxerr_avg, maxerr_avg_biased) \
+    ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, maxerr_avg_biased)
 namespace test {
-void check_tensor(const Tensor& expected, const Tensor& computed,
-                  float epsilon = 1e-3, float max_avg_error = 1e-3,
-                  float max_avg_biased_error = 1e-3);
+void check_tensor(
+        const Tensor& expected, const Tensor& computed, float epsilon = 1e-3,
+        float max_avg_error = 1e-3, float max_avg_biased_error = 1e-3);
 
-std::shared_ptr<Tensor> create_tensor(std::vector<uint32_t> shape,
-                                      TinyNNDType dtype_enum, void* ptr);
+std::shared_ptr<Tensor> create_tensor(
+        std::vector<uint32_t> shape, TinyNNDType dtype_enum, void* ptr);
 
 VM* create_vm();
 
@@ -76,8 +74,8 @@ public:
                 ins->tag = TinyNN_INST_OPR;
                 Opr* opr = &ins->workload.opr;
                 opr->inputs = (Tensor**)malloc(sizeof(Tensor*));
-                opr->nr_input= 1;
-                opr->nr_output= 1;
+                opr->nr_input = 1;
+                opr->nr_output = 1;
                 opr->outputs = (Tensor**)malloc(sizeof(Tensor*));
             }
         }

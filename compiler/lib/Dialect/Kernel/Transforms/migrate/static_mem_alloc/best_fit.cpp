@@ -17,8 +17,7 @@ void StaticMemAllocBestFit::do_solve() {
     helper.alloc = [this](Interval* p) {
         p->addr_begin = this->alloc_aligned_addr(p->size);
     };
-    helper.alloc_overwrite = [this](Interval* dest, size_t offset,
-                                    Interval* p) {
+    helper.alloc_overwrite = [this](Interval* dest, size_t offset, Interval* p) {
         this->free(dest->addr_begin);
         auto addr = dest->addr_begin + offset;
         this->alloc_placement(addr, p->size);
@@ -115,8 +114,7 @@ void StaticMemAllocBestFit::insert_free(const Chunk& chk) {
         auto ins1 = m_free_by_size_addr_align.insert({addr_align, size_align});
         CC_ASSERT(ins1.second);
         ins0.first->second.siter = ins1.first;
-        const_cast<FreeBlockBySizeAddrAligned&>(*ins1.first).aiter() =
-                ins0.first;
+        const_cast<FreeBlockBySizeAddrAligned&>(*ins1.first).aiter() = ins0.first;
     } else {
         ins0.first->second.siter = m_free_by_size_addr_align.end();
     }

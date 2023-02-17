@@ -21,20 +21,20 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
     std::string call_str;
     std::stringstream declare_ss;
     auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+                              ? ctx->getAttrStr("nonlineMode")
+                              : "IDENTITY";
     if ((nonline_mode == "SIGMOID") && need_postprocess) {
         std::vector<CCOperand> operands;
         operands.resize(2);
         auto dtype = ctx->getAttrStr("dtype");
-        auto create_elem = [=](std::string src_dtype, std::string dst_dtype)
-                -> std::shared_ptr<ElemwiseGenUnary> {
-            return std::make_shared<ElemwiseGenUnarySigmoid>(src_dtype,
-                                                             dst_dtype, true);
+        auto create_elem =
+                [=](std::string src_dtype,
+                    std::string dst_dtype) -> std::shared_ptr<ElemwiseGenUnary> {
+            return std::make_shared<ElemwiseGenUnarySigmoid>(
+                    src_dtype, dst_dtype, true);
         };
 
-        std::shared_ptr<ElemwiseGenUnary> ElemwiseImpl =
-                create_elem("f32", "f32");
+        std::shared_ptr<ElemwiseGenUnary> ElemwiseImpl = create_elem("f32", "f32");
 
         if (Utils::is_quant_dtype(dtype)) {
             ElemwiseImpl = create_elem("si32", "si8");
@@ -78,10 +78,9 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
             }
         )";
         }
-        call_str =
-                StringTemplate::StringTemplateArgs()
-                        .add("ElemwiseImplName", ElemwiseImpl->GenInlineName())
-                        .render(post_process_temp);
+        call_str = StringTemplate::StringTemplateArgs()
+                           .add("ElemwiseImplName", ElemwiseImpl->GenInlineName())
+                           .render(post_process_temp);
         GIMathHelper gi_math;
         declare_ss << R"(
 #include "gi_int.h"
@@ -207,12 +206,12 @@ static inline void transpose_1x4_4_s(const float* inptr0, float* outptr) {
 
 static std::string kern_4x12(TContext* ctx) {
     auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+                              ? ctx->getAttrStr("nonlineMode")
+                              : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
     bool with_bias = ctx && ctx->getAttrBool("with_bias")
-                             ? ctx->getAttrBool("with_bias")
-                             : false;
+                           ? ctx->getAttrBool("with_bias")
+                           : false;
     std::stringstream writer;
     writer << R"(
 static inline void kern_4x12_bias_relu(const float* packA, const float* packB, int K,
@@ -440,12 +439,12 @@ static inline void kern_4x12_bias_relu(const float* packA, const float* packB, i
 
 static std::string kern_4x4(TContext* ctx) {
     auto nonline_mode = ctx && ctx->haveAttr("nonlineMode")
-                                ? ctx->getAttrStr("nonlineMode")
-                                : "IDENTITY";
+                              ? ctx->getAttrStr("nonlineMode")
+                              : "IDENTITY";
     auto activation_gen = create_activation_gener_instrinsic(nonline_mode);
     bool with_bias = ctx && ctx->getAttrBool("with_bias")
-                             ? ctx->getAttrBool("with_bias")
-                             : false;
+                           ? ctx->getAttrBool("with_bias")
+                           : false;
     std::stringstream writer;
     writer << R"(
 static inline void kern_4x4_bias_relu(const float* packA, const float* packB, int K,
@@ -651,9 +650,9 @@ std::string gen_pack_b_workspace(const std::string& sig) {
     return ss.str();
 }
 
-std::string gen_kernel(const std::string& sig, TContext* ctx,
-                       const std::string& postprocess_call,
-                       const std::string& preset_str = "") {
+std::string gen_kernel(
+        const std::string& sig, TContext* ctx, const std::string& postprocess_call,
+        const std::string& preset_str = "") {
     std::string keren_body =
             R"(
     ${kernel_sig}{
@@ -727,8 +726,7 @@ std::string MatmulM4N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     writer << gen_pack_a_workspace(GetPackAWorkspaceSignature(ctx));
     writer << gen_pack_b_workspace(GetPackBWorkspaceSignature(ctx));
     writer << postprocess_pair.first;
-    writer << gen_kernel(GetNakedKernelSignature(ctx), ctx,
-                         postprocess_pair.second);
+    writer << gen_kernel(GetNakedKernelSignature(ctx), ctx, postprocess_pair.second);
 
     std::string preset_temp = R"(
         size_t pack_a_size = ${packa_workspace_sym}(0, M, 0, K);
@@ -743,8 +741,8 @@ std::string MatmulM4N12MK4Kernel::GetKernelBody(TContext* ctx) const {
                     .add("packa_sym", GetPackASymbol(ctx))
                     .add("packb_sym", GetPackBSymbol(ctx))
                     .render(preset_temp);
-    writer << gen_kernel(GetKernelSignature(ctx), ctx, postprocess_pair.second,
-                         preset_str);
+    writer << gen_kernel(
+            GetKernelSignature(ctx), ctx, postprocess_pair.second, preset_str);
     return writer.str();
 }
 

@@ -14,14 +14,14 @@
 #include "megcore.h"
 #include "megdnn/handle.h"
 #include "megdnn/tensor_iter.h"
-#define megcore_check(expr)                                            \
-    do {                                                               \
-        megcoreStatus_t _err = (expr);                                 \
-        if (_err != megcoreSuccess) {                                  \
-            fprintf(stderr, "mgb failed : line=%d %s:%d\n", (int)_err, \
-                    __FILE__, __LINE__);                               \
-            abort();                                                   \
-        }                                                              \
+#define megcore_check(expr)                                                      \
+    do {                                                                         \
+        megcoreStatus_t _err = (expr);                                           \
+        if (_err != megcoreSuccess) {                                            \
+            fprintf(stderr, "mgb failed : line=%d %s:%d\n", (int)_err, __FILE__, \
+                    __LINE__);                                                   \
+            abort();                                                             \
+        }                                                                        \
     } while (0)
 namespace megdnn {
 namespace test {
@@ -50,8 +50,8 @@ void print_tensor(megdnn::TensorND& tensor) {
 
 class WorkspaceBundle {
 public:
-    WorkspaceBundle(void* ptr, SmallVector<size_t> sizes_in_bytes,
-                    size_t align_in_bytes = 512);
+    WorkspaceBundle(
+            void* ptr, SmallVector<size_t> sizes_in_bytes, size_t align_in_bytes = 512);
     /**
      * \returns raw workspace ptr.
      *
@@ -86,8 +86,7 @@ private:
 #define MEGDNN_MARK_USED_VAR(v) static_cast<void>(v)
 
 std::shared_ptr<TensorNDArray> dnn_alloc_tensors(
-        megdnn::Handle* handle, const TensorLayoutArray& layouts,
-        const size_t offset);
+        megdnn::Handle* handle, const TensorLayoutArray& layouts, const size_t offset);
 
 void dnn_copy_tensors(const TensorNDArray& dest, const TensorNDArray& src);
 }  // namespace test

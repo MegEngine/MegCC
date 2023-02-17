@@ -13,20 +13,18 @@
 #include "vm/instruction.h"
 #include "vm/registry.h"
 #if ENABLE_INST_RESHAPE
-static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
+static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     Reshape* reshape = &inst->workload.reshape;
     ns(Reshape_table_t) fbs_reshape = (ns(Reshape_table_t))(fbs_inst);
     inst->tag = TinyNN_INST_RESHAPE;
     flatbuffers_int32_vec_t fbs_inputs = ns(Reshape_inputs(fbs_reshape));
-    flatbuffers_int8_vec_t fbs_input_types =
-            ns(Reshape_input_types(fbs_reshape));
+    flatbuffers_int8_vec_t fbs_input_types = ns(Reshape_input_types(fbs_reshape));
     int32_t nr_input = flatbuffers_int32_vec_len(fbs_inputs);
     TINYNN_ASSERT_MSG(nr_input == 2, "Reshape input is not 2.");
     reshape->inputs = tinynn_malloc(nr_input * sizeof(Tensor*));
     DeviceModel* model = get_active_device_model(vm);
-    parase_inputs(reshape->inputs, nr_input, model, vm->model, fbs_inputs,
-                  fbs_input_types);
+    parase_inputs(
+            reshape->inputs, nr_input, model, vm->model, fbs_inputs, fbs_input_types);
 
     int32_t output_idx = ns(Reshape_output(fbs_reshape));
     reshape->output = model->tensors + output_idx;

@@ -48,8 +48,8 @@ bool isDynamicShape(ValueRange operands) {
 class FuseTypeCvtPattern final : public OpRewritePattern<MGB::TypeCvt> {
 public:
     FuseTypeCvtPattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
-    LogicalResult matchAndRewrite(MGB::TypeCvt op,
-                                  PatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(
+            MGB::TypeCvt op, PatternRewriter& rewriter) const override {
         auto rst = op.getResult();
         CHECK_IT(rst.hasOneUse());
         auto next_typecvt =
@@ -59,8 +59,8 @@ public:
         auto in_tensor = op.inputs();
         auto out_type = next_typecvt.o_dtype();
         auto new_typecvt = rewriter.create<MGB::TypeCvt>(
-                op->getLoc(), next_typecvt.getResult().getType(), in_tensor,
-                in_type, out_type);
+                op->getLoc(), next_typecvt.getResult().getType(), in_tensor, in_type,
+                out_type);
         rewriter.replaceOp(next_typecvt, new_typecvt.getResult());
         return success();
     }
@@ -69,15 +69,13 @@ public:
 class FuseConvHswishPattern final : public OpRewritePattern<MGB::ConvBias> {
 public:
     FuseConvHswishPattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
-    LogicalResult matchAndRewrite(MGB::ConvBias op,
-                                  PatternRewriter& rewriter) const override {
-        CHECK_IT(op.nonlineMode() ==
-                 ::megdnn::param::ConvBias::NonlineMode::IDENTITY);
+    LogicalResult matchAndRewrite(
+            MGB::ConvBias op, PatternRewriter& rewriter) const override {
+        CHECK_IT(op.nonlineMode() == ::megdnn::param::ConvBias::NonlineMode::IDENTITY);
         auto rst = op.getResult();
         CHECK_IT(rst.hasOneUse());
 
-        auto typecvt =
-                llvm::dyn_cast<MGB::TypeCvt>(rst.getUses().begin()->getOwner());
+        auto typecvt = llvm::dyn_cast<MGB::TypeCvt>(rst.getUses().begin()->getOwner());
         CHECK_IT(typecvt);
         CHECK_IT(typecvt.i_dtype().isInteger(8));
         CHECK_IT(typecvt.i_dtype().cast<IntegerType>().isQuant());
@@ -92,8 +90,8 @@ public:
         auto elem_rst = elem.getResult();
         CHECK_IT(elem_rst.hasOneUse());
 
-        auto typecvt2 = llvm::dyn_cast<MGB::TypeCvt>(
-                elem_rst.getUses().begin()->getOwner());
+        auto typecvt2 =
+                llvm::dyn_cast<MGB::TypeCvt>(elem_rst.getUses().begin()->getOwner());
         CHECK_IT(typecvt2);
         CHECK_IT(typecvt2.i_dtype().isF32());
         CHECK_IT(typecvt2.o_dtype().isInteger(8));
@@ -103,9 +101,9 @@ public:
 
         auto new_conv = rewriter.create<MGB::ConvBias>(
                 op->getLoc(), typecvt_rst2.getType(), op.inputs(),
-                ::megdnn::param::ConvBias::NonlineMode::H_SWISH, op.mode(),
-                op.sparse(), op.format(), op.pad_h(), op.pad_w(), op.stride_h(),
-                op.stride_w(), op.dilate_h(), op.dilate_w(), op.compute_mode());
+                ::megdnn::param::ConvBias::NonlineMode::H_SWISH, op.mode(), op.sparse(),
+                op.format(), op.pad_h(), op.pad_w(), op.stride_h(), op.stride_w(),
+                op.dilate_h(), op.dilate_w(), op.compute_mode());
         rewriter.replaceOp(typecvt2, new_conv.getResult());
         return success();
     }
@@ -114,8 +112,8 @@ public:
 class FuseElemwisePattern final : public OpRewritePattern<MGB::Elemwise> {
 public:
     FuseElemwisePattern(MLIRContext* ctx) : OpRewritePattern(ctx) {}
-    LogicalResult matchAndRewrite(MGB::Elemwise op,
-                                  PatternRewriter& rewriter) const override {
+    LogicalResult matchAndRewrite(
+            MGB::Elemwise op, PatternRewriter& rewriter) const override {
         //! find the last elemwise op
         Operation* last_elemwise_op = op;
         Operation* tmp_op = op;
@@ -147,8 +145,7 @@ public:
         std::vector<Value> in_values;
         std::vector<Value> out_values;
         std::vector<std::string> modes;
-        std::function<void(MGB::Elemwise op)>
-                find_all_elemwise_info;
+        std::function<void(MGB::Elemwise op)> find_all_elemwise_info;
         auto dst = llvm::cast<MGB::Elemwise>(last_elemwise_op).getResult();
         find_all_elemwise_info = [&](MGB::Elemwise op) {
             auto all_input = op->getOperands();
@@ -188,17 +185,14 @@ public:
                 var_alias[op.getResult().getImpl()] = name;
             }
             modes.push_back(operator_mode);
-            LOG_DEBUG << "Fuse elemwise operator mode is : " << operator_mode
-                      << "\n";
+            LOG_DEBUG << "Fuse elemwise operator mode is : " << operator_mode << "\n";
         };
 
         //! the output var alias to "D", means dst
-        var_alias[llvm::cast<MGB::Elemwise>(last_elemwise_op)
-                          .getResult()
-                          .getImpl()] = "D";
+        var_alias[llvm::cast<MGB::Elemwise>(last_elemwise_op).getResult().getImpl()] =
+                "D";
         find_all_elemwise_info(llvm::cast<MGB::Elemwise>(last_elemwise_op));
-        CC_ASSERT(out_values.size() > 0)
-                << "The fused elemwise with no output var.\n";
+        CC_ASSERT(out_values.size() > 0) << "The fused elemwise with no output var.\n";
         auto dst_var = out_values.back();
         if (modes.size() <= 1) {
             return failure();
@@ -221,13 +215,11 @@ public:
 
 void populateFuseKernelPatterns(RewritePatternSet& patterns) {
     patterns.add(std::make_unique<FuseTypeCvtPattern>(patterns.getContext()));
-    patterns.add(
-            std::make_unique<FuseConvHswishPattern>(patterns.getContext()));
+    patterns.add(std::make_unique<FuseConvHswishPattern>(patterns.getContext()));
     patterns.add(std::make_unique<FuseElemwisePattern>(patterns.getContext()));
 }
 
-class MGBFuseKernelPass final
-        : public MGBFuseKernelPassBase<MGBFuseKernelPass> {
+class MGBFuseKernelPass final : public MGBFuseKernelPassBase<MGBFuseKernelPass> {
     void runOnOperation() override {
         RewritePatternSet patterns(&getContext());
         auto op = getOperation();

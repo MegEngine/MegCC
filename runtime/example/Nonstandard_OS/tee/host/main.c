@@ -63,56 +63,57 @@ int run_ta_model(int iter) {
     uint32_t err_origin;
 
     res = TEEC_InitializeContext(NULL, &ctx);
-    megcc_ca_assert(res == TEEC_SUCCESS,
-                    "TEEC_InitializeContext failed with code 0x%x", res);
+    megcc_ca_assert(
+            res == TEEC_SUCCESS, "TEEC_InitializeContext failed with code 0x%x", res);
 
-    res = TEEC_OpenSession(&ctx, &sess, &uuid, TEEC_LOGIN_PUBLIC, NULL, NULL,
-                           &err_origin);
-    megcc_ca_assert(res == TEEC_SUCCESS,
-                    "TEEC_Opensession failed with code 0x%x origin 0x%x", res,
-                    err_origin);
+    res = TEEC_OpenSession(
+            &ctx, &sess, &uuid, TEEC_LOGIN_PUBLIC, NULL, NULL, &err_origin);
+    megcc_ca_assert(
+            res == TEEC_SUCCESS, "TEEC_Opensession failed with code 0x%x origin 0x%x",
+            res, err_origin);
 
     memset(&op, 0, sizeof(op));
 
-    op.paramTypes =
-            TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE, TEEC_NONE, TEEC_NONE);
+    op.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT, TEEC_NONE, TEEC_NONE, TEEC_NONE);
     op.params[0].value.a = iter;
 
     //! init model
     struct timeval time, e_time;
     gettimeofday(&time, NULL);
-    MEGCC_CA_INFO("invoke init model cmd,seconds:%ld, millis: %ld", time.tv_sec,
-                  time.tv_usec / 1000);
-    res = TEEC_InvokeCommand(&sess, TA_MEGCC_INFERENCE_CMD_INIT_MODEL, &op,
-                             &err_origin);
-    megcc_ca_assert(res == TEEC_SUCCESS,
-                    "TEEC_InvokeCommand failed with code 0x%x origin 0x%x", res,
-                    err_origin);
+    MEGCC_CA_INFO(
+            "invoke init model cmd,seconds:%ld, millis: %ld", time.tv_sec,
+            time.tv_usec / 1000);
+    res = TEEC_InvokeCommand(
+            &sess, TA_MEGCC_INFERENCE_CMD_INIT_MODEL, &op, &err_origin);
+    megcc_ca_assert(
+            res == TEEC_SUCCESS, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+            res, err_origin);
 
     //! run model
     MEGCC_CA_INFO("begin run model at TA side");
     gettimeofday(&time, NULL);
-    res = TEEC_InvokeCommand(&sess, TA_MEGCC_INFERENCE_CMD_RUN_MODEL, &op,
-                             &err_origin);
+    res = TEEC_InvokeCommand(&sess, TA_MEGCC_INFERENCE_CMD_RUN_MODEL, &op, &err_origin);
     gettimeofday(&e_time, NULL);
-    MEGCC_CA_INFO("run model at TA side take: %ld ms (iter: %d)",
-                  (e_time.tv_sec - time.tv_sec) * 1000 +
-                          (e_time.tv_usec - time.tv_usec) / 1000,
-                  iter);
+    MEGCC_CA_INFO(
+            "run model at TA side take: %ld ms (iter: %d)",
+            (e_time.tv_sec - time.tv_sec) * 1000 +
+                    (e_time.tv_usec - time.tv_usec) / 1000,
+            iter);
     MEGCC_CA_INFO("success run model at TA side");
-    megcc_ca_assert(res == TEEC_SUCCESS,
-                    "TEEC_InvokeCommand failed with code 0x%x origin 0x%x", res,
-                    err_origin);
+    megcc_ca_assert(
+            res == TEEC_SUCCESS, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+            res, err_origin);
 
     //! free model
     gettimeofday(&time, NULL);
-    MEGCC_CA_INFO("invoke free model cmd,seconds:%ld, millis: %ld", time.tv_sec,
-                  time.tv_usec / 1000);
-    res = TEEC_InvokeCommand(&sess, TA_MEGCC_INFERENCE_CMD_FREE_MODEL, &op,
-                             &err_origin);
-    megcc_ca_assert(res == TEEC_SUCCESS,
-                    "TEEC_InvokeCommand failed with code 0x%x origin 0x%x", res,
-                    err_origin);
+    MEGCC_CA_INFO(
+            "invoke free model cmd,seconds:%ld, millis: %ld", time.tv_sec,
+            time.tv_usec / 1000);
+    res = TEEC_InvokeCommand(
+            &sess, TA_MEGCC_INFERENCE_CMD_FREE_MODEL, &op, &err_origin);
+    megcc_ca_assert(
+            res == TEEC_SUCCESS, "TEEC_InvokeCommand failed with code 0x%x origin 0x%x",
+            res, err_origin);
 
     TEEC_CloseSession(&sess);
 
@@ -129,10 +130,11 @@ float run_ca_model(int iter) {
     gettimeofday(&time, NULL);
     float ret = ca_run_megcc_deamo(iter);
     gettimeofday(&e_time, NULL);
-    MEGCC_CA_INFO("run model at CA side take: %ld ms (iter: %d)",
-                  (e_time.tv_sec - time.tv_sec) * 1000 +
-                          (e_time.tv_usec - time.tv_usec) / 1000,
-                  iter);
+    MEGCC_CA_INFO(
+            "run model at CA side take: %ld ms (iter: %d)",
+            (e_time.tv_sec - time.tv_sec) * 1000 +
+                    (e_time.tv_usec - time.tv_usec) / 1000,
+            iter);
     MEGCC_CA_INFO("success run model at CA side");
 
     ca_free_megcc_deamo();

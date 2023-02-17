@@ -34,18 +34,16 @@ class MemoryForwardingPass final
         // rewrite function type
         FunctionType oldFuncType = func.type().dyn_cast<FunctionType>();
         auto ArgumentsType = oldFuncType.getInputs();
-        auto returnOp =
-                llvm::dyn_cast<ReturnOp>(&func.getBody().front().back());
+        auto returnOp = llvm::dyn_cast<ReturnOp>(&func.getBody().front().back());
         auto ResultsType = returnOp.getOperandTypes();
         function_interface_impl::setFunctionType(
-                func, FunctionType::get(func.getContext(), ArgumentsType,
-                                        ResultsType));
+                func, FunctionType::get(func.getContext(), ArgumentsType, ResultsType));
     }
 };
 
-LogicalResult tryMemoryForward(Kernel::MemFwdInterface op,
-                               PatternRewriter& rewriter,
-                               std::function<LogicalResult(void)> onFailure) {
+LogicalResult tryMemoryForward(
+        Kernel::MemFwdInterface op, PatternRewriter& rewriter,
+        std::function<LogicalResult(void)> onFailure) {
     CC_ASSERT(op->getNumOperands() == 1 && op->getNumResults() == 1);
     Value input = op->getOperand(0), output = op->getResult(0);
     MemRefType outputType;
@@ -54,9 +52,8 @@ LogicalResult tryMemoryForward(Kernel::MemFwdInterface op,
     }
 
     auto determined_attr = op->getAttr("determined");
-    bool determined = determined_attr
-                              ? determined_attr.dyn_cast<BoolAttr>().getValue()
-                              : false;
+    bool determined =
+            determined_attr ? determined_attr.dyn_cast<BoolAttr>().getValue() : false;
     if (!outputType) {
         CC_ASSERT(!determined) << "memory forward failed on determined op";
         return onFailure();
@@ -69,22 +66,21 @@ LogicalResult tryMemoryForward(Kernel::MemFwdInterface op,
 
     for (auto&& use : output.getUses()) {
         auto layoutConstraint =
-                llvm::dyn_cast<Kernel::LayoutConstraintInterface>(
-                        use.getOwner());
+                llvm::dyn_cast<Kernel::LayoutConstraintInterface>(use.getOwner());
         bool relayout_for_next_kernel =
-                layoutConstraint && !layoutConstraint.checkInputLayout(
-                                            outputType, use.getOperandNumber());
+                layoutConstraint &&
+                !layoutConstraint.checkInputLayout(outputType, use.getOperandNumber());
         bool relayout_for_return = mlir::dyn_cast<ReturnOp>(use.getOwner()) &&
                                    !::mlir::Kernel::isContiguous(outputType);
-        bool need_relayout_output =
-                relayout_for_next_kernel || relayout_for_return;
+        bool need_relayout_output = relayout_for_next_kernel || relayout_for_return;
         if (need_relayout_output) {
             CC_ASSERT(!determined) << "memory forward failed on determined op";
             OpBuilder::InsertionGuard guard(rewriter);
             rewriter.setInsertionPointAfter(op);
             Value newOutput = rewriter.create<memref::AllocOp>(
-                    op->getLoc(), MemRefType::get(outputType.getShape(),
-                                                  outputType.getElementType()));
+                    op->getLoc(),
+                    MemRefType::get(
+                            outputType.getShape(), outputType.getElementType()));
             Operation* relayout = rewriter.create<Kernel::RelayoutKernel>(
                     op->getLoc(), output, newOutput);
             output.replaceUsesWithIf(newOutput, [&](mlir::OpOperand& i) {
@@ -97,8 +93,7 @@ LogicalResult tryMemoryForward(Kernel::MemFwdInterface op,
 }
 
 template <typename T>
-LogicalResult onMemoryForwardFailure(T /* op */,
-                                     PatternRewriter& /* rewriter */) {
+LogicalResult onMemoryForwardFailure(T /* op */, PatternRewriter& /* rewriter */) {
     return failure();
 }
 
@@ -108,15 +103,14 @@ LogicalResult onMemoryForwardFailure<Kernel::Reshape>(
     Value input = op->getOperand(0), output = op->getResult(0);
     MemRefType outputType = output.getType().dyn_cast<MemRefType>();
     Value newOutput = rewriter.create<memref::AllocOp>(
-            op->getLoc(), MemRefType::get(outputType.getShape(),
-                                          outputType.getElementType()));
+            op->getLoc(),
+            MemRefType::get(outputType.getShape(), outputType.getElementType()));
     MemRefType inputType = input.getType().dyn_cast<MemRefType>();
     Value newOutputReshaped = rewriter.create<Kernel::Reshape>(
             op->getLoc(),
             MemRefType::get(inputType.getShape(), inputType.getElementType()),
             newOutput, true);
-    rewriter.create<Kernel::RelayoutKernel>(op->getLoc(), input,
-                                            newOutputReshaped);
+    rewriter.create<Kernel::RelayoutKernel>(op->getLoc(), input, newOutputReshaped);
     rewriter.replaceOp(op, newOutput);
     return success();
 }
@@ -126,20 +120,18 @@ class MemFwdOpConversion final : public OpRewritePattern<OpTy> {
 public:
     using OpRewritePattern<OpTy>::OpRewritePattern;
 
-    LogicalResult matchAndRewrite(OpTy op,
-                                  PatternRewriter& rewriter) const override {
-        return tryMemoryForward(op, rewriter, [&] {
-            return onMemoryForwardFailure(op, rewriter);
-        });
+    LogicalResult matchAndRewrite(OpTy op, PatternRewriter& rewriter) const override {
+        return tryMemoryForward(
+                op, rewriter, [&] { return onMemoryForwardFailure(op, rewriter); });
     }
 };
 
 }  // namespace
 
 void populateMemoryForwardingPatterns(RewritePatternSet& patterns) {
-    patterns.add<MemFwdOpConversion<Kernel::Reshape>,
-                 MemFwdOpConversion<Kernel::Dimshuffle>,
-                 MemFwdOpConversion<Kernel::Subtensor>>(patterns.getContext());
+    patterns.add<
+            MemFwdOpConversion<Kernel::Reshape>, MemFwdOpConversion<Kernel::Dimshuffle>,
+            MemFwdOpConversion<Kernel::Subtensor>>(patterns.getContext());
 }
 
 std::unique_ptr<OperationPass<FuncOp>> createMemoryForwardingPass() {

@@ -17,10 +17,9 @@
 
 namespace megcc {
 namespace test {
-void check_fuse_elemwise(TensorShapeArray shapes,
-                         std::vector<std::string> modes,
-                         megcc::KernelGen::Arch arch, const std::string& symbol,
-                         float epsilon = 1e-3);
+void check_fuse_elemwise(
+        TensorShapeArray shapes, std::vector<std::string> modes,
+        megcc::KernelGen::Arch arch, const std::string& symbol, float epsilon = 1e-3);
 }
 }  // namespace megcc
 

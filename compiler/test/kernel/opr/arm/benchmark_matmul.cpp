@@ -51,8 +51,7 @@ TEST(ARMCOMMON, BenchmarkFP32GEVM_NT) {
 TEST(AARCH64, BenchmarkFP32M4N16K4) {
     Benchmarker<MatrixMulForward> benchmarker(Arch::ARM64);
     benchmarker.set_before_exec_callback(
-            megdnn::test::AlgoChecker<MatrixMulForward>(
-                    "AARCH64_F32_MK4_4x16"));
+            megdnn::test::AlgoChecker<MatrixMulForward>("AARCH64_F32_MK4_4x16"));
     for (size_t m : {64, 128})
         for (size_t n : {256, 384})
             for (size_t k : {128, 256}) {
@@ -61,8 +60,8 @@ TEST(AARCH64, BenchmarkFP32M4N16K4) {
                 param.transposeB = false;
                 param.format = param::MatrixMul::Format::MK4;
                 benchmarker.set_param(param);
-                auto result = benchmarker.execs(
-                        {{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}});
+                auto result =
+                        benchmarker.execs({{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}});
                 printf("megcc result time = %f, throughput %f Gops, %f mbps\n",
                        result.megcc_performance.kernel_time_ms,
                        result.megcc_performance.compute_throughput_gops,

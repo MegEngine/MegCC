@@ -16,8 +16,9 @@
 
 namespace {
 
-void get_kernel_size(uint32_t& kh, uint32_t& kw, megdnn::TensorND weight,
-                     ConvParam::Sparse sparse, ConvParam::Format format) {
+void get_kernel_size(
+        uint32_t& kh, uint32_t& kw, megdnn::TensorND weight, ConvParam::Sparse sparse,
+        ConvParam::Format format) {
     if (format == ConvParam::Format::NCHW) {
         if (sparse == ConvParam::Sparse::DENSE) {
             kh = weight.layout[2];
@@ -27,8 +28,9 @@ void get_kernel_size(uint32_t& kh, uint32_t& kw, megdnn::TensorND weight,
             kh = weight.layout[3];
             kw = weight.layout[4];
         }
-    } else if (format == ConvParam::Format::NCHW44 ||
-               format == ConvParam::Format::NCHW44_DOT) {
+    } else if (
+            format == ConvParam::Format::NCHW44 ||
+            format == ConvParam::Format::NCHW44_DOT) {
         if (sparse == ConvParam::Sparse::DENSE) {
             //! dense layout is oc/4, ic/4, fh, fw, 4, 4
             if (weight.layout.ndim == 6) {
@@ -90,9 +92,8 @@ namespace test {
 using KernType = KernelGen::KernelPack::KernType;
 template <>
 KernelGenRet opr_fill_attr<megdnn::ElemwiseForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ElemwiseForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ElemwiseForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     attr_map["mode"] = CCAttr(dnnparam_2_str(param.mode));
@@ -128,15 +129,13 @@ KernelGenRet opr_fill_attr<megdnn::ElemwiseMultiType>(
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     attr_map["mode"] = CCAttr(dnnparam_2_str(param.mode));
-    return KernelGen::KernelPack::GetKernel(KernType::ElemwiseMultiKernel,
-                                            arch);
+    return KernelGen::KernelPack::GetKernel(KernType::ElemwiseMultiKernel, arch);
 }
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::RelayoutForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::RelayoutForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::RelayoutForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     return KernelGen::KernelPack::GetKernel(KernType::RelayoutKernel, arch);
 }
@@ -151,35 +150,31 @@ KernelGenRet opr_fill_attr<megdnn::IndexingMultiAxisVec>(
     for (size_t i = 0; i < axis.size(); ++i) {
         attr_map["axis:" + std::to_string(i)] = CCAttr((int)axis[i]);
     }
-    return KernelGen::KernelPack::GetKernel(KernType::IndexingMultiAxisKernel,
-                                            arch);
+    return KernelGen::KernelPack::GetKernel(KernType::IndexingMultiAxisKernel, arch);
 }
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::IndexingOneHot>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::IndexingOneHot* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch, const std::unordered_map<std::string, CCAttr>&) {
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::IndexingOneHot* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
+        const std::unordered_map<std::string, CCAttr>&) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, axis);
-    return KernelGen::KernelPack::GetKernel(KernType::IndexingOneHotKernel,
-                                            arch);
+    return KernelGen::KernelPack::GetKernel(KernType::IndexingOneHotKernel, arch);
 }
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::MatrixInverse>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::MatrixInverse* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::MatrixInverse* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     return KernelGen::KernelPack::GetKernel(KernType::MatrixInvKernel, arch);
 }
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVtranspose>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVtranspose* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVtranspose* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     return KernelGen::KernelPack::GetKernel(KernType::CVTransposeKernel, arch);
 }
@@ -194,9 +189,8 @@ KernelGenRet opr_fill_attr<megdnn::CVflip>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVCvtColor>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVCvtColor* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVCvtColor* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP_EX(attr_map, param, mode, dnnparam_2_str);
@@ -205,9 +199,8 @@ KernelGenRet opr_fill_attr<megdnn::CVCvtColor>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVWarpAffine>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVWarpAffine* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVWarpAffine* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, border_val);
@@ -243,9 +236,8 @@ KernelGenRet opr_fill_attr<megdnn::ConvolutionForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::ConvBiasForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ConvBiasForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ConvBiasForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     uint32_t kh = 0, kw = 0;
@@ -267,9 +259,8 @@ KernelGenRet opr_fill_attr<megdnn::ConvBiasForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::PoolingForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::PoolingForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::PoolingForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, stride_h);
@@ -286,9 +277,8 @@ KernelGenRet opr_fill_attr<megdnn::PoolingForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::ConcatForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ConcatForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ConcatForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, axis);
@@ -337,8 +327,7 @@ KernelGenRet opr_fill_attr<megdnn::WarpPerspectiveForward>(
     FILL_MAP_EX(attr_map, param, imode, dnnparam_2_str);
     FILL_MAP_EX(attr_map, param, format, dnnparam_2_str);
 
-    return KernelGen::KernelPack::GetKernel(KernType::WarpPerspectiveKernel,
-                                            arch);
+    return KernelGen::KernelPack::GetKernel(KernType::WarpPerspectiveKernel, arch);
 }
 
 template <>
@@ -358,9 +347,8 @@ KernelGenRet opr_fill_attr<megdnn::WarpAffineForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::ReduceForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ReduceForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ReduceForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, axis);
@@ -372,9 +360,8 @@ KernelGenRet opr_fill_attr<megdnn::ReduceForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVResize>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVResize* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVResize* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
 
@@ -385,9 +372,8 @@ KernelGenRet opr_fill_attr<megdnn::CVResize>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::ResizeForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ResizeForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ResizeForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
 
@@ -398,9 +384,8 @@ KernelGenRet opr_fill_attr<megdnn::ResizeForward>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVRotate>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVRotate* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVRotate* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
 
@@ -410,9 +395,8 @@ KernelGenRet opr_fill_attr<megdnn::CVRotate>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::CVRoicopy>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::CVRoicopy* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVRoicopy* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, row_from);
@@ -434,18 +418,16 @@ KernelGenRet opr_fill_attr<megdnn::PowC>(
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::TypeCvtForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::TypeCvtForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::TypeCvtForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     return KernelGen::KernelPack::GetKernel(KernType::TypeCvtKernel, arch);
 }
 
 template <>
 KernelGenRet opr_fill_attr<megdnn::ArgmaxForward>(
-        std::unordered_map<std::string, CCAttr>& attr_map,
-        megdnn::ArgmaxForward* opr, const TensorNDArray& tensors,
-        KernelGen::Arch arch,
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::ArgmaxForward* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
         const std::unordered_map<std::string, CCAttr>& proxy_attr) {
     auto param = opr->param();
     FILL_MAP(attr_map, param, axis);

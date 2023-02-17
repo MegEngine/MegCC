@@ -5,18 +5,18 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
+#include "compiler/Target/Hako/hako_parse.h"
 #include <string.h>
 #include <fstream>
 #include <memory>
 #include "compiler/Common/Logger.h"
-#include "compiler/Target/Hako/hako_parse.h"
 #include "rc4/rc4_cryption_base.h"
 #include "rc4_cryption.h"
 using namespace megcc;
 
 //! used to check hash
-uint64_t get_model_hash(uint64_t expected_hash, std::ifstream& model_stream,
-                        size_t size) {
+uint64_t get_model_hash(
+        uint64_t expected_hash, std::ifstream& model_stream, size_t size) {
     constexpr size_t CHUNK_SIZE = 1024 * 16;
     std::unique_ptr<uint8_t[]> chunk{new uint8_t[CHUNK_SIZE]};
     rc4::FastHash64 hasher(rc4::key_gen_hash_key());
@@ -63,19 +63,19 @@ std::vector<uint8_t> find_prefix(std::vector<uint8_t> src, std::string prefix) {
     return res;
 }
 
-std::vector<uint8_t> megcc::parse_hako(const std::vector<uint8_t>& model_buffer,
-                                       int version) {
+std::vector<uint8_t> megcc::parse_hako(
+        const std::vector<uint8_t>& model_buffer, int version) {
     std::vector<uint8_t> result;
     if (version == 2) {
         //! Naive is used for version2, version 1 use sfrc4
-        result = NaiveEncrypt::decrypt_model(model_buffer.data(),
-                                             model_buffer.size(),
-                                             NaiveEncrypt::get_decrypt_key());
+        result = NaiveEncrypt::decrypt_model(
+                model_buffer.data(), model_buffer.size(),
+                NaiveEncrypt::get_decrypt_key());
     } else {
         CC_ASSERT(version == 1);
-        result = SimpleFastRC4::decrypt_model(model_buffer.data(),
-                                              model_buffer.size(),
-                                              SimpleFastRC4::get_decrypt_key());
+        result = SimpleFastRC4::decrypt_model(
+                model_buffer.data(), model_buffer.size(),
+                SimpleFastRC4::get_decrypt_key());
     }
     std::vector<std::string> valid_magic{"MGBC", "MGBS"};
     std::vector<uint8_t> mdl_result;

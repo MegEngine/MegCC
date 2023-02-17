@@ -25,8 +25,7 @@ public:
 
     struct Registry {
         Registry() {
-            symbol2kernelDef =
-                    std::make_shared<std::map<std::string, Operation*>>();
+            symbol2kernelDef = std::make_shared<std::map<std::string, Operation*>>();
             symbol2kernelFunc =
                     std::make_shared<std::map<std::string, const KernelFn*>>();
             symbol2deduceFunc =
@@ -34,27 +33,29 @@ public:
             symbol2InternalKernel =
                     std::make_shared<std::map<std::string, std::string>>();
         }
-        Registry(std::shared_ptr<std::map<std::string, Operation*>>
-                         symbol2kernelDefIn,
-                 std::shared_ptr<std::map<std::string, const KernelFn*>>
-                         symbol2kernelFuncIn,
-                 std::shared_ptr<std::map<std::string, std::string>>
-                         symbol2InternalKernelIn) {
+        Registry(
+                std::shared_ptr<std::map<std::string, Operation*>> symbol2kernelDefIn,
+                std::shared_ptr<std::map<std::string, const KernelFn*>>
+                        symbol2kernelFuncIn,
+                std::shared_ptr<std::map<std::string, std::string>>
+                        symbol2InternalKernelIn) {
             symbol2kernelDef = symbol2kernelDefIn;
             symbol2kernelFunc = symbol2kernelFuncIn;
             symbol2InternalKernel = symbol2InternalKernelIn;
         }
         template <typename OpTy>
-        Registry& create(const KernelFn* kernelFn, const DeduceFn* deduceFn,
-                         PrepareFn prepareFn = {}) {
+        Registry& create(
+                const KernelFn* kernelFn, const DeduceFn* deduceFn,
+                PrepareFn prepareFn = {}) {
             return create(
                     kernelFn, deduceFn,
                     [&](Operation* op) { return op && llvm::isa<OpTy>(op); },
                     prepareFn);
         }
 
-        Registry& create(const KernelFn* kernelFn, const DeduceFn* deduceFn,
-                         MatchFn matchFn, PrepareFn prepareFn = {}) {
+        Registry& create(
+                const KernelFn* kernelFn, const DeduceFn* deduceFn, MatchFn matchFn,
+                PrepareFn prepareFn = {}) {
             kernelTemplates.emplace_back(new RawCodeKernelTemplate(
                     this, kernelFn, matchFn, prepareFn, deduceFn));
             return *this;
@@ -70,12 +71,9 @@ public:
             return nullptr;
         }
         std::shared_ptr<std::map<std::string, Operation*>> symbol2kernelDef;
-        std::shared_ptr<std::map<std::string, const KernelFn*>>
-                symbol2kernelFunc;
-        std::shared_ptr<std::map<std::string, const DeduceFn*>>
-                symbol2deduceFunc;
-        std::shared_ptr<std::map<std::string, std::string>>
-                symbol2InternalKernel;
+        std::shared_ptr<std::map<std::string, const KernelFn*>> symbol2kernelFunc;
+        std::shared_ptr<std::map<std::string, const DeduceFn*>> symbol2deduceFunc;
+        std::shared_ptr<std::map<std::string, std::string>> symbol2InternalKernel;
 
     private:
         std::vector<std::unique_ptr<RawCodeKernelTemplate>> kernelTemplates;
@@ -83,9 +81,9 @@ public:
     };
 
 private:
-    RawCodeKernelTemplate(Registry* registry, const KernelFn* kernelFn,
-                          MatchFn matchFn, PrepareFn prepareFn,
-                          const DeduceFn* deduceFn)
+    RawCodeKernelTemplate(
+            Registry* registry, const KernelFn* kernelFn, MatchFn matchFn,
+            PrepareFn prepareFn, const DeduceFn* deduceFn)
             : owner(registry),
               kernelFunc(kernelFn),
               matchFunc(matchFn),
@@ -99,13 +97,13 @@ private:
     const DeduceFn* deduceFunc;
 
     // return null for instantiate failure
-    void instantiateInternalKernel(OpBuilder& builder,
-                                   megcc::TContext* context);
+    void instantiateInternalKernel(OpBuilder& builder, megcc::TContext* context);
 
 public:
     // return null for instantiate failure
-    Operation* instantiate(OpBuilder& builder, megcc::TContext* context,
-                           bool is_internal_func = false);
+    Operation* instantiate(
+            OpBuilder& builder, megcc::TContext* context,
+            bool is_internal_func = false);
 
     // perform early type checking on given operation
     bool match(Operation* op) { return matchFunc(op); }
@@ -124,15 +122,14 @@ class RawCodeKernelJIT {
 public:
     virtual ~RawCodeKernelJIT() = default;
     virtual size_t getWorkspace(Operation* op, megcc::TContext* ctx) const = 0;
-    static std::unique_ptr<RawCodeKernelJIT> make(
-            KernelTemplateRegistry* registry);
+    static std::unique_ptr<RawCodeKernelJIT> make(KernelTemplateRegistry* registry);
 
 protected:
     RawCodeKernelJIT() = default;
 };
 
-void addBuiltinTemplates(KernelTemplateRegistry& registry,
-                         megcc::KernelGen::Arch target_arch);
+void addBuiltinTemplates(
+        KernelTemplateRegistry& registry, megcc::KernelGen::Arch target_arch);
 
 }  // namespace Kernel
 }  // namespace mlir

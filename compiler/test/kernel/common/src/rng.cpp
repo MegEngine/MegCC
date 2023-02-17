@@ -25,9 +25,7 @@ public:
     static uint64_t max() { return std::numeric_limits<uint64_t>::max(); }
 #else
     static constexpr uint64_t min() { return 0; }
-    static constexpr uint64_t max() {
-        return std::numeric_limits<uint64_t>::max();
-    }
+    static constexpr uint64_t max() { return std::numeric_limits<uint64_t>::max(); }
 #endif
 
     template <typename T>
@@ -106,8 +104,9 @@ static void write_helper(const TensorND& tensor, std::function<float()> gen) {
             *iter = gen();
             ++iter;
         }
-    } else if (t_dtype.enumv() == DTypeEnum::Uint8 ||
-               t_dtype.enumv() == DTypeEnum::Quantized8Asymm) {
+    } else if (
+            t_dtype.enumv() == DTypeEnum::Uint8 ||
+            t_dtype.enumv() == DTypeEnum::Quantized8Asymm) {
         auto iter_tensor = tensor;
         iter_tensor.layout.dtype = dtype::Uint8();
         FastIter<uint8_t> iter(iter_tensor, tensor.layout.is_contiguous());
@@ -118,8 +117,9 @@ static void write_helper(const TensorND& tensor, std::function<float()> gen) {
             *iter = (uint8_t)val;
             ++iter;
         }
-    } else if (t_dtype.enumv() == DTypeEnum::Int8 ||
-               t_dtype.enumv() == DTypeEnum::QuantizedS8) {
+    } else if (
+            t_dtype.enumv() == DTypeEnum::Int8 ||
+            t_dtype.enumv() == DTypeEnum::QuantizedS8) {
         auto iter_tensor = tensor;
         iter_tensor.layout.dtype = dtype::Int8();
         FastIter<int8_t> iter(iter_tensor, tensor.layout.is_contiguous());
@@ -130,8 +130,9 @@ static void write_helper(const TensorND& tensor, std::function<float()> gen) {
             *iter = (int8_t)val;
             ++iter;
         }
-    } else if (t_dtype.enumv() == DTypeEnum::Int32 ||
-               t_dtype.enumv() == DTypeEnum::QuantizedS32) {
+    } else if (
+            t_dtype.enumv() == DTypeEnum::Int32 ||
+            t_dtype.enumv() == DTypeEnum::QuantizedS32) {
         auto iter_tensor = tensor;
         iter_tensor.layout.dtype = dtype::Int32();
         FastIter<int> iter(iter_tensor, tensor.layout.is_contiguous());
@@ -202,8 +203,7 @@ void megcc::test::UniformRNG::gen(const TensorND& tensor) {
             ptr[i] = m_dist(gen);
         }
     } else {
-        mgb_assert(0, "UniformRNG not support dtype %s",
-                   tensor.layout.dtype.name());
+        mgb_assert(0, "UniformRNG not support dtype %s", tensor.layout.dtype.name());
     }
 }
 
@@ -253,8 +253,8 @@ void InvertibleMatrixRNG::do_gen(ctype* ptr, size_t batch, size_t n) {
     for (size_t i = 0; i < batch; ++i, ptr += n * n) {
         for (size_t j = 0; j < n; ++j) {
             for (size_t k = 0; k < n; ++k) {
-                ptr[j * n + k] = static_cast<ctype>(
-                        gen() / (RNGxorshf::max() + 1.0) * 2 - 0.5);
+                ptr[j * n + k] =
+                        static_cast<ctype>(gen() / (RNGxorshf::max() + 1.0) * 2 - 0.5);
             }
         }
         for (size_t i = 0; i < n; ++i) {
@@ -267,20 +267,19 @@ void InvertibleMatrixRNG::do_gen(ctype* ptr, size_t batch, size_t n) {
 }
 
 void InvertibleMatrixRNG::gen(const megdnn::TensorND& tensor) {
-#define cb(DType)                                               \
-    if (tensor.layout.dtype == DType()) {                       \
-        using ctype = typename DTypeTrait<DType>::ctype;        \
-        auto ptr = tensor.ptr<ctype>();                         \
-        mgb_assert(tensor.layout.ndim >= 2 &&                   \
-                   tensor.layout.is_physical_contiguous());     \
-        size_t batch = 1;                                       \
-        for (size_t i = 0; i < tensor.layout.ndim - 2; ++i) {   \
-            batch *= tensor.layout[i];                          \
-        }                                                       \
-        size_t n = tensor.layout[tensor.layout.ndim - 1];       \
-        mgb_assert(n == tensor.layout[tensor.layout.ndim - 2]); \
-        do_gen<ctype>(ptr, batch, n);                           \
-        return;                                                 \
+#define cb(DType)                                                                      \
+    if (tensor.layout.dtype == DType()) {                                              \
+        using ctype = typename DTypeTrait<DType>::ctype;                               \
+        auto ptr = tensor.ptr<ctype>();                                                \
+        mgb_assert(tensor.layout.ndim >= 2 && tensor.layout.is_physical_contiguous()); \
+        size_t batch = 1;                                                              \
+        for (size_t i = 0; i < tensor.layout.ndim - 2; ++i) {                          \
+            batch *= tensor.layout[i];                                                 \
+        }                                                                              \
+        size_t n = tensor.layout[tensor.layout.ndim - 1];                              \
+        mgb_assert(n == tensor.layout[tensor.layout.ndim - 2]);                        \
+        do_gen<ctype>(ptr, batch, n);                                                  \
+        return;                                                                        \
     }
     MEGDNN_FOREACH_COMPUTING_DTYPE_FLOAT(cb)
 #undef cb

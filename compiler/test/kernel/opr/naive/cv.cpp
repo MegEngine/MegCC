@@ -122,8 +122,9 @@ TEST(NAIVE, CVWarpAffine) {
     CVWarpAffine::Param param;
     param.imode = InterpolationMode::LINEAR;
     for (auto fmt : {Format::NHWC})
-        for (auto bmode : {BorderMode::WRAP, BorderMode::REFLECT,
-                           BorderMode::REPLICATE, BorderMode::CONSTANT}) {
+        for (auto bmode :
+             {BorderMode::WRAP, BorderMode::REFLECT, BorderMode::REPLICATE,
+              BorderMode::CONSTANT}) {
             param.format = fmt;
             param.border_val = 5;
             param.border_mode = bmode;

@@ -66,8 +66,7 @@ static int register_loader(const MGBOprLoader* loader) {
 static int delete_loader(LoaderMapVec* lm, const char* name) {
     for (int i = 0; i < lm->size; ++i) {
         if (strcmp(lm->loader_map[i].loader.name, name) == 0) {
-            memmove(lm->loader_map + i, lm->loader_map + i + 1,
-                    lm->size - i - 1);
+            memmove(lm->loader_map + i, lm->loader_map + i + 1, lm->size - i - 1);
             --lm->size;
             return 1;
         }
@@ -79,8 +78,7 @@ static int unregister_loader(const char* name) {
     return delete_loader(&loader_maps, name);
 }
 
-static LoaderMap* find_loader_by_name(const LoaderMapVec* lm,
-                                      const char* name) {
+static LoaderMap* find_loader_by_name(const LoaderMapVec* lm, const char* name) {
     for (int i = 0; i < lm->size; ++i) {
         if (strcmp(lm->loader_map[i].loader.name, name) == 0) {
             return lm->loader_map + i;
@@ -100,8 +98,8 @@ static void free_loader_maps(LoaderMapVec* lm) {
 const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int version) {
     static MGBExternCOprApi api;
     api.unregister_loader = unregister_loader;
-    TINYNN_ASSERT_MSG(version >= 0x24,
-                      "Extern opr loader version must greater than 0x24.\n");
+    TINYNN_ASSERT_MSG(
+            version >= 0x24, "Extern opr loader version must greater than 0x24.\n");
 
     if (version != MGB_EXTERN_C_OPR_VERSION) {
         return NULL;
@@ -185,8 +183,7 @@ static void* dlsym(void* handle, const char* name) {
 
 static int has_set_env_and_loader = 0;
 
-static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
-                         VM* vm) {
+static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* vm) {
     ExternOpr* extern_opr = &inst->workload.extern_opr;
     DeviceModel* model = get_active_device_model(vm);
     ns(ExternOpr_table_t) fbs_extern_opr = (ns(ExternOpr_table_t))(fbs_inst);
@@ -201,8 +198,7 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
 
     flatbuffers_int32_vec_t fbs_outputs = ns(ExternOpr_output(fbs_extern_opr));
     extern_opr->nr_output = flatbuffers_int32_vec_len(fbs_outputs);
-    extern_opr->outputs =
-            tinynn_malloc(sizeof(Tensor*) * extern_opr->nr_output);
+    extern_opr->outputs = tinynn_malloc(sizeof(Tensor*) * extern_opr->nr_output);
     for (int i = 0; i < extern_opr->nr_output; ++i) {
         extern_opr->outputs[i] = model->tensors + fbs_outputs[i];
     }
@@ -241,9 +237,10 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
             value[value_len] = '\0';
             extra_data += value_len;
 
-            TINYNN_ASSERT_MSG((!setenv(env, value, 1)),
-                              "setenv failed.\n");  // 1 means overwrite when
-                                                    // 'env' does exist.
+            TINYNN_ASSERT_MSG(
+                    (!setenv(env, value, 1)),
+                    "setenv failed.\n");  // 1 means overwrite when
+                                          // 'env' does exist.
             LOG_DEBUG("Set ENV: %s=%s\n", env, value);
 
             tinynn_free(env);
@@ -266,8 +263,7 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
                 char* extend_loader_path = tinynn_malloc(loader_path_len + 3);
                 extend_loader_path[0] = '.';
                 extend_loader_path[1] = '/';
-                memcpy(extend_loader_path + 2, loader_path,
-                       loader_path_len + 1);
+                memcpy(extend_loader_path + 2, loader_path, loader_path_len + 1);
                 LOG_DEBUG(
                         "Load loader in path %s failed. Now try to load loader "
                         "in path %s.\n",
@@ -276,9 +272,10 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
                 tinynn_free(extend_loader_path);
             }
             tinynn_free(loader_path);
-            TINYNN_ASSERT_MSG(handle,
-                              "Load loader failed. Can NOT find loader file in "
-                              "given path.\n");
+            TINYNN_ASSERT_MSG(
+                    handle,
+                    "Load loader failed. Can NOT find loader file in "
+                    "given path.\n");
 
             size_t interface_len = *(size_t*)extra_data;
             extra_data += sizeof(size_t);
@@ -296,33 +293,27 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst,
 
     LoaderMap* loader_map = find_loader_by_name(&loader_maps, name);
     TINYNN_ASSERT_MSG(loader_map, "Wrong loader.\n");
-    extern_opr->desc = loader_map->loader.create_desc(extern_opr->nr_input,
-                                                      data, data_len);
+    extern_opr->desc =
+            loader_map->loader.create_desc(extern_opr->nr_input, data, data_len);
 
-    extern_opr->mgb_inputs =
-            tinynn_malloc(sizeof(MGBTensor) * extern_opr->nr_input);
+    extern_opr->mgb_inputs = tinynn_malloc(sizeof(MGBTensor) * extern_opr->nr_input);
     MGBTensorShape* inputs_shape =
             tinynn_malloc(sizeof(MGBTensorShape) * extern_opr->nr_input);
-    MGBDType* inputs_type =
-            tinynn_malloc(sizeof(MGBDType) * extern_opr->nr_input);
+    MGBDType* inputs_type = tinynn_malloc(sizeof(MGBDType) * extern_opr->nr_input);
     for (int i = 0; i < extern_opr->nr_input; ++i) {
         Tensor2MGBTensor(extern_opr->inputs[i], extern_opr->mgb_inputs + i);
         inputs_shape[i] = extern_opr->mgb_inputs[i].layout.shape;
         inputs_type[i] = extern_opr->mgb_inputs[i].layout.dtype;
     }
 
-    extern_opr->mgb_outputs =
-            tinynn_malloc(sizeof(MGBTensor) * extern_opr->nr_output);
+    extern_opr->mgb_outputs = tinynn_malloc(sizeof(MGBTensor) * extern_opr->nr_output);
     MGBTensorShape* outputs_shape =
             tinynn_malloc(sizeof(MGBTensorShape) * extern_opr->nr_output);
-    MGBDType* outputs_type =
-            tinynn_malloc(sizeof(MGBDType) * extern_opr->nr_output);
+    MGBDType* outputs_type = tinynn_malloc(sizeof(MGBDType) * extern_opr->nr_output);
 
-    extern_opr->desc->infer_shape(extern_opr->desc, inputs_shape,
-                                  outputs_shape);
+    extern_opr->desc->infer_shape(extern_opr->desc, inputs_shape, outputs_shape);
     if (extern_opr->desc->infer_dtype) {
-        extern_opr->desc->infer_dtype(extern_opr->desc, inputs_type,
-                                      outputs_type);
+        extern_opr->desc->infer_dtype(extern_opr->desc, inputs_type, outputs_type);
     } else {
         for (int i = 0; i < extern_opr->nr_output; ++i) {
             outputs_type[i] = inputs_type[0];
@@ -356,8 +347,8 @@ static TinyNNStatus execute(Instruction* inst, VM* vm) {
     for (int i = 0; i < extern_opr->nr_output; ++i) {
         extern_opr->mgb_outputs[i].data = extern_opr->outputs[i]->ptr;
     }
-    extern_opr->desc->execute(extern_opr->desc, extern_opr->mgb_inputs,
-                              extern_opr->mgb_outputs);
+    extern_opr->desc->execute(
+            extern_opr->desc, extern_opr->mgb_inputs, extern_opr->mgb_outputs);
     for (int i = 0; i < extern_opr->nr_output; ++i) {
         MGBTensor2Tensor(extern_opr->mgb_outputs + i, extern_opr->outputs[i]);
     }

@@ -26,11 +26,10 @@ public:
 
     ~StaticMemAllocImplHelper() noexcept;
 
-    size_t add(size_t begin, size_t end, size_t size,
-               UserKeyType key) override final;
+    size_t add(size_t begin, size_t end, size_t size, UserKeyType key) override final;
 
-    StaticMemAlloc& add_overwrite_spec(size_t iid_src, size_t iid_dest,
-                                       size_t offset) override final;
+    StaticMemAlloc& add_overwrite_spec(
+            size_t iid_src, size_t iid_dest, size_t offset) override final;
 
     size_t get_start_addr(UserKeyType key) const override final;
 
@@ -47,9 +46,7 @@ public:
         return *this;
     }
 
-    size_t tot_alloc_lower_bound() const override final {
-        return m_peak_lower_bound;
-    }
+    size_t tot_alloc_lower_bound() const override final { return m_peak_lower_bound; }
 
 protected:
     static constexpr size_t INVALID = -1;
@@ -138,9 +135,7 @@ public:
     /*!
      * \brief get offset of this interval in overwrite dest
      */
-    size_t offset_in_overwrite_dest() const {
-        return m_offset_in_overwrite_dest;
-    }
+    size_t offset_in_overwrite_dest() const { return m_offset_in_overwrite_dest; }
 
     /*!
      * \brief get offset of this interval in overwrite dest root

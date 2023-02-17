@@ -25,11 +25,10 @@ static float as_float(const ccuint x) {
 //! From:
 //! https://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion
 static float half_to_float(const uint16_t x) {
-    const ccuint e = (x & 0x7C00) >> 10;  // exponent
-    const ccuint m = (x & 0x03FF) << 13;  // mantissa
-    const ccuint v =
-            as_uint((float)m) >> 23;  // evil log2 bit hack to count leading
-                                      // zeros in denormalized format
+    const ccuint e = (x & 0x7C00) >> 10;       // exponent
+    const ccuint m = (x & 0x03FF) << 13;       // mantissa
+    const ccuint v = as_uint((float)m) >> 23;  // evil log2 bit hack to count leading
+                                               // zeros in denormalized format
     return as_float(
             (x & 0x8000) << 16 | (e != 0) * ((e + 112) << 23 | m) |
             ((e == 0) & (m != 0)) *
@@ -115,8 +114,8 @@ static DTypeParam dtype_param_from_fbs(ns(DType_table_t) fbs_dtype) {
     return param;
 }
 
-TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor,
-                          int tensor_id) {
+TinyNNStatus parse_tensor(
+        Tensor* tensor, ns(Tensor_table_t) fbs_tensor, int tensor_id) {
     //! dtype
     ns(DType_table_t) fbs_dtype = ns(Tensor_dtype(fbs_tensor));
     tensor->dtype.type_enum = dtype_from_fbs(ns(DType_type(fbs_dtype)));
@@ -136,9 +135,9 @@ TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor,
     tensor->is_dynamic = ns(Tensor_dynamic(fbs_tensor));
     //! offset
     tensor->offset = ns(Tensor_offset(fbs_tensor));
-    LOG_DEBUG("Tensor info: name=%s, use_count=%d, offset=%zu, is_dynamic=%d\n",
-              tensor->name, tensor->use_count, tensor->offset,
-              tensor->is_dynamic);
+    LOG_DEBUG(
+            "Tensor info: name=%s, use_count=%d, offset=%zu, is_dynamic=%d\n",
+            tensor->name, tensor->use_count, tensor->offset, tensor->is_dynamic);
     //! layout
     ns(Layout_table_t) fbs_layout = ns(Tensor_layout(fbs_tensor));
     flatbuffers_int32_vec_t fbs_dims = ns(Layout_dims(fbs_layout));
@@ -160,8 +159,8 @@ TinyNNStatus parse_tensor(Tensor* tensor, ns(Tensor_table_t) fbs_tensor,
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
-                          Device* host_dev) {
+TinyNNStatus parse_weight(
+        Tensor* weight, ns(Weight_table_t) fbs_weight, Device* host_dev) {
     //! dtype
     ns(DType_table_t) fbs_dtype = ns(Weight_dtype(fbs_weight));
     weight->dtype.type_enum = dtype_from_fbs(ns(DType_type(fbs_dtype)));
@@ -171,8 +170,7 @@ TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
     weight->name = get_string(ns(Weight_name(fbs_weight)));
     //! use_count
     weight->use_count = ns(Weight_use_count(fbs_weight));
-    LOG_DEBUG("weight info: name=%s, use_count=%d \n", weight->name,
-              weight->use_count);
+    LOG_DEBUG("weight info: name=%s, use_count=%d \n", weight->name, weight->use_count);
 
     ns(Layout_table_t) fbs_layout = ns(Weight_layout(fbs_weight));
     flatbuffers_int32_vec_t fbs_dims = ns(Layout_dims(fbs_layout));
@@ -193,15 +191,16 @@ TinyNNStatus parse_weight(Tensor* weight, ns(Weight_table_t) fbs_weight,
 
     flatbuffers_int8_vec_t data = ns(Weight_data(fbs_weight));
     size_t weight_length_in_byte = flatbuffers_int8_vec_len(data);
-    LOG_DEBUG("], format=%d, weight length=%zu\n", weight->layout.format,
-              weight_length_in_byte);
+    LOG_DEBUG(
+            "], format=%d, weight length=%zu\n", weight->layout.format,
+            weight_length_in_byte);
 
     //! check data length
     size_t length = tensor_length_in_byte(weight);
     int compressed = ns(Weight_compressed(fbs_weight));
     if (!compressed) {
-        TINYNN_ASSERT_MSG(length == weight_length_in_byte,
-                          "weight length error when parse.\n");
+        TINYNN_ASSERT_MSG(
+                length == weight_length_in_byte, "weight length error when parse.\n");
     } else {
         LOG_DEBUG("Model weights is compressed.\n");
     }
@@ -227,9 +226,8 @@ static int weight_ptr_compare(const void* item0, const void* item1) {
     }
 }
 
-static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
-                                               void* buffer,
-                                               int share_weights) {
+static TinyNNStatus alignment_or_alloc_weights(
+        CombineModel* model, void* buffer, int share_weights) {
     int nr_weight = model->nr_origin_weight;
     uintptr_t current_addr = (uintptr_t)buffer;
     Device* host_dev = &model->host_dev;
@@ -255,8 +253,8 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
         }
 
         void* origin_ptr = weight->ptr;
-        TINYNN_ASSERT_MSG(current_addr < (uintptr_t)origin_ptr,
-                          "weight pointer addr error.\n");
+        TINYNN_ASSERT_MSG(
+                current_addr < (uintptr_t)origin_ptr, "weight pointer addr error.\n");
         uintptr_t alignment_addr =
                 (uintptr_t)origin_ptr & (~((uintptr_t)alignment - 1));
         if (!share_weights || alignment_addr < current_addr || compressed) {
@@ -277,15 +275,17 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
                 }
             }
         } else {
-            uintptr_t more_fit_addr = (current_addr + alignment - 1) &
-                                      (~((uintptr_t)alignment - 1));
-            alignment_addr = alignment_addr > more_fit_addr ? more_fit_addr
-                                                            : alignment_addr;
+            uintptr_t more_fit_addr =
+                    (current_addr + alignment - 1) & (~((uintptr_t)alignment - 1));
+            alignment_addr =
+                    alignment_addr > more_fit_addr ? more_fit_addr : alignment_addr;
             if (alignment_addr != (uintptr_t)origin_ptr) {
-                LOG_DEBUG("align weight: %d from %p to %p\n", i, origin_ptr,
-                          (void*)alignment_addr);
-                TINYNN_ASSERT_MSG(alignment_addr < (uintptr_t)origin_ptr,
-                                  "Align Ptr must be ahead of origin ptr.");
+                LOG_DEBUG(
+                        "align weight: %d from %p to %p\n", i, origin_ptr,
+                        (void*)alignment_addr);
+                TINYNN_ASSERT_MSG(
+                        alignment_addr < (uintptr_t)origin_ptr,
+                        "Align Ptr must be ahead of origin ptr.");
                 memmove((void*)alignment_addr, origin_ptr, length);
                 weight->ptr = (void*)alignment_addr;
                 weight->is_shared = 1;
@@ -300,11 +300,11 @@ static TinyNNStatus alignment_or_alloc_weights(CombineModel* model,
     return TinyNN_SUCCESS;
 }
 
-TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
-                                ns(DeviceModel_table_t) fbs_device_model) {
+TinyNNStatus parse_device_model(
+        DeviceModel* model, CombineModel* c_model,
+        ns(DeviceModel_table_t) fbs_device_model) {
     //! parse tensor
-    ns(Tensor_vec_t) fbs_tensors =
-            ns(DeviceModel_tensor_pool(fbs_device_model));
+    ns(Tensor_vec_t) fbs_tensors = ns(DeviceModel_tensor_pool(fbs_device_model));
     int nr_tensor = ns(Tensor_vec_len(fbs_tensors));
     LOG_DEBUG("device model tensor number: %d\n", nr_tensor);
     model->nr_tensor = nr_tensor;
@@ -333,15 +333,14 @@ TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
         ns(Instruction_union_t) fbs_instruction_union =
                 ns(Instruction_union_vec_at(fbs_instructions_union, i));
         Instruction* inst = model->instructions + i;
-        if (vm_instruction_load((VM*)(c_model->vm), fbs_instruction_union,
-                                inst) != TinyNN_SUCCESS) {
+        if (vm_instruction_load((VM*)(c_model->vm), fbs_instruction_union, inst) !=
+            TinyNN_SUCCESS) {
             goto exit;
         }
     }
 
     //! inputs
-    flatbuffers_int32_vec_t fbs_inputs =
-            ns(DeviceModel_inputs(fbs_device_model));
+    flatbuffers_int32_vec_t fbs_inputs = ns(DeviceModel_inputs(fbs_device_model));
     model->nr_input = flatbuffers_int32_vec_len(fbs_inputs);
     model->inputs = tinynn_malloc(model->nr_input * sizeof(Tensor*));
     memset(model->inputs, 0, model->nr_input * sizeof(Tensor*));
@@ -350,8 +349,7 @@ TinyNNStatus parse_device_model(DeviceModel* model, CombineModel* c_model,
         *(model->inputs + i) = model->tensors + index;
     }
     //! outputs
-    flatbuffers_int32_vec_t fbs_outputs =
-            ns(DeviceModel_outputs(fbs_device_model));
+    flatbuffers_int32_vec_t fbs_outputs = ns(DeviceModel_outputs(fbs_device_model));
     model->nr_output = flatbuffers_int32_vec_len(fbs_outputs);
     model->outputs = tinynn_malloc(model->nr_output * sizeof(Tensor*));
     memset(model->outputs, 0, model->nr_output * sizeof(Tensor*));
@@ -401,8 +399,8 @@ static inline bool valid_device_check(TinyNNDevice device) {
 }
 
 //! all resource are allocate here
-TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
-                         int share_weights) {
+TinyNNStatus parse_model(
+        void* buffer, size_t size, CombineModel* model, int share_weights) {
     load_kernel_init_function();
     ns(Model_table_t) fbs_model;
     if (!(fbs_model = ns(Model_as_root(buffer)))) {
@@ -420,8 +418,9 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
     model->name = get_string(MegCC_Model_name(fbs_model));
     model->model_id = ns(Model_model_id(fbs_model));
     model->const_shape = ns(Model_const_shape(fbs_model));
-    LOG_DEBUG("log model: %s, model id: %zu, const shape: %d\n", model->name,
-              model->model_id, model->const_shape);
+    LOG_DEBUG(
+            "log model: %s, model id: %zu, const shape: %d\n", model->name,
+            model->model_id, model->const_shape);
     //! host device used to alloc weight
     memset(&(model->host_dev), 0, sizeof(Device));
     model->host_dev.device_type = TinyNN_BARE_METAL;
@@ -438,16 +437,14 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
         LOG_DEBUG("parse weight id: %d\n", i);
         ns(Weight_table_t) fbs_weight = ns(Weight_vec_at(fbs_weights, i));
         Tensor* weight = model->weights + i;
-        if (parse_weight(weight, fbs_weight, &(model->host_dev)) !=
-            TinyNN_SUCCESS) {
+        if (parse_weight(weight, fbs_weight, &(model->host_dev)) != TinyNN_SUCCESS) {
             LOG_ERROR("parse weight error!\n");
             goto exit;
         }
     }
 
     //! parse device model
-    ns(DeviceModel_vec_t) fbs_device_models =
-            ns(Model_device_models(fbs_model));
+    ns(DeviceModel_vec_t) fbs_device_models = ns(Model_device_models(fbs_model));
     int nr_model = ns(DeviceModel_vec_len(fbs_device_models));
     int nr_valid_device_model = 0;
     {
@@ -456,32 +453,30 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
         for (int i = 0; i < nr_model; i++) {
             ns(DeviceModel_table_t) fbs_device_model =
                     ns(DeviceModel_vec_at(fbs_device_models, i));
-            ns(Device_enum_t) fbs_device =
-                    ns(DeviceModel_device(fbs_device_model));
+            ns(Device_enum_t) fbs_device = ns(DeviceModel_device(fbs_device_model));
             TinyNNDevice device_enum = device_from_fbs(fbs_device);
             if (!valid_device_check(device_enum)) {
                 continue;
             }
             nr_valid_device_model++;
-            size_t tensor_size =
-                    ns(DeviceModel_tensor_memory(fbs_device_model));
-            max_tensor_size = max_tensor_size < tensor_size ? tensor_size
-                                                            : max_tensor_size;
+            size_t tensor_size = ns(DeviceModel_tensor_memory(fbs_device_model));
+            max_tensor_size =
+                    max_tensor_size < tensor_size ? tensor_size : max_tensor_size;
         }
         model->max_tensor_memroy = tinynn_malloc(sizeof(Memory));
         model->max_tensor_memroy->length_in_byte = max_tensor_size;
         model->max_tensor_memroy->ptr = NULL;
         model->is_own_tensor_memory = 1;
-        LOG_DEBUG("max_tensor_memroy number %zu.\n",
-                  model->max_tensor_memroy->length_in_byte);
+        LOG_DEBUG(
+                "max_tensor_memroy number %zu.\n",
+                model->max_tensor_memroy->length_in_byte);
     }
-    LOG_DEBUG("device model number: %d, valid device model %d\n", nr_model,
-              nr_valid_device_model);
-    model->device_models =
-            tinynn_malloc(sizeof(DeviceModel*) * nr_valid_device_model);
+    LOG_DEBUG(
+            "device model number: %d, valid device model %d\n", nr_model,
+            nr_valid_device_model);
+    model->device_models = tinynn_malloc(sizeof(DeviceModel*) * nr_valid_device_model);
     model->nr_device_model = nr_valid_device_model;
-    memset(model->device_models, 0,
-           sizeof(DeviceModel*) * nr_valid_device_model);
+    memset(model->device_models, 0, sizeof(DeviceModel*) * nr_valid_device_model);
 
     for (int i = 0, valid_model_idx = 0; i < nr_model; i++) {
         ns(DeviceModel_table_t) fbs_device_model =
@@ -492,8 +487,9 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
             continue;
         }
         DeviceModel* dev_model = tinynn_malloc(sizeof(DeviceModel));
-        LOG_DEBUG("parse device model %d device is %d with %d\n", i,
-                  device_enum, dev_model->device.device_type);
+        LOG_DEBUG(
+                "parse device model %d device is %d with %d\n", i, device_enum,
+                dev_model->device.device_type);
         memset(dev_model, 0, sizeof(DeviceModel));
         model->device_models[valid_model_idx] = dev_model;
         model->active_device_model_idx = valid_model_idx;
@@ -503,8 +499,7 @@ TinyNNStatus parse_model(void* buffer, size_t size, CombineModel* model,
             goto exit;
         }
         dev_model->opt = create_runtime_opt(&dev_model->device);
-        if (parse_device_model(dev_model, model, fbs_device_model) !=
-            TinyNN_SUCCESS) {
+        if (parse_device_model(dev_model, model, fbs_device_model) != TinyNN_SUCCESS) {
             LOG_ERROR("parse device model error!\n");
             goto exit;
         }

@@ -38,28 +38,30 @@ extern LiteLogLevel g_log_level;
         __tinynn_log__("TinyNN DEBUG:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                        \
     }
-#define LOG_DEBUG_NO_PREFIX(msg...)  \
-    if (DEBUG >= g_log_level) {      \
-        __tinynn_log__(msg);         \
+#define LOG_DEBUG_NO_PREFIX(msg...) \
+    if (DEBUG >= g_log_level) {     \
+        __tinynn_log__(msg);        \
     }
 
-#define TINYNN_ASSERT(exp)                                                   \
-    do {                                                                     \
-        if (!(exp)) {                                                        \
-            __tinynn_log__("TinyNN ASSERT failed:%s location:%s@%d\n", #exp, \
-                           __func__, __LINE__);                              \
-            tinynn_trap();                                                   \
-        }                                                                    \
+#define TINYNN_ASSERT(exp)                                                      \
+    do {                                                                        \
+        if (!(exp)) {                                                           \
+            __tinynn_log__(                                                     \
+                    "TinyNN ASSERT failed:%s location:%s@%d\n", #exp, __func__, \
+                    __LINE__);                                                  \
+            tinynn_trap();                                                      \
+        }                                                                       \
     } while (0)
 
-#define TINYNN_ASSERT_MSG(exp, msg...)                                       \
-    do {                                                                     \
-        if (!(exp)) {                                                        \
-            __tinynn_log__("TinyNN ASSERT failed:%s location:%s@%d: ", #exp, \
-                           __func__, __LINE__);                              \
-            __tinynn_log__("%s\n", msg);                                     \
-            tinynn_trap();                                                   \
-        }                                                                    \
+#define TINYNN_ASSERT_MSG(exp, msg...)                                          \
+    do {                                                                        \
+        if (!(exp)) {                                                           \
+            __tinynn_log__(                                                     \
+                    "TinyNN ASSERT failed:%s location:%s@%d: ", #exp, __func__, \
+                    __LINE__);                                                  \
+            __tinynn_log__("%s\n", msg);                                        \
+            tinynn_trap();                                                      \
+        }                                                                       \
     } while (0)
 
 /**

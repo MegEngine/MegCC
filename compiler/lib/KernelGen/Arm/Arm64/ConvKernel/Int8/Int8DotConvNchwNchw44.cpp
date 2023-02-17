@@ -23,8 +23,7 @@ bool ConvDotNCHWNCHW44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
             ctx->getAttrUInt("kernel_h") == ctx->getAttrUInt("kernel_w") &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_w") == 2 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_w") == 2 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
                          ctx->getAttrStr("format") == "NCHW44_DOT" &&
@@ -37,8 +36,7 @@ bool ConvDotNCHWNCHW44::IsAvailable(TContext* ctx) const {
     bool layout_ok =
             ctx->getAttrOprand("operand:0").shape.size() == 4 &&
             ctx->getAttrOprand(
-                       "operand:" +
-                       std::to_string(ctx->getAttrInt("nr_operands") - 1))
+                       "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1))
                             .shape.size() == 5;
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
@@ -49,8 +47,7 @@ std::string ConvDotNCHWNCHW44::GetKernelSymbol(TContext* ctx) const {
     auto dst_tensor = ctx->getAttrOprand(
             "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1));
     uint32_t oc = dst_tensor.shape[1] * 4;
-    std::string name_temp =
-            "${base_kernel_sym}_dot_nchw_nchw44_oc${oc}_ic${ic}";
+    std::string name_temp = "${base_kernel_sym}_dot_nchw_nchw44_oc${oc}_ic${ic}";
     return StringTemplate::StringTemplateArgs(ctx)
             .add("base_kernel_sym", Arm64ConvImpl::GetKernelSymbol(ctx))
             .add("oc", oc)
@@ -185,17 +182,18 @@ std::string render_init(int c_idx, int nr_ow, bool with_bias) {
     std::stringstream ss;
     for (int src_idx = 0; src_idx < nr_ow; ++src_idx) {
         if (with_bias) {
-            ss << "c[" << c_idx << "][" << src_idx
-               << "] = vld1q_s32(bias_ptr + " << c_idx << " * 4);";
+            ss << "c[" << c_idx << "][" << src_idx << "] = vld1q_s32(bias_ptr + "
+               << c_idx << " * 4);";
         } else {
             ss << "c[" << c_idx << "][" << src_idx << "] = vdupq_n_s32(0);";
         }
     }
     return ss.str();
 }
-std::string render_core(int src_reg_size, int filter_reg_size, int filter_size,
-                        bool is_big_oc, int ld_weight_fw, int ld_weight_oc,
-                        int simd_len, int nr_ow, int stride, bool remain_n) {
+std::string render_core(
+        int src_reg_size, int filter_reg_size, int filter_size, bool is_big_oc,
+        int ld_weight_fw, int ld_weight_oc, int simd_len, int nr_ow, int stride,
+        bool remain_n) {
     using Rendor = StringTemplate::StringTemplateArgs;
     std::stringstream fw_ss;
     if (remain_n) {
@@ -207,18 +205,18 @@ std::string render_core(int src_reg_size, int filter_reg_size, int filter_size,
     } else {
         for (int src_idx = 0; src_idx < src_reg_size; ++src_idx) {
             fw_ss << "src[0][" << src_idx
-                  << "] = vld1q_s8(src_ptr + ${fh_idx} * packed_iw + "
-                  << src_idx << "* ${simd_len});\n";
+                  << "] = vld1q_s8(src_ptr + ${fh_idx} * packed_iw + " << src_idx
+                  << "* ${simd_len});\n";
             fw_ss << "src[1][" << src_idx
-                  << "] = vld1q_s8(src_ptr + ${fh_idx} * packed_iw + "
-                  << src_idx << "* ${simd_len} + 2);\n";
+                  << "] = vld1q_s8(src_ptr + ${fh_idx} * packed_iw + " << src_idx
+                  << "* ${simd_len} + 2);\n";
         }
     }
 
     for (int fw_idx = 0; fw_idx < filter_reg_size; ++fw_idx) {
         fw_ss << "weight[0][" << fw_idx
-              << "] = vld1q_s8(filter_ptr + ${fh_idx} * ${ld_weight_fw} + "
-              << fw_idx << " * ${simd_len});\n";
+              << "] = vld1q_s8(filter_ptr + ${fh_idx} * ${ld_weight_fw} + " << fw_idx
+              << " * ${simd_len});\n";
     }
     if (is_big_oc) {
         for (int fw_idx = 0; fw_idx < filter_reg_size; ++fw_idx) {
@@ -232,25 +230,23 @@ std::string render_core(int src_reg_size, int filter_reg_size, int filter_size,
         auto src_idx = fw_idx;
         auto weight_idx = fw_idx;
         for (int i = 0; i < nr_ow / 2; ++i) {
-            fw_ss << "c[0][" << (i * 2) << "] = vdotq_laneq_s32(c[0]["
-                  << (i * 2) << "], weight[0][" << weight_idx << "],  src[0][("
-                  << i << " + " << src_idx << ") / 4], (" << i << " + "
-                  << src_idx << ") % 4);\n";
+            fw_ss << "c[0][" << (i * 2) << "] = vdotq_laneq_s32(c[0][" << (i * 2)
+                  << "], weight[0][" << weight_idx << "],  src[0][(" << i << " + "
+                  << src_idx << ") / 4], (" << i << " + " << src_idx << ") % 4);\n";
             if (is_big_oc) {
-                fw_ss << "c[1][" << (i * 2) << "] = vdotq_laneq_s32(c[1]["
-                      << (i * 2) << "], weight[1][" << weight_idx
-                      << "],  src[0][(" << i << " + " << src_idx << ") / 4], ("
-                      << i << " + " << src_idx << ") % 4);\n";
+                fw_ss << "c[1][" << (i * 2) << "] = vdotq_laneq_s32(c[1][" << (i * 2)
+                      << "], weight[1][" << weight_idx << "],  src[0][(" << i << " + "
+                      << src_idx << ") / 4], (" << i << " + " << src_idx << ") % 4);\n";
             }
             fw_ss << "c[0][" << (i * 2 + 1) << "] = vdotq_laneq_s32(c[0]["
-                  << (i * 2 + 1) << "], weight[0][" << weight_idx
-                  << "],  src[1][(" << i << " + " << src_idx << ") / 4], (" << i
-                  << " + " << src_idx << ") % 4);\n";
+                  << (i * 2 + 1) << "], weight[0][" << weight_idx << "],  src[1][(" << i
+                  << " + " << src_idx << ") / 4], (" << i << " + " << src_idx
+                  << ") % 4);\n";
             if (is_big_oc) {
                 fw_ss << "c[1][" << (i * 2 + 1) << "] = vdotq_laneq_s32(c[1]["
-                      << (i * 2 + 1) << "], weight[1][" << weight_idx
-                      << "],  src[1][(" << i << " + " << src_idx << ") / 4], ("
-                      << i << " + " << src_idx << ") % 4);\n";
+                      << (i * 2 + 1) << "], weight[1][" << weight_idx << "],  src[1][("
+                      << i << " + " << src_idx << ") / 4], (" << i << " + " << src_idx
+                      << ") % 4);\n";
             }
         }
     }
@@ -266,16 +262,15 @@ std::string render_core(int src_reg_size, int filter_reg_size, int filter_size,
     }
     return res_ss.str();
 }
-std::string render_store(int nr_ow, int c_idx, const std::string& store_offset,
-                         const ActivationGenIntrinsicBase& act) {
+std::string render_store(
+        int nr_ow, int c_idx, const std::string& store_offset,
+        const ActivationGenIntrinsicBase& act) {
     std::stringstream ss;
     for (int ow_idx = 0; ow_idx < nr_ow; ++ow_idx) {
-        ss << act.GenIntrinsicQuantStore("c[" + std::to_string(c_idx) + "][" +
-                                                 std::to_string(ow_idx) + "]",
-                                         "dst_ptr + " + store_offset + " + " +
-                                                 std::to_string(ow_idx) +
-                                                 " * 4",
-                                         "scale");
+        ss << act.GenIntrinsicQuantStore(
+                "c[" + std::to_string(c_idx) + "][" + std::to_string(ow_idx) + "]",
+                "dst_ptr + " + store_offset + " + " + std::to_string(ow_idx) + " * 4",
+                "scale");
     }
     return ss.str();
 }
@@ -300,15 +295,14 @@ std::string render_kernel(TContext* ctx) {
     int filter_size = ctx->getAttrUInt("kernel_h");
     int stride = ctx->getAttrUInt("stride_h");
     constexpr int ow_step = 8;
-    const int ld_weight_oc = packed_oc * filter_size *
-                             Utils::round_up(filter_size, packed_fw) * ic;
+    const int ld_weight_oc =
+            packed_oc * filter_size * Utils::round_up(filter_size, packed_fw) * ic;
     const int ld_weight_ic =
             packed_oc * filter_size * Utils::round_up(filter_size, packed_fw);
     const int src_reg_size =
             ((ow_step)*stride + filter_size - stride + simd_len - 1) / simd_len;
     const int flt_reg_size = Utils::round_up(filter_size, 4) / 4;
-    const int ld_weight_fw =
-            packed_oc * Utils::round_up(filter_size, packed_fw);
+    const int ld_weight_fw = packed_oc * Utils::round_up(filter_size, packed_fw);
     bool with_bias = ConvImpl::is_bias(ctx);
 
     auto kernel_render = StringTemplate::StringTemplateArgs(ctx);
@@ -329,8 +323,7 @@ std::string render_kernel(TContext* ctx) {
             .add("flt_reg_size", flt_reg_size)
             .add("activate_init",
                  [=](std::vector<std::string> args) {
-                     CC_ASSERT(args.size() == 0)
-                             << "args size = " << args.size();
+                     CC_ASSERT(args.size() == 0) << "args size = " << args.size();
 
                      auto str = activate_gen->GenIntrinsicInitFloat();
                      return str;
@@ -342,21 +335,20 @@ std::string render_kernel(TContext* ctx) {
                  })
             .add("render_core",
                  [=]() {
-                     return render_core(src_reg_size, flt_reg_size, filter_size,
-                                        true, ld_weight_fw, ld_weight_oc,
-                                        simd_len, ow_step, stride, false);
+                     return render_core(
+                             src_reg_size, flt_reg_size, filter_size, true,
+                             ld_weight_fw, ld_weight_oc, simd_len, ow_step, stride,
+                             false);
                  })
             .add("render_store",
-                 [=](const std::string& cidx_str,
-                     const std::string& store_offset) {
+                 [=](const std::string& cidx_str, const std::string& store_offset) {
                      int c_idx = std::atoi(cidx_str.c_str());
-                     return render_store(ow_step, c_idx, store_offset,
-                                         *activate_gen);
+                     return render_store(ow_step, c_idx, store_offset, *activate_gen);
                  })
             .add("activate", [=](std::vector<std::string> args) {
                 CC_ASSERT(args.size() == 2) << "args size = " << args.size();
-                auto str = activate_gen->GenIntrinsicQuantStore(
-                        args[0], args[1], "scale");
+                auto str =
+                        activate_gen->GenIntrinsicQuantStore(args[0], args[1], "scale");
                 return str;
             });
     std::string kernel_temp = R"(  
@@ -423,10 +415,10 @@ std::string render_kernel(TContext* ctx) {
     ss << kernel_render
                     .add("render_core",
                          [=]() {
-                             return render_core(src_reg_size, flt_reg_size,
-                                                filter_size, true, ld_weight_fw,
-                                                ld_weight_oc, simd_len, ow_step,
-                                                stride, true);
+                             return render_core(
+                                     src_reg_size, flt_reg_size, filter_size, true,
+                                     ld_weight_fw, ld_weight_oc, simd_len, ow_step,
+                                     stride, true);
                          })
                     .render(kernel_remain_temp);
 
@@ -461,9 +453,9 @@ std::string render_kernel(TContext* ctx) {
                     .add("render_core",
                          [=]() {
                              return render_core(
-                                     src_reg_size, flt_reg_size, filter_size,
-                                     false, ld_weight_fw, ld_weight_oc,
-                                     simd_len, ow_step, stride, false);
+                                     src_reg_size, flt_reg_size, filter_size, false,
+                                     ld_weight_fw, ld_weight_oc, simd_len, ow_step,
+                                     stride, false);
                          })
                     .render(small_oc_kernel_temp);
 
@@ -504,9 +496,9 @@ std::string render_kernel(TContext* ctx) {
                     .add("render_core",
                          [=]() {
                              return render_core(
-                                     src_reg_size, flt_reg_size, filter_size,
-                                     false, ld_weight_fw, ld_weight_oc,
-                                     simd_len, ow_step, stride, true);
+                                     src_reg_size, flt_reg_size, filter_size, false,
+                                     ld_weight_fw, ld_weight_oc, simd_len, ow_step,
+                                     stride, true);
                          })
                     .render(small_oc_kernel_remain_temp);
 

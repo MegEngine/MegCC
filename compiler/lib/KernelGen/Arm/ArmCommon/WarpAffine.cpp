@@ -7,11 +7,11 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "WarpAffine.h"
 #include <cmath>
 #include "../../Utils/StringTemplate.h"
 #include "../../Utils/Utils.h"
 #include "Common/CVRemapTable.h"
-#include "WarpAffine.h"
 #include "compiler/Common/Logger.h"
 using namespace megcc;
 using namespace KernelGen;
@@ -29,15 +29,13 @@ bool WarpAffineKernel::IsAvailable(TContext* ctx) const {
     if (is_u8 && is_nhwc && bmode == "CONSTANT") {
         float border_val = ctx->getAttrFloat("border_val");
         CC_ASSERT(std::abs(std::round(border_val) - border_val) < 1e-5)
-                << "u8 const only support int as border_val not " << border_val
-                << "\n";
+                << "u8 const only support int as border_val not " << border_val << "\n";
     }
     CC_ASSERT(nr_operands == 3);
 
-    bool dtype_valid =
-            ((src_layout.dtype == "f32" && dst_layout.dtype == "f32") ||
-             (src_layout.dtype == "ui8" && dst_layout.dtype == "ui8")) &&
-            mat_layout.dtype == "f32";
+    bool dtype_valid = ((src_layout.dtype == "f32" && dst_layout.dtype == "f32") ||
+                        (src_layout.dtype == "ui8" && dst_layout.dtype == "ui8")) &&
+                       mat_layout.dtype == "f32";
     return dtype_valid;
 }
 //! kernel gen
@@ -113,9 +111,9 @@ std::string gen_get_real_coord(const std::string& bmode) {
             .render(body_temp);
 }
 
-std::string gen_visit(const std::string& bmode, float border_val,
-                      const std::string& dtype_c_str,
-                      const std::string& dtype) {
+std::string gen_visit(
+        const std::string& bmode, float border_val, const std::string& dtype_c_str,
+        const std::string& dtype) {
     std::stringstream temp_body;
     if (bmode != "CONSTANT") {
         temp_body << R"(
@@ -543,8 +541,7 @@ std::string to_lower_case(std::string data) {
     return data;
 }
 }  // namespace
-std::vector<KernelObj> WarpAffineKernel::GetDependInternalSymbol(
-        TContext* ctx) const {
+std::vector<KernelObj> WarpAffineKernel::GetDependInternalSymbol(TContext* ctx) const {
     Common::CVRemapTableKernel remap_table;
     auto format = ctx->getAttrStr("format");
     auto dtype_str = ctx->getAttrOprand("operand:0").dtype;
@@ -552,10 +549,9 @@ std::vector<KernelObj> WarpAffineKernel::GetDependInternalSymbol(
     bool is_u8 = dtype_str == "ui8";
     bool is_nhwc_u8 = is_nhwc && is_u8;
     if (is_nhwc_u8) {
-        return {{remap_table.GetKernelSymbol(ctx),
-                 remap_table.GetKernelBody(ctx),
-                 remap_table.GetBodyGuardBegin(ctx),
-                 remap_table.GetBodyGuardEnd(ctx),
+        return {
+                {remap_table.GetKernelSymbol(ctx), remap_table.GetKernelBody(ctx),
+                 remap_table.GetBodyGuardBegin(ctx), remap_table.GetBodyGuardEnd(ctx),
                  remap_table.GetDependInternalSymbol(ctx)}};
     } else {
         return {};
@@ -736,8 +732,7 @@ bool WarpAffineKernel::IsCVAvailable(TContext* context) const {
     if (is_u8 && is_nhwc && bmode == "CONSTANT") {
         float border_val = context->getAttrFloat("border_val");
         CC_ASSERT(std::abs(std::round(border_val) - border_val) < 1e-5)
-                << "u8 const only support int as border_val not " << border_val
-                << "\n";
+                << "u8 const only support int as border_val not " << border_val << "\n";
     }
     return dtype_ok && mode_ok;
 }
@@ -746,16 +741,14 @@ std::string WarpAffineKernel::GetCVKernelSubSymbol(TContext* context) const {
     std::stringstream ss;
     auto bmode = context->getAttrStr("border_mode");
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    ss << "tinycv_warp_affine_" << to_lower_case(bmode) << "_linear_"
-       << src_dtype;
+    ss << "tinycv_warp_affine_" << to_lower_case(bmode) << "_linear_" << src_dtype;
     return ss.str();
 }
 
 std::string WarpAffineKernel::GetCVKernelSignature(TContext* context) const {
     auto bmode = context->getAttrStr("border_mode");
     bool is_const_bmode = bmode == "CONSTANT";
-    std::string const_bmode_arg =
-            is_const_bmode ? ", uint8_t const_board_val" : "";
+    std::string const_bmode_arg = is_const_bmode ? ", uint8_t const_board_val" : "";
     return GetCVKernelSymbol(context) +
            "(const TinyMat* src, const TinyMat* dst, const double* trans" +
            const_bmode_arg + ")";

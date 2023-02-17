@@ -6,9 +6,9 @@
  *
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
+#include "Utils.h"
 #include <cstdarg>
 #include <string>
-#include "Utils.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -140,8 +140,7 @@ static inline int min(int a, int b){
     return "";
 }
 
-std::vector<std::string> Utils::split_string(const std::string& s,
-                                             const char delim) {
+std::vector<std::string> Utils::split_string(const std::string& s, const char delim) {
     std::istringstream iss(s);
     std::string item;
     std::vector<std::string> result;

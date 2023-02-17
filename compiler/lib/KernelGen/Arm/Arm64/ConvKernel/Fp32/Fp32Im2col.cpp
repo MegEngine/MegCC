@@ -10,8 +10,8 @@
 #include <string>
 #include "Arm/Arm64/Activation.h"
 #include "Arm/Arm64/ConvKernel.h"
-#include "Arm/ArmCommon/Im2colHelper.h"
 #include "Arm/Arm64/InternalKernel/InternalKernel.h"
+#include "Arm/ArmCommon/Im2colHelper.h"
 #include "compiler/KernelGen/KernelGen.h"
 
 using namespace megcc;
@@ -69,8 +69,7 @@ std::string ConvIm2colFloat::GetKernelSymbol(TContext* ctx) const {
     if (is_bias(ctx)) {
         extra_ss << "_bias";
     }
-    if (ctx->haveAttr("nonlineMode") &&
-        ctx->getAttrStr("nonlineMode") != "IDENTITY") {
+    if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         extra_ss << "_" << ctx->getAttrStr("nonlineMode");
     }
     extra_ss << ctx->getAttrOprand("operand:0").dtype;
@@ -96,10 +95,9 @@ std::string ConvIm2colFloat::GetKernelSymbol(TContext* ctx) const {
 bool ConvIm2colFloat::IsAvailable(TContext* ctx) const {
     auto fmt = ctx->getAttrStr("format");
     int nr_operands = ctx->getAttrInt("nr_operands");
-    std::string dst_oprands =
-            std::string("operand:") + std::to_string(nr_operands - 1);
-    bool param_value_ok = ctx->getAttrUInt("dilate_h") == 1 &&
-                          ctx->getAttrUInt("dilate_w") == 1;
+    std::string dst_oprands = std::string("operand:") + std::to_string(nr_operands - 1);
+    bool param_value_ok =
+            ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
     bool param_mode_ok = (fmt == "NCHW44" || fmt == "NCHW") &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
     bool noline_ok = !ctx->haveAttr("nonlineMode") ||
@@ -107,8 +105,7 @@ bool ConvIm2colFloat::IsAvailable(TContext* ctx) const {
                      ctx->getAttrStr("nonlineMode") == "RELU" ||
                      ctx->getAttrStr("nonlineMode") == "SIGMOID" ||
                      ctx->getAttrStr("nonlineMode") == "H_SWISH";
-    bool type_ok = nr_operands >= 3 &&
-                   ctx->getAttrOprand("operand:0").dtype == "f32" &&
+    bool type_ok = nr_operands >= 3 && ctx->getAttrOprand("operand:0").dtype == "f32" &&
                    ctx->getAttrOprand("operand:1").dtype == "f32" &&
                    ctx->getAttrOprand("operand:2").dtype == "f32";
     bool layout_ok = ctx->getAttrOprand("operand:0").shape.size() == 4 &&
@@ -168,8 +165,7 @@ std::string ConvIm2colFloat::GetInitBody(TContext* ctx) const {
                       )";
     const std::string fill_weight_transform =
             StringTemplate::StringTemplateArgs()
-                    .add("packa_sym",
-                         inner_gemm->GetPackASymbol(inner_ctx.get()))
+                    .add("packa_sym", inner_gemm->GetPackASymbol(inner_ctx.get()))
                     .render(
                             R"(    
         float* outptr = out_weights->ptr;
@@ -197,8 +193,7 @@ MatmulInternal* ConvIm2colFloat::GetInnerCtxMatmul(TContext* ctx) const {
     }
 }
 
-std::string ConvIm2colFloat::GetWorkspaceBodyCondition(TContext* ctx,
-                                                       bool jit) const {
+std::string ConvIm2colFloat::GetWorkspaceBodyCondition(TContext* ctx, bool jit) const {
     std::stringstream ss;
     auto inner_ctx = GetInnerCtx(ctx);
     auto inner_gemm = GetInnerCtxMatmul(ctx);
@@ -207,8 +202,8 @@ std::string ConvIm2colFloat::GetWorkspaceBodyCondition(TContext* ctx,
     if (jit) {
         ss << inner_gemm->GetPackBWorkspaceBody(inner_ctx.get()) << ";\n";
     } else {
-        ss << "extern "
-           << inner_gemm->GetPackBWorkspaceSignature(inner_ctx.get()) << ";\n";
+        ss << "extern " << inner_gemm->GetPackBWorkspaceSignature(inner_ctx.get())
+           << ";\n";
     }
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
     std::string workspace_temp =
@@ -256,11 +251,11 @@ std::string ConvIm2colFloat::GetWorkspaceBodyCondition(TContext* ctx,
     return ss.str();
 }
 
-std::vector<KernelObj> ConvIm2colFloat::GetDependInternalSymbol(
-        TContext* ctx) const {
+std::vector<KernelObj> ConvIm2colFloat::GetDependInternalSymbol(TContext* ctx) const {
     auto inner_ctx = GetInnerCtx(ctx);
     auto inner_gemm = GetInnerCtxMatmul(ctx);
-    return {{inner_gemm->GetKernelSymbol(inner_ctx.get()),
+    return {
+            {inner_gemm->GetKernelSymbol(inner_ctx.get()),
              inner_gemm->GetKernelBody(inner_ctx.get()),
              inner_gemm->GetBodyGuardBegin(inner_ctx.get()),
              inner_gemm->GetBodyGuardEnd(inner_ctx.get()),
@@ -270,8 +265,7 @@ std::vector<KernelObj> ConvIm2colFloat::GetDependInternalSymbol(
 std::shared_ptr<TContext> ConvIm2colFloat::GetInnerCtx(TContext* ctx) const {
     auto inner_ctx = std::make_shared<CodeGenContext>();
     if (ctx->haveAttr("nonlineMode")) {
-        inner_ctx->setAttr("nonlineMode",
-                           CCAttr(ctx->getAttrStr("nonlineMode")));
+        inner_ctx->setAttr("nonlineMode", CCAttr(ctx->getAttrStr("nonlineMode")));
     }
     inner_ctx->setAttr("with_bias", ConvImpl::is_bias(ctx));
     inner_ctx->setAttr("transposeA", false);
@@ -385,8 +379,7 @@ std::string ConvIm2colFloat::GetKernelBody(TContext* ctx) const {
                       .add_ctx_int("kernel_w")
                       .add("pack_c_size", pack_c_size)
                       .add("bias_ptr_str", bias_ptr_str)
-                      .add("pack_b_sym",
-                           inner_gemm->GetPackBSymbol(inner_ctx.get()))
+                      .add("pack_b_sym", inner_gemm->GetPackBSymbol(inner_ctx.get()))
                       .add("naked_kern_sym",
                            inner_gemm->GetNakedKernelSymbol(inner_ctx.get()))
                       .render(temp_body);

@@ -36,8 +36,9 @@ class alignas(ALIGN) IncompleteObjStorage {
 
 public:
     IncompleteObjStorage() {
-        static_assert(sizeof(Obj) <= SIZE && !(ALIGN % alignof(Obj)),
-                      "SIZE and ALIGN do not match Obj");
+        static_assert(
+                sizeof(Obj) <= SIZE && !(ALIGN % alignof(Obj)),
+                "SIZE and ALIGN do not match Obj");
         new (m_mem) Obj;
     }
 
@@ -62,15 +63,12 @@ public:
 
     Obj& get() { return *aliased_ptr<Obj>(m_mem); }
 
-    const Obj& get() const {
-        return const_cast<IncompleteObjStorage*>(this)->get();
-    }
+    const Obj& get() const { return const_cast<IncompleteObjStorage*>(this)->get(); }
 };
 
 //! use size and align of another object
 template <class Obj, class Mock>
-using IncompleteObjStorageMock =
-        IncompleteObjStorage<Obj, sizeof(Mock), alignof(Mock)>;
+using IncompleteObjStorageMock = IncompleteObjStorage<Obj, sizeof(Mock), alignof(Mock)>;
 
 /*!
  * \brief update dest if val is greater than it

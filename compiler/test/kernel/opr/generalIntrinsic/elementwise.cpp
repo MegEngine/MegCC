@@ -46,8 +46,8 @@ TEST(GI, ElementwiseBinary) {
     checker.set_kernel_symbol("GI_kernel_elementwise.+");
 
     ElemwiseForward::Param param;
-    for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU,
-                      MODE::MAX, MODE::MIN}) {
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::MAX, MODE::MIN}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {1}, {}});

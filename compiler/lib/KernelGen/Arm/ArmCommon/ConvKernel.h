@@ -23,15 +23,12 @@ public:
     virtual std::string GetKernelSymbol(TContext* context) const override {
         auto sub_str = GetKernelSubSymbol(context);
         if (sub_str.size() > 0) {
-            return "ArmCommon_" + sub_str + "_" +
-                   ConvImpl::GetKernelSymbol(context);
+            return "ArmCommon_" + sub_str + "_" + ConvImpl::GetKernelSymbol(context);
         } else {
             return "ArmCommon_" + ConvImpl::GetKernelSymbol(context);
         }
     }
-    virtual std::string GetKernelSubSymbol(TContext* context) const {
-        return "";
-    }
+    virtual std::string GetKernelSubSymbol(TContext* context) const { return ""; }
 };
 
 class ConvFloatNCHWNCHW44 : public ArmCommonConvImpl {

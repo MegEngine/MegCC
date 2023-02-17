@@ -8,26 +8,26 @@
  */
 
 #include "Reduce.h"
-#include "compiler/Common/Logger.h"
 #include "Utils/StringTemplate.h"
+#include "compiler/Common/Logger.h"
 
 using namespace megcc;
 using namespace KernelGen;
 using namespace GeneralIntrinsic;
-namespace{
-struct Rdeucer{
-    virtual std::string gen_init(bool c_remain) = 0; 
+namespace {
+struct Rdeucer {
+    virtual std::string gen_init(bool c_remain) = 0;
     virtual std::string gen_feed() = 0;
     virtual std::string gen_feed_remain() = 0;
     virtual std::string gen_post(bool c_remain) = 0;
 };
-struct MinReducerC1 final: public Rdeucer {
+struct MinReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(__FLT_MAX__);
         float ans = __FLT_MAX__; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -38,7 +38,7 @@ struct MinReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans = min(*temp_src0, ans);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -47,17 +47,17 @@ struct MinReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct MinReducer final: public Rdeucer {
+struct MinReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(__FLT_MAX__); 
             )";
         else
             return R"(
         float ans = __FLT_MAX__; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -68,10 +68,10 @@ struct MinReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans = min(*temp_src0, ans);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GiStoreFloat32(dst, ans_vec);
             )";
@@ -79,16 +79,15 @@ struct MinReducer final: public Rdeucer {
             return R"(
         *dst = ans;
             )";
-          
     };
 };
-struct MaxReducerC1 final: public Rdeucer {
+struct MaxReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(- __FLT_MAX__);
         float ans = - __FLT_MAX__; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -99,7 +98,7 @@ struct MaxReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans = max(*temp_src0, ans);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -108,17 +107,17 @@ struct MaxReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct MaxReducer final: public Rdeucer {
+struct MaxReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(-__FLT_MAX__); 
             )";
         else
             return R"(
         float ans = - __FLT_MAX__; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -129,10 +128,10 @@ struct MaxReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans = max(*temp_src0, ans);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GiStoreFloat32(dst, ans_vec);
             )";
@@ -140,16 +139,15 @@ struct MaxReducer final: public Rdeucer {
             return R"(
         *dst = ans;
             )";
-          
     };
 };
-struct SumReducerC1 final: public Rdeucer {
+struct SumReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0);
         float ans = 0; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -160,7 +158,7 @@ struct SumReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -169,17 +167,17 @@ struct SumReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct SumReducer final: public Rdeucer {
+struct SumReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0); 
             )";
         else
             return R"(
         float ans =0; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -190,10 +188,10 @@ struct SumReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GiStoreFloat32(dst, ans_vec);
             )";
@@ -201,16 +199,15 @@ struct SumReducer final: public Rdeucer {
             return R"(
         *dst = ans;
             )";
-          
     };
 };
-struct SumSqrReducerC1 final: public Rdeucer {
+struct SumSqrReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0);
         float ans = 0; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -221,7 +218,7 @@ struct SumSqrReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += (*temp_src0)*(*temp_src0);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -230,17 +227,17 @@ struct SumSqrReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct SumSqrReducer final: public Rdeucer {
+struct SumSqrReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0); 
             )";
         else
             return R"(
         float ans =0; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0); 
@@ -251,10 +248,10 @@ struct SumSqrReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += (*temp_src0)*(*temp_src0);
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GiStoreFloat32(dst, ans_vec);
             )";
@@ -262,16 +259,15 @@ struct SumSqrReducer final: public Rdeucer {
             return R"(
         *dst = ans;
             )";
-          
     };
 };
-struct MeanReducerC1 final: public Rdeucer {
+struct MeanReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0);
         float ans = 0; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -282,7 +278,7 @@ struct MeanReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -292,17 +288,17 @@ struct MeanReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct MeanReducer final: public Rdeucer {
+struct MeanReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(0); 
             )";
         else
             return R"(
         float ans =0; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -313,10 +309,10 @@ struct MeanReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans += *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         ans_vec = GiMultiplyScalerFloat32(ans_vec, 1.0/B);
         GiStoreFloat32(dst, ans_vec);
@@ -326,17 +322,16 @@ struct MeanReducer final: public Rdeucer {
         ans /= B;
         *dst = ans;
             )";
-          
     };
 };
 
-struct ProductReducerC1 final: public Rdeucer {
+struct ProductReducerC1 final : public Rdeucer {
     std::string gen_init(bool c_remain = false) override {
         return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(1);
         float ans = 1; 
-        )"; 
-    }; 
+        )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -347,7 +342,7 @@ struct ProductReducerC1 final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans *= *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain = false) override {
         return R"(
@@ -356,17 +351,17 @@ struct ProductReducerC1 final: public Rdeucer {
         )";
     };
 };
-struct ProductReducer final: public Rdeucer {
+struct ProductReducer final : public Rdeucer {
     std::string gen_init(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GI_FLOAT32_t ans_vec = GiBroadcastFloat32(1); 
             )";
         else
             return R"(
         float ans = 1; 
-            )"; 
-    }; 
+            )";
+    };
     std::string gen_feed() override {
         return R"(
         GI_FLOAT32_t src_vec = GiLoadFloat32(temp_src0);
@@ -377,10 +372,10 @@ struct ProductReducer final: public Rdeucer {
     std::string gen_feed_remain() override {
         return R"(
         ans *= *temp_src0;
-        )"; 
+        )";
     };
     std::string gen_post(bool c_remain) override {
-        if(!c_remain)
+        if (!c_remain)
             return R"(
         GiStoreFloat32(dst, ans_vec);
             )";
@@ -388,57 +383,56 @@ struct ProductReducer final: public Rdeucer {
             return R"(
         *dst = ans;
             )";
-          
     };
 };
 
-std::shared_ptr<Rdeucer> get_reducer(std::string mode, bool c_is_one){
-    if("MIN" == mode){
-        if(c_is_one)
+std::shared_ptr<Rdeucer> get_reducer(std::string mode, bool c_is_one) {
+    if ("MIN" == mode) {
+        if (c_is_one)
             return std::make_shared<MinReducerC1>();
         else
-            return std::make_shared<MinReducer>(); 
-    }else if ("MAX" == mode) {
-        if(c_is_one)
+            return std::make_shared<MinReducer>();
+    } else if ("MAX" == mode) {
+        if (c_is_one)
             return std::make_shared<MaxReducerC1>();
         else
-            return std::make_shared<MaxReducer>(); 
-    }else if ("SUM" == mode) {
-        if(c_is_one)
+            return std::make_shared<MaxReducer>();
+    } else if ("SUM" == mode) {
+        if (c_is_one)
             return std::make_shared<SumReducerC1>();
         else
-            return std::make_shared<SumReducer>(); 
-    }else if ("SUM_SQR" == mode) {
-         if(c_is_one)
+            return std::make_shared<SumReducer>();
+    } else if ("SUM_SQR" == mode) {
+        if (c_is_one)
             return std::make_shared<SumSqrReducerC1>();
         else
-            return std::make_shared<SumSqrReducer>(); 
+            return std::make_shared<SumSqrReducer>();
         return nullptr;
-    }else if ("MEAN" == mode) {
-        if(c_is_one)
+    } else if ("MEAN" == mode) {
+        if (c_is_one)
             return std::make_shared<MeanReducerC1>();
         else
-            return std::make_shared<MeanReducer>(); 
-    }else if ("PRODUCT" == mode) {
-        if(c_is_one)
+            return std::make_shared<MeanReducer>();
+    } else if ("PRODUCT" == mode) {
+        if (c_is_one)
             return std::make_shared<ProductReducerC1>();
         else
-            return std::make_shared<ProductReducer>(); 
-    }else{
+            return std::make_shared<ProductReducer>();
+    } else {
         CC_ABORT << "unsupport reduce mode: " << mode;
     }
     return nullptr;
 }
 
 template <bool C_is_one>
-std::string generate_reducer(std::string mode){
-        return "";
-   } 
+std::string generate_reducer(std::string mode) {
+    return "";
+}
 
 template <>
-std::string generate_reducer<true>(std::string mode){
-        auto reducer = get_reducer(mode, true);
-        std::string func_body = R"(
+std::string generate_reducer<true>(std::string mode) {
+    auto reducer = get_reducer(mode, true);
+    std::string func_body = R"(
 for(size_t a = 0; a < A; ++a){
     float* temp_src0 = src + a * B;
     size_t b = 0;
@@ -455,18 +449,18 @@ for(size_t a = 0; a < A; ++a){
     dst++;  
 }
         )";
-        return StringTemplate::StringTemplateArgs()
-                    .add("init", reducer->gen_init(false))
-                    .add("feed", reducer->gen_feed())
-                    .add("feed_remain", reducer->gen_feed_remain())
-                    .add("post", reducer->gen_post(false))
-                    .render(func_body);
-   }  
+    return StringTemplate::StringTemplateArgs()
+            .add("init", reducer->gen_init(false))
+            .add("feed", reducer->gen_feed())
+            .add("feed_remain", reducer->gen_feed_remain())
+            .add("post", reducer->gen_post(false))
+            .render(func_body);
+}
 
 template <>
-std::string generate_reducer<false>(std::string mode){
-        auto reducer = get_reducer(mode, false);
-        std::string func_body = R"(
+std::string generate_reducer<false>(std::string mode) {
+    auto reducer = get_reducer(mode, false);
+    std::string func_body = R"(
 for(size_t a = 0; a < A; ++a){
     size_t c = 0;
     for(; c + SIMD_WIDTH <= C; c += SIMD_WIDTH){
@@ -493,17 +487,17 @@ for(size_t a = 0; a < A; ++a){
     }  
 }
         )";
-        return StringTemplate::StringTemplateArgs()
-                    .add("init", reducer->gen_init(false))
-                    .add("init_remain", reducer->gen_init(true))
-                    .add("feed", reducer->gen_feed())
-                    .add("feed_remain", reducer->gen_feed_remain())
-                    .add("post", reducer->gen_post(false))
-                    .add("post_remain", reducer->gen_post(true))
-                    .render(func_body);
-   }      
-
+    return StringTemplate::StringTemplateArgs()
+            .add("init", reducer->gen_init(false))
+            .add("init_remain", reducer->gen_init(true))
+            .add("feed", reducer->gen_feed())
+            .add("feed_remain", reducer->gen_feed_remain())
+            .add("post", reducer->gen_post(false))
+            .add("post_remain", reducer->gen_post(true))
+            .render(func_body);
 }
+
+}  // namespace
 bool ReduceKernel::IsAvailable(TContext* context) const {
     auto data_type = context->getAttrStr("data_type");
     auto operand_type = context->getAttrOprand("operand:0").dtype;
@@ -529,8 +523,8 @@ std::string ReduceKernel::GetKernelBody(TContext* context) const {
     auto input = context->getAttrOprand("operand:0");
     std::stringstream writer;
     writer << R"(
-#include "gi_int.h"
 #include "gi_float.h"
+#include "gi_int.h"
 static inline float max(float a,float b){return a>b?a:b;}
 static inline float min(float a,float b){return a<b?a:b;}    
     )";
@@ -555,14 +549,14 @@ static inline float min(float a,float b){return a<b?a:b;}
     }
     return TinyNN_SUCCESS;
 }
-    )"; 
+    )";
     writer << StringTemplate::StringTemplateArgs()
-                    .add("axis", axis)
-                    .add("gen_reducer_c1", generate_reducer<true>(mode))
-                    .add("gen_reducer_cx", generate_reducer<false>(mode))
-                    .render(tmp_body);
+                      .add("axis", axis)
+                      .add("gen_reducer_c1", generate_reducer<true>(mode))
+                      .add("gen_reducer_cx", generate_reducer<false>(mode))
+                      .render(tmp_body);
     // clang-format on
     return writer.str();
 }
 
-   // vim: syntax=cpp.doxygen
+// vim: syntax=cpp.doxygen

@@ -17,8 +17,8 @@ EMPTY_CV_DEDUCE(CVflip);
 }  // namespace test
 }  // namespace megdnn
 
-void megdnn::CVtranspose::reformat_layout(CVtranspose* opr,
-                                          TensorLayoutArray& layouts) {
+void megdnn::CVtranspose::reformat_layout(
+        CVtranspose* opr, TensorLayoutArray& layouts) {
     auto src_layout = layouts[0];
 
     mgb_assert(src_layout.ndim == 4);
