@@ -45,6 +45,14 @@ ShapeCases get_elewise_binary_case() {
     //! bcast101x4_vec
     res.push_back({{1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {}});
     res.push_back({{1, 6, 1, 1, 4}, {5, 6, 7, 8, 4}, {}});
+    //! bcast111c_vec
+    res.push_back({{13}, {3, 10, 13}, {}});
+    res.push_back({{128}, {7, 10, 128}, {}});
+    res.push_back({{1, 1, 1, 13}, {2, 3, 4, 13}, {}});
+    //! vec_bcast111c
+    res.push_back({{10, 3, 21}, {21}, {}});
+    res.push_back({{100, 3, 96}, {96}, {}});
+    res.push_back({{2, 100, 3, 96}, {1, 1, 1, 96}, {}});
     return res;
 }
 

@@ -31,6 +31,8 @@ enum BcastType {
     VEC_VEC,
     VEC_BCAST101,
     VEC_BCAST101x4,
+    BCAST111C_VEC,
+    VEC_BCAST111C,
     VEC_SCALAR,
     SCALAR_VEC,
     BCAST101_VEC,

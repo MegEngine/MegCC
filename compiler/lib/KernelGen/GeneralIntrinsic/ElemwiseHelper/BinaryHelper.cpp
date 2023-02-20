@@ -95,6 +95,45 @@ std::string BinaryCode<VEC_SCALAR>() {
 }
 
 template <>
+std::string BinaryCode<VEC_BCAST111C>() {
+    std::string body = R"(
+        Layout dst_layout = outputs[0]->layout;
+        size_t channel = 1;
+        for(size_t i = 0; i < dst_layout.nr_dim - 1; ++i)
+            channel *= dst_layout.dims[i];
+        size_t channel_stride = dst_layout.dims[dst_layout.nr_dim - 1];
+        ${kernel_init()}
+        const float * src0 = ${source0};
+        const float * src1 = ${source1};
+        float * dst = ${dst};
+        for(size_t c=0; c<channel; c++){
+            const float* src0_ptr = src0 + c * channel_stride;
+            const float* src1_ptr = src1;
+            size_t index = 0;
+            for(; index + 7 < channel_stride; index += 8){
+                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
+                GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0_ptr + index + 4);
+                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+                GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1_ptr + index + 4);
+                ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
+                dst += 8;
+            }
+            for(; index + 3 < channel_stride; index += 4){
+                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
+                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+                ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
+                dst += 4;
+            }
+            for(; index < channel_stride; index++) {
+                ${kernel_naive_unroll(1, dst, src0_ptr + index, src1_ptr + index)}
+                ++dst;
+            }
+        }
+        )";
+    return body;
+}
+
+template <>
 std::string BinaryCode<VEC_BCAST101>() {
     std::string body = R"(
         Layout dst_layout = outputs[0]->layout;
@@ -348,6 +387,43 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
                     ${kernel_naive_unroll(1, dst, src0, src1)}
                     src1 += 1;
                     dst += 1;
+                }
+            }
+        }else if((nr_elem_in0 == src_layout_0.dims[src_layout_0.nr_dim - 1] || 
+                nr_elem_in1 == src_layout_1.dims[src_layout_1.nr_dim - 1]) &&
+                src_layout_0.dims[src_layout_0.nr_dim - 1] == src_layout_1.dims[src_layout_1.nr_dim - 1]){
+            const float* src0 = inputs[0]->ptr;
+            const float* src1 = inputs[1]->ptr;
+            size_t channel = 1;
+            for(size_t i = 0; i < dst_layout.nr_dim - 1; ++i)
+                channel *= dst_layout.dims[i];
+            size_t channel_stride = dst_layout.dims[dst_layout.nr_dim - 1];
+            float * dst = outputs[0]->ptr;
+            for(size_t c=0; c<channel; c++){
+                const float* src0_ptr = src0 + c * channel_stride;
+                const float* src1_ptr = src1;
+                if(nr_elem_in0 == src_layout_0.dims[src_layout_0.nr_dim - 1]){
+                    src0_ptr = src0;
+                    src1_ptr = src1 + c * channel_stride;
+                }
+                size_t index = 0;
+                for(; index + 7 < channel_stride; index += 8){
+                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
+                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0_ptr + index + 4);
+                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+                    GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1_ptr + index + 4);
+                    ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
+                    dst += 8;
+                }
+                for(; index + 3 < channel_stride; index += 4){
+                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
+                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+                    ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
+                    dst += 4;
+                }
+                for(; index < channel_stride; index++) {
+                    ${kernel_naive_unroll(1, dst, src0_ptr + index, src1_ptr + index)}
+                    ++dst;
                 }
             }
         }else{
@@ -655,6 +731,10 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
         case VEC_SCALAR:
         case SCALAR_VEC:
             body = BinaryCode<VEC_SCALAR>();
+            break;
+        case BCAST111C_VEC:
+        case VEC_BCAST111C:
+            body = BinaryCode<VEC_BCAST111C>();
             break;
         case VEC_BV:
         case BV_VEC:

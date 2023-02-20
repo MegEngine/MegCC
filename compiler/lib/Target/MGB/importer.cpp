@@ -705,7 +705,7 @@ private:
             auto&& p = reduce->param();
             auto&& out = opr->output(0);
             auto inputs = opr->input();
-            int axis = p.axis;
+            int32_t axis = p.axis < 0 ? p.axis + inputs[0]->shape().ndim : p.axis;
             if (inputs.size() > 1) {
                 CC_ASSERT(
                         inputs.size() == 2 &&

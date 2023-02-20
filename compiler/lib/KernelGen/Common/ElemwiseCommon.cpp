@@ -74,6 +74,14 @@ BcastType GetBinaryBcastType(const CCOperand& operand0, const CCOperand& operand
         } else {
             return BcastType::VEC_SCALAR;
         }
+    } else if (
+            (nr_elem0 == shape0.back() && shape0.back() == shape1.back()) ||
+            (nr_elem1 == shape1.back() && shape0.back() == shape1.back())) {
+        if (nr_elem0 == shape0.back()) {
+            return BcastType::BCAST111C_VEC;
+        } else {
+            return BcastType::VEC_BCAST111C;
+        }
     } else {
         CC_ASSERT(shape0.size() == shape1.size())
                 << shape0.size() << "==" << shape1.size() << "\n";
