@@ -386,11 +386,9 @@ class Build:
         cmake_config = cmake_config + " -DTINYNN_PROFILE_KERNEL={}".format(
             "ON" if args.build_with_profile else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_ASAN={}".format(
-            "ON" if args.build_with_asan else "OFF"
-        )
+            "ON" if args.build_with_asan else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_FP16={}".format(
-            "ON" if args.enable_fp16 else "OFF"
-        )
+            "ON" if args.enable_fp16 else "OFF")
 
         logging.debug("python3 args: {}".format(args))
         config_cmd = "{}".format(cmake_config)

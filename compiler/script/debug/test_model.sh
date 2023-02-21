@@ -25,7 +25,7 @@ filename=${filepath##*/}
 tinyname="${filename%.*}.tiny"
 run2mi9 ./xxx_nchw44/$tinyname
 run2mi9 $input_data
-run2mi9 ./xxx_nchw44/runtime/tinynn_test_lite $tinyname tiny_out 0 $input_data #>& get log  megcc_log
+run2mi9 ./xxx_nchw44/runtime/tinynn_test_lite -m $tinyname -o tiny_out -l 0 -d $input_data_string -s $input_shape_string #>& get log  megcc_log
 cpmi9 tiny_out/
 cpmi9 ./dump/
 

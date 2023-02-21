@@ -78,25 +78,25 @@ Release 包中的 script 目录下面有一个 `ppl_gen.sh` 的文件，直接�
 ``` 
 `./script/ppl_gen.sh` 这个脚本将执行模型编译，并把 Runtime 需要的资源一同打包在一个压缩包中，方便后续 Runtime 的编译，解压这个压缩包将得到：
 ```
-.
-├── example : 在各种操作系统上集成的example
-│   ├── Nonstandard_OS
-│   │   ├── bare_board
-│   │   ├── freeRTOS
-│   │   └── tee
-│   └── standard_OS
-├── flatcc：编译 runtime 时候依赖的 flatcc
-├── include ：runtime 的头文件
-│   └── lite-c
-├── kern ：编译生成的 Kernel 包括 cv 算子
-├── model：编译之后生成的模型，用于部署
-├── model_info
-├── schema
-├── script：各种帮助脚本
-└── src：runtime 的源文件
-    ├── cheader
-    ├── lite
-    └── vm
+├── build runtime build 的路径
+├── immigration generalIntrinsic 头文件
+│   └── include
+├── kern 模型 kernel 文件包括cv 算子
+├── mobilenet.json 模型dump所需的配置文件
+├── model 模型
+│   └── mobilenet_nchw44.tiny
+├── model_info 模型输入信息
+│   └── mobilenet_nchw44.tiny.txt
+├── ppl_build.sh
+├── runtime runtime 源码
+│   ├── CMakeLists.txt
+│   ├── example
+│   ├── flatcc
+│   ├── include
+│   ├── schema
+│   ├── script
+│   └── src
+└── test_model.py 模型测试脚本
 ```
 
 #### 使用可执行文件编译
@@ -185,15 +185,104 @@ MegCC 提供一个脚本方便完成上述编译操作
 > warning: **进行下面的步骤，需要环境中有 NDK 工具链，并且设置 NDK_ROOT 环境变量为 NDK 的路径。**
 
 > warning: **下面的步骤是在 android 手机上进行，执行时需要保证 android 设备可以通过 rsync访问** 
-
+## mobilenet example 计算错误的快速验证
 进行正确性检查主要使用脚本 [test_model.py](../script/test_model.py) 帮助完成在目标机器上运行 MegCC 编译之后的 Runtime 和直接使用 MegEngine 运行模型的结果进行对比。使用示例：
 - 在通过上面 `ppl_gen.sh` 工具生成的 tar 解压之后的目录 `mobilenet_gen` 包中执行 `./ppl_build.sh` 编译运行需要的文件（这里默认编译平台为 arm64）
 - 编译完成之后，执行
     ```python3
     python3 script/test_model.py --target user@you_phone  mobilenet_gen --mdl="mobilenet_nchw44:./example/mobilenet.mdl"
     ```  
-其中：`--target user@you_phone` 为一个可以通过 [rsync](https://en.wikipedia.org/wiki/Rsync) 访问的 android 设备。运行完成之后的 log 中会报告最终检测的结果，以及精度误差等。 
+其中：`--target user@you_phone` 为一个可以通过 [rsync](https://en.wikipedia.org/wiki/Rsync) 访问的 android 设备。运行完成之后的 log 中会报告最终检测的结果，以及精度误差等。相应的输入输出的二进制文件在 `mobilenet_gen`同级的 `megcc_check_workdir`中，其具体组织如下：
+```bash
+.
+├── mobilenet_nchw44_input
+│   ├── 1_3_224_224_f32 输入二进制文件（由test_model 随机生成）
+│   └── 1_3_224_224_f32.npy 输入npy文件
+└── mobilenet_nchw44_rundir
+    ├── mgb_out
+    │   └── cls_softmax_0 mgb-runner的输出二进制文件
+    └── tiny_out
+        └── cls_softmax_0 tinynn_test_lite的输出二进制文件 
+```
+## 其他模型的快速验证
+> warning: **进行下面步骤之前, 模型已通过 mgb-to-tinynn 或 ppl_gen.sh 生成 kernel, 其生成的模型路径已知，这里以 kernel_dir 为例**
+> warning: **进行下面步骤需要指定 mgb-runner 的路径，这里以 runner_dir 为例**  
+运行如下命令行可对模型的正确性进行验证：
+```python3
+    python3 script/test_model.py --target user@you_phone  kernel_dir --mdl="<your_model_name>:<your_megengine_model_path>" --bin_dir runner_dir 
+```  
+# 模型对分
+很多应用场景中需要对于模型推理的精度进行评估，一般称这一过程为对分过程。下面以mobilenet example 为例介绍下对分的整体流程。
+## 准备工作
+* 准备模型文件以及对应模型输入的数据文件，模型为 megengine 模型，输入数据为裸的二进制数据，这里以`input_data.bin`为例。
+* 参考上文，准备模型转换的配置 json 文件
+* 执行上文 `使用可执行文件编译` 以及`单独编译`步骤得到可执行的`tinynn_test_lite`以及`mobilenet_nchw44.tiny`文件。
+## 获取模型推理输出
+### 获取 MegCC 推理输出
+* 将可执行程序`tinynn_test_lite`,模型输入数据`input_data.bin`以及模型文件`mobilenet_nchw44.tiny` 上传到相应测试设备
+* 执行下面命令,获取 MegCC 的推理输出, 输出位于`tiny_out`文件夹下，运行结束后回传`tiny_out`的文件
+```bash
+./tinynn_test_lite -m mobilenet_nchw44.tiny -d 'data=input_data.bin' -s 'data=1,3,224,224' -o tiny_out -l 0
+```
+### 获取对照输出
+对照输出可以是用户自定义给出，唯一要求是**输出名称和tiny_out中的名称一致且输出数据为裸的二进制数据**。
+除过自定义的给出对照输出外，还可以通过mgb-runner获取模型在megengine下的推理结果，具体用法参考下面`mgb-runner`用法，目前其**只能在 X86上运行**。
+相关的输入信息和上面`tinynn_test_lite` 一致
+## 输出对分
+输出对分可参考 `script/test_model.py`中`compare_file_or_dir` 函数进行对分,示例代码如下：
+```python
+def compare_file(file_path_0, file_path_1, eps):
+    print("compare ", file_path_0, file_path_1)
+    with open(file_path_0, "rb") as f:
+        d0 = np.frombuffer(f.read(), dtype=np.float32)
+    with open(file_path_1, "rb") as f:
+        d1 = np.frombuffer(f.read(), dtype=np.float32)
+    assert d0.size == d1.size, "{} == {}".format(d0.size, d1.size)
+    diff = np.abs(d0 - d1) / np.maximum(1.0, np.minimum(
+        np.abs(d0), np.abs(d1)))
+    max_idx = np.argmax(diff.flatten())
+    print(d0.shape)
+    print(
+        "max diff ",
+        np.max(diff.flatten()),
+        "abs_diff",
+        np.max(np.abs(d0 - d1).flatten()),
+        d0[max_idx:max_idx + 10],
+        " vs ",
+        d1[max_idx:max_idx + 10],
+        " at ",
+        max_idx,
+    )
+    assert np.all(diff < eps), "failed {} != {}, max ".format(
+        d0, d1, np.max(diff.flatten()))
 
+
+def compare_file_or_dir(path_0, path_1, eps):
+    compare_file_cnt = 0
+    if os.path.isdir(path_0) and os.path.isdir(path_1):
+        file_names = os.listdir(path_0)
+        for file_name in file_names:
+            file_path_0 = os.path.join(path_0, file_name)
+            file_path_1 = os.path.join(path_1, file_name)
+            assert os.path.exists(file_path_0), "can not find {}".format(
+                file_path_0)
+            assert os.path.exists(file_path_1), "can not find {}".format(
+                file_path_1)
+            compare_file(file_path_0, file_path_1, eps)
+            compare_file_cnt += 1
+    else:
+        assert os.path.isfile(path_0), "can not find {}".format(path_0)
+        assert os.path.isfile(path_1), "can not find {}".format(path_1)
+        compare_file(path_0, path_1, eps)
+        compare_file_cnt += 1
+    if compare_file_cnt > 0:
+        print("compare pass!!")
+        return True
+    else:
+        print("no file compared!!")
+        return False
+
+```
 # 进阶使用
 MegCC 是在 MLIR 的基础组件上开发的，你可以通过下面的工具来探索 MegCC 编译过程的更多细节。 
 ## mgb-to-tinynn

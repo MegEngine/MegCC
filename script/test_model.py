@@ -164,7 +164,7 @@ def parse_env(dump_dir, bin_dir=None):
         env["build_dir"] = os.path.join(dump_dir, "build")
     else:
         # release mode
-        env["build_script"] = os.path.join(dump_dir, "script",
+        env["build_script"] = os.path.join(dump_dir, "runtime/script",
                                            "runtime_build.py")
         bin_dir = os.path.abspath(bin_dir) if bin_dir else os.path.dirname(
             dump_dir)
@@ -191,6 +191,9 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
     os.mkdir(work_dir)
     tinynn_test_lite_path = os.path.join(build_dir, "tinynn_test_lite")
     if not os.path.exists(tinynn_test_lite_path):
+        if not os.path.exists(build_dir):
+            print("build not exit!!")
+            os.mkdir(build_dir)
         subprocess.run([
             build_script,
             "--cross_build",
@@ -248,11 +251,11 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
                     target_run_dir,
                     "&&",
                     "./tinynn_test_lite",
-                    model_file,
-                    "tiny_out",
-                    "0",
-                    "'" + model_data_info + "'",
-                    target_shape_info,
+                    "-m {} ".format(model_file),
+                    "-o tiny_out ",
+                    "-l 0 ",
+                    "-d '{}' ".format(model_data_info),
+                    "-s {} ".format(target_shape_info),
                 ],
             )
             copyftarget(target_host, target_run_dir + "/tiny_out",
@@ -295,8 +298,11 @@ def main():
         "--arch",
         type=str,
         required=False,
-        default="arm64-v8a",
-        choices=["arm64-v8a", "armeabi-v7a", "native"],
+        default="aarch64",
+        choices=[
+            'x86_64', 'i386', 'aarch64', 'armv7-a', 'cortex-m', 'armv7-a-qemu',
+            'rv64gcv0p7', 'rv64norvv'
+        ],
     )
     parser.add_argument("--eps", type=float, required=False, default=3e-4)
     parser.add_argument(

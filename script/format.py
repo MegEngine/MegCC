@@ -16,7 +16,8 @@ os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 failed_files = Manager().list()
 
-exclude_dir=["runtime/flatcc"]
+exclude_dir = ["runtime/flatcc"]
+
 
 def process_file(file, clang_format, write):
     original_source = open(file, "r").read()
@@ -97,7 +98,7 @@ def main():
             p = os.path.join(path, p)
             if os.path.isdir(p):
                 if exclude_dir.count(p) == 1:
-                    continue; 
+                    continue
                 rst += getfiles(p)
             elif (os.path.isfile(p) and not os.path.islink(p)
                   and os.path.splitext(p)[1] in format_type):
