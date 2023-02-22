@@ -724,10 +724,6 @@ public:
                         for (auto&& i : op.getOperands()) {
                             auto&& tensor =
                                     value2typed_tensor.at(i.getAsOpaquePointer());
-                            if (tensor.first != MegCC::TensorType_TENSOR) {
-                                CC_ABORT << "network output must be "
-                                            "Tensor\n";
-                            }
                             outputs.push_back(tensor.second);
                         }
                     })
@@ -964,7 +960,7 @@ private:
         auto dense = attr.cast<DenseElementsAttr>();
         auto size_in_bits = dense.getType().getSizeInBits();
         if (size_in_bits & 0x7) {
-            CC_ABORT << "unsupport data type\n";
+            CC_ABORT << "unsupported data type\n";
         }
 
         auto size_in_bytes = size_in_bits >> 3;
@@ -1014,7 +1010,7 @@ private:
             std::string type_string;
             llvm::raw_string_ostream raw_os(type_string);
             dense.getType().getElementType().print(raw_os);
-            CC_ABORT << "unsupport data type: " << type_string << "\n";
+            CC_ABORT << "unsupported data type: " << type_string << "\n";
         }
 
         auto shape = dense.getType();
