@@ -109,15 +109,29 @@ private:
     ArmCommon::MatmulInternal* GetInnerCtxMatmul(TContext* ctx) const;
 };
 
-class ConvDotNCHWNCHW44 : public Arm64ConvImpl {
+class ConvDotNCHWNCHW44Common : public Arm64ConvImpl {
+protected:
+    bool IsAvailableCommon(TContext* context, const uint32_t valid_stride) const;
+
 public:
-    bool IsAvailable(TContext* context) const override;
     std::string GetKernelSymbol(TContext* ctx) const override;
-    //! kernel gen
-    std::string GetKernelBody(TContext* context) const override;
     //! init gen
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
+};
+
+class ConvDotNCHWNCHW44Stride1 : public ConvDotNCHWNCHW44Common {
+public:
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+};
+
+class ConvDotNCHWNCHW44Stride2 : public ConvDotNCHWNCHW44Common {
+public:
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
 };
 
 class ChannelWiseInt8Mk4K3 : public Arm64ConvImpl {

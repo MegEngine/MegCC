@@ -87,8 +87,6 @@ TEST(AARCH64, ConvBias1x1NCHW44DotNCHWNCHW44) {
 
     ConvBiasForward::Param param;
 
-    param.stride_h = 2;
-    param.stride_w = 2;
     param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
     param.format = ConvolutionForward::Param::Format::NCHW44_DOT;
 
@@ -97,20 +95,23 @@ TEST(AARCH64, ConvBias1x1NCHW44DotNCHWNCHW44) {
           ConvBiasForward::Param::NonlineMode::RELU})
         for (size_t filter_size : {2, 3, 5})
             for (size_t ic : {3})
-                for (size_t iw = 13; iw < 33; iw++) {
-                    size_t pad = filter_size / 2;
-                    size_t oc_div4 = 3;
-                    param.pad_h = pad;
-                    param.pad_w = pad;
-                    param.nonlineMode = mode;
-                    checker.set_param(param);
-                    checker.execs(
-                            {{2, ic, 11, iw},
-                             {oc_div4, filter_size, filter_size, ic, 4},
-                             {1, oc_div4, 1, 1, 4},
-                             {},
-                             {}});
-                }
+                for (size_t iw = 13; iw < 33; iw++)
+                    for (int stride : {1, 2}) {
+                        size_t pad = filter_size / 2;
+                        size_t oc_div4 = 3;
+                        param.pad_h = pad;
+                        param.pad_w = pad;
+                        param.stride_h = stride;
+                        param.stride_w = stride;
+                        param.nonlineMode = mode;
+                        checker.set_param(param);
+                        checker.execs(
+                                {{2, ic, 11, iw},
+                                 {oc_div4, filter_size, filter_size, ic, 4},
+                                 {1, oc_div4, 1, 1, 4},
+                                 {},
+                                 {}});
+                    }
 }
 #endif
 

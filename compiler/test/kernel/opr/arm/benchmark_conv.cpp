@@ -129,6 +129,26 @@ TEST(AARCH64, BenchmarkConvNCHWNCHW44) {
             .print();
 }
 
+TEST(AARCH64, BenchmarkConvDotNCHWNCHW44Stride1) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44_DOT;
+    benchmarker.set_param(param);
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>("ARMDOTS8_NCHW_NCHW44"));
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    benchmarker.execs({{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}})
+            .print();
+}
+
 TEST(AARCH64, BenchmarkConvF32Winograd) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
 
