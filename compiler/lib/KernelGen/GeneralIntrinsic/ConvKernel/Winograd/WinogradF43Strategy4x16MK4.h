@@ -10,8 +10,8 @@
 #include <string>
 #include "Common/ConvKernel.h"
 #include "Utils/StringTemplate.h"
-#include "WinogradCommon.h"
 #include "compiler/KernelGen/KernelGen.h"
+#include "../WinogradCommon.h"
 namespace megcc {
 namespace KernelGen {
 namespace GeneralIntrinsic {

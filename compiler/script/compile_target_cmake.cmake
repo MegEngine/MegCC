@@ -3,7 +3,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
     ON
     CACHE INTERNAL "")
 project(compile_target)
-option(MEGCC_COMPILER_KERNEL_WITH_ASAN "Enalbe asan check" OFF)
+option(MEGCC_COMPILER_KERNEL_WITH_ASAN "Enable asan check" OFF)
 file(GLOB_RECURSE TARGET_FILE ./*.c ./*.cpp ./*.o)
 add_library(compile_target STATIC ${TARGET_FILE})
 target_compile_options(
@@ -25,9 +25,9 @@ else()
     if(ANDROID
        OR IOS
        OR RISCV_CROSS_BUILD_ARCH STREQUAL "riscv64")
-      target_compile_options(compile_target PRIVATE -Ofast)
+      target_compile_options(compile_target PRIVATE -Ofast -fno-finite-math-only)
     else()
-      target_compile_options(compile_target PRIVATE -O3)
+      target_compile_options(compile_target PRIVATE -O3 -fno-finite-math-only)
     endif()
   endif()
 endif()

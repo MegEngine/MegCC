@@ -29,8 +29,9 @@ class Benchmarker : public Runner<Opr> {
 public:
     using Param = typename Opr::Param;
     using BeforeExecCallback = std::function<void(Opr*, const TensorNDArray&)>;
-    Benchmarker(KernelGen::Arch arch = KernelGen::Arch::BAREMETAL)
-            : Runner<Opr>(arch, 0), m_arch(arch), m_kernel_symbol(".*") {
+    Benchmarker(
+            KernelGen::Arch arch = KernelGen::Arch::BAREMETAL, const int dnn_level = 0)
+            : Runner<Opr>(arch, dnn_level), m_arch(arch), m_kernel_symbol(".*") {
         m_benchmark_option.disable_check = true;
         m_benchmark_option.valid_megcc_performance = true;
         m_benchmark_option.valid_dnn_performance = true;

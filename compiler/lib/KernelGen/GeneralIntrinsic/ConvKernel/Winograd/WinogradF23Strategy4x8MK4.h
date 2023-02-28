@@ -8,9 +8,9 @@
  */
 #pragma once
 #include <string>
+#include "../WinogradCommon.h"
 #include "Common/ConvKernel.h"
 #include "Utils/StringTemplate.h"
-#include "WinogradCommon.h"
 #include "compiler/KernelGen/KernelGen.h"
 namespace megcc {
 namespace KernelGen {

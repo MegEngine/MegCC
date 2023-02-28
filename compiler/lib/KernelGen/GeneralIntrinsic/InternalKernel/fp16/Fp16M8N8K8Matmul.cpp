@@ -462,11 +462,11 @@ static void kern_8x8(
 }
 }  // namespace
 
-std::string MatmulM8N8MK8Kernel::GetKernelSymbol(TContext*) const {
+std::string Fp16MatmulM8N8MK8Kernel::GetKernelSymbol(TContext*) const {
     return "GI_fp16_m8_n8_mk8_matmul";
 }
 
-std::string MatmulM8N8MK8Kernel::GetKernelSignature(TContext* ctx) const {
+std::string Fp16MatmulM8N8MK8Kernel::GetKernelSignature(TContext* ctx) const {
     std::stringstream writer;
     writer << "void " << GetKernelSymbol(ctx) << R"((const gi_float16_t* A, size_t LDA,
                             const gi_float16_t* B, size_t LDB, gi_float16_t* C,
@@ -474,7 +474,7 @@ std::string MatmulM8N8MK8Kernel::GetKernelSignature(TContext* ctx) const {
     return writer.str();
 }
 
-std::string MatmulM8N8MK8Kernel::GetKernelBody(TContext* ctx) const {
+std::string Fp16MatmulM8N8MK8Kernel::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include \"gi_float16.h\"\n";
     writer << "#include \"stddef.h\"\n";

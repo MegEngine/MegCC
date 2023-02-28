@@ -110,7 +110,7 @@ public:
     std::string GetPackBWorkspaceBody(TContext*) const override;
 };
 
-class MatmulM8N8MK8Kernel : public GIInternalKernelFunc {
+class Fp16MatmulM8N8MK8Kernel : public GIInternalKernelFunc {
 public:
     std::string GetKernelSymbol(TContext*) const override;
 

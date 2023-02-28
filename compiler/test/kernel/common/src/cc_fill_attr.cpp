@@ -54,6 +54,30 @@ void get_kernel_size(
                 kw = weight.layout[4];
             }
         }
+    } else if (format == ConvParam::Format::NCHW88) {
+        if (sparse == ConvParam::Sparse::DENSE) {
+            //! dense layout is oc/8, ic/8, fh, fw, 8, 8
+            if (weight.layout.ndim == 6) {
+                kh = weight.layout[2];
+                kw = weight.layout[3];
+            } else {
+                //! hybrid first layout oc/4, fh, fw, ic, 8
+                kh = weight.layout[1];
+                kw = weight.layout[2];
+            }
+        }
+        if (sparse == ConvParam::Sparse::GROUP) {
+            //! channel wise weight layout is g/8, 1, 1, fh, fw, 8
+            if (weight.layout.ndim == 6) {
+                kh = weight.layout[3];
+                kw = weight.layout[4];
+            } else {
+                //! group conv with weight layout is g, ocpg/8, icpg/8, fh, fw,
+                //! 8, 8
+                kh = weight.layout[3];
+                kw = weight.layout[4];
+            }
+        }
     } else {
         mgb_assert(0, "get_kernel_size not support format %d", (int)format);
     }

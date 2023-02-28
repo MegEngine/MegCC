@@ -29,6 +29,13 @@ static inline ::megdnn::DType type_to_dtype(Type type) {
     if (auto floatType = type.dyn_cast<FloatType>()) {
         if (floatType.getWidth() == 32) {
             return ::megdnn::dtype::Float32();
+        } else if (floatType.getWidth() == 16) {
+            return ::megdnn::dtype::Float16();
+        } else {
+            std::string type_name;
+            llvm::raw_string_ostream raw_os(type_name);
+            type.print(raw_os);
+            CC_ABORT << "Unsupported type : " << type_name << "\n";
         }
     } else if (auto intType = type.dyn_cast<IntegerType>()) {
         if (intType.isQuant()) {
@@ -55,7 +62,7 @@ static inline ::megdnn::DType type_to_dtype(Type type) {
         std::string type_name;
         llvm::raw_string_ostream raw_os(type_name);
         type.print(raw_os);
-        CC_ABORT << "Unsupport type : " << type_name << "\n";
+        CC_ABORT << "Unsupported type : " << type_name << "\n";
     }
     return {};
 }
@@ -90,7 +97,7 @@ static inline Type dtype_to_type(MLIRContext* context, const ::megdnn::DType& dt
             return FloatType::getF16(context);
 
         default:
-            CC_ABORT << "Unsupport dtype " << dtype.name() << "\n";
+            CC_ABORT << "Unsupported dtype " << dtype.name() << "\n";
             break;
     }
     return Type();
@@ -142,7 +149,7 @@ static inline ShapedType tensorShapeToShapedType(
     if (dims.size() > 0) {
         res = RankedTensorType::get(dims, dtype_to_type(context, dtype));
     } else {
-        LOG_WARN << "Shape is unknow, compiler just make 1 dim dynamic tensor "
+        LOG_WARN << "Shape is unknown, compiler just make 1 dim dynamic tensor "
                     "type\n";
         res = RankedTensorType::get({-1}, dtype_to_type(context, dtype));
     }

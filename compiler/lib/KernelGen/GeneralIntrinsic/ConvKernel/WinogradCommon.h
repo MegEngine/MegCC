@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradCommon.h
+ * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/WinogradCommon.h
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *
@@ -63,6 +63,18 @@ public:
 };
 
 class WinogradFrameNchw44 {
+public:
+    //! gen init code
+    std::string GenInitCode(TContext*, WinogradStrategyBase*);
+
+    //! gen body code without signature
+    std::string GenKernelBodyCode(TContext*, WinogradStrategyBase*);
+
+    //! gen get workspace code
+    std::string GenGetWorkSpaceCode(TContext*, WinogradStrategyBase*);
+};
+
+class WinogradFrameNchw88 {
 public:
     //! gen init code
     std::string GenInitCode(TContext*, WinogradStrategyBase*);

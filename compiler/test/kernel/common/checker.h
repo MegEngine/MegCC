@@ -26,8 +26,8 @@ public:
     using Param = typename Opr::Param;
     using BeforeExecCallback = std::function<void(Opr*, const TensorNDArray&)>;
     using OutputCanonizer = std::function<void(const TensorNDArray&)>;
-    Checker(KernelGen::Arch arch = KernelGen::Arch::BAREMETAL)
-            : Runner<Opr>(arch), m_arch(arch), m_kernel_symbol(".*") {}
+    Checker(KernelGen::Arch arch = KernelGen::Arch::BAREMETAL, const int dnn_level = 2)
+            : Runner<Opr>(arch, dnn_level), m_arch(arch), m_kernel_symbol(".*") {}
 
     /*!
      * \brief execute opr on current param/dtype/rng config

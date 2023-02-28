@@ -20,6 +20,7 @@ namespace KernelGen {
 namespace GeneralIntrinsic {
 
 enum NonlineMode { IDENTITY, H_SWISH, RELU, SIGMOID };
+enum Dtype { FLOAT32, FLOAT16 };
 
 struct ActivationGenIntrinsicBase {
     //! gen the const neon data, such as zero in relu
@@ -38,7 +39,7 @@ struct ActivationGenIntrinsicBase {
             const std::string& scale_sym) const = 0;
 };
 
-template <NonlineMode mode>
+template <NonlineMode mode, Dtype ctype>
 struct ActivationGenIntrinsic : public ActivationGenIntrinsicBase {
 public:
     //! gen the const neon data, such as zero in relu
@@ -75,8 +76,37 @@ public:
     }
 };
 
+template <NonlineMode mode>
+struct ActivationGenIntrinsic<mode, Dtype::FLOAT16>
+        : public ActivationGenIntrinsicBase {
+public:
+    //! gen the const neon data, such as zero in relu
+    virtual std::string GenIntrinsicInitFloat() const override { return ""; }
+
+    //! compute the input neon data and write to the output neon
+    virtual std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
+        std::stringstream writer;
+        writer << "\n" << output << " = " << input << ";";
+        return writer.str();
+    };
+    std::string GenIntrinsicFloatStore(
+            const std::string& input, const std::string& outptr) const override {
+        std::stringstream writer;
+        writer << "\n GiStoreFloat16(" << outptr << ", " << input << ");";
+        return writer.str();
+    }
+    std::string GenIntrinsicQuantStore(
+            const std::string& input, const std::string& outptr,
+            const std::string& scale_sym) const override {
+        CC_ASSERT(0) << "not impl GI quant relu fp16 compute act\n";
+        return "";
+    }
+};
+
 template <>
-struct ActivationGenIntrinsic<NonlineMode::RELU> : public ActivationGenIntrinsicBase {
+struct ActivationGenIntrinsic<NonlineMode::RELU, Dtype::FLOAT32>
+        : public ActivationGenIntrinsicBase {
 public:
     std::string GenIntrinsicInitFloat() const override {
         std::stringstream writer;
@@ -115,7 +145,7 @@ public:
 };
 
 template <>
-struct ActivationGenIntrinsic<NonlineMode::H_SWISH>
+struct ActivationGenIntrinsic<NonlineMode::H_SWISH, Dtype::FLOAT32>
         : public ActivationGenIntrinsicBase {
 public:
     std::string GenIntrinsicInitFloat() const override {
@@ -166,8 +196,92 @@ public:
         return "";
     }
 };
+
+template <>
+struct ActivationGenIntrinsic<NonlineMode::RELU, Dtype::FLOAT16>
+        : public ActivationGenIntrinsicBase {
+public:
+    std::string GenIntrinsicInitFloat() const override {
+        std::stringstream writer;
+        writer << "\nGI_FLOAT16_t vzero = GiBroadcastFloat16(0.f);";
+        return writer.str();
+    }
+    std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
+        std::stringstream writer;
+        writer << "\n" << output << " = GiMaximumFloat16(" << input << ", vzero);";
+        return writer.str();
+    }
+    std::string GenIntrinsicFloatStore(
+            const std::string& input, const std::string& outptr) const override {
+        std::stringstream writer;
+        writer << "\n GiStoreFloat16(" << outptr << ", GiMaximumFloat16(" << input
+               << ", vzero));";
+        return writer.str();
+    }
+    std::string GenIntrinsicQuantStore(
+            const std::string& input, const std::string& outptr,
+            const std::string& scale_sym) const override {
+        CC_ASSERT(0) << "not impl GI quant relu fp16 compute act\n";
+        return "";
+    }
+};
+
+template <>
+struct ActivationGenIntrinsic<NonlineMode::H_SWISH, Dtype::FLOAT16>
+        : public ActivationGenIntrinsicBase {
+public:
+    std::string GenIntrinsicInitFloat() const override {
+        std::stringstream writer;
+        writer << "\n GI_FLOAT16_t vzero =  GiBroadcastFloat16(0.f);";
+        writer << "\n GI_FLOAT16_t f6_v =   GiBroadcastFloat16(6.f);";
+        writer << "\n GI_FLOAT16_t f3_v =   GiBroadcastFloat16(3.f);";
+        writer << "\n GI_FLOAT16_t inv6_v = GiBroadcastFloat16(1/6.f);";
+        return writer.str();
+    }
+    std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
+        std::stringstream writer;
+        auto input_temp = "hswish_temp";
+        writer << "\n{";
+        writer << "GI_FLOAT16_t " << input_temp << " = GiAddFloat16(" << input
+               << ", f3_v);\n";
+        writer << input_temp << " = GiMaximumFloat16(" << input_temp << ", vzero);\n";
+        writer << input_temp << " = GiMinimumFloat16(" << input_temp << ", f6_v);\n";
+        writer << input_temp << " = GiMultiplyFloat16(" << input << ", " << input_temp
+               << ");\n";
+        writer << "\n"
+               << output << " = GiMultiplyFloat16(" << input_temp << ", inv6_v);";
+        writer << "\n}";
+        return writer.str();
+    }
+    std::string GenIntrinsicFloatStore(
+            const std::string& input, const std::string& outptr) const override {
+        std::stringstream writer;
+
+        auto input_temp = "hswish_temp";
+        writer << "\n{";
+        writer << "GI_FLOAT16_t " << input_temp << " = GiAddFloat16(" << input
+               << ", f3_v);\n";
+        writer << input_temp << " = GiMaximumFloat16(" << input_temp << ", vzero);\n";
+        writer << input_temp << " = GiMinimumFloat16(" << input_temp << ", f6_v);\n";
+        writer << input_temp << " = GiMultiplyFloat16(" << input << ", " << input_temp
+               << ");\n";
+        writer << "\n GiStoreFloat16(" << outptr << ", GiMultiplyFloat16(" << input_temp
+               << ", inv6_v));";
+        writer << "\n}";
+        return writer.str();
+    }
+    std::string GenIntrinsicQuantStore(
+            const std::string& input, const std::string& outptr,
+            const std::string& scale_sym) const override {
+        CC_ASSERT(0) << "not impl GI quant hswish act\n";
+        return "";
+    }
+};
+
 std::shared_ptr<ActivationGenIntrinsicBase> create_activation_gener_instrinsic(
-        std::string mode);
+        std::string mode, std::string ctype = "f32");
 
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen

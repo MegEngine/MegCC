@@ -60,7 +60,7 @@ std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) {
 
 std::vector<KernelObj> Fp16MatMulM8N8K8::GetDependInternalSymbol(
         TContext* context) const {
-    auto matmul_kernel = MatmulM8N8MK8Kernel();
+    auto matmul_kernel = Fp16MatmulM8N8MK8Kernel();
     auto ctx = GetInnerCtx(context);
     return {
             {matmul_kernel.GetKernelSymbol(ctx.get()),
@@ -73,7 +73,7 @@ std::vector<KernelObj> Fp16MatMulM8N8K8::GetDependInternalSymbol(
 std::string Fp16MatMulM8N8K8::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     writer << "#include \"gi_float16.h\"\n";
-    auto matmul_kernel = MatmulM8N8MK8Kernel();
+    auto matmul_kernel = Fp16MatmulM8N8MK8Kernel();
     writer << "extern " << matmul_kernel.GetKernelSignature(context) << ";\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";

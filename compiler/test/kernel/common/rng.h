@@ -104,5 +104,19 @@ private:
     void do_gen(ctype* ptr, size_t batch, size_t n);
 };
 
+class Float16PeriodicalRNG : public RNG {
+public:
+    Float16PeriodicalRNG();
+    Float16PeriodicalRNG(size_t range);
+
+    void gen(const megdnn::TensorND& tensor) override;
+    megdnn::dt_float16 get_single_val();
+
+private:
+    void gen_all_valid_float16();
+    size_t m_offset;
+    std::vector<megdnn::dt_float16> m_sequence;
+};
+
 }  // namespace test
 }  // namespace megcc

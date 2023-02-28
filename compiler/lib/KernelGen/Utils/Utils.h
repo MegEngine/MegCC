@@ -16,7 +16,7 @@ namespace KernelGen {
 namespace Utils {
 
 enum DtypeEnum {
-    unknow = 0,
+    unknown = 0,
     float32 = 1,
     int32 = 2,
     int8 = 3,
@@ -115,6 +115,25 @@ static inline DtypeEnum get_dtype_enum(const std::string& dtype) {
     }
 }
 
+static inline std::string get_tinynn_dtype_string(const std::string& dtype) {
+    if (is_float_dtype(dtype, 32)) {
+        return "TinyNN_FLOAT";
+    } else if (is_int_dtype(dtype, 32)) {
+        return "TinyNN_INT";
+    } else if (dtype == "ui8") {
+        return "TinyNN_UINT8";
+    } else if (is_quant_dtype(dtype, 8)) {
+        return "TinyNN_QINT8";
+    } else if (is_quant_dtype(dtype, 32)) {
+        return "TinyNN_QINT32";
+    } else if (is_float_dtype(dtype, 16)) {
+        return "TinyNN_FLOAT16";
+    } else {
+        CC_ASSERT(is_int_dtype(dtype, 8) || is_quant_dtype(dtype, 8))
+                << "not support " << dtype;
+        return "TinyNN_INT8";
+    }
+}
 static inline size_t get_dtype_size(const std::string& dtype) {
     if (is_float_dtype(dtype, 32) || is_int_dtype(dtype, 32) ||
         is_quant_dtype(dtype, 32)) {

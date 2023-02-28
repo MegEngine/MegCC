@@ -149,9 +149,17 @@ static void write_helper(const TensorND& tensor, std::function<float()> gen) {
             ++iter;
         }
     } else if (t_dtype.enumv() == DTypeEnum::Float16) {
-        FastIter<dt_float16> iter(tensor, tensor.layout.is_contiguous());
+        FastIter<megdnn::dt_float16> iter(tensor, tensor.layout.is_contiguous());
         for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
-            *iter = gen();
+            auto val = megdnn::dt_float16(gen());
+
+            if (!half_float::isfinite(val)) {
+                mgb_assert(
+                        0,
+                        "write_helper write dt_float16 value failed and the value is "
+                        "not finate");
+            }
+            *iter = val;
             ++iter;
         }
     } else {
@@ -198,7 +206,7 @@ void megcc::test::UniformRNG::gen(const TensorND& tensor) {
         }
     } else if (tensor.layout.dtype.enumv() == DTypeEnum::Float16) {
         RNGxorshf gen{RandomState::generator()};
-        dt_float16* ptr = tensor.ptr<dt_float16>();
+        megdnn::dt_float16* ptr = tensor.ptr<megdnn::dt_float16>();
         for (size_t i = 0; i < tensor.layout.total_nr_elems(); ++i) {
             ptr[i] = m_dist(gen);
         }
@@ -283,4 +291,61 @@ void InvertibleMatrixRNG::gen(const megdnn::TensorND& tensor) {
     }
     MEGDNN_FOREACH_COMPUTING_DTYPE_FLOAT(cb)
 #undef cb
+}
+
+Float16PeriodicalRNG::Float16PeriodicalRNG() : m_offset(0) {
+    for (size_t x = 0; x < (1u << 16); ++x) {
+        size_t exponent = (x >> 10) & 0x1F;
+        if (exponent == 0x1F) {
+            // +inf, -inf, NaN
+            continue;
+        }
+        union U {
+            U() {}
+            uint16_t i;
+            megdnn::dt_float16 f;
+        } i2f;
+        i2f.i = static_cast<uint16_t>(x);
+        m_sequence.push_back(i2f.f);
+    }
+    std::random_shuffle(m_sequence.begin(), m_sequence.end());
+}
+
+Float16PeriodicalRNG::Float16PeriodicalRNG(size_t range) : m_offset(0) {
+    union U {
+        U() {}
+        uint16_t i;
+        megdnn::dt_float16 f;
+    } i2f;
+    size_t x = 0;
+    i2f.i = static_cast<uint16_t>(x);
+    for (size_t i = 0; i < range; i++) {
+        x += 1;
+        i2f.i = static_cast<uint16_t>(x);
+        m_sequence.push_back(i2f.f);
+    }
+    x = 1u << 15;
+    i2f.i = static_cast<uint16_t>(x);
+    for (size_t i = 0; i < range; i++) {
+        x += 1;
+        i2f.i = static_cast<uint16_t>(x);
+        m_sequence.push_back(i2f.f);
+    }
+
+    std::random_shuffle(m_sequence.begin(), m_sequence.end());
+}
+
+void Float16PeriodicalRNG::gen(const megdnn::TensorND& tensor) {
+    size_t nr_elems = tensor.layout.span().dist_elem();
+    auto offset = tensor.layout.span().low_elem;
+    for (size_t i = 0; i < nr_elems; ++i) {
+        tensor.ptr<megdnn::dt_float16>()[offset + i] = get_single_val();
+    }
+}
+
+megdnn::dt_float16 Float16PeriodicalRNG::get_single_val() {
+    if (m_offset >= m_sequence.size()) {
+        m_offset = 0;
+    }
+    return m_sequence[m_offset++];
 }

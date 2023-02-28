@@ -66,8 +66,8 @@ std::string ElemwiseKernel::GetKernelSymbol(TContext* context) const {
                 context->getAttrOprand("operand:1"),
                 context->getAttrOprand("operand:2")));
     } else {
-        //! Not implement quater elemwise kernel
-        CC_ABORT << "not support quater elemwise kernel.\n";
+        //! Not implement quarter elemwise kernel
+        CC_ABORT << "not support quarter elemwise kernel.\n";
     }
     ss << "_" << SymbolHelper::gen_io_str(context);
     return ss.str();
@@ -84,8 +84,8 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     auto dtype = Utils::get_dtype_enum(ctx->getAttrOprand("operand:0").dtype);
 
     auto ElemwiseImpl = ElemwiseHelperFunc::CreateGenHelper(mode, operands);
-    auto src_specificer = Utils::cvt_dtype_specifier(operands[0].dtype);
-    auto dst_specificer =
+    auto src_specifier = Utils::cvt_dtype_specifier(operands[0].dtype);
+    auto dst_specifier =
             Utils::cvt_dtype_specifier(operands[operands.size() - 1].dtype);
     GIMathHelper gi_math;
     CC_ASSERT(ElemwiseImpl) << "ElemwiseHelper Create error!\n";
@@ -146,9 +146,9 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     //! input + output = 2, unary case
     if (nr_operands == 2) {
         writer << R"(
-        ${src_specificer}* input_data0 = inputs[0]->ptr;
+        ${src_specifier}* input_data0 = inputs[0]->ptr;
         TINYNN_ASSERT(input_data0);
-        ${dst_specificer}* output_data = outputs[0]->ptr;
+        ${dst_specifier}* output_data = outputs[0]->ptr;
         ${ElemwiseImpl(input_data0, output_data)};
         )";
     } else if (nr_operands == 3) {
@@ -182,8 +182,8 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     };
     ss << StringTemplate::StringTemplateArgs()
                     .add("ElemwiseImpl", ImpleGen)
-                    .add("src_specificer", src_specificer)
-                    .add("dst_specificer", dst_specificer)
+                    .add("src_specifier", src_specifier)
+                    .add("dst_specifier", dst_specifier)
                     .render(writer.str());
     return ss.str();
 }

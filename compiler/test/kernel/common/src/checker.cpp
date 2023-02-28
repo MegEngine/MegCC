@@ -123,6 +123,13 @@ static inline bool good_float(dt_quint8) {
 static inline bool good_float(dt_qint32) {
     return true;
 }
+static inline dt_float16 diff(dt_float16 x, dt_float16 y) {
+    return x - y;
+}
+static inline bool good_float(dt_float16 val) {
+    return half_float::isfinite(val);
+}
+
 // A hack for the (x+0) promote to int trick on dt_quint8.
 static inline int operator+(dt_quint8 lhs, int rhs) {
     mgb_assert(rhs == 0, "unexpected rhs");

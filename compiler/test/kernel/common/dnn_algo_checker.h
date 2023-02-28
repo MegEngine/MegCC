@@ -111,7 +111,7 @@ public:
         } else {
             opr->execution_policy() = m_policy;
         }
-        printf("Benchmark with dnn algo: %s\n", m_policy.algo.name.c_str());
+        printf("run with dnn algo: %s\n", m_policy.algo.name.c_str());
     }
 
 private:
