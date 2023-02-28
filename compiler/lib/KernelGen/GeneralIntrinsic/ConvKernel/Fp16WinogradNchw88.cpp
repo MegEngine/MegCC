@@ -20,11 +20,9 @@ using namespace GeneralIntrinsic;
 // 23
 bool WinogradFp16F23NCHW88::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -72,18 +70,17 @@ std::string WinogradFp16F23NCHW88::GetKernelBody(TContext* ctx) const {
     writer << "#include \"gi_float.h\"\n";
     writer << "#include\"gi_float16.h\"\n";
     writer << "\n\n";
-    writer << "extern " << Fp16MatmulM8N8MK8Kernel().GetKernelSignature(ctx)
-           << ";\n";
+    writer << "extern " << Fp16MatmulM8N8MK8Kernel().GetKernelSignature(ctx) << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     writer << m_framework.GenKernelBodyCode(ctx, &m_winograd_strategy);
     writer << "return TinyNN_SUCCESS;\n}";
     return writer.str();
 }
 
-std::vector<KernelObj> WinogradFp16F23NCHW88::GetDependInternalSymbol(
-        TContext*) const {
+std::vector<KernelObj> WinogradFp16F23NCHW88::GetDependInternalSymbol(TContext*) const {
     auto matmul = Fp16MatmulM8N8MK8Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }
@@ -96,11 +93,9 @@ std::string WinogradFp16F23NCHW88::GetKernelSymbol(TContext* context) const {
 // 43
 bool WinogradFp16F43NCHW88::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -156,10 +151,10 @@ std::string WinogradFp16F43NCHW88::GetKernelBody(TContext* ctx) const {
     return writer.str();
 }
 
-std::vector<KernelObj> WinogradFp16F43NCHW88::GetDependInternalSymbol(
-        TContext*) const {
+std::vector<KernelObj> WinogradFp16F43NCHW88::GetDependInternalSymbol(TContext*) const {
     auto matmul = Fp16MatmulM8N8MK8Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }
@@ -172,11 +167,9 @@ std::string WinogradFp16F43NCHW88::GetKernelSymbol(TContext* context) const {
 // 63
 bool WinogradFp16F63NCHW88::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 &&
-            ctx->getAttrUInt("kernel_w") == 3 &&
+            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
-            ctx->getAttrUInt("stride_h") == 1 &&
-            ctx->getAttrUInt("dilate_h") == 1 &&
+            ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("dilate_h") == 1 &&
             ctx->getAttrUInt("dilate_w") == 1;
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
@@ -232,10 +225,10 @@ std::string WinogradFp16F63NCHW88::GetKernelBody(TContext* ctx) const {
     return writer.str();
 }
 
-std::vector<KernelObj> WinogradFp16F63NCHW88::GetDependInternalSymbol(
-        TContext*) const {
+std::vector<KernelObj> WinogradFp16F63NCHW88::GetDependInternalSymbol(TContext*) const {
     auto matmul = Fp16MatmulM8N8MK8Kernel();
-    return {{matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
+    return {
+            {matmul.GetKernelSymbol(nullptr), matmul.GetKernelBody(nullptr),
              matmul.GetBodyGuardBegin(nullptr), matmul.GetBodyGuardEnd(nullptr),
              matmul.GetDependInternalSymbol(nullptr)}};
 }

@@ -175,8 +175,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };
@@ -193,8 +192,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };
@@ -211,8 +209,7 @@ public:
     std::string GetInitBody(TContext* context) const override;
     std::string GetWorkspaceBody(TContext* context) const override;
 
-    std::vector<KernelObj> GetDependInternalSymbol(
-            TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
 
     std::string GetKernelSymbol(TContext* context) const override;
 };

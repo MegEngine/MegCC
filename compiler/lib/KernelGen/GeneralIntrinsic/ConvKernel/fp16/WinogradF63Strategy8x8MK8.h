@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradF63Strategy4x16MK4.h
+ * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradF63Strategy8x8MK8.h
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *
@@ -16,7 +16,7 @@ namespace megcc {
 namespace KernelGen {
 namespace GeneralIntrinsic {
 
-class WinogradF63Strategy4x16MK4 : public WinogradStrategyBase {
+class WinogradF63Strategy8x8MK8 : public WinogradStrategyBase {
 public:
     uint32_t GetKernelSize() override { return 3; }
     uint32_t GetOutputBlockSize() override { return 6; }

@@ -8,10 +8,10 @@
  */
 #pragma once
 #include <string>
+#include "../WinogradCommon.h"
 #include "Common/ConvKernel.h"
 #include "Utils/StringTemplate.h"
 #include "compiler/KernelGen/KernelGen.h"
-#include "../WinogradCommon.h"
 namespace megcc {
 namespace KernelGen {
 namespace GeneralIntrinsic {
@@ -22,11 +22,10 @@ public:
     uint32_t GetOutputBlockSize() override { return 2; }
     std::string DependMatmulSymbol() override;
     std::string WeightTrans(const std::vector<std::string>& strs) override;
-    std::string InputFeatureTrans(
-            const std::vector<std::string>& strs) override;
+    std::string InputFeatureTrans(const std::vector<std::string>& strs) override;
     std::string BatchedMatMul(const std::vector<std::string>& strs) override;
-    std::string OutputFeatureTrans(const std::vector<std::string>& strs,
-                                   TContext*) override;
+    std::string OutputFeatureTrans(
+            const std::vector<std::string>& strs, TContext*) override;
 };
 
 }  // namespace GeneralIntrinsic
