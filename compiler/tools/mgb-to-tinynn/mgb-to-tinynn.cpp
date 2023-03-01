@@ -8,6 +8,7 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "mlir/Dialect/Bufferization/Transforms/Passes.h"
@@ -26,7 +27,6 @@
 #include "compiler/KernelGen/KernelGen.h"
 #include "compiler/Target/MGB/import.h"
 #include "compiler/Target/TinyNN/export.h"
-
 using namespace llvm;
 
 cl::opt<std::string> InputFile(
@@ -387,6 +387,15 @@ int main(int argc, char** argv) {
             return -1;
         }
         llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir << "\n";
+
+        if (!llvm::sys::fs::exists(dump_dir.c_str())) {
+            llvm::sys::fs::create_directory(dump_dir.c_str());
+        } else {
+            CC_ASSERT(llvm::sys::fs::is_directory(dump_dir.c_str()))
+            "output: " << dump_dir
+                       << "is existed and not a directory, try remove it manually or "
+                          "choice another one";
+        }
         mlir::export_tinynn_model(
                 mod.get(), dump_dir + "/" + options.module_name + ".tiny", SaveModel,
                 kernel_exporter, model.bool_options.at("enable_compress_fp16"));

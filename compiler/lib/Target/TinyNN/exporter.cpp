@@ -235,6 +235,7 @@ public:
                 model_meta_info.push_back(ss.str());
             }
         }
+        model_info_vec.clear();
 
         auto&& block = func.getBody().front();
         for (auto&& iter = block.rbegin(); iter != block.rend(); ++iter) {
@@ -250,8 +251,25 @@ public:
                         CC_ABORT << "duplicate output buffer\n";
                     }
                     LOG_DEBUG << "Get TinyNN model output name: " << name << "\n";
+                    model_info_vec.push_back(log_model_info(value, name));
                 }
                 break;
+            }
+        }
+        {
+            //! hack: ignore armv7 in arm64v7 mode
+            if (!func.getName().endswith(
+                        megcc::KernelGen::DumpHelper::ARM64V7_ARMV7_POSTFIX)) {
+                std::stringstream ss;
+                ss << "[";
+                for (size_t i = 0; i < model_info_vec.size(); ++i) {
+                    ss << "[" << model_info_vec[i] << "]";
+                    if (i != model_info_vec.size() - 1) {
+                        ss << ",";
+                    }
+                }
+                ss << "]";
+                model_meta_info.push_back(ss.str());
             }
         }
 
