@@ -92,6 +92,8 @@ static void free_loader_maps(LoaderMapVec* lm) {
         tinynn_free(lm->loader_map);
         lm->loader_map = NULL;
     }
+    lm->size = 0;
+    lm->capacity = 0;
 }
 
 //! get API ptr for specific version; return nullptr if version mismatch
