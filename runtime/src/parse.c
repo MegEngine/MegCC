@@ -350,12 +350,34 @@ TinyNNStatus parse_device_model(
     }
     //! outputs
     flatbuffers_int32_vec_t fbs_outputs = ns(DeviceModel_outputs(fbs_device_model));
-    model->nr_output = flatbuffers_int32_vec_len(fbs_outputs);
+    flatbuffers_int32_vec_t fbs_weight_outputs =
+            ns(DeviceModel_weight_outputs(fbs_device_model));
+    flatbuffers_string_vec_t fbs_weight_outputs_name =
+            ns(DeviceModel_weight_outputs_name(fbs_device_model));
+    int nr_outputs = flatbuffers_int32_vec_len(fbs_outputs);
+    int nr_weight_outputs = flatbuffers_int32_vec_len(fbs_weight_outputs);
+    TINYNN_ASSERT(
+            nr_weight_outputs == flatbuffers_string_vec_len(fbs_weight_outputs_name));
+    model->nr_output = nr_outputs + nr_weight_outputs;
     model->outputs = tinynn_malloc(model->nr_output * sizeof(Tensor*));
     memset(model->outputs, 0, model->nr_output * sizeof(Tensor*));
-    for (int i = 0; i < model->nr_output; i++) {
+    for (int i = 0; i < nr_outputs; i++) {
         int index = flatbuffers_int32_vec_at(fbs_outputs, i);
         *(model->outputs + i) = model->tensors + index;
+    }
+    for (int i = 0; i < nr_weight_outputs; ++i) {
+        int index = flatbuffers_int32_vec_at(fbs_weight_outputs, i);
+        const char* name = flatbuffers_string_vec_at(fbs_weight_outputs_name, i);
+        *(model->outputs + i + nr_outputs) = c_model->weights + index;
+        Tensor* weight_output_ptr = *(model->outputs + i + nr_outputs);
+        //! Since the original name is wrong (extra "_xxxxx"), we need to free the memory
+        //! of the original name and set the new name.
+        //! Since the variable 'name' is part of a large block of malloced memory (not
+        //! all of it), in order to free the memory properly, we must copy the memory
+        //! instead of pointing the pointer to 'name'
+        FREE(weight_output_ptr->name);
+        weight_output_ptr->name = tinynn_malloc(strlen(name) + 1);
+        memcpy(weight_output_ptr->name, name, strlen(name) + 1);
     }
     return TinyNN_SUCCESS;
 exit:

@@ -180,6 +180,9 @@ public:
         std::vector<Offset<void>> instructions;
         std::vector<int32_t> inputs;
         std::vector<int32_t> outputs;
+        //! for taking fake weights as outputs when dump model.
+        std::vector<int32_t> weight_outputs;
+        std::vector<std::string> weight_outputs_name;
 
         uint64_t tensor_memory = 0;
 
@@ -742,7 +745,14 @@ public:
                         for (auto&& i : op.getOperands()) {
                             auto&& tensor =
                                     value2typed_tensor.at(i.getAsOpaquePointer());
-                            outputs.push_back(tensor.second);
+                            if (tensor.first == MegCC::TensorType_TENSOR) {
+                                outputs.push_back(tensor.second);
+                            } else {
+                                CC_ASSERT(tensor.first == MegCC::TensorType_WEIGHT);
+                                weight_outputs.push_back(tensor.second);
+                                weight_outputs_name.push_back(
+                                        value2name.at(i.getAsOpaquePointer()));
+                            }
                         }
                     })
                     .Default([&](Operation* op) {
@@ -755,6 +765,9 @@ public:
         auto instructions_ = m_fbs_builder.CreateVector(instructions);
         auto inputs_ = m_fbs_builder.CreateVector(inputs);
         auto outputs_ = m_fbs_builder.CreateVector(outputs);
+        auto weight_outputs_ = m_fbs_builder.CreateVector(weight_outputs);
+        auto weight_outputs_name_ =
+                m_fbs_builder.CreateVectorOfStrings(weight_outputs_name);
 
         MegCC::DeviceModelBuilder device_model(m_fbs_builder);
         device_model.add_tensor_pool(tensors_);
@@ -762,6 +775,10 @@ public:
         device_model.add_instructions(instructions_);
         device_model.add_inputs(inputs_);
         device_model.add_outputs(outputs_);
+        //! To get the correct weights(as outputs) at runtime,
+        //! store index and names of weights which are taken as outputs into device model.
+        device_model.add_weight_outputs(weight_outputs_);
+        device_model.add_weight_outputs_name(weight_outputs_name_);
         device_model.add_tensor_memory(tensor_memory);
         auto func_name = func.getName();
         device_model.add_device(get_tiny_device(func_name));

@@ -379,6 +379,8 @@ table DeviceModel {
     // the model input/output tensor index
     inputs: [int];
     outputs: [int];
+    weight_outputs: [int];
+    weight_outputs_name: [string];
 }
 
 // Model
