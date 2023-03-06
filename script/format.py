@@ -16,7 +16,7 @@ os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 failed_files = Manager().list()
 
-exclude_dir = ["runtime/flatcc"]
+exclude_dir = ["runtime/flatcc", "runtime/src/cheader"]
 
 
 def process_file(file, clang_format, write):

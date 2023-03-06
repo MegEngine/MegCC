@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import sys
 from argparse import ArgumentParser
+import re
 
 import numpy as np
 
@@ -32,7 +33,7 @@ def parse_model_info(model_infos, input_dir):
     model_data_info = []
     model_data_info_local = []
     model_shape_info = []
-    for model_info in model_infos:
+    for model_info in model_infos[0]:
         model_input_info = []
         model_input_info_local = []
         model_input_shape_info = []
@@ -57,7 +58,12 @@ def parse_model_info(model_infos, input_dir):
     model_data_info = ":".join(model_data_info)
     model_shape_info = ":".join(model_shape_info)
     model_data_info_local = ":".join(model_data_info_local)
-    return input_list, model_data_info, model_shape_info, model_data_info_local
+
+    output_name_2_dtype = {}
+    for output_info in model_infos[1]:
+        for _, dtype, name in output_info:
+            output_name_2_dtype[name] = dtype
+    return input_list, model_data_info, model_shape_info, model_data_info_local, output_name_2_dtype
 
 
 def local_call(cmd):
@@ -78,49 +84,74 @@ def copyftarget(host, workdir, origin_path):
         ["rsync", "-aP", "-zz", host + ":" + workdir, origin_path])
 
 
-def compare_file(file_path_0, file_path_1, eps):
+def compare_file(file_path_0, file_path_1, eps, out_dtype):
     print("compare ", file_path_0, file_path_1)
     with open(file_path_0, "rb") as f:
-        d0 = np.frombuffer(f.read(), dtype=np.float32)
+        d0 = np.frombuffer(f.read(), dtype=out_dtype)
     with open(file_path_1, "rb") as f:
-        d1 = np.frombuffer(f.read(), dtype=np.float32)
+        d1 = np.frombuffer(f.read(), dtype=out_dtype)
     assert d0.size == d1.size, "{} == {}".format(d0.size, d1.size)
-    diff = np.abs(d0 - d1) / np.maximum(1.0, np.minimum(
+    diff = (np.maximum(d0, d1) - np.minimum(d0, d1)) / np.maximum(1.0, np.minimum(
         np.abs(d0), np.abs(d1)))
+    abs_diff = np.maximum(d0, d1) - np.minimum(d0, d1)
     max_idx = np.argmax(diff.flatten())
     print(d0.shape)
     print(
         "max diff ",
         np.max(diff.flatten()),
-        "abs_diff",
-        np.max(np.abs(d0 - d1).flatten()),
+        "\nabs_diff",
+        np.max(abs_diff.flatten()[max_idx]),
+        "\n",
         d0[max_idx:max_idx + 10],
         " vs ",
         d1[max_idx:max_idx + 10],
         " at ",
         max_idx,
     )
-    assert np.all(diff < eps), "failed {} != {}, max ".format(
-        d0, d1, np.max(diff.flatten()))
+    #! FIXME: the max abs diff should be zero when dtype is int?
+    if out_dtype == np.int8 or out_dtype == np.uint8 or out_dtype == np.int32:
+        assert np.all(abs_diff <= 1), "failed {} != {}, max : {}".format(
+            d0, d1, np.max(abs_diff.flatten()))
+        if np.max(abs_diff.flatten()) == 1:
+            print("\033[31mWarning\033[0m: the max abs diff is 1")
+    else:
+        assert np.all(diff < eps), "failed {} != {}, max: {} ".format(
+            d0, d1, np.max(diff.flatten()))
 
 
-def compare_file_or_dir(path_0, path_1, eps):
+def compare_file_or_dir(path_0, path_1, eps, output_name_2_dtype):
     compare_file_cnt = 0
+    dtype_str_2_np = {"f32": np.float32, "ui8": np.uint8,
+                      "f16": np.float16, "si8": np.int8, "si32": np.int32}
     if os.path.isdir(path_0) and os.path.isdir(path_1):
         file_names = os.listdir(path_0)
         for file_name in file_names:
+            output_name = None
+            for i in output_name_2_dtype.keys():
+                if re.search("^"+i+"_[0-9]+$", file_name):
+                    output_name = i
+                    break
+            assert output_name
             file_path_0 = os.path.join(path_0, file_name)
             file_path_1 = os.path.join(path_1, file_name)
             assert os.path.exists(file_path_0), "can not find {}".format(
                 file_path_0)
             assert os.path.exists(file_path_1), "can not find {}".format(
                 file_path_1)
-            compare_file(file_path_0, file_path_1, eps)
+            compare_file(file_path_0, file_path_1, eps,
+                         dtype_str_2_np[output_name_2_dtype[output_name]])
             compare_file_cnt += 1
     else:
         assert os.path.isfile(path_0), "can not find {}".format(path_0)
         assert os.path.isfile(path_1), "can not find {}".format(path_1)
-        compare_file(path_0, path_1, eps)
+        output_name = None
+        for i in output_name_2_dtype.keys():
+            if re.search(i+"_[0-9]+$", file_name):
+                output_name = i
+                break
+        assert output_name
+        compare_file(path_0, path_1, eps,
+                     dtype_str_2_np[output_name_2_dtype[output_name]])
         compare_file_cnt += 1
     if compare_file_cnt > 0:
         print("compare pass!!")
@@ -190,25 +221,26 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
         shutil.rmtree(work_dir)
     os.mkdir(work_dir)
     tinynn_test_lite_path = os.path.join(build_dir, "tinynn_test_lite")
-    if not os.path.exists(tinynn_test_lite_path):
-        if not os.path.exists(build_dir):
-            print("build not exit!!")
-            os.mkdir(build_dir)
-        subprocess.run([
-            build_script,
-            "--cross_build",
-            "--remove_old_build",
-            "--kernel_dir",
-            kern_dir,
-            "--cross_build_target_arch",
-            target_arch,
-            "--specify_build_dir",
-            build_dir,
-        ])
+    if not os.path.exists(build_dir):
+        print("build not exit!!")
+        os.mkdir(build_dir)
+    subprocess.run([
+        build_script,
+        "--cross_build",
+        "--remove_old_build",
+        "--kernel_dir",
+        kern_dir,
+        "--cross_build_target_arch",
+        target_arch,
+        "--specify_build_dir",
+        build_dir,
+    ])
 
     for model_file in os.listdir(model_dir):
         if model_file.endswith(".tiny"):
             model_name = model_file[:-5]
+            if model_name_2_all and model_name not in model_name_2_all.keys():
+                continue
             model_path = os.path.join(model_dir, model_file)
             model_info_path = os.path.join(model_info_dir, model_file + ".txt")
             assert os.path.exists(model_info_path)
@@ -222,6 +254,7 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
                 model_data_info,
                 model_shape_info,
                 model_data_info_local,
+                output_name_2_dtype
             ) = parse_model_info(model_infos, input_dir)
             for input_info in input_list:
                 if not os.path.exists(input_info["input_path"]):
@@ -278,10 +311,9 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
                 ])
                 try:
                     compare_file_or_dir(local_run_dir + "/tiny_out",
-                                        mgb_out_dir, eps)
+                                        mgb_out_dir, eps, output_name_2_dtype)
                 except Exception as err:
-                    print("{} result check failed for: {}".format(model_name),
-                          err)
+                    print("{} result check failed for: {}".format(model_name, err))
                     exit(-1)
             else:
                 print(

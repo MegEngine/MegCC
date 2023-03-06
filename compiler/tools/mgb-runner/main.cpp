@@ -220,10 +220,17 @@ void run(const serialization::GraphLoader::LoadResult& graph, bool verbose) {
             if (output[i].dtype() == dtype::Float32()) {
                 output_file->write(
                         output[i].ptr<float>(), output[i].layout().span().high_byte);
+            } else if (output[i].dtype() == dtype::Uint8()) {
+                output_file->write(
+                        output[i].ptr<uint8_t>(), output[i].layout().span().high_byte);
+            } else if (output[i].dtype() == dtype::Int8()) {
+                output_file->write(
+                        output[i].ptr<int8_t>(), output[i].layout().span().high_byte);
             } else {
                 mgb_assert(
                         output[i].dtype() == dtype::Int32(),
-                        "invalid output type (non float32 neither int32)");
+                        "invalid output type (should be float32, int8, uint8 or "
+                        "int32)");
                 output_file->write(
                         output[i].ptr<int>(), output[i].layout().span().high_byte);
             }

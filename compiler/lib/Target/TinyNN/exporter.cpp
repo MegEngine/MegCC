@@ -57,7 +57,7 @@ public:
         symbol2weight_id.clear();
 
         std::vector<Offset<MegCC::Weight>> weights;
-        std::vector<std::string> model_meta_info;
+        std::vector<std::string> model_input_meta_info, model_output_meta_info;
         std::vector<Offset<MegCC::DeviceModel>> device_models;
         for (auto&& _ : *m_root.getBody()) {
             llvm::TypeSwitch<Operation*>(&_)
@@ -106,7 +106,8 @@ public:
                     })
                     .Case([&](FuncOp op) {
                         device_models.push_back(export_single_func(
-                                op, kernel_exporter, model_meta_info));
+                                op, kernel_exporter, model_input_meta_info,
+                                model_output_meta_info));
                     })
                     .Default([&](Operation* op) {
                         llvm::errs() << "Unknown operation : " << *op << "\n";
@@ -135,14 +136,21 @@ public:
                         static_cast<void*>(m_fbs_builder.GetBufferPointer())),
                 m_fbs_builder.GetSize());
         llvm::raw_fd_stream model_file_meta(model_path + ".txt", EC);
-        model_file_meta << "[";
-        for (size_t i = 0; i < model_meta_info.size(); ++i) {
-            model_file_meta << model_meta_info[i];
-            if (i != model_meta_info.size() - 1) {
+        model_file_meta << "[[";
+        for (size_t i = 0; i < model_input_meta_info.size(); ++i) {
+            model_file_meta << model_input_meta_info[i];
+            if (i != model_input_meta_info.size() - 1) {
                 model_file_meta << ",";
             }
         }
-        model_file_meta << "]";
+        model_file_meta << "],[";
+        for (size_t i = 0; i < model_output_meta_info.size(); ++i) {
+            model_file_meta << model_output_meta_info[i];
+            if (i != model_output_meta_info.size() - 1) {
+                model_file_meta << ",";
+            }
+        }
+        model_file_meta << "]]";
 
         if (save_model) {
             writeModelToCFile(model_path + ".c", m_fbs_builder);
@@ -171,7 +179,8 @@ public:
     }
     Offset<MegCC::DeviceModel> export_single_func(
             mlir::FuncOp func, KernelExporter& kernel_exporter,
-            std::vector<std::string>& model_meta_info) {
+            std::vector<std::string>& model_input_meta_info,
+            std::vector<std::string>& model_output_meta_info) {
         std::unordered_map<void*, std::pair<MegCC::TensorType, int32_t>>
                 value2typed_tensor;
         std::unordered_map<void*, std::string> value2name;
@@ -235,7 +244,7 @@ public:
                     }
                 }
                 ss << "]";
-                model_meta_info.push_back(ss.str());
+                model_input_meta_info.push_back(ss.str());
             }
         }
         model_info_vec.clear();
@@ -272,7 +281,7 @@ public:
                     }
                 }
                 ss << "]";
-                model_meta_info.push_back(ss.str());
+                model_output_meta_info.push_back(ss.str());
             }
         }
 
