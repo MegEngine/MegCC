@@ -284,7 +284,7 @@ std::string kernbody_template(
                            })
                       .add("BatchedMatmul",
                            [&](std::vector<std::string> strs) {
-                               return strategy->BatchedMatMul(strs);
+                               return strategy->BatchedMatMul(strs, dst_specifier);
                            })
                       .add("OutputTransform",
                            [&](std::vector<std::string> strs) {
@@ -298,6 +298,40 @@ std::string kernbody_template(
 }
 
 }  // namespace
+
+std::string WinogradStrategyBase::BatchedMatMul(
+        const std::vector<std::string>& strs, const std::string& ctype_specifier) {
+    std::string matmul_compute = R"(
+    for(uint32_t i =0; i< Alpha; i++){
+        for(uint32_t j=0; j<Alpha; j++){
+            const ${ctype_specifier}* a_ptr = ${A_ptr} +
+                (i * Alpha + j) * ${OC} * ${IC};
+            ${ctype_specifier}* b_ptr = ${B_ptr} +
+                (i * Alpha + j) * ${nr_tiles_in_loop} * ${IC};
+            ${ctype_specifier}* c_ptr = ${C_ptr} +
+                (i * Alpha + j) * ${nr_tiles_in_loop} * ${OC};
+            ${MatMul}(a_ptr, ${LDA}, b_ptr, ${LDB}, c_ptr, ${LDC}, ${OC}, 
+                    ${nr_tiles_in_loop}, ${IC});
+        }
+    })";
+
+    std::stringstream ss;
+    ss << StringTemplate::StringTemplateArgs()
+                    .add("MatMul", DependMatmulSymbol())
+                    .add("A_ptr", strs[0])
+                    .add("LDA", strs[1])
+                    .add("B_ptr", strs[2])
+                    .add("LDB", strs[3])
+                    .add("C_ptr", strs[4])
+                    .add("LDC", strs[5])
+                    .add("OC", strs[6])
+                    .add("IC", strs[7])
+                    .add("nr_tiles_in_loop", strs[8])
+                    .add("ctype_specifier", ctype_specifier)
+                    .render(matmul_compute);
+    return ss.str();
+}
+
 std::string WinogradFrameNchw44::GenGetWorkSpaceCode(
         TContext* context, WinogradStrategyBase* strategy) {
     CC_ASSERT(context->getAttrStr("format") == "NCHW44")

@@ -159,7 +159,7 @@ std::vector<KernelObj> WinogradFloatF43NCHW44::GetDependInternalSymbol(
 
 std::string WinogradFloatF43NCHW44::GetKernelSymbol(TContext* context) const {
     auto symbol = GIConvImpl::GetKernelSymbol(context);
-    return symbol + "_winograd_f43";
+    return symbol + "_winograd_f43_fp32";
 }
 
 bool WinogradFloatF63NCHW44::IsAvailable(TContext* ctx) const {
@@ -231,6 +231,6 @@ std::vector<KernelObj> WinogradFloatF63NCHW44::GetDependInternalSymbol(
 
 std::string WinogradFloatF63NCHW44::GetKernelSymbol(TContext* context) const {
     auto symbol = GIConvImpl::GetKernelSymbol(context);
-    return symbol + "_winograd_f63";
+    return symbol + "_winograd_f63_fp32";
 }
 // vim: syntax=cpp.doxygen

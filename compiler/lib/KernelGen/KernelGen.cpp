@@ -54,9 +54,9 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
             for (auto&& kern : gi_kerns) {
                 auto kern_sym = kern->GetKernelSymbol(nullptr);
                 auto is_f63 = std::regex_match(
-                        kern_sym, std::regex("^GI.*f32.*_winograd_f63.*"));
+                        kern_sym, std::regex("^GI.*_winograd_f63_fp32.*"));
                 auto is_f43 = std::regex_match(
-                        kern_sym, std::regex("^GI.*f32.*_winograd_f43.*"));
+                        kern_sym, std::regex("^GI.*_winograd_f43_fp32.*"));
                 auto if_match = is_f63 || is_f43;
                 if (!if_match) {
                     valid_kern.push_back(kern);
@@ -110,9 +110,9 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
                 auto kern_sym = kern->GetKernelSymbol(nullptr);
                 auto if_match =
                         std::regex_match(
-                                kern_sym, std::regex("^GI.*f32.*_winograd_f63.*")) ||
+                                kern_sym, std::regex("^GI.*_winograd_f63_fp32.*")) ||
                         std::regex_match(
-                                kern_sym, std::regex("^GI.*f32.*_winograd_f43.*"));
+                                kern_sym, std::regex("^GI.*_winograd_f43_fp32.*"));
                 if (!if_match) {
                     valid_kern.push_back(kern);
                 }

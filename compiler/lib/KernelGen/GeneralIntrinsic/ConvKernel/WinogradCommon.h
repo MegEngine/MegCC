@@ -21,6 +21,7 @@ public:
     virtual uint32_t GetKernelSize() = 0;
     virtual uint32_t GetOutputBlockSize() = 0;
     virtual uint32_t GetTileSize() { return 32; };
+    virtual ~WinogradStrategyBase() = default;
 
     //! transform the weight to winograd space, input strings are:
     //! 0: inptr, the start pointer of the convolution weight
@@ -45,7 +46,7 @@ public:
     //! input strings:
     //! 0:A_ptr, 1:LDA, 2:B_ptr, 3:LDB, 4:C_ptr, 5:LDC, 6:OC,
     //! 7:IC, 8:nr_tiles_in_loop
-    virtual std::string BatchedMatMul(const std::vector<std::string>& strs) = 0;
+    std::string BatchedMatMul(const std::vector<std::string>& strs, const std::string&);
 
     //! output transform and data post process, input strings:
     //! 0: transform_output_ptr, to be transform memory

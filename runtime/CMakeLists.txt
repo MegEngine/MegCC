@@ -221,9 +221,9 @@ if(TINYNN_CALLBACK_ENABLE)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
-  set(CMAKE_C_FLAGS " -g -O0  ${CMAKE_C_FLAGS} -DDEBUG_MODE=1")
+  set(CMAKE_C_FLAGS " -g -O0   -fno-finite-math-only ${CMAKE_C_FLAGS} -DDEBUG_MODE=1")
 else()
-  set(CMAKE_C_FLAGS "-Ofast -g ${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "-Ofast  -fno-finite-math-only -g ${CMAKE_C_FLAGS}")
 endif()
 
 if(TINYNN_ENABLE_ASAN)
@@ -231,10 +231,14 @@ if(TINYNN_ENABLE_ASAN)
     message(FATAL_ERROR "Build for TINYNN_ENABLE_ASAN, do not support static libc")
   endif()
   if(${CMAKE_C_COMPILER_ID} STREQUAL "Clang")
-    set(CMAKE_C_FLAGS " -fsanitize=address -g -O0 -static-libsan ${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS
+        " -fsanitize=address -g -O0 -fno-finite-math-only -static-libsan ${CMAKE_C_FLAGS}"
+    )
     set(CMAKE_LINK_FLAGS "-fsanitize=address -static-libsan ${CMAKE_LINK_FLAGS}")
   else()
-    set(CMAKE_C_FLAGS " -fsanitize=address -g -O0 -static-libasan ${CMAKE_C_FLAGS}")
+    set(CMAKE_C_FLAGS
+        " -fsanitize=address -g -O0  -fno-finite-math-only -static-libasan ${CMAKE_C_FLAGS}"
+    )
     set(CMAKE_LINK_FLAGS "-fsanitize=address -static-libasan ${CMAKE_LINK_FLAGS}")
   endif()
 endif()

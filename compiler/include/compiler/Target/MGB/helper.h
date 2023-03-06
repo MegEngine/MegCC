@@ -27,9 +27,9 @@ namespace MGB {
 
 static inline ::megdnn::DType type_to_dtype(Type type) {
     if (auto floatType = type.dyn_cast<FloatType>()) {
-        if (floatType.getWidth() == 32) {
+        if (type.isF32()) {
             return ::megdnn::dtype::Float32();
-        } else if (floatType.getWidth() == 16) {
+        } else if (type.isF16()) {
             return ::megdnn::dtype::Float16();
         } else {
             std::string type_name;

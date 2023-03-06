@@ -61,7 +61,7 @@ void get_kernel_size(
                 kh = weight.layout[2];
                 kw = weight.layout[3];
             } else {
-                //! hybrid first layout oc/4, fh, fw, ic, 8
+                //! hybrid first layout oc/8, fh, fw, ic, 8
                 kh = weight.layout[1];
                 kw = weight.layout[2];
             }

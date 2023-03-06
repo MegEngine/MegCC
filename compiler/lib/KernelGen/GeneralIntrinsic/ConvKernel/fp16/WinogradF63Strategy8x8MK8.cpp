@@ -7,7 +7,6 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "WinogradF63Strategy8x8MK8.h"
 #include <string>
 #include "GeneralIntrinsic/Activation.h"
 #include "GeneralIntrinsic/ConvKernel/ConvKernel.h"
@@ -54,19 +53,12 @@ std::string WinogradF63Strategy8x8MK8::WeightTrans(
 
                 //! write to the dst
                 gi_float16_t* dst = ${outptr};
-//                         int32_t tmp_vec[4];
-//         gi_float16_t* vec_ptr = (gi_float16_t*)(&tmp_vec[0]);
-// #define cb_save(m, n) \
-//         GiStoreFloat16(vec_ptr, ret##m##n);                                   \
-//     printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);
-//     UNROLL_CALL_NOWRAPPER_D2(8, 8, cb_save)
-// #undef cb_save 
                 ${StoreRet2D(8, 8, ret)};
             }
         }
        
     }
-    //  printf("\n\n\n");)";
+    )";
     auto FilterTransUnroll = [](const std::vector<std::string>& strs) {
         int times = std::stoi(strs[0]);
         std::string dst = strs[1];
@@ -141,7 +133,6 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
     auto InputPrepareF63NCHW88 = [](std::vector<std::string>) {
         std::stringstream ss;
         std::string kernel = R"(
-            // printf("input prepare\n");
         size_t IW8 = IW_ * PACK_C_SIZE;
         size_t iw8_start = iw_start * PACK_C_SIZE;
         size_t icb = ic / PACK_C_SIZE;
@@ -155,10 +146,6 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
 #define cb(i) GI_FLOAT16_t v##i = GiLoadFloat16(input_ptr_ + PACK_C_SIZE * i);
                 UNROLL_CALL_NOWRAPPER(8, cb);
 #undef cb
-// #define cb(i)         GiStoreFloat16(vec_ptr, v##i); \
-//     printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);
-//                 UNROLL_CALL_NOWRAPPER(8, cb);
-// #undef cb
 
 #define cb(i) GiStoreFloat16(patchT + ih * PACK_C_SIZE * Alpha + i * PACK_C_SIZE, v##i);
                 UNROLL_CALL_NOWRAPPER(8, cb);
@@ -176,8 +163,6 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
                 for (int iw = iw0_act; iw < iw1_act; ++iw) {
                     size_t iho = ih - ih_start, iwo = iw - iw_start;
                     GI_FLOAT16_t src = GiLoadFloat16(input_ptr_ + ih * IW8 + iw * PACK_C_SIZE);
-                    // GiStoreFloat16(vec_ptr, src);
-                    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);
                     GiStoreFloat16(
                             patchT + iho * PACK_C_SIZE * Alpha + iwo * PACK_C_SIZE, src);
                 }
@@ -267,22 +252,6 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
     t##i##7 = MSUB(t##i##7, d5, v0, 0);
         UNROLL_CALL_RAW(8, cb);
 #undef cb
-    // GiStoreFloat16(vec_ptr, d0);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d1);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d2);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d3);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d4);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d5);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d6);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
-    // GiStoreFloat16(vec_ptr, d7);                                               \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);   \
 
 #define cb(i)                                                                  \
     d0 = t0##i;                                                                \
@@ -428,11 +397,9 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
 
             
             ${InputPrepareF63NCHW88()}
-            //  printf("\n\n\n");
             ${InputTransformF63NCHW88()}
         }
     }
-    // printf("\n\n\n");
     )";
 
     std::stringstream ss;
@@ -454,39 +421,6 @@ std::string WinogradF63Strategy8x8MK8::InputFeatureTrans(
 
 std::string WinogradF63Strategy8x8MK8::DependMatmulSymbol() {
     return Fp16MatmulM8N8MK8Kernel().GetKernelSymbol(NULL);
-}
-
-std::string WinogradF63Strategy8x8MK8::BatchedMatMul(
-        const std::vector<std::string>& strs) {
-    std::string matmul_compute = R"(
-    for(uint32_t i =0; i< Alpha; i++){
-        for(uint32_t j=0; j<Alpha; j++){
-            const gi_float16_t* a_ptr = ${A_ptr} +
-                (i * Alpha + j) * ${OC} * ${IC};
-            gi_float16_t* b_ptr = ${B_ptr} +
-                (i * Alpha + j) * ${nr_tiles_in_loop} * ${IC};
-            gi_float16_t* c_ptr = ${C_ptr} +
-                (i * Alpha + j) * ${nr_tiles_in_loop} * ${OC};
-            ${MatMul}(a_ptr, ${LDA}, b_ptr, ${LDB}, c_ptr, ${LDC}, ${OC}, 
-                    ${nr_tiles_in_loop}, ${IC});
-        }
-    }
-    )";
-
-    std::stringstream ss;
-    ss << StringTemplate::StringTemplateArgs()
-                    .add("MatMul", DependMatmulSymbol())
-                    .add("A_ptr", strs[0])
-                    .add("LDA", strs[1])
-                    .add("B_ptr", strs[2])
-                    .add("LDB", strs[3])
-                    .add("C_ptr", strs[4])
-                    .add("LDC", strs[5])
-                    .add("OC", strs[6])
-                    .add("IC", strs[7])
-                    .add("nr_tiles_in_loop", strs[8])
-                    .render(matmul_compute);
-    return ss.str();
 }
 
 std::string WinogradF63Strategy8x8MK8::OutputFeatureTrans(
@@ -513,17 +447,12 @@ std::string WinogradF63Strategy8x8MK8::OutputFeatureTrans(
 
         size_t OCB = OC_ / PACK_C_SIZE;
         size_t ocb = oc / PACK_C_SIZE;
-        //  int32_t tmp_vec[4];
-        // gi_float16_t* vec_ptr = (gi_float16_t*)(&tmp_vec[0]);
 
 #define cb(m, n)                                                   \
     GI_FLOAT16_t v##m##n = GiLoadFloat16(                                  \
             transform_output_ptr_ +                                 \
             (m * Alpha + n) * OCB * nr_tiles_in_loop_ * PACK_C_SIZE + \
             ocb * nr_tiles_in_loop_ * PACK_C_SIZE + tile_idx * PACK_C_SIZE); 
-
-    //             GiStoreFloat16(vec_ptr, v##m##n);                                   \
-    // printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]);
 
         UNROLL_CALL_NOWRAPPER_D2(8, 8, cb);
 #undef cb
@@ -658,10 +587,7 @@ ${nonline_gen_func(v52, vbias)};v52=vbias;
 ${nonline_gen_func(v53, vbias)};v53=vbias;
 ${nonline_gen_func(v54, vbias)};v54=vbias;
 ${nonline_gen_func(v55, vbias)};v55=vbias;
-// gi_float16_t tmp_out[8];
-// GiStoreFloat16(tmp_out, v00);
-// printf("\n\n\n");
-// printf("%.8f %.8f %.8f %.8f %.8f %.8f %.8f %.8f\n", tmp_out[0], tmp_out[1], tmp_out[2], tmp_out[3], tmp_out[4], tmp_out[5], tmp_out[6], tmp_out[7]);
+
 #define out_save(oho, owo)                                                           \
     do {                                                                             \
         size_t oh = oh_start + oho;                                                  \
@@ -675,14 +601,11 @@ ${nonline_gen_func(v55, vbias)};v55=vbias;
         UNROLL_CALL_RAW_D2(6, 6, out_save);
 
 #undef out_save
-    // GiStoreFloat16(vec_ptr, v##oho##owo);                                    \
-    //         printf("%x %x %x %x\n", tmp_vec[0], tmp_vec[1], tmp_vec[2], tmp_vec[3]); \
 
 #undef MSUB
 #undef MADD
         }
     }
-    // printf("\n\n\n");
     )";
     std::string nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";

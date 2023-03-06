@@ -16,7 +16,7 @@ using namespace megcc::KernelGen;
 #if ENABLE_KERNEL_FP16
 TEST(GI, Fp16ConvWinogradNCHW88) {
     Checker<ConvBiasForward> checker(Arch::BAREMETAL, 1);
-    checker.set_epsilon(0.1);
+    checker.set_epsilon(1e-3);
     ConvBiasForward::Param param;
     param.stride_h = 1;
     param.stride_w = 1;
@@ -25,7 +25,6 @@ TEST(GI, Fp16ConvWinogradNCHW88) {
     param.sparse = ConvBiasForward::Param::Sparse::DENSE;
 
     megcc::test::Float16PeriodicalRNG rng(0x3c00);
-    megcc::test::ConstRNG zero_rng(0);
     checker.set_rng(0, &rng);
     checker.set_rng(1, &rng);
     checker.set_rng(2, &rng);

@@ -7,7 +7,6 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
-#include "WinogradF23Strategy4x8MK4.h"
 #include <string>
 #include "GeneralIntrinsic/Activation.h"
 #include "GeneralIntrinsic/ConvKernel/ConvKernel.h"
@@ -256,38 +255,6 @@ std::string WinogradF23Strategy4x8MK4::InputFeatureTrans(
 
 std::string WinogradF23Strategy4x8MK4::DependMatmulSymbol() {
     return MatmulM4N8MK4Kernel().GetKernelSymbol(nullptr);
-}
-
-std::string WinogradF23Strategy4x8MK4::BatchedMatMul(
-        const std::vector<std::string>& strs) {
-    std::string matmul_compute = R"(
-    for(uint32_t i =0; i< Alpha; i++){
-        for(uint32_t j=0; j<Alpha; j++){
-            const float* a_ptr = ${A_ptr} +
-                (i * Alpha + j) * ${OC} * ${IC};
-            float* b_ptr = ${B_ptr} +
-                (i * Alpha + j) * ${nr_tiles_in_loop} * ${IC};
-            float* c_ptr = ${C_ptr} +
-                (i * Alpha + j) * ${nr_tiles_in_loop} * ${OC};
-            ${MatMul}(a_ptr, ${LDA}, b_ptr, ${LDB}, c_ptr, ${LDC}, ${OC}, 
-                    ${nr_tiles_in_loop}, ${IC});
-        }
-    })";
-
-    std::stringstream ss;
-    ss << StringTemplate::StringTemplateArgs()
-                    .add("MatMul", DependMatmulSymbol())
-                    .add("A_ptr", strs[0])
-                    .add("LDA", strs[1])
-                    .add("B_ptr", strs[2])
-                    .add("LDB", strs[3])
-                    .add("C_ptr", strs[4])
-                    .add("LDC", strs[5])
-                    .add("OC", strs[6])
-                    .add("IC", strs[7])
-                    .add("nr_tiles_in_loop", strs[8])
-                    .render(matmul_compute);
-    return ss.str();
 }
 
 std::string WinogradF23Strategy4x8MK4::OutputFeatureTrans(
