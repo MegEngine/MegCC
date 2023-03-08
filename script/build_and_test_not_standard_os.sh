@@ -63,6 +63,29 @@ function check_key_words() {
 }
 
 ################################################################################ test bare aarch64 #############################################################
+
+runtime_test(){
+    cd ${PROJECT_PATH}
+    # verify debug lib
+    ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --build_with_dump_tensor --build_with_profile --cross_build_target_arch aarch64 --build_for_debug --cross_build_target_os NOT_STANDARD_OS --remove_old_build
+    python3 runtime/scripts/check_tinynn_lib.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+
+    # verify release lib
+    ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --build_with_dump_tensor --build_with_profile --cross_build_target_arch aarch64 --cross_build_target_os NOT_STANDARD_OS --remove_old_build
+    python3 runtime/scripts/check_tinynn_lib.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+
+    # run aarch64 qemu
+    ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --remove_old_build --cross_build_target_arch aarch64 --build_for_debug --cross_build_target_os NOT_STANDARD_OS
+    cd ${PROJECT_PATH}/runtime/example/Nonstandard_OS/bare_board
+    python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
+    python3 test_bare_board_qemu.py --tinynn_lib_install_dir ${KERNEL_DIR}/runtime/install --test_arch aarch64
+}
+
 echo "test bare aarch64"
 MODEL_PATH=${PROJECT_PATH}/ci/resource/mobilenet/mobilenet.cppmodel
 MODEL_INPUT=${PROJECT_PATH}/ci/resource/mobilenet/input.bin
@@ -74,26 +97,19 @@ cp ${MODEL_INPUT} ${KERNEL_DIR}
 cd ${KERNEL_DIR}
 xxd -i input.bin >input.c
 cd -
+runtime_test
 
-cd ${PROJECT_PATH}
-# verify debug lib
-./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --build_with_dump_tensor --build_with_profile --cross_build_target_arch aarch64 --build_for_debug --cross_build_target_os NOT_STANDARD_OS --remove_old_build
-python3 runtime/scripts/check_tinynn_lib.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-
-# verify release lib
-./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --build_with_dump_tensor --build_with_profile --cross_build_target_arch aarch64 --cross_build_target_os NOT_STANDARD_OS --remove_old_build
-python3 runtime/scripts/check_tinynn_lib.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-
-# run aarch64 qemu
-./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --remove_old_build --cross_build_target_arch aarch64 --build_for_debug --cross_build_target_os NOT_STANDARD_OS
-cd ${PROJECT_PATH}/runtime/example/Nonstandard_OS/bare_board
-python3 ${PROJECT_PATH}/runtime/scripts/strip_and_mangling_static_tinynn.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
-python3 test_bare_board_qemu.py --tinynn_lib_install_dir ${KERNEL_DIR}/runtime/install --test_arch aarch64
+MODEL_PATH=${PROJECT_PATH}/ci/resource/finger/local_feature/local_feature_small.mge
+MODEL_INPUT=${PROJECT_PATH}/ci/resource/finger/local_feature/1x1x160x160xuint8
+KERNEL_DIR="${COMPILER_BUILD_DIR}/kernel_dir/"
+rm -fr ${KERNEL_DIR}
+mkdir -p ${KERNEL_DIR}
+$MEGCC_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn "$MODEL_PATH" "$KERNEL_DIR" --input-shapes="data=(1,1,160,160):img_mask=(1,1,160,160)" --arm64  --enable_nchw44 --save-model
+cp ${MODEL_INPUT} ${KERNEL_DIR}/input.bin
+cd ${KERNEL_DIR}
+xxd -i input.bin >input.c
+cd -
+runtime_test
 
 ################################################################################## test bare aarch32 #############################################################
 echo "test bare aarch32"

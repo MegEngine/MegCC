@@ -256,8 +256,6 @@ template <typename ctype>
 #define MEGDNN_ASSERT_TENSOR_EQ_EPS_AVG(v0, v1, maxerr, maxerr_avg, maxerr_avg_biased) \
     ASSERT_PRED_FORMAT5(assert_tensor_eq, v0, v1, maxerr, maxerr_avg, maxerr_avg_biased)
 
-}  // namespace
-
 template <typename Opr>
 void fix_addition_attr_map(
         std::unordered_map<std::string, megcc::CCAttr>& proxy_attr,
@@ -282,6 +280,7 @@ void fix_addition_attr_map<megdnn::TopK>(
         TensorNDArray& tensor_array) {
     proxy_attr["k"] = megcc::CCAttr(dnn_proxy.get_k());
 }
+}  // namespace
 
 template <typename Opr>
 void Checker<Opr>::check_tensors(

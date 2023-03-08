@@ -7,6 +7,7 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "test/kernel/common/benchmark.h"
 #include "test/kernel/common/checker.h"
 using namespace megdnn;
 using namespace megcc::test;
@@ -70,3 +71,31 @@ TEST(NAIVE, Topk) {
                 }
         }
 }
+
+#ifdef ENABLE_KERNEL_BENCHMARK
+
+TEST(NAIVE, BenchmarkTopK) {
+    Benchmarker<TopK> benchmarker(Arch::BAREMETAL);
+    benchmarker.set_kernel_symbol("kernel_.*");
+    TopK::Param param;
+    using Mode = TopK::Param::Mode;
+    for (int k : {-50, 70})
+        for (auto mode : {
+                     Mode::KTH_ONLY,
+                     Mode::VALUE_IDX_NOSORT,
+                     Mode::VALUE_IDX_SORTED,
+             }) {
+            benchmarker.set_proxy(k);
+            for (size_t batch_size : {1})
+                for (size_t vec_len : {100000}) {
+                    param.mode = mode;
+                    benchmarker.set_param(param);
+                    if (mode == Mode::KTH_ONLY) {
+                        benchmarker.execs({{batch_size, vec_len}, {}}).print();
+                    } else {
+                        benchmarker.execs({{batch_size, vec_len}, {}, {}}).print();
+                    }
+                }
+        }
+}
+#endif

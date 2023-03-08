@@ -12,6 +12,7 @@
 #include <string>
 
 #include "test/kernel/common/performance.h"
+#include "test/kernel/common/dnn_proxy.h"
 #include "test/kernel/common/runner.h"
 #include "dnn_algo_checker.h"
 #include <functional>
@@ -77,6 +78,10 @@ public:
         m_rng[idx] = rng;
         return *this;
     }
+    Benchmarker& set_proxy(const megdnn::test::DnnOprProxy<Opr>& proxy) {
+        m_dnn_proxy = proxy;
+        return *this;
+    }
     static std::string format_result(const PerformanceResultPair& perf_result);
 
 private:
@@ -91,6 +96,7 @@ private:
     std::string m_kernel_symbol;
 
     BeforeExecCallback m_before_exec_callback = nullptr;
+    megdnn::test::DnnOprProxy<Opr> m_dnn_proxy;
 };
 }  // namespace test
 

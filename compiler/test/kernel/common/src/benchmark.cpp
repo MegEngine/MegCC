@@ -10,7 +10,6 @@
 #include "test/kernel/common/benchmark.h"
 #include "megcc_test_config.h"
 #include "test/kernel/common/cc_proxy.h"
-#include "test/kernel/common/dnn_proxy.h"
 #include "test/kernel/common/timer.h"
 #include "test/kernel/common/workload_proxy.h"
 using namespace megdnn;
@@ -28,16 +27,28 @@ static inline void fill_performance_result(
                 workload.memory_workload_mb / result.kernel_time_ms * 1e3;
     }
 }
+namespace {
+template <typename Opr>
+void fix_addition_attr_map(
+        std::unordered_map<std::string, megcc::CCAttr>& proxy_attr,
+        megdnn::test::DnnOprProxy<Opr>& dnn_proxy, TensorNDArray& tensor_array) {}
+
+template <>
+void fix_addition_attr_map<megdnn::TopK>(
+        std::unordered_map<std::string, megcc::CCAttr>& proxy_attr,
+        megdnn::test::DnnOprProxy<megdnn::TopK>& dnn_proxy,
+        TensorNDArray& tensor_array) {
+    proxy_attr["k"] = megcc::CCAttr(dnn_proxy.get_k());
+}
+}  // namespace
 
 template <typename Opr>
 PerformanceResultPair Benchmarker<Opr>::exec(TensorLayoutArray all_layouts) {
-    using DnnProxy = DnnOprProxy<Opr>;
     using CCProxy = CCOprProxy<Opr>;
     auto dnn_handle = Runner<Opr>::get_dnn_handle();
     auto opr = dnn_handle->template create_operator<Opr>();
     opr->param() = m_param;
-    DnnProxy dnn_proxy;
-    dnn_proxy.deduce_layout(opr.get(), all_layouts);
+    m_dnn_proxy.deduce_layout(opr.get(), all_layouts);
 
     auto tensor_array_storage = dnn_alloc_tensors(dnn_handle, all_layouts, 0);
     auto tensor_array_naive_storage = dnn_alloc_tensors(dnn_handle, all_layouts, 0);
@@ -53,9 +64,11 @@ PerformanceResultPair Benchmarker<Opr>::exec(TensorLayoutArray all_layouts) {
     res.args = ss.str();
     //! test mode
     CCProxy cc_proxy;
+    std::unordered_map<std::string, CCAttr> proxy_attr;
+    fix_addition_attr_map<Opr>(proxy_attr, m_dnn_proxy, tensor_array_dnn);
     auto megcc_perf = cc_proxy.exec(
-            opr.get(), tensor_array, m_arch, m_benchmark_option, m_kernel_symbol, {},
-            false);
+            opr.get(), tensor_array, m_arch, m_benchmark_option, m_kernel_symbol,
+            proxy_attr, false);
     if (m_benchmark_option.valid_megcc_performance) {
         auto workload = WorkloadOprProxy<Opr>::get_workload(opr.get(), tensor_array);
         fill_performance_result(megcc_perf, workload);
@@ -70,16 +83,16 @@ PerformanceResultPair Benchmarker<Opr>::exec(TensorLayoutArray all_layouts) {
     if (m_before_exec_callback) {
         m_before_exec_callback(opr.get(), tensor_array_dnn);
     }
-    dnn_proxy.exec(opr.get(), tensor_array_dnn);
+    m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
     if (m_benchmark_option.valid_dnn_performance) {
         for (int i = 0; i < m_benchmark_option.warmup_iter; ++i) {
-            dnn_proxy.exec(opr.get(), tensor_array_dnn);
+            m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
         }
         mgb_assert(m_benchmark_option.test_iter > 0);
         Timer timer;
         timer.start();
         for (int i = 0; i < m_benchmark_option.test_iter; ++i) {
-            dnn_proxy.exec(opr.get(), tensor_array_dnn);
+            m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
         }
         timer.stop();
         PerformanceResult dnn_perf;
@@ -208,6 +221,7 @@ template class megcc::test::Benchmarker<megdnn::RelayoutForward>;
 template class megcc::test::Benchmarker<megdnn::WarpAffine>;
 template class megcc::test::Benchmarker<megdnn::ResizeForward>;
 template class megcc::test::Benchmarker<megdnn::ReduceForward>;
+template class megcc::test::Benchmarker<megdnn::TopK>;
 namespace megcc {
 namespace test {
 

@@ -34,11 +34,12 @@ def main():
         "strcmp",
         "sprintf",
         "memmove",
-        "qsort",
+        "rand",
     ]
     # libm_apis_without_syscall means libm api do not depends syscall, some toolchains(tee), may
     # not imp it now, link newlib libm.a now, TODO: imp self math function
-    libm_apis_without_syscall = ["exp", "floor", "fmax", "expf"]
+    libm_apis_without_syscall = [
+        "exp", "floor", "fmax", "expf", "powf", "qsort"]
     cmd = "nm {}".format(args.tinynn_lib)
     nm_raw_log = subprocess.check_output(
         cmd, shell=True).decode("utf-8").split("\n")

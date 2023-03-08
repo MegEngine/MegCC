@@ -69,8 +69,10 @@ static TinyNnCallBack g_cb = {
 
 void run_tinynn_test(
         unsigned char* model_ptr, int model_len, unsigned char* inptr, int input_len,
-        const char* input_name, LogFunc log_func) {
+        LogFunc log_func) {
     LiteNetwork model;
+    size_t i, nr_input;
+    char** input_name = NULL;
     EXAMPLE_CHECK(
             LITE_make_network(&model, *default_config(), *default_network_io()),
             "create model error. \n");
@@ -79,13 +81,22 @@ void run_tinynn_test(
             LITE_load_model_from_mem(model, model_ptr, model_len),
             "load model error. \n");
 
-    LiteTensor input;
-    EXAMPLE_CHECK(
-            LITE_get_io_tensor(model, input_name, LITE_INPUT, &input),
-            "get input tensor failed\n");
-    EXAMPLE_CHECK(
-            LITE_reset_tensor_memory(input, inptr, input_len),
-            "set input ptr failed\n");
+    LITE_get_all_input_name(model, &nr_input, NULL);
+    input_name = (char**)g_cb.tinynn_malloc_cb(sizeof(char*) * nr_input);
+    LITE_get_all_input_name(model, NULL, (const char**)input_name);
+    //! TODO: The byte lengths of all inputs in the model must be same with `input_len`
+    //! for now.
+    //！ All inputs of the model share `inptr`.
+    for (i = 0; i < nr_input; ++i) {
+        LiteTensor input;
+        EXAMPLE_CHECK(
+                LITE_get_io_tensor(model, input_name[i], LITE_INPUT, &input),
+                "get input tensor failed\n");
+        EXAMPLE_CHECK(
+                LITE_reset_tensor_memory(input, inptr, input_len),
+                "set input ptr failed\n");
+    }
+    g_cb.tinynn_free_cb(input_name);
 
     EXAMPLE_CHECK(LITE_forward(model), "run model failed\n");
     EXAMPLE_CHECK(LITE_wait(model), "wait model failed\n");
@@ -94,16 +105,16 @@ void run_tinynn_test(
     EXAMPLE_CHECK(
             LITE_get_all_output_name(model, &nr_output, NULL),
             "get output number failed\n");
-    char* output_name_ptr = (char*)g_cb.tinynn_malloc_cb(nr_output);
+    char** output_name_ptr = (char**)g_cb.tinynn_malloc_cb(sizeof(char*) * nr_output);
     EXAMPLE_CHECK(
-            LITE_get_all_output_name(model, NULL, (const char**)&output_name_ptr),
+            LITE_get_all_output_name(model, NULL, (const char**)output_name_ptr),
             "get output name failed\n");
 
     for (size_t i = 0; i < nr_output; ++i) {
         float sum = 0.0f, max = 0.0f;
         LiteTensor output;
         EXAMPLE_CHECK(
-                LITE_get_io_tensor(model, &output_name_ptr[i], LITE_OUTPUT, &output),
+                LITE_get_io_tensor(model, output_name_ptr[i], LITE_OUTPUT, &output),
                 "get output tensor failed\n");
         float* output_ptr = NULL;
         EXAMPLE_CHECK(
@@ -125,10 +136,11 @@ void run_tinynn_test(
                 "output name: %s sum =%f, max=%f, ptr=%p, dim %zu, shape %zu "
                 "%zu %zu "
                 "%zu\n",
-                &output_name_ptr[i], sum, max, output_ptr, layout.ndim,
-                layout.shapes[0], layout.shapes[1], layout.shapes[2], layout.shapes[3]);
+                output_name_ptr[i], sum, max, output_ptr, layout.ndim, layout.shapes[0],
+                layout.shapes[1], layout.shapes[2], layout.shapes[3]);
         EXAMPLE_CHECK(LITE_destroy_tensor(output), "destory output tensor");
     }
+    g_cb.tinynn_free_cb(output_name_ptr);
     EXAMPLE_CHECK(LITE_destroy_network(model), "free model failed \n");
 }
 
@@ -137,8 +149,7 @@ int main() {
     LITE_set_log_level(DEBUG);
     print_uart0("Hello world!\n");
     run_tinynn_test(
-            model_tiny, model_tiny_len, input_bin, input_bin_len, "data",
-            print_uart0_ftm);
+            model_tiny, model_tiny_len, input_bin, input_bin_len, print_uart0_ftm);
     print_uart0("inference done\n");
     print_uart0("Bye world!\n");
     //! shutdown system by host call, delete it when real board

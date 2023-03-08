@@ -17,7 +17,10 @@ namespace BareMetal {
 
 bool TopkKernel::IsAvailable(TContext* ctx) const {
     bool ok_dtype = ctx->getAttrOprand("operand:0").dtype == "f32";
-    return ok_dtype;
+    bool ok_mode = ctx->getAttrStr("mode") == "KTH_ONLY" ||
+                   ctx->getAttrStr("mode") == "VALUE_IDX_SORTED" ||
+                   ctx->getAttrStr("mode") == "VALUE_IDX_NOSORT";
+    return ok_dtype && ok_mode;
 }
 
 namespace {
@@ -74,14 +77,9 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     get_mode_bool(with_index, only_kth, ctx);
     std::string declear_index;
     std::string init_index;
-    std::string init_k =
-            only_kth ? "int k = " + std::to_string(std::abs(k)) + ";\n" : "";
-    std::string call_sort = "q_sort_val(val_workspace, 0, vec_len);\n";
-    std::string write_back_val =
-            R"(
-              float* out_data = val_data + batch_id * k_len;
-              memcpy(out_data, val_workspace, k_len * sizeof(float));
-            )";
+    std::string init_k;
+    std::string call_sort;
+    std::string write_back_val;
     std::string write_back_index;
     if (with_index) {
         declear_index = R"(
@@ -93,13 +91,26 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
                   idx_workspace[i] = i;
                 }
         )";
-        call_sort = "q_sort(val_workspace, idx_workspace, 0, vec_len);\n";
-        write_back_index = R"(
-          int* out_idx = idx_data + batch_id * k_len;
-          memcpy(out_idx, idx_workspace, k_len * sizeof(int));
-      )";
+        call_sort =
+                "kth_element_sorted(val_workspace, idx_workspace, val_data + batch_id "
+                "* k_len, idx_data + batch_id * k_len, vec_len, k_len);\n";
+        if (mode == "VALUE_IDX_NOSORT") {
+            call_sort =
+                    "kth_element_no_sort(val_workspace, idx_workspace, 0, vec_len - 1, "
+                    "k_len - 1);\n";
+            write_back_index = R"(
+                    int* out_idx = idx_data + batch_id * k_len;
+                    memcpy(out_idx, idx_workspace, k_len * sizeof(int));
+                )";
+            write_back_val = R"(
+                    float* out_data = val_data + batch_id * k_len;
+                    memcpy(out_data, val_workspace, k_len * sizeof(float));
+                  )";
+        }
     }
     if (only_kth) {
+        init_k = "int k = " + std::to_string(std::abs(k)) + ";\n";
+        call_sort = "kth_element_no_sort(val_workspace, 0, vec_len - 1, k - 1);\n";
         write_back_val = R"(
           float* out_data = val_data + batch_id;
           *out_data = val_workspace[k - 1];
@@ -107,51 +118,174 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     }
 
     writer << "#include <string.h>\n";
-    writer << StringTemplate::StringTemplateArgs(ctx)
-                      .add("compare_sign", compare_sign)
-                      .render(R"(
+    if (mode != "VALUE_IDX_SORTED")
+        writer << "#include <stdlib.h>\n";
+
+    writer << R"(
       static inline void swap(float* val, int a, int b){
         float temp = val[a];
         val[a] = val[b];
         val[b] = temp;
       }
-      static inline void swap_int(int* val, int a, int b){
-        float temp = val[a];
-        val[a] = val[b];
-        val[b] = temp;
-      }
-      static void q_sort(float* val, int* idx, int left, int right){
-        if (left >= right - 1)
-          return;
-        int select_idx = right - 1;
-        float select_val = val[select_idx];
-        int last = left - 1;
-        for(int i = left; i < right; ++i){
-          if(val[i] ${compare_sign}= select_val){
-            ++last;
-            swap(val, i, last);
-            swap_int(idx, i, last);
+    )";
+
+    if (with_index) {
+        writer << R"(
+        static inline void swap_int(int* val, int a, int b) {
+          int temp = val[a];
+          val[a] = val[b];
+          val[b] = temp;
+        }
+      )";
+    }
+
+    if (mode == "KTH_ONLY") {
+        writer << StringTemplate::StringTemplateArgs(ctx)
+                          .add("compare_sign", compare_sign)
+                          .render(R"(
+        static int partition(float* val, int left, int right) {
+          float x = val[right];
+          int i = left - 1;
+          for (int j = left; j < right; ++j) {
+              if (val[j] ${compare_sign} x) {
+                  ++i;
+                  swap(val, i, j);
+              }
+          }
+          ++i;
+          swap(val, i, right);
+          return i;
+        }
+        static int randomized_partition(float* val, int left, int right) {
+          int rdm_idx = left + rand() % (right - left + 1);
+          swap(val, rdm_idx, right);
+          return partition(val, left, right);
+        }
+        static void kth_element_no_sort(float* val, int left, int right, const int k) {
+          if (left >= right)
+              return;
+          int i = randomized_partition(val, left, right);
+          if (i == k) {
+              return;
+          } else if (i > k) {
+              kth_element_no_sort(val, left, i - 1, k);
+          } else {
+              kth_element_no_sort(val, i + 1, right, k);
           }
         }
-        q_sort(val, idx, 0, last);
-        q_sort(val, idx, last + 1, right);
-      }
-      static void q_sort_val(float* val, int left, int right){
-        if (left >= right - 1)
-          return;
-        int select_idx = right - 1;
-        float select_val = val[select_idx];
-        int last = left - 1;
-        for(int i = left; i < right; ++i){
-          if(val[i] ${compare_sign}= select_val){
-            ++last;
-            swap(val, i, last);
+      )");
+    }
+
+    if (mode == "VALUE_IDX_NOSORT") {
+        writer << StringTemplate::StringTemplateArgs(ctx)
+                          .add("compare_sign", compare_sign)
+                          .render(R"(
+          static int partition(float* val, int* idx, int left, int right) {
+            float x = val[right];
+            int i = left - 1;
+            for (int j = left; j < right; ++j) {
+                if (val[j] ${compare_sign} x) {
+                    ++i;
+                    swap(val, i, j);
+                    swap_int(idx, i, j);
+                }
+            }
+            ++i;
+            swap(val, i, right);
+            swap_int(idx, i, right);
+            return i;
           }
-        }
-        q_sort_val(val, 0, last);
-        q_sort_val(val, last + 1, right);
-      }
-    )");
+          static int randomized_partition(float* val, int* idx, int left, int right) {
+            int rdm_idx = left + rand() % (right - left + 1);
+            swap(val, rdm_idx, right);
+            swap_int(idx, rdm_idx, right);
+            return partition(val, idx, left, right);
+          }
+          static void kth_element_no_sort(
+                float* val, int* idx, int left, int right, const int k) {
+            if (left >= right)
+                return;
+            int i = randomized_partition(val, idx, left, right);
+            if (i == k) {
+                return;
+            } else if (i > k) {
+                kth_element_no_sort(val, idx, left, i - 1, k);
+            } else {
+                kth_element_no_sort(val, idx, i + 1, right, k);
+            }
+          }
+        )");
+    }
+
+    if (mode == "VALUE_IDX_SORTED") {
+        writer << StringTemplate::StringTemplateArgs(ctx)
+                          .add("compare_sign", compare_sign)
+                          .render(R"(
+          typedef struct Heap {
+              int size;
+              float* val;
+              int* idx;
+          } Heap;
+          static void shiftDown(Heap * heap, int idx) {
+            int left = (idx << 1) + 1;
+            if (left >= heap->size)
+                return;
+            int right = left + 1;
+            int candidate = left;
+            if (right < heap->size)
+                candidate = heap->val[left] ${compare_sign} heap->val[right] ? right : left;
+            if (heap->val[idx] ${compare_sign} heap->val[candidate]) {
+                swap(heap->val, idx, candidate);
+                swap_int(heap->idx, idx, candidate);
+                shiftDown(heap, candidate);
+            }
+          }
+          static void shiftUp(Heap * heap, int idx) {
+            int dad = (idx - 1) >> 1;
+            if (dad < 0)
+                return;
+            if (heap->val[dad] ${compare_sign} heap->val[idx]) {
+                swap(heap->val, idx, dad);
+                swap_int(heap->idx, idx, dad);
+                shiftUp(heap, dad);
+            }
+          }
+          static void insert(Heap * heap, float val, int idx) {
+            heap->val[heap->size] = val;
+            heap->idx[heap->size] = idx;
+            shiftUp(heap, heap->size);
+            ++heap->size;
+          }
+          static void pop(Heap * heap) {
+            --heap->size;
+            swap(heap->val, 0, heap->size);
+            swap_int(heap->idx, 0, heap->size);
+            shiftDown(heap, 0);
+          }
+          static float top(Heap * heap) { return heap->val[0]; }
+          static void kth_element_sorted(
+                  const float* val, const int* idx, float* dst_val, int* dst_idx,
+                  const int vec_len, const int k) {
+            Heap heap;
+            heap.size = 0;
+            heap.val = dst_val;
+            heap.idx = dst_idx;
+            int i = 0;
+            for (; i < k; ++i) {
+                insert(&heap, val[i], idx[i]);
+            }
+            for (; i < vec_len; ++i) {
+                if (val[i] ${compare_sign} top(&heap)) {
+                    pop(&heap);
+                    insert(&heap, val[i], idx[i]);
+                }
+            }
+            for (i = 0; i < k; ++i) {
+                pop(&heap);
+            }
+          }
+        )");
+    }
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(ctx) << "{\n";
     // clang-format off

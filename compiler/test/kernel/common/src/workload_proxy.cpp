@@ -7,6 +7,7 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 #include "test/kernel/common/workload_proxy.h"
+#include <cmath>
 #include <cstddef>
 
 using TensorNDArray = megdnn::SmallVector<megdnn::TensorND>;
@@ -182,6 +183,14 @@ size_t WorkloadOprProxy<megdnn::ConvolutionBackwardData>::get_compute_workload(
     auto dst_layout = tensors[2].layout;
     return get_conv_compute_workload(
             src_layout, filter_layout, dst_layout, param.format, param.sparse);
+}
+template <>
+size_t WorkloadOprProxy<megdnn::TopK>::get_compute_workload(
+        megdnn::TopK* opr, const TensorNDArray& tensors) {
+    auto src_layout = tensors[0].layout;
+    auto dst_layout = tensors[1].layout;
+    float computation = src_layout[0] * src_layout[1] * std::log2f(dst_layout[1]);
+    return computation;
 }
 }  // namespace test
 }  // namespace megcc
