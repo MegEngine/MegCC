@@ -143,7 +143,7 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
         writer << StringTemplate::StringTemplateArgs(ctx)
                           .add("compare_sign", compare_sign)
                           .render(R"(
-        static int partition(float* val, int left, int right) {
+        static inline int partition(float* val, int left, int right) {
           float x = val[right];
           int i = left - 1;
           for (int j = left; j < right; ++j) {
@@ -156,12 +156,12 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
           swap(val, i, right);
           return i;
         }
-        static int randomized_partition(float* val, int left, int right) {
+        static inline int randomized_partition(float* val, int left, int right) {
           int rdm_idx = left + rand() % (right - left + 1);
           swap(val, rdm_idx, right);
           return partition(val, left, right);
         }
-        static void kth_element_no_sort(float* val, int left, int right, const int k) {
+        static inline void kth_element_no_sort(float* val, int left, int right, const int k) {
           if (left >= right)
               return;
           int i = randomized_partition(val, left, right);
@@ -180,7 +180,7 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
         writer << StringTemplate::StringTemplateArgs(ctx)
                           .add("compare_sign", compare_sign)
                           .render(R"(
-          static int partition(float* val, int* idx, int left, int right) {
+          static inline int partition(float* val, int* idx, int left, int right) {
             float x = val[right];
             int i = left - 1;
             for (int j = left; j < right; ++j) {
@@ -195,13 +195,13 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
             swap_int(idx, i, right);
             return i;
           }
-          static int randomized_partition(float* val, int* idx, int left, int right) {
+          static inline int randomized_partition(float* val, int* idx, int left, int right) {
             int rdm_idx = left + rand() % (right - left + 1);
             swap(val, rdm_idx, right);
             swap_int(idx, rdm_idx, right);
             return partition(val, idx, left, right);
           }
-          static void kth_element_no_sort(
+          static inline void kth_element_no_sort(
                 float* val, int* idx, int left, int right, const int k) {
             if (left >= right)
                 return;
@@ -226,7 +226,7 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
               float* val;
               int* idx;
           } Heap;
-          static void shiftDown(Heap * heap, int idx) {
+          static inline void shift_down(Heap * heap, int idx) {
             int left = (idx << 1) + 1;
             if (left >= heap->size)
                 return;
@@ -237,33 +237,33 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
             if (heap->val[idx] ${compare_sign} heap->val[candidate]) {
                 swap(heap->val, idx, candidate);
                 swap_int(heap->idx, idx, candidate);
-                shiftDown(heap, candidate);
+                shift_down(heap, candidate);
             }
           }
-          static void shiftUp(Heap * heap, int idx) {
+          static inline void shift_up(Heap * heap, int idx) {
             int dad = (idx - 1) >> 1;
             if (dad < 0)
                 return;
             if (heap->val[dad] ${compare_sign} heap->val[idx]) {
                 swap(heap->val, idx, dad);
                 swap_int(heap->idx, idx, dad);
-                shiftUp(heap, dad);
+                shift_up(heap, dad);
             }
           }
-          static void insert(Heap * heap, float val, int idx) {
+          static inline void insert(Heap * heap, float val, int idx) {
             heap->val[heap->size] = val;
             heap->idx[heap->size] = idx;
-            shiftUp(heap, heap->size);
+            shift_up(heap, heap->size);
             ++heap->size;
           }
-          static void pop(Heap * heap) {
+          static inline void pop(Heap * heap) {
             --heap->size;
             swap(heap->val, 0, heap->size);
             swap_int(heap->idx, 0, heap->size);
-            shiftDown(heap, 0);
+            shift_down(heap, 0);
           }
-          static float top(Heap * heap) { return heap->val[0]; }
-          static void kth_element_sorted(
+          static inline float top(Heap * heap) { return heap->val[0]; }
+          static inline void kth_element_sorted(
                   const float* val, const int* idx, float* dst_val, int* dst_idx,
                   const int vec_len, const int k) {
             Heap heap;

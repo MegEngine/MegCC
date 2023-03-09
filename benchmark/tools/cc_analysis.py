@@ -25,9 +25,6 @@ def main(passed_args=None):
             files0.add(str(Path(args.data) / i))
     else:
         files0.add(args.data)
-    data_map = {}
-    data_info = []
-    model_set = set()
     for i in files0:
         path = i.split("/")
         file_name = path[len(path) - 1].split(".")
@@ -38,9 +35,14 @@ def main(passed_args=None):
             text_file.close()
             pattern = re.compile(r"\s\w+\s[\r\n]+use\s\d*\.\d+")
             results = pattern.findall(data)
+            pattern = re.compile(r"warmup iter \d+ finished.")
+            warmup_cnt = len(pattern.findall(data))
+            pattern = re.compile(r"execute iter \d+ finished.")
+            execute_cnt = len(pattern.findall(data))
             analyze_data = []
             op_totoal_nums = len(results)
-            op_per_test = int(op_totoal_nums / 60)
+            op_per_test = int(op_totoal_nums / (warmup_cnt + execute_cnt))
+            results = results[warmup_cnt * op_per_test:]
             iter_num = 0
             total = 0.0
             for i in results:
@@ -52,6 +54,8 @@ def main(passed_args=None):
                     total = total + kernel_time
                     analyze_data.append([kernel_name, kernel_time])
                 else:
+                    assert kernel_name == analyze_data[iter_num %
+                                                       op_per_test][0]
                     total = total + kernel_time
                     analyze_data[iter_num % op_per_test][1] += kernel_time
 
@@ -71,7 +75,6 @@ def main(passed_args=None):
                 kernel_name.append(k)
                 kernel_rate.append(v[1] * 100)
 
-            barWidth = 0.5
             topK = 10
             kernel_name = kernel_name[0:topK]
             kernel_rate = kernel_rate[0:topK]

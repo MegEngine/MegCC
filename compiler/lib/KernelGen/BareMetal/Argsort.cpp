@@ -41,25 +41,51 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
         val[b] = temp;
       }
       static inline void swap_int(int* val, int a, int b){
-        float temp = val[a];
+        int temp = val[a];
         val[a] = val[b];
         val[b] = temp;
       }
-      static void q_sort(float* val, int* idx, int left, int right){
-        if (left >= right - 1)
-          return;
-        int select_idx = right - 1;
-        float select_val = val[select_idx];
-        int last = left - 1;
-        for(int i = left; i < right; ++i){
-          if(val[i] ${compare_sign}= select_val){
-            ++last;
-            swap(val, i, last);
-            swap_int(idx, i, last);
-          }
+      typedef struct Heap {
+          int size;
+          float* val;
+          int* idx;
+      } Heap;
+      static inline void shift_down(Heap * heap, int idx) {
+        int left = (idx << 1) + 1;
+        if (left >= heap->size)
+            return;
+        int right = left + 1;
+        int candidate = left;
+        if (right < heap->size)
+            candidate = heap->val[left] ${compare_sign} heap->val[right] ? right : left;
+        if (heap->val[idx] ${compare_sign} heap->val[candidate]) {
+            swap(heap->val, idx, candidate);
+            swap_int(heap->idx, idx, candidate);
+            shift_down(heap, candidate);
         }
-        q_sort(val, idx, 0, last);
-        q_sort(val, idx, last + 1, right);
+      }
+      static inline void pop(Heap * heap) {
+        --heap->size;
+        swap(heap->val, 0, heap->size);
+        swap_int(heap->idx, 0, heap->size);
+        shift_down(heap, 0);
+      }
+      static inline void build_heap_from_array(Heap* heap){
+        int last_dad = (heap->size - 2) >> 1;
+        for(; last_dad >= 0; --last_dad)
+          shift_down(heap, last_dad);
+      }
+      static inline void sort(
+              float* dst_val, int* dst_idx, const int vec_len) {
+        Heap heap;
+        heap.size = vec_len;
+        heap.val = dst_val;
+        heap.idx = dst_idx;
+        build_heap_from_array(&heap);
+        int i;
+        for (i = 0; i < vec_len; ++i) {
+            pop(&heap);
+        }
       }
     )");
     writer << GenCommonRet() << " ";
@@ -81,7 +107,7 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
       for(int i = 0; i < vec_len; ++i){
         out_idx[i] = i;
       }
-      q_sort(out_data, out_idx, 0, vec_len);
+      sort(out_data, out_idx, vec_len);
     }
 
     return TinyNN_SUCCESS;
