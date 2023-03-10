@@ -8,6 +8,7 @@
  */
 
 #include "test/kernel/common/checker.h"
+#include "test/kernel/common/rng.h"
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
@@ -52,6 +53,7 @@ TEST(NAIVE, WarpPerspective) {
             checker.set_dtype(0, dtype::Float32());
             checker.set_dtype(2, dtype::Float32());
             checker.execs({{1, 13, 13, 17}, {1, 3, 3}, {1, 13, 7, 17}});
+            checker.execs({{1000, 13, 13, 17}, {1000, 3, 3}, {1000, 13, 7, 17}});
             checker.execs({{2, 13, 22, 17}, {2, 3, 3}, {2, 13, 7, 17}});
             checker.execs({{5, 13, 33, 17}, {5, 3, 3}, {5, 13, 7, 17}});
         }
@@ -94,4 +96,36 @@ TEST(NAIVE, WarpPerspectiveCv) {
             checker.set_dtype(3, dtype::Float32());
             checker.execs({{3, 13, 13, 17}, {3, 3, 3}, {3}, {3, 13, 7, 17}});
         }
+}
+
+TEST(NAIVE, WarpPerspectiveResize) {
+    Checker<WarpPerspectiveForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("kernel_.*");
+    WarpPerspectiveForward::Param param;
+    ResizeMatRNG rng;
+
+    checker.set_rng(1, &rng);
+    checker.set_epsilon(1e-4);
+    using BMode = param::WarpPerspective::BorderMode;
+    param.imode = param::WarpPerspective::InterpolationMode::LINEAR;
+
+    param.format = Format::NCHW;
+    for (auto mode :
+         {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
+          BMode::CONSTANT}) {
+        param.bmode = mode;
+        param.border_val = 1.737;
+        checker.set_param(param);
+        checker.exec({{1000, 2, 10, 11}, {1000, 3, 3}, {1000, 2, 12, 13}});
+    }
+
+    param.format = Format::NHWC;
+    for (auto mode :
+         {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
+          BMode::CONSTANT}) {
+        param.bmode = mode;
+        param.border_val = 0.439;
+        checker.set_param(param);
+        checker.exec({{1000, 10, 11, 4}, {1000, 3, 3}, {1000, 12, 15, 4}});
+    }
 }
