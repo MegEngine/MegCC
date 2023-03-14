@@ -851,9 +851,6 @@ std::string naked_kern(const std::string& sig, TContext* ctx) {
         operands.resize(2);
         auto ElemwiseImpl =
                 std::make_shared<ElemwiseGenUnarySigmoid>("f32", "f32", true);
-        auto ImpleGen = [=](std::vector<std::string> strs) {
-            return ElemwiseImpl->GenCodeBody(strs);
-        };
         std::string post_process_temp = R"(
             if (LDC == N){
                 ${ElemwiseImplName}(C, C, M * N);

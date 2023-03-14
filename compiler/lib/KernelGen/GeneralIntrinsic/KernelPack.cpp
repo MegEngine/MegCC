@@ -51,6 +51,7 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::WinogradFp16F63NCHW88>(),
                 std::make_shared<GeneralIntrinsic::WinogradFp16F43NCHW88>(),
                 std::make_shared<GeneralIntrinsic::WinogradFp16F23NCHW88>(),
+                std::make_shared<GeneralIntrinsic::ConvIm2colFloat16M8N8>(),
                 std::make_shared<GeneralIntrinsic::Conv1x1FloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ChannelWiseFloatMk4>(),
                 std::make_shared<GeneralIntrinsic::ConvFloatNCHWNCHW44>(),
@@ -58,6 +59,7 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::WinogradFloatF43NCHW44>(),
                 std::make_shared<GeneralIntrinsic::WinogradFloatF23NCHW44>(),
                 std::make_shared<GeneralIntrinsic::ConvIm2colFloat>(),
+                std::make_shared<GeneralIntrinsic::ConvIm2colFloatM4N8>(),
 
         };
 

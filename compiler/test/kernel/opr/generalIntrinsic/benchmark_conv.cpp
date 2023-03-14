@@ -165,5 +165,29 @@ TEST(GI, BenchmarkConvBiasIm2colNCHW44) {
     run_conv(1, 64, 56, 64, 3, 2, 1, cc_algo, dnn_algo, fmt);
     run_conv(1, 64, 56, 64, 3, 1, 1, cc_algo, dnn_algo, fmt);
 }
-
+#if ENABLE_KERNEL_FP16
+TEST(GI, BenchmarkConvBiasIm2colNCHW88) {
+    std::string cc_algo = "GI_kernel_conv2d_im2colm8n8_fp16.*";
+    std::string dnn_algo = "IM2COLMATMUL:AARCH64_F16_MK8_16X12X1";
+    Benchmarker<ConvBiasForward> benchmarker(Arch::BAREMETAL);
+    benchmarker.set_kernel_symbol(cc_algo);
+    benchmarker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW88;
+    param.nonlineMode = ConvBiasForward::Param::NonlineMode::IDENTITY;
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>(dnn_algo.c_str()));
+    benchmarker.set_param(param);
+    benchmarker.execs({{1, 8, 56, 56, 8}, {8, 8, 5, 5, 8, 8}, {1, 8, 1, 1, 8}, {}, {}})
+            .print();
+}
+#endif
 #endif

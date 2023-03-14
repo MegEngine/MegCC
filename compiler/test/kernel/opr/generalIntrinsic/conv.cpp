@@ -284,37 +284,37 @@ TEST(GI, Conv1x1NCHW44) {
 
 TEST(GI, ConvBiasIm2colNCHW44) {
     Checker<ConvBiasForward> checker(Arch::BAREMETAL);
-    checker.set_kernel_symbol("GI_kernel_conv2d_im2col.*");
     checker.set_epsilon(5e-4);
     ConvBiasForward::Param param;
     param.format = ConvBiasForward::Param::Format::NCHW44;
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
-
-    for (auto noline :
-         {ConvBiasForward::Param::NonlineMode::RELU,
-          ConvBiasForward::Param::NonlineMode::IDENTITY,
-          ConvBiasForward::Param::NonlineMode::SIGMOID,
-          ConvBiasForward::Param::NonlineMode::H_SWISH})
-        for (size_t n : {1, 3})
-            for (size_t oc : {4, 8, 20})
-                for (size_t ic : {4, 20})
-                    for (size_t stride : {1, 2, 3})
-                        for (size_t filter_size : {2, 3, 5})
-                            for (size_t hw : {7, 13, 23}) {
-                                param.nonlineMode = noline;
-                                param.pad_h = filter_size / 2;
-                                param.pad_w = filter_size / 2;
-                                param.stride_h = stride;
-                                param.stride_w = stride;
-                                checker.set_param(param);
-                                checker.execs(
-                                        {{n, ic / 4, hw, hw, 4},
-                                         {oc / 4, ic / 4, filter_size, filter_size, 4,
-                                          4},
-                                         {1, oc / 4, 1, 1, 4},
-                                         {},
-                                         {}});
-                            }
+    for (auto sym : {"GI_kernel_conv2d_im2col.*", "GI_kernel_conv2d_im2colm4n8.*"})
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::SIGMOID,
+              ConvBiasForward::Param::NonlineMode::H_SWISH})
+            for (size_t n : {1, 3})
+                for (size_t oc : {4, 8, 20})
+                    for (size_t ic : {4, 20})
+                        for (size_t stride : {1, 2, 3})
+                            for (size_t filter_size : {2, 3, 5})
+                                for (size_t hw : {7, 13, 23}) {
+                                    checker.set_kernel_symbol(sym);
+                                    param.nonlineMode = noline;
+                                    param.pad_h = filter_size / 2;
+                                    param.pad_w = filter_size / 2;
+                                    param.stride_h = stride;
+                                    param.stride_w = stride;
+                                    checker.set_param(param);
+                                    checker.execs(
+                                            {{n, ic / 4, hw, hw, 4},
+                                             {oc / 4, ic / 4, filter_size, filter_size,
+                                              4, 4},
+                                             {1, oc / 4, 1, 1, 4},
+                                             {},
+                                             {}});
+                                }
     {
         param.pad_h = 1;
         param.pad_w = 1;
@@ -336,6 +336,44 @@ TEST(GI, ConvBiasIm2colNCHW44) {
         checker.set_param(param);
         checker.execs({{1, 6, 24, 48, 4}, {6, 6, 1, 3, 4, 4}, {1, 6, 1, 1, 4}, {}, {}});
     }
+}
+
+TEST(GI, ConvBiasIm2colNCHW44Group) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+
+    checker.set_epsilon(5e-4);
+    ConvBiasForward::Param param;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    for (auto sym : {"GI_kernel_conv2d_im2col.*", "GI_kernel_conv2d_im2colm4n8.*"})
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::SIGMOID})
+            for (size_t n : {1, 3})
+                for (size_t group : {3, 7})
+                    for (size_t ocpg : {4, 8, 20})
+                        for (size_t icpg : {4, 8})
+                            for (size_t stride : {1, 2})
+                                for (size_t filter_size : {3})
+                                    for (size_t hw : {22, 33}) {
+                                        checker.set_kernel_symbol(sym);
+                                        param.nonlineMode = noline;
+                                        param.sparse =
+                                                ConvBiasForward::Param::Sparse::GROUP;
+                                        param.pad_h = filter_size / 2;
+                                        param.pad_w = filter_size / 2;
+                                        param.stride_h = stride;
+                                        param.stride_w = stride;
+                                        checker.set_param(param);
+                                        checker.execs(
+                                                {{n, group * icpg / 4, hw, hw, 4},
+                                                 {group, ocpg / 4, icpg / 4,
+                                                  filter_size, filter_size, 4, 4},
+                                                 {1, group * ocpg / 4, 1, 1, 4},
+                                                 {},
+                                                 {}});
+                                    }
 }
 
 // vim: syntax=cpp.doxygen

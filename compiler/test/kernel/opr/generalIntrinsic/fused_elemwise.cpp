@@ -35,12 +35,12 @@ TEST(GI, FusedElemwiseKernel) {
 }
 
 TEST(GI, FusedMoreElemwise) {
-    //! check: max(sigmoid(x + y), z) / z
+    //! check: max(sigmoid(x + y), z) * z
     std::vector<std::string> modes;
     modes.push_back("I0,I1,ADD,O0");
     modes.push_back("O0,SIGMOID,O1");
     modes.push_back("O1,I2,MAX,O2");
-    modes.push_back("O2,I2,TRUE_DIV,D");
+    modes.push_back("O2,I2,MUL,D");
 
     auto test = [&](TensorShapeArray shapes) {
         check_fuse_elemwise(

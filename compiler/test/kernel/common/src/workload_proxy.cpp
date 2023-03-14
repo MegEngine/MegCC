@@ -30,6 +30,24 @@ static inline size_t get_conv_compute_workload(
             fh = filter_layout[3];
             fw = filter_layout[4];
         }
+    } else if (format == Param::Format::NCHW88) {
+        if (sparse == Param::Sparse::DENSE) {
+            if (src_layout.ndim == 5) {
+                icpg = filter_layout[1] * 8;
+                fh = filter_layout[2];
+                fw = filter_layout[3];
+            } else {
+                mgb_assert(src_layout.ndim == 4);
+                icpg = filter_layout[3];
+                fh = filter_layout[1];
+                fw = filter_layout[2];
+            }
+        } else {
+            mgb_assert(sparse == Param::Sparse::GROUP);
+            icpg = filter_layout[2];
+            fh = filter_layout[3];
+            fw = filter_layout[4];
+        }
     } else {
         mgb_assert(
                 format == Param::Format::NCHW44 || format == Param::Format::NCHW44_DOT);
@@ -51,6 +69,7 @@ static inline size_t get_conv_compute_workload(
             fw = filter_layout[4];
         }
     }
+
     return dst_layout.total_nr_elems() * icpg * fh * fw * 2;
 }
 namespace megcc {

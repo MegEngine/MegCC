@@ -11,12 +11,15 @@
 #include <string>
 #include "Common/ConvKernel.h"
 #include "GeneralIntrinsic/InternalKernel/InternalKernel.h"
+#include "Im2col/F32StrategyM4N12.h"
+#include "Im2col/F32StrategyM4N8.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Winograd/WinogradF23Strategy4x8MK4.h"
 #include "Winograd/WinogradF43Strategy4x16MK4.h"
 #include "Winograd/WinogradF63Strategy4x16MK4.h"
 #include "compiler/KernelGen/KernelGen.h"
+#include "fp16/F16StrategyM8N8.h"
 #include "fp16/WinogradF23Strategy8x8MK8.h"
 #include "fp16/WinogradF43Strategy8x8MK8.h"
 #include "fp16/WinogradF63Strategy8x8MK8.h"
@@ -86,8 +89,8 @@ public:
 
 private:
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
-    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
-    GeneralIntrinsic::MatmulInternal* GetInnerCtxMatmul(TContext* ctx) const;
+    mutable Im2colFrameNchwxx m_framework;
+    mutable F32StrategyM4N12 m_strategy;
 };
 
 class WinogradFloatF23NCHW44 : public GIConvImpl {
@@ -214,6 +217,45 @@ public:
     std::string GetKernelSymbol(TContext* context) const override;
 };
 
+class ConvIm2colFloat16M8N8 : public GIConvImpl {
+public:
+    std::string GetKernelSymbol(TContext* context) const override;
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+
+    std::string GetWorkspaceBody(TContext* ctx) const override;
+
+private:
+    mutable Im2colFrameNchwxx m_framework;
+    mutable F16StrategyM8N8 m_strategy;
+};
+
+class ConvIm2colFloatM4N8 : public GIConvImpl {
+public:
+    std::string GetKernelSymbol(TContext* context) const override;
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+
+    std::string GetWorkspaceBody(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, true);
+    }
+
+private:
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+    mutable Im2colFrameNchwxx m_framework;
+    mutable F32StrategyM4N8 m_strategy;
+};
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen
 }  // namespace megcc

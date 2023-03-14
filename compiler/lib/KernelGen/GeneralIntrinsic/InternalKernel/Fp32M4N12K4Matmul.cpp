@@ -40,9 +40,6 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
             ElemwiseImpl = create_elem("si32", "si8");
         }
 
-        auto ImpleGen = [=](std::vector<std::string> strs) {
-            return ElemwiseImpl->GenCodeBody(strs);
-        };
         std::string post_process_temp = R"(
             if (LDC == N){
                 ${ElemwiseImplName}(C, C, M * N);

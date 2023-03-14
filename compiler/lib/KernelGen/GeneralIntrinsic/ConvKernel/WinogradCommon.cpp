@@ -89,7 +89,7 @@ std::string init_template(
     auto dst_specifier =
             Utils::cvt_dtype_specifier(operands[operands.size() - 1].dtype);
     uint32_t nr_out_weight = 1;
-    std::string dtype_enum = Utils::get_tinynn_dtype_string(operands[1].dtype);
+    std::string dtype_enum = Utils::get_tinynn_dtype_string(operands[0].dtype);
     std::string common_def = R"(
     int PACK_C_SIZE = ${pack_c_size};
     Tensor* in_weights = inputs[1];
