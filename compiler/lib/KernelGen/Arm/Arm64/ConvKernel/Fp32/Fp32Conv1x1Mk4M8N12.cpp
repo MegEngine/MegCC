@@ -27,7 +27,8 @@ bool Conv1x1FloatMk4::IsAvailable(TContext* ctx) const {
             ctx->getAttrUInt("stride_h") == 1 && ctx->getAttrUInt("stride_w") == 1 &&
             ctx->getAttrUInt("pad_h") == 0 && ctx->getAttrUInt("pad_w") == 0 &&
             ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
-    bool param_mode_ok = ctx->getAttrStr("sparse") == "DENSE" &&
+    bool param_mode_ok = (ctx->getAttrStr("sparse") == "DENSE" ||
+                          ctx->getAttrStr("sparse") == "GROUP") &&
                          ctx->getAttrStr("format") == "NCHW44" &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
     bool noline_ok = !ctx->haveAttr("nonlineMode") ||
@@ -78,32 +79,47 @@ std::string Conv1x1FloatMk4::GetInitBody(TContext* ctx) const {
     writer << m_inner_gemm.GetPackASignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetPackAWorkspaceSignature(inner_ctx.get()) << ";\n";
     writer << GenCommonRet() << " " << GetInitSignature(ctx);
+    const bool is_group = ctx->getAttrStr("sparse") == "GROUP";
+    const std::string group_str = is_group ? "in_weights->layout.dims[0]" : "1";
+    const int ocpg_offset = is_group ? 1 : 0;
     uint32_t nr_out_weight = 1;
-    std::string common_def = R"(
+    std::string common_def = StringTemplate::StringTemplateArgs()
+                                     .add("group_str", group_str)
+                                     .add("ocpg_offset", ocpg_offset)
+                                     .render(R"(
     int PACK_SIZE_32 = 4 * 8;
     int PACK_SIZE_16 = 4 * 4;
     int PACK_C_SIZE = 4;
     Tensor* in_weights = inputs[1];
-    int ymax = in_weights->layout.dims[0] * PACK_C_SIZE;
-    int kmax = in_weights->layout.dims[1] * PACK_C_SIZE;
+    const int group = ${group_str};
+    int ymax = in_weights->layout.dims[${ocpg_offset} + 0] * PACK_C_SIZE;
+    int kmax = in_weights->layout.dims[${ocpg_offset} + 1] * PACK_C_SIZE;
     int ldin = kmax * PACK_C_SIZE;
-                      )";
+                      )");
     std::string fill_weight_attr =
             R"(
-    out_weights->layout.nr_dim = 1;
-    out_weights->layout.dims[0] = )" +
+    out_weights->layout.nr_dim = 2;
+    out_weights->layout.dims[0] = group;
+    out_weights->layout.dims[1] = )" +
             m_inner_gemm.GetPackAWorkspaceSymbol(inner_ctx.get()) +
             R"((0, ymax, 0, kmax)/sizeof(float);
-    out_weights->layout.stride[0] = 1;
+    out_weights->layout.stride[0] = out_weights->layout.dims[1];
+    out_weights->layout.stride[1] = 1;
     out_weights->dtype.type_enum=TinyNN_FLOAT;
     out_weights->name = in_weights->name;
                       )";
     std::string fill_weight_transform =
-            R"(    
+            StringTemplate::StringTemplateArgs()
+                    .add("packa", m_inner_gemm.GetPackASymbol(inner_ctx.get()))
+                    .render(R"(    
     float* outptr = out_weights->ptr;
     float* inptr = in_weights->ptr;
-    )" + m_inner_gemm.GetPackASymbol(inner_ctx.get()) +
-            "(outptr, inptr, ldin, 0, ymax, 0, kmax);";
+    for(int group_idx = 0; group_idx < group; ++group_idx) {
+        ${packa}(outptr, inptr, ldin, 0, ymax, 0, kmax);
+        outptr += out_weights->layout.dims[1];
+        inptr += ymax * kmax;
+    }
+    )");
     writer << StringTemplate::render_init_body(
             nr_out_weight, fill_weight_attr, fill_weight_transform, common_def);
 
@@ -168,10 +184,13 @@ std::string Conv1x1FloatMk4::GetKernelBody(TContext* ctx) const {
     writer << m_inner_gemm.GetPackBSignature(inner_ctx.get()) << ";\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx);
     std::string bias_ptr_str = is_bias(ctx) ? "inputs[2]->ptr;" : "0;";
-    writer << R"({
+    writer << StringTemplate::StringTemplateArgs()
+                      .add("bias_ptr_str", bias_ptr_str)
+                      .add("packB", m_inner_gemm.GetPackBSymbol(inner_ctx.get()))
+                      .add("kern", m_inner_gemm.GetNakedKernelSymbol(inner_ctx.get()))
+                      .render(R"({
     float* input_data = inputs[0]->ptr;
     float* output_data = outputs[0]->ptr;
-
 
     Layout in_layout = inputs[0]->layout;
     Layout out_layout = outputs[0]->layout;
@@ -186,6 +205,11 @@ std::string Conv1x1FloatMk4::GetKernelBody(TContext* ctx) const {
     const int out_w = out_layout.dims[3];
     const size_t N = out_h * out_w;
 
+    Layout weight_layout = inputs[1]->layout;
+    const int group = weight_layout.dims[0];
+    const int icpg = in_c / group;
+    const int ocpg = out_c / group;
+
     const int K12 = in_c * 12;
     const int K8 = in_c * 8;
     const int K4 = in_c * 4;
@@ -199,18 +223,18 @@ std::string Conv1x1FloatMk4::GetKernelBody(TContext* ctx) const {
     void* workspace_ptr = workspace->ptr;
     for (int n_idx = 0; n_idx < in_n; ++n_idx) {
         float* weight_data = inputs[1]->ptr;
-        float* bias_data = )"
-           << bias_ptr_str << "\n"
-           << m_inner_gemm.GetPackBSymbol(inner_ctx.get()) << R"(
-        (workspace_ptr, input_data, LDB, 0, in_h * in_w, 0, in_c);
-        
-        )" << m_inner_gemm.GetNakedKernelSymbol(inner_ctx.get())
-           << R"( (weight_data, workspace_ptr, output_data, LDC, out_c, N, in_c, bias_data);
-        input_data += in_c * in_h * in_w;
-        output_data += out_c * out_h * out_w;
+        float* bias_data = ${bias_ptr_str};
+        for(int group_idx = 0; group_idx < group; ++group_idx){
+            ${packB}(workspace_ptr, input_data, LDB, 0, in_h * in_w, 0, icpg);
+            ${kern}(weight_data, workspace_ptr, output_data, LDC, ocpg, N, icpg, bias_data);
+            input_data += icpg * in_h * in_w;
+            output_data += ocpg * out_h * out_w;
+            weight_data += weight_layout.stride[0];
+            bias_data += ocpg;
+        }
     }
     return TinyNN_SUCCESS;
-})";
+})");
 
     return writer.str();
 }

@@ -26,6 +26,10 @@ TEST(AARCH64, Conv1x1NCHW44) {
     param.format = ConvolutionForward::Param::Format::NCHW44;
     checker.set_param(param);
     checker.execs({{2, 3, 5, 11, 4}, {3, 3, 1, 1, 4, 4}, {}});
+
+    param.sparse = ConvolutionForward::Param::Sparse::GROUP;
+    checker.set_param(param);
+    checker.execs({{2, 6, 17, 19, 4}, {2, 4, 3, 1, 1, 4, 4}, {}});
 }
 #if !MEGCC_WITHOUT_DOT
 TEST(AARCH64, ConvBias1x1NCHW44Dot) {
@@ -133,6 +137,17 @@ TEST(AARCH64, ConvBias1x1NCHW44) {
         param.nonlineMode = noline;
         checker.set_param(param);
         checker.execs({{2, 3, 5, 11, 4}, {5, 3, 1, 1, 4, 4}, {1, 5, 1, 1, 4}, {}, {}});
+    }
+
+    param.sparse = ConvolutionForward::Param::Sparse::GROUP;
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
+        checker.set_param(param);
+        checker.execs(
+                {{2, 6, 17, 19, 4}, {2, 4, 3, 1, 1, 4, 4}, {1, 8, 1, 1, 4}, {}, {}});
     }
 }
 

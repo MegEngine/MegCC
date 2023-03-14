@@ -19,7 +19,8 @@ static void run_conv(
         ConvBiasForward::Param::Format fmt = ConvBiasForward::Param::Format::NCHW,
         bool qint8 = false,
         ConvBiasForward::Param::NonlineMode noline =
-                ConvBiasForward::Param::NonlineMode::IDENTITY) {
+                ConvBiasForward::Param::NonlineMode::IDENTITY,
+        const size_t group = 0) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
     if (!cc_algo_name.empty()) {
         benchmarker.set_kernel_symbol(cc_algo_name);
@@ -38,6 +39,9 @@ static void run_conv(
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = fmt;
     param.nonlineMode = noline;
+    if (group > 0) {
+        param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    }
 
     benchmarker.set_param(param);
     if (!dnn_algo_name.empty()) {
@@ -46,25 +50,47 @@ static void run_conv(
     }
     PerformanceResultPair result;
     if (fmt == ConvBiasForward::Param::Format::NCHW) {
-        result = benchmarker.execs(
-                {{n, ic, hw, hw},
-                 {oc, ic, filter_size, filter_size},
-                 {1, oc, 1, 1},
-                 {},
-                 {}});
-
+        if (group == 0) {
+            result = benchmarker.execs(
+                    {{n, ic, hw, hw},
+                     {oc, ic, filter_size, filter_size},
+                     {1, oc, 1, 1},
+                     {},
+                     {}});
+        } else {
+            mgb_assert(oc % group == 0);
+            mgb_assert(ic % group == 0);
+            result = benchmarker.execs(
+                    {{n, ic, hw, hw},
+                     {group, oc / group, ic / group, filter_size, filter_size},
+                     {1, oc, 1, 1},
+                     {},
+                     {}});
+        }
     } else {
         mgb_assert(
                 fmt == ConvBiasForward::Param::Format::NCHW44 ||
                 fmt == ConvBiasForward::Param::Format::NCHW44_DOT);
-        mgb_assert(oc % 4 == 0);
-        mgb_assert(ic % 4 == 0);
-        result = benchmarker.execs(
-                {{n, ic / 4, hw, hw, 4},
-                 {oc / 4, ic / 4, filter_size, filter_size, 4, 4},
-                 {1, oc / 4, 1, 1, 4},
-                 {},
-                 {}});
+        if (group == 0) {
+            mgb_assert(oc % 4 == 0);
+            mgb_assert(ic % 4 == 0);
+            result = benchmarker.execs(
+                    {{n, ic / 4, hw, hw, 4},
+                     {oc / 4, ic / 4, filter_size, filter_size, 4, 4},
+                     {1, oc / 4, 1, 1, 4},
+                     {},
+                     {}});
+        } else {
+            mgb_assert(oc % (group * 4) == 0);
+            mgb_assert(ic % (group * 4) == 0);
+            result = benchmarker.execs(
+                    {{n, ic / 4, hw, hw, 4},
+                     {group, oc / group / 4, ic / group / 4, filter_size, filter_size,
+                      4, 4},
+                     {1, oc / 4, 1, 1, 4},
+                     {},
+                     {}});
+        }
     }
     printf("%s\n", benchmarker.format_result(result).c_str());
 }
@@ -75,6 +101,15 @@ TEST(AARCH64, BenchmarkConv1x1NCHW4) {
     run_conv(
             1, 32, 32, 32, 1, 1, 0, cc_algo, dnn_algo,
             ConvBiasForward::Param::Format::NCHW44);
+}
+
+TEST(AARCH64, BenchmarkConv1x1GroupNCHW4) {
+    std::string cc_algo = "";
+    std::string dnn_algo = "";
+    run_conv(
+            1, 32, 256, 32, 1, 1, 0, cc_algo, dnn_algo,
+            ConvBiasForward::Param::Format::NCHW44, false,
+            ConvBiasForward::Param::NonlineMode::RELU, 2);
 }
 
 TEST(AARCH64, BenchmarkConv1x1NCHW4Dot) {
