@@ -48,6 +48,7 @@ struct AllGICommonKernel {
                 std::make_shared<GeneralIntrinsic::MatmulM4N12Kernel>(),
                 std::make_shared<GeneralIntrinsic::MatmulM4N12MK4Kernel>()};
         inner_map[KernelPack::KernType::ConvKernel] = {
+                std::make_shared<GeneralIntrinsic::Conv1x1Float16MK8>(),
                 std::make_shared<GeneralIntrinsic::WinogradFp16F63NCHW88>(),
                 std::make_shared<GeneralIntrinsic::WinogradFp16F43NCHW88>(),
                 std::make_shared<GeneralIntrinsic::WinogradFp16F23NCHW88>(),

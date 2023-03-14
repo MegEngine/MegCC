@@ -256,6 +256,27 @@ private:
     mutable Im2colFrameNchwxx m_framework;
     mutable F32StrategyM4N8 m_strategy;
 };
+class Conv1x1Float16MK8 : public GIConvImpl {
+public:
+    std::string GetKernelSymbol(TContext* context) const override;
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, true);
+    }
+
+private:
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+    Fp16MatmulM8N8MK8Kernel m_inner_gemm;
+};
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen
 }  // namespace megcc

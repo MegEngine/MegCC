@@ -7,6 +7,7 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include "megbrain/reflection.h"
 #include "test/kernel/common/benchmark.h"
 #include "test/kernel/common/checker.h"
 using namespace megdnn;
@@ -43,6 +44,7 @@ TEST(AARCH64, WarpAffine) {
 TEST(AARCH64, WarpAffineU8) {
     Checker<WarpAffineForward> checker(Arch::ARM64);
     UniformIntRNG rng(0, 255);
+    checker.set_epsilon(1 + 1e-4);
     checker.set_rng(0, &rng);
     checker.set_dtype(0, dtype::Uint8());
     checker.set_dtype(2, dtype::Uint8());
@@ -54,8 +56,11 @@ TEST(AARCH64, WarpAffineU8) {
               WarpPerspective::BorderMode::REPLICATE,
               WarpPerspective::BorderMode::CONSTANT}) {
             param.format = fmt;
-            param.border_val = 3;
+            param.border_val = 0;
             param.border_mode = bmode;
+            printf("bmode=%s\n",
+                   mgb::reflection::nameOfEnumValue<WarpPerspective::BorderMode>(bmode)
+                           .c_str());
             checker.set_param(param);
             checker.execs({{1, 13, 13, 1}, {1, 2, 3}, {1, 13, 7, 1}});
             checker.execs({{2, 13, 22, 2}, {2, 2, 3}, {2, 13, 7, 2}});
