@@ -173,7 +173,7 @@ std::string BinaryCode<VEC_BCAST101>() {
 }
 
 template <>
-std::string BinaryCode<VEC_BCAST101x4>() {
+std::string BinaryCode<VEC_BCAST101xX>() {
     std::string body = R"(
         Layout dst_layout = outputs[0]->layout;
         size_t batch = dst_layout.dims[0];
@@ -651,9 +651,9 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
         case BCAST101_VEC:
             body = BinaryCode<VEC_BCAST101>();
             break;
-        case VEC_BCAST101x4:
-        case BCAST101x4_VEC:
-            body = BinaryCode<VEC_BCAST101x4>();
+        case VEC_BCAST101xX:
+        case BCAST101xX_VEC:
+            body = BinaryCode<VEC_BCAST101xX>();
             break;
         case VEC_SCALAR:
         case SCALAR_VEC:
@@ -674,7 +674,7 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
             body = BinaryCode<DYNAMIC_TYPE>();
             break;
         default:
-            CC_ABORT << "unsupport broadcast type in elemwise\n";
+            CC_ABORT << "unsupported broadcast type in elemwise\n";
     }
 
     auto kernel_init = [this](std::vector<std::string> strs) {

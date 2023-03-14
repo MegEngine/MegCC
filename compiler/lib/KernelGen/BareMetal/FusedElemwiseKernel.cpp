@@ -208,7 +208,7 @@ std::string gen_one_get_data<BCAST101>(size_t id, const std::string& specifier) 
 }
 
 template <>
-std::string gen_one_get_data<BCAST101x4>(size_t id, const std::string& specifier) {
+std::string gen_one_get_data<BCAST101xX>(size_t id, const std::string& specifier) {
     std::string get_data = R"(
        static inline ${specifier} get_input${id}(size_t elem_id, ${specifier}* ptr,
                                     Layout* dst_layout, size_t* stride) {
@@ -261,8 +261,8 @@ std::string gen_get_data_func(
             case TensorType::BCAST101:
                 functions += gen_one_get_data<BCAST101>(i, specifier);
                 break;
-            case TensorType::BCAST101x4:
-                functions += gen_one_get_data<BCAST101x4>(i, specifier);
+            case TensorType::BCAST101xX:
+                functions += gen_one_get_data<BCAST101xX>(i, specifier);
                 break;
             case TensorType::UNKNOWN_TENSOR_TYPE:
                 functions += gen_one_get_data<UNKNOWN_TENSOR_TYPE>(i, specifier);

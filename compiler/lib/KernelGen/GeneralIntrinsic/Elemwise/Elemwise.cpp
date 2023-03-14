@@ -40,8 +40,6 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
         is_fp16_ok &=
                 (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype == "f16");
     }
-    is_fp16_ok &=
-            (mode == "RELU" || mode == "EXP" || mode == "SIGMOID" || mode == "H_SWISH");
     bool usable = (type_ok && mode_ok && ok_input) || is_fp16_ok;
     return usable;
 }
@@ -141,6 +139,9 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
     if ("H_SWISH" == mode) {
         writer << gi_math.GiHSwishFloat32() << "\n";
     }
+    if ("TRUE_DIV" == mode && dtype == Utils::DtypeEnum::float16) {
+        writer << gi_math.GiDivideFloat16() << "\n";
+    }
     writer << "\n\n";
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     //! input + output = 2, unary case
@@ -153,22 +154,22 @@ std::string ElemwiseKernel::GetKernelBody(TContext* ctx) const {
         )";
     } else if (nr_operands == 3) {
         writer << R"(
-        float* input_data0 = inputs[0]->ptr;
+        ${src_specifier}* input_data0 = inputs[0]->ptr;
         TINYNN_ASSERT(input_data0);
-        float* input_data1 = inputs[1]->ptr;
+        ${src_specifier}* input_data1 = inputs[1]->ptr;
         TINYNN_ASSERT(input_data1);
-        float* output_data = outputs[0]->ptr;
+        ${dst_specifier}* output_data = outputs[0]->ptr;
         ${ElemwiseImpl(input_data0, input_data1, output_data)};
         )";
     } else if (nr_operands == 4) {
         writer << R"(
-        float* input_data0 = inputs[0]->ptr;
+        ${src_specifier}* input_data0 = inputs[0]->ptr;
         TINYNN_ASSERT(input_data0);
-        float* input_data1 = inputs[1]->ptr;
+        ${src_specifier}* input_data1 = inputs[1]->ptr;
         TINYNN_ASSERT(input_data1);
-        float* input_data2 = inputs[2]->ptr;
+        ${src_specifier}* input_data2 = inputs[2]->ptr;
         TINYNN_ASSERT(input_data2);
-        float* output_data = outputs[0]->ptr;
+        ${dst_specifier}* output_data = outputs[0]->ptr;
         ${ElemwiseImpl(input_data0, input_data1, input_data2, output_data)};
         )";
     } else {

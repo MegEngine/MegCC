@@ -219,6 +219,84 @@ static inline void cv_kern_sym_add_prefix(
     }
 }
 
+static inline size_t get_dtype_simd_length(DtypeEnum dtype) {
+    switch (dtype) {
+        case DtypeEnum::float32:
+        case DtypeEnum::int32:
+        case DtypeEnum::qsi32:
+            return 4;
+        case DtypeEnum::float16:
+            return 8;
+        case DtypeEnum::int8:
+        case DtypeEnum::qsi8:
+        case DtypeEnum::uint8:
+            return 16;
+        default:
+            CC_ABORT << "unknown dtype for get_dtype_simd_length\n";
+            return 4;
+    }
+}
+
+static inline std::string cvt_dtype_specifier(DtypeEnum dtype) {
+    switch (dtype) {
+        case DtypeEnum::float32:
+            return "float";
+        case DtypeEnum::int32:
+        case DtypeEnum::qsi32:
+            return "int";
+        case DtypeEnum::float16:
+            return "gi_float16_t";
+        case DtypeEnum::int8:
+        case DtypeEnum::qsi8:
+            return "int8_t";
+        case DtypeEnum::uint8:
+            return "uint8_t";
+        default:
+            CC_ABORT << "unknown dtype for cvt_dtype_specifier\n";
+            return "";
+    }
+}
+
+static inline std::string get_dtype_gi_simd_type(DtypeEnum dtype) {
+    switch (dtype) {
+        case DtypeEnum::float32:
+            return "GI_FLOAT32_t";
+        case DtypeEnum::int32:
+        case DtypeEnum::qsi32:
+            return "GI_INT32_t";
+        case DtypeEnum::float16:
+            return "GI_FLOAT16_t";
+        case DtypeEnum::int8:
+        case DtypeEnum::qsi8:
+            return "GI_INT8_t";
+        case DtypeEnum::uint8:
+            return "GI_UINT8_t";
+        default:
+            CC_ABORT << "unknown dtype for get_dtype_gi_simd_type\n";
+            return "";
+    }
+}
+
+static inline std::string get_dtype_gi_type_str(DtypeEnum dtype) {
+    switch (dtype) {
+        case DtypeEnum::float32:
+            return "Float32";
+        case DtypeEnum::int32:
+        case DtypeEnum::qsi32:
+            return "Int32";
+        case DtypeEnum::float16:
+            return "Float16";
+        case DtypeEnum::int8:
+        case DtypeEnum::qsi8:
+            return "Int8";
+        case DtypeEnum::uint8:
+            return "Uint8";
+        default:
+            CC_ABORT << "unknown dtype for get_dtype_gi_simd_type\n";
+            return "";
+    }
+}
+
 std::string ssprintf(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
 
 class DtypeHelper {

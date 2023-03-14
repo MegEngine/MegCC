@@ -439,7 +439,7 @@ std::string gen_one_get_data<BCAST101>(
 }
 
 template <>
-std::string gen_one_get_data<BCAST101x4>(
+std::string gen_one_get_data<BCAST101xX>(
         size_t id, std::shared_ptr<GISimdHelper> simd_helper,
         const std::string& specifier) {
     std::string get_data = R"(
@@ -479,8 +479,8 @@ std::string gen_get_data_func(
             case TensorType::BCAST101:
                 functions += gen_one_get_data<BCAST101>(i, simd_helper, specifier);
                 break;
-            case TensorType::BCAST101x4:
-                functions += gen_one_get_data<BCAST101x4>(i, simd_helper, specifier);
+            case TensorType::BCAST101xX:
+                functions += gen_one_get_data<BCAST101xX>(i, simd_helper, specifier);
                 break;
             default:
                 CC_ABORT << "Not support tensor type in fused elemwise\n";

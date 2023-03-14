@@ -416,8 +416,8 @@ static float FastFp16toFp32(const gi_float16_t data) {
     float m_ = (float)m;
     const unsigned int m_0 = *(unsigned int*)&m_;
     const unsigned int v = m_0 >>23;
-    const unsigned int ans = (x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000)); 
-    return *(float*)&ans; 
+    const unsigned int answer = (x&0x8000)<<16 | (e!=0)*((e+112)<<23|m) | ((e==0)&(m!=0))*((v-37)<<23|((m<<(150-v))&0x007FE000)); 
+    return *(float*)&answer; 
 }
 
     )";
@@ -428,9 +428,28 @@ static gi_float16_t FastFp32toFp16(const float x) {
     const unsigned int b = (*(unsigned int*)&x)+0x00001000; 
     const unsigned int e = (b&0x7F800000)>>23;
     const unsigned int m = b&0x007FFFFF;
-    unsigned short ans = (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; 
-    return *(gi_float16_t*)&ans; 
+    unsigned short answer = (b&0x80000000)>>16 | (e>112)*((((e-112)<<10)&0x7C00)|m>>13) | ((e<113)&(e>101))*((((0x007FF000+m)>>(125-e))+1)>>1) | (e>143)*0x7FFF; 
+    return *(gi_float16_t*)&answer; 
 }   
+        )";
+    }
+    std::string GiDivideFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static GI_FLOAT16_t GiDivideFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y) {
+    GI_FLOAT32_V2_t fp32_x = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low_x = GiGetSubVectorFloat32V2(fp32_x, 0);
+    GI_FLOAT32_t high_x = GiGetSubVectorFloat32V2(fp32_x, 1);
+    GI_FLOAT32_V2_t fp32_y = GiCastFloat16ToFloat32(y);
+    GI_FLOAT32_t low_y = GiGetSubVectorFloat32V2(fp32_y, 0);
+    GI_FLOAT32_t high_y = GiGetSubVectorFloat32V2(fp32_y, 1);
+    GI_FLOAT32_t low = GiDivideFloat32(low_x, low_y);
+    GI_FLOAT32_t high = GiDivideFloat32(high_x, high_y);
+    return GiCastFloat32ToFloat16(low, high);
+}
+#endif
         )";
     }
 };

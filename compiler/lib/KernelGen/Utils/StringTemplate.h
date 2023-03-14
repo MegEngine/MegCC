@@ -107,6 +107,7 @@ public:
             };
             return *this;
         }
+
         StringTemplateArgs& remove(const std::string& key) {
             m_kv_map.erase(key);
             return *this;

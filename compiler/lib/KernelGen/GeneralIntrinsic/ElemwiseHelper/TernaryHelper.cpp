@@ -22,39 +22,40 @@ std::string TernaryCode();
 template <>
 std::string TernaryCode<VEC_VEC_VEC>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout layout = outputs[0]->layout;
         size_t nr_elem = 1;
         for (int i = 0; i < layout.nr_dim; ++i) {
             nr_elem *= layout.dims[i];
         }
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        const float * src2 = ${source2};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        const ${dtype_specifier} * src2 = ${source2};
+        ${dtype_specifier} * dst = ${dst};
         size_t index = 0;
-        for(; index + 7 < nr_elem; index += 8) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-            GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-            GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-            GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1 + 4);
-            GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
-            GI_FLOAT32_t vsrc2_1 = GiLoadFloat32(src2 + 4);
+        for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+            ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+            ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+            ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1 + SIMD_WIDTH);
+            ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
+            ${simd_dtype_specifier} vsrc2_1 = ${load_vec}(src2 + SIMD_WIDTH);
             ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc2_0, vsrc0_1, vsrc1_1, vsrc2_1)}
-            src0 += 8;
-            src1 += 8;
-            src2 += 8;
-            dst += 8;
+            src0 += 2*SIMD_WIDTH;
+            src1 += 2*SIMD_WIDTH;
+            src2 += 2*SIMD_WIDTH;
+            dst += 2*SIMD_WIDTH;
         }
-        for(; index + 3 < nr_elem; index += 4) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-            GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-            GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
+        for(; index + SIMD_WIDTH-1 < nr_elem; index += SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+            ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+            ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
             ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0, vsrc2_0)}
-            src0 += 4;
-            src1 += 4;
-            src2 += 4;
-            dst += 4;
+            src0 += SIMD_WIDTH;
+            src1 += SIMD_WIDTH;
+            src2 += SIMD_WIDTH;
+            dst += SIMD_WIDTH;
         }
         for(; index < nr_elem; index++) {
             ${kernel_naive_unroll(1, dst, src0, src1, src2)}
@@ -99,6 +100,7 @@ std::string bvbv_calc(
 template <>
 std::string TernaryCode<VEC_BCAST101_VEC>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         size_t nr_elem = 1;
         for (int i = 0; i < dst_layout.nr_dim; ++i) {
@@ -115,31 +117,31 @@ std::string TernaryCode<VEC_BCAST101_VEC>() {
         size_t channel = bvbv[1];
         size_t nr_elem_per_channel = bvbv[2];
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        const float * src2 = ${source2};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        const ${dtype_specifier} * src2 = ${source2};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t b=0; b<batch; b++){
             for(size_t c=0; c<channel; c++){
-                GI_FLOAT32_t vsrc1_0 = GiBroadcastFloat32(src1[c]);
+                ${simd_dtype_specifier} vsrc1_0 = ${broad_cast}(src1[c]);
                 size_t index = 0;
-                for(; index + 7 < nr_elem_per_channel; index += 8) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-                    GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
-                    GI_FLOAT32_t vsrc2_1 = GiLoadFloat32(src2 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem_per_channel; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+                    ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
+                    ${simd_dtype_specifier} vsrc2_1 = ${load_vec}(src2 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc2_0, vsrc0_1, vsrc1_0, vsrc2_1)}
-                    src0 += 8;
-                    src2 += 8;
-                    dst += 8;
+                    src0 += 2*SIMD_WIDTH;
+                    src2 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem_per_channel; index += 4) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
+                for(; index + SIMD_WIDTH-1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0, vsrc2_0)}
-                    src0 += 4;
-                    src2 += 4;
-                    dst += 4;
+                    src0 += SIMD_WIDTH;
+                    src2 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
                 for(; index < nr_elem_per_channel; index++) {
                     ${kernel_naive_unroll(1, dst, src0, src1+c, src2)}
@@ -154,8 +156,9 @@ std::string TernaryCode<VEC_BCAST101_VEC>() {
 }
 
 template <>
-std::string TernaryCode<VEC_BCAST101x4_VEC>() {
+std::string TernaryCode<VEC_BCAST101xX_VEC>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         Layout src_layout_1 = inputs[1]->layout;
         
@@ -165,34 +168,34 @@ std::string TernaryCode<VEC_BCAST101x4_VEC>() {
         size_t batch = bvbv[0];
         size_t channel = bvbv[1];
         size_t nr_elem_per_channel = bvbv[2] * bvbv[3];
-        TINYNN_ASSERT(bvbv[3] == 4);
+        TINYNN_ASSERT(bvbv[3] == SIMD_WIDTH);
 
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        const float * src2 = ${source2};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        const ${dtype_specifier} * src2 = ${source2};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t b=0; b<batch; b++){
             for(size_t c=0; c<channel; c++){
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1 + c * 4);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1 + c * SIMD_WIDTH);
                 size_t index = 0;
-                for(; index + 7 < nr_elem_per_channel; index += 8) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-                    GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
-                    GI_FLOAT32_t vsrc2_1 = GiLoadFloat32(src2 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem_per_channel; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+                    ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
+                    ${simd_dtype_specifier} vsrc2_1 = ${load_vec}(src2 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc2_0, vsrc0_1, vsrc1_0, vsrc2_1)}
-                    src0 += 8;
-                    src2 += 8;
-                    dst += 8;
+                    src0 += 2*SIMD_WIDTH;
+                    src2 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem_per_channel; index += 4) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc2_0 = GiLoadFloat32(src2);
+                for(; index + SIMD_WIDTH-1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc2_0 = ${load_vec}(src2);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0, vsrc2_0)}
-                    src0 += 4;
-                    src2 += 4;
-                    dst += 4;
+                    src0 += SIMD_WIDTH;
+                    src2 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
             }
         })";
@@ -204,8 +207,8 @@ std::string get_bcast_template(BcastType bcast_type) {
             return TernaryCode<VEC_VEC_VEC>();
         case VEC_BCAST101_VEC:
             return TernaryCode<VEC_BCAST101_VEC>();
-        case VEC_BCAST101x4_VEC:
-            return TernaryCode<VEC_BCAST101x4_VEC>();
+        case VEC_BCAST101xX_VEC:
+            return TernaryCode<VEC_BCAST101xX_VEC>();
         default:
             return "";
     }
@@ -225,10 +228,20 @@ std::string ElemwiseGenTernaryFuseMulAdd3::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GI_FLOAT32_t tmp" << i << " = GiMlaqFloat32(" << strs[str_id + 2]
-               << "," << strs[str_id + 0] << "," << strs[str_id + 1] << ");";
-        writer << "\n GiStoreFloat32((" << dst << " + 4 * " << i << "), tmp" << i
-               << ");";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GI_FLOAT32_t tmp" << i << " = GiMlaqFloat32("
+                   << strs[str_id + 2] << "," << strs[str_id + 0] << ","
+                   << strs[str_id + 1] << ");";
+            writer << "\n GiStoreFloat32((" << dst << " + 4 * " << i << "), tmp" << i
+                   << ");";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GI_FLOAT16_t tmp" << i << " = GiMlaqFloat16("
+                   << strs[str_id + 2] << "," << strs[str_id + 0] << ","
+                   << strs[str_id + 1] << ");";
+            writer << "\n GiStoreFloat16((" << dst << " + 8 * " << i << "), tmp" << i
+                   << ");";
+        }
+
         str_id += 3;
     }
     return writer.str();
@@ -241,13 +254,24 @@ std::string ElemwiseGenTernaryFuseMulAdd3::GenKernelNaiveUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n"
-               << "float tmp = (" << strs[str_id + 0] << ")[" << i << "] * ("
-               << strs[str_id + 1] << ")[" << i << "] + (" << strs[str_id + 2] << ")["
-               << i << "];";
-        writer << "\n"
-               << dst << "[" << i << "] = "
-               << " tmp;";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n"
+                   << "float tmp = (" << strs[str_id + 0] << ")[" << i << "] * ("
+                   << strs[str_id + 1] << ")[" << i << "] + (" << strs[str_id + 2]
+                   << ")[" << i << "];";
+            writer << "\n"
+                   << dst << "[" << i << "] = "
+                   << " tmp;";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n"
+                   << "gi_float16_t tmp = (" << strs[str_id + 0] << ")[" << i << "] * ("
+                   << strs[str_id + 1] << ")[" << i << "] + (" << strs[str_id + 2]
+                   << ")[" << i << "];";
+            writer << "\n"
+                   << dst << "[" << i << "] = "
+                   << " tmp;";
+        }
+
         str_id += 3;
     }
     return writer.str();
@@ -260,7 +284,7 @@ std::string ElemwiseGenTernary::GenCodeBody(std::vector<std::string> strs) const
     auto input2 = strs[2];
     auto output = strs[3];
     std::string body = get_bcast_template(m_bcast_type);
-    CC_ASSERT(!body.empty()) << "unsupport broadcast type in elemwise\n";
+    CC_ASSERT(!body.empty()) << "unsupported broadcast type in elemwise\n";
 
     auto kernel_init = [this](std::vector<std::string> strs) {
         return GenKernelSimdInit(strs);
@@ -272,6 +296,13 @@ std::string ElemwiseGenTernary::GenCodeBody(std::vector<std::string> strs) const
         return GenKernelNaiveUnroll(strs);
     };
     std::stringstream ss;
+
+    auto dtype = Utils::cvt_dtype_specifier(m_comp_type);
+    auto simd_width = Utils::get_dtype_simd_length(m_comp_type);
+    auto simd_dtype = Utils::get_dtype_gi_simd_type(m_comp_type);
+    std::string gi_type_str = Utils::get_dtype_gi_type_str(m_comp_type);
+    auto simd_load = "GiLoad" + gi_type_str;
+    auto simd_broad = "GiBroadcast" + gi_type_str;
     ss << StringTemplate::StringTemplateArgs()
                     .add("source0", input0)
                     .add("source1", input1)
@@ -280,6 +311,11 @@ std::string ElemwiseGenTernary::GenCodeBody(std::vector<std::string> strs) const
                     .add("kernel_init", kernel_init)
                     .add("kernel_simd_unroll", kernel_simd_unroll)
                     .add("kernel_naive_unroll", kernel_naive_unroll)
+                    .add("dtype_specifier", dtype)
+                    .add("simd_dtype_specifier", simd_dtype)
+                    .add("simd_width", (uint32_t)simd_width)
+                    .add("load_vec", simd_load)
+                    .add("broad_cast", simd_broad)
                     .render(body);
 
     return ss.str();

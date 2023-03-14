@@ -77,13 +77,13 @@ std::string ElemwiseHelperFunc::BcastType2String(BcastType bcast_type) {
         CASE_BCAST_TYPE(VEC)
         CASE_BCAST_TYPE(VEC_VEC)
         CASE_BCAST_TYPE(VEC_BCAST101)
-        CASE_BCAST_TYPE(VEC_BCAST101x4)
+        CASE_BCAST_TYPE(VEC_BCAST101xX)
         CASE_BCAST_TYPE(VEC_SCALAR)
         CASE_BCAST_TYPE(SCALAR_VEC)
         CASE_BCAST_TYPE(BCAST111C_VEC)
         CASE_BCAST_TYPE(VEC_BCAST111C)
         CASE_BCAST_TYPE(BCAST101_VEC)
-        CASE_BCAST_TYPE(BCAST101x4_VEC)
+        CASE_BCAST_TYPE(BCAST101xX_VEC)
         CASE_BCAST_TYPE(BV_VEC)
         CASE_BCAST_TYPE(VEC_BV)
         CASE_BCAST_TYPE(NAIVE)
@@ -91,14 +91,14 @@ std::string ElemwiseHelperFunc::BcastType2String(BcastType bcast_type) {
         CASE_BCAST_TYPE(VEC_VEC_VEC)
         CASE_BCAST_TYPE(VEC_VEC_SCALAR)
         CASE_BCAST_TYPE(BCAST101_VEC_BCAST101)
-        CASE_BCAST_TYPE(BCAST101x4_VEC_BCAST101x4)
+        CASE_BCAST_TYPE(BCAST101xX_VEC_BCAST101xX)
         CASE_BCAST_TYPE(VEC_BCAST101_VEC)
-        CASE_BCAST_TYPE(VEC_BCAST101x4_VEC)
+        CASE_BCAST_TYPE(VEC_BCAST101xX_VEC)
         CASE_BCAST_TYPE(VEC_SCALAR_VEC)
         CASE_BCAST_TYPE(VEC_SCALAR_SCALAR)
         CASE_BCAST_TYPE(UNKNOWN_BCAST_TYPE)
         default:
-            CC_ABORT << "Unknow model " << bcast_type << ", " << VEC_BCAST101_VEC
+            CC_ABORT << "Unknown model " << bcast_type << ", " << VEC_BCAST101_VEC
                      << "\n";
             return "";
     }

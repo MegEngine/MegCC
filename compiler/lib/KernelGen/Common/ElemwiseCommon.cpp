@@ -42,8 +42,8 @@ TensorType GetOperandTensorType(const CCOperand& dst, const CCOperand& operand) 
 
         } else if (
                 small_shape.size() == 5 && small_shape[0] == 1 && small_shape[2] == 1 &&
-                small_shape[3] == 1 && small_shape[4] == 4) {
-            return TensorType::BCAST101x4;
+                small_shape[3] == 1 && (small_shape[4] == 4 || small_shape[4] == 8)) {
+            return TensorType::BCAST101xX;
         } else {
             return TensorType::UNKNOWN_TENSOR_TYPE;
         }
@@ -104,11 +104,12 @@ BcastType GetBinaryBcastType(const CCOperand& operand0, const CCOperand& operand
 
             } else if (
                     small_shape.size() == 5 && small_shape[0] == 1 &&
-                    small_shape[2] == 1 && small_shape[3] == 1 && small_shape[4] == 4) {
+                    small_shape[2] == 1 && small_shape[3] == 1 &&
+                    (small_shape[4] == 4 || small_shape[4] == 8)) {
                 if (nr_elem0 < nr_elem1) {
-                    return BCAST101x4_VEC;
+                    return BCAST101xX_VEC;
                 } else {
-                    return VEC_BCAST101x4;
+                    return VEC_BCAST101xX;
                 }
             }
             auto bv_array = CalBroadcastElemwise(small_shape, big_shape);
@@ -164,8 +165,8 @@ BcastType GetTernaryBcastType(
             return SCALAR;
         } else {
             auto bvb_vec = CalBroadcastElemwise(shape, dst_shape);
-            if (bvb_vec.size() == 4 && bvb_vec[3] == 4) {
-                return BCAST101x4;
+            if (bvb_vec.size() == 4 && (bvb_vec[3] == 4 || bvb_vec[3] == 8)) {
+                return BCAST101xX;
             } else if (bvb_vec.size() == 3) {
                 return BCAST101;
             } else {
@@ -206,10 +207,10 @@ std::vector<TensorType> GetQuaterBcastType(
         } else if (nr_elem == max_elemwise) {
             return VECTOR;
         } else {
-            if (shape[shape.size() - 1] != 4) {
+            if (shape[shape.size() - 1] != 4 && shape[shape.size() - 1] != 8) {
                 return BCAST101;
             } else {
-                return BCAST101x4;
+                return BCAST101xX;
             }
         }
     };

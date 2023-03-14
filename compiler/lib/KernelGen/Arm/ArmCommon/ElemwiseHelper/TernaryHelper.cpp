@@ -154,7 +154,7 @@ std::string TernaryCode<VEC_BCAST101_VEC>() {
 }
 
 template <>
-std::string TernaryCode<VEC_BCAST101x4_VEC>() {
+std::string TernaryCode<VEC_BCAST101xX_VEC>() {
     std::string body = R"(
         Layout dst_layout = outputs[0]->layout;
         Layout src_layout_1 = inputs[1]->layout;
@@ -204,8 +204,8 @@ std::string get_bcast_template(BcastType bcast_type) {
             return TernaryCode<VEC_VEC_VEC>();
         case VEC_BCAST101_VEC:
             return TernaryCode<VEC_BCAST101_VEC>();
-        case VEC_BCAST101x4_VEC:
-            return TernaryCode<VEC_BCAST101x4_VEC>();
+        case VEC_BCAST101xX_VEC:
+            return TernaryCode<VEC_BCAST101xX_VEC>();
         default:
             return "";
     }
@@ -259,7 +259,7 @@ std::string ElemwiseGenTernary::GenCodeBody(std::vector<std::string> strs) const
     auto input2 = strs[2];
     auto output = strs[3];
     std::string body = get_bcast_template(m_bcast_type);
-    CC_ASSERT(!body.empty()) << "unsupport broadcast type in elemwise\n";
+    CC_ASSERT(!body.empty()) << "unsupported broadcast type in elemwise\n";
 
     auto kernel_init = [this](std::vector<std::string> strs) {
         return GenKernelSimdInit(strs);

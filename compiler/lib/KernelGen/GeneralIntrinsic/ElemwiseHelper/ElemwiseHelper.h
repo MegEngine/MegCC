@@ -14,6 +14,7 @@
 #include "GeneralIntrinsic/GISimdHelper.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
+#include "Utils/Utils.h"
 #include "compiler/KernelGen/KernelGen.h"
 
 namespace megcc {
@@ -66,14 +67,16 @@ public:
 
 //! The Binary elemwise kernel base
 class ElemwiseGenBinary : public ElemwiseGenBase {
-public:
+protected:
     BcastType m_bcast_type;
     bool m_should_reverse;
+    Utils::DtypeEnum m_comp_type;
 
 public:
     ElemwiseGenBinary(const CCOperand& operand0, const CCOperand& operand1) {
         m_bcast_type = GetBcastType(operand0, operand1);
         m_should_reverse = WhetherShouldReverse(operand0, operand1);
+        m_comp_type = Utils::get_dtype_enum(operand1.dtype);
     }
     std::string GenCodeBody(std::vector<std::string>) const override;
 
@@ -89,13 +92,16 @@ public:
 //! The Ternary elemwise kernel base
 //! TODO: add ternary elemwise kernel here
 class ElemwiseGenTernary : public ElemwiseGenBase {
+protected:
     BcastType m_bcast_type;
+    Utils::DtypeEnum m_comp_type;
 
 public:
     ElemwiseGenTernary(
             const CCOperand& operand0, const CCOperand& operand1,
             const CCOperand& operand2) {
         m_bcast_type = GetBcastType(operand0, operand1, operand2);
+        m_comp_type = Utils::get_dtype_enum(operand2.dtype);
     }
     std::string GenCodeBody(std::vector<std::string>) const override;
 

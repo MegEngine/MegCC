@@ -23,32 +23,33 @@ template <>
 std::string BinaryCode<VEC_VEC>() {
     std::string body = R"(
         Layout layout = outputs[0]->layout;
+        size_t SIMD_WIDTH = ${simd_width};
         size_t nr_elem = 1;
         for (int i = 0; i < layout.nr_dim; ++i) {
                 nr_elem *= layout.dims[i];
         }
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        ${dtype_specifier} * dst = ${dst};
         size_t index = 0;
-        for(; index + 7 < nr_elem; index += 8) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-            GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-            GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-            GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1 + 4);
+        for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+            ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+            ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+            ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1 + SIMD_WIDTH);
             ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
-            src0 += 8;
-            src1 += 8;
-            dst += 8;
+            src0 += 2*SIMD_WIDTH;
+            src1 += 2*SIMD_WIDTH;
+            dst += 2*SIMD_WIDTH;
         }
-        for(; index + 3 < nr_elem; index += 4) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-            GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
+        for(; index +  SIMD_WIDTH-1< nr_elem; index += SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0);
+            ${simd_dtype_specifier} vsrc1_0 =  ${load_vec}(src1);
             ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-            src0 += 4;
-            src1 += 4;
-            dst += 4;
+            src0 += SIMD_WIDTH;
+            src1 += SIMD_WIDTH;
+            dst += SIMD_WIDTH;
         }
         for(; index < nr_elem; index++) {
             ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -63,28 +64,29 @@ template <>
 std::string BinaryCode<VEC_SCALAR>() {
     std::string body = R"(
         Layout layout = outputs[0]->layout;
+        size_t SIMD_WIDTH = ${simd_width};
         size_t nr_elem = 1;
         for (int i = 0; i < layout.nr_dim; ++i) {
                 nr_elem *= layout.dims[i];
         }
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        float * dst = ${dst};
-        GI_FLOAT32_t vsrc1_0 = GiBroadcastFloat32(src1[0]);
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        ${dtype_specifier} * dst = ${dst};
+        ${simd_dtype_specifier} vsrc1_0 = ${broad_cast}(src1[0]);
         size_t index = 0;
-        for(; index + 7 < nr_elem; index += 8) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-            GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
+        for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+            ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
             ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_0)}
-            src0 += 8;
-            dst += 8;
+            src0 +=  2*SIMD_WIDTH;
+            dst +=  2*SIMD_WIDTH;
         }
-        for(; index + 3 < nr_elem; index += 4) {
-            GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
+        for(; index + SIMD_WIDTH-1 < nr_elem; index += SIMD_WIDTH) {
+            ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
             ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-            src0 += 4;
-            dst += 4;
+            src0 += SIMD_WIDTH;
+            dst += SIMD_WIDTH;
         }
         for(; index < nr_elem; index++) {
             ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -97,32 +99,33 @@ std::string BinaryCode<VEC_SCALAR>() {
 template <>
 std::string BinaryCode<VEC_BCAST111C>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         size_t channel = 1;
         for(size_t i = 0; i < dst_layout.nr_dim - 1; ++i)
             channel *= dst_layout.dims[i];
         size_t channel_stride = dst_layout.dims[dst_layout.nr_dim - 1];
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t c=0; c<channel; c++){
-            const float* src0_ptr = src0 + c * channel_stride;
-            const float* src1_ptr = src1;
+            const ${dtype_specifier}* src0_ptr = src0 + c * channel_stride;
+            const ${dtype_specifier}* src1_ptr = src1;
             size_t index = 0;
-            for(; index + 7 < channel_stride; index += 8){
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
-                GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0_ptr + index + 4);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
-                GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1_ptr + index + 4);
+            for(; index + 2*SIMD_WIDTH-1 < channel_stride; index += 2*SIMD_WIDTH){
+                ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0_ptr + index);
+                ${simd_dtype_specifier} vsrc0_1 =  ${load_vec}(src0_ptr + index + SIMD_WIDTH);
+                ${simd_dtype_specifier} vsrc1_0 =  ${load_vec}(src1_ptr + index);
+                ${simd_dtype_specifier} vsrc1_1 =  ${load_vec}(src1_ptr + index + SIMD_WIDTH);
                 ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
-                dst += 8;
+                dst += 2*SIMD_WIDTH;
             }
-            for(; index + 3 < channel_stride; index += 4){
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+            for(; index + SIMD_WIDTH-1 < channel_stride; index += SIMD_WIDTH){
+                ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0_ptr + index);
+                ${simd_dtype_specifier} vsrc1_0 =  ${load_vec}(src1_ptr + index);
                 ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                dst += 4;
+                dst += SIMD_WIDTH;
             }
             for(; index < channel_stride; index++) {
                 ${kernel_naive_unroll(1, dst, src0_ptr + index, src1_ptr + index)}
@@ -136,30 +139,31 @@ std::string BinaryCode<VEC_BCAST111C>() {
 template <>
 std::string BinaryCode<VEC_BCAST101>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         size_t batch = dst_layout.dims[0];
         size_t channel = dst_layout.dims[1];
         size_t nr_elem_per_channel = dst_layout.dims[2] * dst_layout.dims[3];
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t b=0; b<batch; b++){
             for(size_t c=0; c<channel; c++){
-                GI_FLOAT32_t vsrc1_0 = GiBroadcastFloat32(src1[c]);
+                ${simd_dtype_specifier} vsrc1_0 = ${broad_cast}(src1[c]);
                 size_t index = 0;
-                for(; index + 7 < nr_elem_per_channel; index += 8) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem_per_channel; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc0_1 =  ${load_vec}(src0 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_0)}
-                    src0 += 8;
-                    dst += 8;
+                    src0 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem_per_channel; index += 4) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
+                for(; index + SIMD_WIDTH-1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                    src0 += 4;
-                    dst += 4;
+                    src0 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
                 for(; index < nr_elem_per_channel; index++) {
                     ${kernel_naive_unroll(1, dst, src0, src1+c)}
@@ -173,32 +177,33 @@ std::string BinaryCode<VEC_BCAST101>() {
 }
 
 template <>
-std::string BinaryCode<VEC_BCAST101x4>() {
+std::string BinaryCode<VEC_BCAST101xX>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         size_t batch = dst_layout.dims[0];
         size_t channel = dst_layout.dims[1];
         size_t nr_elem_per_channel = dst_layout.dims[2] * dst_layout.dims[3] * dst_layout.dims[4];
         ${kernel_init()}
-        const float * src0 = ${source0};
-        const float * src1 = ${source1};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0 = ${source0};
+        const ${dtype_specifier} * src1 = ${source1};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t b=0; b<batch; b++){
             for(size_t c=0; c<channel; c++){
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1 + c * 4);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1 + c * SIMD_WIDTH);
                 size_t index = 0;
-                for(; index + 7 < nr_elem_per_channel; index += 8) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem_per_channel; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc0_1 =  ${load_vec}(src0 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_0)}
-                    src0 += 8;
-                    dst += 8;
+                    src0 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem_per_channel; index += 4) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
+                for(; index + SIMD_WIDTH-1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 =  ${load_vec}(src0);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                    src0 += 4;
-                    dst += 4;
+                    src0 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
             }
         })";
@@ -208,6 +213,7 @@ std::string BinaryCode<VEC_BCAST101x4>() {
 template <>
 std::string BinaryCode<VEC_BV>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         Layout src_layout_0 = inputs[0]->layout;
         Layout src_layout_1 = inputs[1]->layout;
@@ -224,30 +230,30 @@ std::string BinaryCode<VEC_BV>() {
             }
         }
         ${kernel_init()}
-        const float * src0_base = ${source0};
-        const float * src1_base = ${source1};
-        float * dst = ${dst};
+        const ${dtype_specifier} * src0_base = ${source0};
+        const ${dtype_specifier} * src1_base = ${source1};
+        ${dtype_specifier} * dst = ${dst};
         for(size_t b=0; b<batch; b++){
-            const float * src0 = src0_base + b * nr_elem_per_channel;
-            const float * src1 = src1_base;
+            const ${dtype_specifier} * src0 = src0_base + b * nr_elem_per_channel;
+            const ${dtype_specifier} * src1 = src1_base;
             size_t index = 0;
-            for(; index + 7 < nr_elem_per_channel; index += 8) {
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-                GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1 + 4);
+            for(; index + 2*SIMD_WIDTH-1 < nr_elem_per_channel; index += 2*SIMD_WIDTH) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+                ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1 + SIMD_WIDTH);
                 ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
-                src0 += 8;
-                src1 += 8;
-                dst += 8;
+                src0 += 2*SIMD_WIDTH;
+                src1 += 2*SIMD_WIDTH;
+                dst += 2*SIMD_WIDTH;
             }
-            for(; index + 3 < nr_elem_per_channel; index += 4) {
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
+            for(; index + SIMD_WIDTH-1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
                 ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                src0 += 4;
-                src1 += 4;
-                dst += 4;
+                src0 += SIMD_WIDTH;
+                src1 += SIMD_WIDTH;
+                dst += SIMD_WIDTH;
             }
             for(; index < nr_elem_per_channel; index++) {
                 ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -276,9 +282,9 @@ std::string BinaryCode<NAIVE>() {
         broadcast_layout(&src_layout_1, dst_layout);
         NoconIter src0_iter = init_iter(src_layout_0);
         NoconIter src1_iter = init_iter(src_layout_1);
-        const float * src0 = inputs[0]->ptr;
-        const float * src1 = inputs[1]->ptr;
-        float * dst = outputs[0]->ptr;
+        const ${dtype_specifier} * src0 = inputs[0]->ptr;
+        const ${dtype_specifier} * src1 = inputs[1]->ptr;
+        ${dtype_specifier} * dst = outputs[0]->ptr;
         
         for(size_t index = 0; index < nr_elem; index++) {
             ${kernel_naive_unroll(1, dst, src0 + src0_iter.offset, src1 + src1_iter.offset)}
@@ -294,6 +300,7 @@ std::string BinaryCode<NAIVE>() {
 template <>
 std::string BinaryCode<DYNAMIC_TYPE>() {
     std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
         Layout dst_layout = outputs[0]->layout;
         size_t nr_elem = 1;
         for (int i = 0; i < dst_layout.nr_dim; ++i) {
@@ -311,27 +318,27 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
         }
         ${kernel_init()}
         if (nr_elem == nr_elem_in0 && nr_elem_in0 == nr_elem_in1){
-            const float * src0 = inputs[0]->ptr;
-            const float * src1 = inputs[1]->ptr;
-            float * dst = outputs[0]->ptr;
+            const ${dtype_specifier} * src0 = inputs[0]->ptr;
+            const ${dtype_specifier} * src1 = inputs[1]->ptr;
+            ${dtype_specifier} * dst = outputs[0]->ptr;
             size_t index = 0;
-            for(; index + 7 < nr_elem; index += 8) {
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-                GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1 + 4);
+            for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+                ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1 + SIMD_WIDTH);
                 ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
-                src0 += 8;
-                src1 += 8;
-                dst += 8;
+                src0 += 2*SIMD_WIDTH;
+                src1 += 2*SIMD_WIDTH;
+                dst += 2*SIMD_WIDTH;
             }
-            for(; index + 3 < nr_elem; index += 4) {
-                GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
+            for(; index + SIMD_WIDTH-1 < nr_elem; index += SIMD_WIDTH) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
                 ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                src0 += 4;
-                src1 += 4;
-                dst += 4;
+                src0 += SIMD_WIDTH;
+                src1 += SIMD_WIDTH;
+                dst += SIMD_WIDTH;
             }
             for(; index < nr_elem; index++) {
                 ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -341,23 +348,23 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
             }
         }else if(nr_elem_in0 == 1 || nr_elem_in1 == 1){
             if(nr_elem_in0 > nr_elem_in1){
-                const float * src0 = inputs[0]->ptr;
-                const float * src1 = inputs[1]->ptr;
-                float * dst = outputs[0]->ptr;
-                GI_FLOAT32_t vsrc1_0 = GiBroadcastFloat32(src1[0]);
+                const ${dtype_specifier} * src0 = inputs[0]->ptr;
+                const ${dtype_specifier} * src1 = inputs[1]->ptr;
+                ${dtype_specifier} * dst = outputs[0]->ptr;
+                ${simd_dtype_specifier} vsrc1_0 = ${broad_cast}(src1[0]);
                 size_t index = 0;
-                for(; index + 7 < nr_elem; index += 8) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                    ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_0)}
-                    src0 += 8;
-                    dst += 8;
+                    src0 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem; index += 4) {
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0);
+                for(; index + SIMD_WIDTH-1 < nr_elem; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                    src0 += 4;
-                    dst += 4;
+                    src0 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
                 for(; index < nr_elem; index++) {
                     ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -365,23 +372,23 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
                     dst += 1;
                 }
             }else{
-                const float * src0 = inputs[0]->ptr;
-                const float * src1 = inputs[1]->ptr;
-                float * dst = outputs[0]->ptr;
-                GI_FLOAT32_t vsrc0_0 = GiBroadcastFloat32(src0[0]);
+                const ${dtype_specifier} * src0 = inputs[0]->ptr;
+                const ${dtype_specifier} * src1 = inputs[1]->ptr;
+                ${dtype_specifier} * dst = outputs[0]->ptr;
+                ${simd_dtype_specifier} vsrc0_0 = ${broad_cast}(src0[0]);
                 size_t index = 0;
-                for(; index + 7 < nr_elem; index += 8) {
-                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
-                    GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1 + 4);
+                for(; index + 2*SIMD_WIDTH-1 < nr_elem; index += 2*SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
+                    ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1 + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_0, vsrc1_1)}
-                    src1 += 8;
-                    dst += 8;
+                    src1 += 2*SIMD_WIDTH;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < nr_elem; index += 4) {
-                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1);
+                for(; index + SIMD_WIDTH-1 < nr_elem; index += SIMD_WIDTH) {
+                    ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                    src1 += 4;
-                    dst += 4;
+                    src1 += SIMD_WIDTH;
+                    dst += SIMD_WIDTH;
                 }
                 for(; index < nr_elem; index++) {
                     ${kernel_naive_unroll(1, dst, src0, src1)}
@@ -392,34 +399,34 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
         }else if((nr_elem_in0 == src_layout_0.dims[src_layout_0.nr_dim - 1] || 
                 nr_elem_in1 == src_layout_1.dims[src_layout_1.nr_dim - 1]) &&
                 src_layout_0.dims[src_layout_0.nr_dim - 1] == src_layout_1.dims[src_layout_1.nr_dim - 1]){
-            const float* src0 = inputs[0]->ptr;
-            const float* src1 = inputs[1]->ptr;
+            const ${dtype_specifier}* src0 = inputs[0]->ptr;
+            const ${dtype_specifier}* src1 = inputs[1]->ptr;
             size_t channel = 1;
             for(size_t i = 0; i < dst_layout.nr_dim - 1; ++i)
                 channel *= dst_layout.dims[i];
             size_t channel_stride = dst_layout.dims[dst_layout.nr_dim - 1];
-            float * dst = outputs[0]->ptr;
+            ${dtype_specifier} * dst = outputs[0]->ptr;
             for(size_t c=0; c<channel; c++){
-                const float* src0_ptr = src0 + c * channel_stride;
-                const float* src1_ptr = src1;
+                const ${dtype_specifier}* src0_ptr = src0 + c * channel_stride;
+                const ${dtype_specifier}* src1_ptr = src1;
                 if(nr_elem_in0 == src_layout_0.dims[src_layout_0.nr_dim - 1]){
                     src0_ptr = src0;
                     src1_ptr = src1 + c * channel_stride;
                 }
                 size_t index = 0;
-                for(; index + 7 < channel_stride; index += 8){
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
-                    GI_FLOAT32_t vsrc0_1 = GiLoadFloat32(src0_ptr + index + 4);
-                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
-                    GI_FLOAT32_t vsrc1_1 = GiLoadFloat32(src1_ptr + index + 4);
+                for(; index + 2*SIMD_WIDTH-1 < channel_stride; index += 2*SIMD_WIDTH){
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0_ptr + index);
+                    ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0_ptr + index + SIMD_WIDTH);
+                    ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1_ptr + index);
+                    ${simd_dtype_specifier} vsrc1_1 = ${load_vec}(src1_ptr + index + SIMD_WIDTH);
                     ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1_0, vsrc0_1, vsrc1_1)}
-                    dst += 8;
+                    dst += 2*SIMD_WIDTH;
                 }
-                for(; index + 3 < channel_stride; index += 4){
-                    GI_FLOAT32_t vsrc0_0 = GiLoadFloat32(src0_ptr + index);
-                    GI_FLOAT32_t vsrc1_0 = GiLoadFloat32(src1_ptr + index);
+                for(; index + SIMD_WIDTH-1 < channel_stride; index += SIMD_WIDTH){
+                    ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0_ptr + index);
+                    ${simd_dtype_specifier} vsrc1_0 = ${load_vec}(src1_ptr + index);
                     ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1_0)}
-                    dst += 4;
+                    dst += SIMD_WIDTH;
                 }
                 for(; index < channel_stride; index++) {
                     ${kernel_naive_unroll(1, dst, src0_ptr + index, src1_ptr + index)}
@@ -431,9 +438,9 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
             broadcast_layout(&src_layout_1, dst_layout);
             NoconIter src0_iter = init_iter(src_layout_0);
             NoconIter src1_iter = init_iter(src_layout_1);
-            const float * src0 = inputs[0]->ptr;
-            const float * src1 = inputs[1]->ptr;
-            float * dst = outputs[0]->ptr;
+            const ${dtype_specifier} * src0 = inputs[0]->ptr;
+            const ${dtype_specifier} * src1 = inputs[1]->ptr;
+            ${dtype_specifier} * dst = outputs[0]->ptr;
             
             for(size_t index = 0; index < nr_elem; index++) {
                 ${kernel_naive_unroll(1, dst, src0 + src0_iter.offset, src1 + src1_iter.offset)}
@@ -446,6 +453,7 @@ std::string BinaryCode<DYNAMIC_TYPE>() {
     )";
     return body;
 }
+
 }  // namespace
 
 std::string ElemwiseGenBinaryAdd::GenKernelSimdInit(std::vector<std::string>) const {
@@ -459,8 +467,15 @@ std::string ElemwiseGenBinaryAdd::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i << ", GiAddFloat32("
-               << strs[str_id] << "," << strs[str_id + 1] << "));";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                   << ", GiAddFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                   << ", GiAddFloat16(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        }
         str_id += 2;
     }
     return writer.str();
@@ -492,13 +507,26 @@ std::string ElemwiseGenBinarySub::GenKernelSimdUnroll(
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
         if (!m_should_reverse) {
-            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
-                   << ", GiSubtractFloat32(" << strs[str_id] << "," << strs[str_id + 1]
-                   << "));";
+            if (m_comp_type == Utils::DtypeEnum::float32) {
+                writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                       << ", GiSubtractFloat32(" << strs[str_id] << ","
+                       << strs[str_id + 1] << "));";
+            } else if (m_comp_type == Utils::DtypeEnum::float16) {
+                writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                       << ", GiSubtractFloat16(" << strs[str_id] << ","
+                       << strs[str_id + 1] << "));";
+            }
+
         } else {
-            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
-                   << ", GiSubtractFloat32(" << strs[str_id + 1] << "," << strs[str_id]
-                   << "));";
+            if (m_comp_type == Utils::DtypeEnum::float32) {
+                writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                       << ", GiSubtractFloat32(" << strs[str_id + 1] << ","
+                       << strs[str_id] << "));";
+            } else if (m_comp_type == Utils::DtypeEnum::float16) {
+                writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                       << ", GiSubtractFloat16(" << strs[str_id + 1] << ","
+                       << strs[str_id] << "));";
+            }
         }
         str_id += 2;
     }
@@ -535,9 +563,16 @@ std::string ElemwiseGenBinaryMul::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
-               << ", GiMultiplyFloat32(" << strs[str_id] << "," << strs[str_id + 1]
-               << "));";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                   << ", GiMultiplyFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                   << ", GiMultiplyFloat16(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        }
+
         str_id += 2;
     }
     return writer.str();
@@ -570,13 +605,26 @@ std::string ElemwiseGenBinaryTrueDiv::GenKernelSimdUnroll(
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
         if (!m_should_reverse) {
-            writer << "\n GiStoreFloat32((" << dst << "+4*" << i
-                   << "), GiDivideFloat32(" << strs[str_id] << " , " << strs[str_id + 1]
-                   << "));";
+            if (m_comp_type == Utils::DtypeEnum::float32) {
+                writer << "\n GiStoreFloat32((" << dst << "+4*" << i
+                       << "), GiDivideFloat32(" << strs[str_id] << " , "
+                       << strs[str_id + 1] << "));";
+            } else if (m_comp_type == Utils::DtypeEnum::float16) {
+                writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                       << ", GiDivideFloat16(" << strs[str_id] << ","
+                       << strs[str_id + 1] << "));";
+            }
+
         } else {
-            writer << "\n GiStoreFloat32((" << dst << "+4*" << i
-                   << "), GiDivideFloat32(" << strs[str_id + 1] << " , " << strs[str_id]
-                   << "));";
+            if (m_comp_type == Utils::DtypeEnum::float32) {
+                writer << "\n GiStoreFloat32((" << dst << "+4*" << i
+                       << "), GiDivideFloat32(" << strs[str_id + 1] << " , "
+                       << strs[str_id] << "));";
+            } else if (m_comp_type == Utils::DtypeEnum::float16) {
+                writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                       << ", GiDivideFloat16(" << strs[str_id + 1] << ","
+                       << strs[str_id] << "));";
+            }
         }
         str_id += 2;
     }
@@ -605,7 +653,12 @@ std::string ElemwiseGenBinaryTrueDiv::GenKernelNaiveUnroll(
 std::string ElemwiseGenBinaryFuseAddRelu::GenKernelSimdInit(
         std::vector<std::string>) const {
     std::stringstream writer;
-    writer << "\nGI_FLOAT32_t vzero = GiBroadcastFloat32(0.f);";
+    if (m_comp_type == Utils::DtypeEnum::float32) {
+        writer << "\nGI_FLOAT32_t vzero = GiBroadcastFloat32(0.f);";
+    } else if (m_comp_type == Utils::DtypeEnum::float16) {
+        writer << "\nGI_FLOAT16_t vzero = GiBroadcastFloat16(0.0);";
+    }
+
     return writer.str();
 }
 
@@ -616,10 +669,18 @@ std::string ElemwiseGenBinaryFuseAddRelu::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GI_FLOAT32_t tmp" << i << " = GiAddFloat32(" << strs[str_id]
-               << "," << strs[str_id + 1] << ");";
-        writer << "\n GiStoreFloat32((" << dst << " +4*" << i
-               << "), GiMaximumFloat32(tmp" << i << ", vzero));";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GI_FLOAT32_t tmp" << i << " = GiAddFloat32(" << strs[str_id]
+                   << "," << strs[str_id + 1] << ");";
+            writer << "\n GiStoreFloat32((" << dst << " +4*" << i
+                   << "), GiMaximumFloat32(tmp" << i << ", vzero));";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GI_FLOAT16_t tmp" << i << " = GiAddFloat16(" << strs[str_id]
+                   << "," << strs[str_id + 1] << ");";
+            writer << "\n GiStoreFloat16((" << dst << " +8*" << i
+                   << "), GiMaximumFloat16(tmp" << i << ", vzero));";
+        }
+
         str_id += 2;
     }
     return writer.str();
@@ -632,12 +693,22 @@ std::string ElemwiseGenBinaryFuseAddRelu::GenKernelNaiveUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n"
-               << "float tmp = (" << strs[str_id] << ")[" << i << "] + ("
-               << strs[str_id + 1] << ")[" << i << "];";
-        writer << "\n"
-               << dst << "[" << i << "] = "
-               << " tmp > 0 ? tmp : 0.0f;";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n"
+                   << "float tmp = (" << strs[str_id] << ")[" << i << "] + ("
+                   << strs[str_id + 1] << ")[" << i << "];";
+            writer << "\n"
+                   << dst << "[" << i << "] = "
+                   << " tmp > 0 ? tmp : 0.0f;";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n"
+                   << "gi_float16_t tmp = (" << strs[str_id] << ")[" << i << "] + ("
+                   << strs[str_id + 1] << ")[" << i << "];";
+            writer << "\n"
+                   << dst << "[" << i << "] = "
+                   << " tmp > 0 ? tmp : 0.0;";
+        }
+
         str_id += 2;
     }
     return writer.str();
@@ -654,9 +725,16 @@ std::string ElemwiseGenBinaryMax::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
-               << ", GiMaximumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
-               << "));";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                   << ", GiMaximumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                   << ", GiMaximumFloat16(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        }
+
         str_id += 2;
     }
     return writer.str();
@@ -688,9 +766,15 @@ std::string ElemwiseGenBinaryMin::GenKernelSimdUnroll(
     std::stringstream writer;
     int str_id = 2;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
-               << ", GiMinimumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
-               << "));";
+        if (m_comp_type == Utils::DtypeEnum::float32) {
+            writer << "\n GiStoreFloat32((" << dst << ") + 4 * " << i
+                   << ", GiMinimumFloat32(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        } else if (m_comp_type == Utils::DtypeEnum::float16) {
+            writer << "\n GiStoreFloat16((" << dst << ") + 8 * " << i
+                   << ", GiMinimumFloat16(" << strs[str_id] << "," << strs[str_id + 1]
+                   << "));";
+        }
         str_id += 2;
     }
     return writer.str();
@@ -724,9 +808,9 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
         case BCAST101_VEC:
             body = BinaryCode<VEC_BCAST101>();
             break;
-        case VEC_BCAST101x4:
-        case BCAST101x4_VEC:
-            body = BinaryCode<VEC_BCAST101x4>();
+        case VEC_BCAST101xX:
+        case BCAST101xX_VEC:
+            body = BinaryCode<VEC_BCAST101xX>();
             break;
         case VEC_SCALAR:
         case SCALAR_VEC:
@@ -747,7 +831,7 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
             body = BinaryCode<DYNAMIC_TYPE>();
             break;
         default:
-            CC_ABORT << "unsupport broadcast type in elemwise\n";
+            CC_ABORT << "unsupported broadcast type in elemwise\n";
     }
 
     auto kernel_init = [this](std::vector<std::string> strs) {
@@ -765,6 +849,13 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
     }
     int reverse_flag = m_should_reverse ? 1 : 0;
     std::stringstream ss;
+    auto dtype = Utils::cvt_dtype_specifier(m_comp_type);
+    auto simd_width = Utils::get_dtype_simd_length(m_comp_type);
+    auto simd_dtype = Utils::get_dtype_gi_simd_type(m_comp_type);
+    std::string gi_type_str = Utils::get_dtype_gi_type_str(m_comp_type);
+    auto simd_load = "GiLoad" + gi_type_str;
+    auto simd_broad = "GiBroadcast" + gi_type_str;
+
     ss << StringTemplate::StringTemplateArgs()
                     .add("source0", input0)
                     .add("source1", input1)
@@ -773,6 +864,12 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
                     .add("kernel_init", kernel_init)
                     .add("kernel_simd_unroll", kernel_simd_unroll)
                     .add("kernel_naive_unroll", kernel_naive_unroll)
+                    .add("dtype_specifier", dtype)
+                    .add("simd_dtype_specifier", simd_dtype)
+                    .add("simd_width", (uint32_t)simd_width)
+                    .add("load_vec", simd_load)
+                    .add("broad_cast", simd_broad)
+
                     .render(body);
 
     return ss.str();
