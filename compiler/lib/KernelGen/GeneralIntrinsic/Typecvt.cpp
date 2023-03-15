@@ -9,11 +9,11 @@
 
 #include <sstream>
 
+#include "GIMathHelper.h"
 #include "Typecvt.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
-
 using namespace megcc;
 using namespace KernelGen;
 using namespace GeneralIntrinsic;
@@ -29,7 +29,10 @@ bool TypecvtKernel::IsAvailable(TContext* context) const {
             (Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) ||
             (Utils::is_float_dtype(src_dtype) && Utils::is_quant_dtype(dst_dtype, 8)) ||
             (Utils::get_dtype_enum(src_dtype) == Utils::DtypeEnum::uint8 &&
-             Utils::is_float_dtype(dst_dtype));
+             Utils::is_float_dtype(dst_dtype)) ||
+            (Utils::is_float_dtype(src_dtype) &&
+             Utils::is_float_dtype(dst_dtype, 16)) ||
+            (Utils::is_float_dtype(src_dtype, 16) && Utils::is_float_dtype(dst_dtype));
     if (Utils::is_quant_dtype(src_dtype)) {
         CC_ASSERT(context->getAttrOprand("operand:0").scale > 0);
     }
@@ -47,11 +50,15 @@ std::string TypecvtKernel::GetKernelSymbol(TContext* context) const {
 }
 namespace {
 std::string init_declare(const std::string& src_dtype, const std::string& dst_dtype) {
-    std::string body_temp = R"(
+    std::string body_temp =
+            StringTemplate::StringTemplateArgs()
+                    .add("simd_width",
+                         (uint32_t)(16 / std::min<size_t>(Utils::get_dtype_size(src_dtype), Utils::get_dtype_size(dst_dtype))))
+                    .render(R"(
         float scale;
         GI_FLOAT32_t vscale;
-        const size_t SIMD_WIDTH = 16;
-    )";
+        const size_t SIMD_WIDTH = ${simd_width};
+    )");
     return body_temp;
 }
 
@@ -86,8 +93,8 @@ std::string gen_cvt(const std::string& src_dtype, const std::string& dst_dtype) 
             GiSetSubVectorFloat32V4(vitem, 1, vitem1);
             GiSetSubVectorFloat32V4(vitem, 2, vitem2);
             GiSetSubVectorFloat32V4(vitem, 3, vitem3);
-            GI_INT8_t ans = GiCvtFromFloat32V4ToInt8(vitem);
-            GiStoreInt8(dst, ans);
+            GI_INT8_t answer = GiCvtFromFloat32V4ToInt8(vitem);
+            GiStoreInt8(dst, answer);
          )";
     } else if (
             Utils::is_quant_dtype(src_dtype, 8) && Utils::is_float_dtype(dst_dtype)) {
@@ -123,8 +130,8 @@ std::string gen_cvt(const std::string& src_dtype, const std::string& dst_dtype) 
             GiSetSubVectorFloat32V4(vitem, 1, vitem1);
             GiSetSubVectorFloat32V4(vitem, 2, vitem2);
             GiSetSubVectorFloat32V4(vitem, 3, vitem3);
-            GI_INT8_t ans = GiCvtFromFloat32V4ToInt8(vitem);
-            GiStoreInt8(dst, ans);
+            GI_INT8_t answer = GiCvtFromFloat32V4ToInt8(vitem);
+            GiStoreInt8(dst, answer);
          )";
     } else if (
             src_dtype_enum == Utils::DtypeEnum::uint8 &&
@@ -146,6 +153,24 @@ std::string gen_cvt(const std::string& src_dtype, const std::string& dst_dtype) 
             GiStoreFloat32(dst + 1 * 4, vitem1);
             GiStoreFloat32(dst + 2 * 4, vitem2);
             GiStoreFloat32(dst + 3 * 4, vitem3);
+         )";
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::float16 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
+        body_temp = R"( 
+            GI_FLOAT16_t vitem0 = GiLoadFloat16(src);
+            GI_FLOAT32_V2_t answer= GiCastFloat16ToFloat32(vitem0);
+            GiStoreFloat32(dst, GiGetSubVectorFloat32V2(answer, 0));
+            GiStoreFloat32(dst+4, GiGetSubVectorFloat32V2(answer, 1));
+         )";
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::float32 &&
+            dst_dtype_enum == Utils::DtypeEnum::float16) {
+        body_temp = R"(
+            GI_FLOAT32_t vitem0 = GiLoadFloat32(src);
+            GI_FLOAT32_t vitem1 = GiLoadFloat32(src + 4);
+            GI_FLOAT16_t answer= GiCastFloat32ToFloat16(vitem0, vitem1);
+            GiStoreFloat16(dst, answer);
          )";
     } else {
         CC_ABORT << "General Intrinsic not support optimise cvt " << src_dtype << "->"
@@ -187,6 +212,18 @@ std::string gen_cvt_remain(const std::string& src_dtype, const std::string& dst_
         body_temp = R"(
             *dst = (float)*src;
          )";
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::float16 &&
+            dst_dtype_enum == Utils::DtypeEnum::float32) {
+        body_temp = R"(
+           *dst = FastFp16toFp32(*src);
+         )";
+    } else if (
+            src_dtype_enum == Utils::DtypeEnum::float32 &&
+            dst_dtype_enum == Utils::DtypeEnum::float16) {
+        body_temp = R"(
+           *dst = FastFp32toFp16(*src);
+         )";
     } else {
         CC_ABORT << "General Intrinsic not support optimise cvt " << src_dtype << "->"
                  << dst_dtype << "\n";
@@ -208,6 +245,13 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     #include "gi_float.h"
     #include "gi_int.h"
     )";
+    GIMathHelper gi_math;
+    if (Utils::is_float_dtype(src_dtype_str, 16) ||
+        Utils::is_float_dtype(dst_dtype_str, 16)) {
+        ss << "#include \"gi_float16.h\"\n";
+        ss << gi_math.FastFp32toFp16() << "\n";
+        ss << gi_math.FastFp16toFp32() << "\n";
+    }
     ss << GenCommonRet() << " " << GetKernelSignature(context);
     std::string body_temp = R"({
     ${init_declare_str}
