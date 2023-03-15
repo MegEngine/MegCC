@@ -16,9 +16,12 @@ using namespace KernelGen;
 using namespace GeneralIntrinsic;
 
 bool PoolingNchw88Fp16::IsAvailable(TContext* context) const {
-    bool mode_ok = context->getAttrStr("format") == "NCHW88";
+    bool format_ok = context->getAttrStr("format") == "NCHW88";
+    auto mode_str = context->getAttrStr("mode");
+    bool mode_ok = mode_str == "MAX" || mode_str == "AVERAGE" ||
+                   mode_str == "AVERAGE_COUNT_EXCLUDE_PADDING";
     bool dtype_ok = context->getAttrOprand("operand:0").dtype == "f16";
-    return mode_ok && dtype_ok;
+    return format_ok && mode_ok && dtype_ok;
 }
 
 std::string PoolingNchw88Fp16::GetKernelSymbol(TContext* context) const {

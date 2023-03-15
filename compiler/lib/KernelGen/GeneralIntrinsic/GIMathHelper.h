@@ -436,7 +436,7 @@ static gi_float16_t FastFp32toFp16(const float x) {
     std::string GiDivideFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate divide has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static GI_FLOAT16_t GiDivideFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y) {
     GI_FLOAT32_V2_t fp32_x = GiCastFloat16ToFloat32(x);
@@ -455,7 +455,7 @@ static GI_FLOAT16_t GiDivideFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y) {
     std::string GiReduceMinNanFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate  reduce min has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static gi_float16_t GiReduceMinNanFloat16(GI_FLOAT16_t x) {
     GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
@@ -472,7 +472,7 @@ static gi_float16_t GiReduceMinNanFloat16(GI_FLOAT16_t x) {
     std::string GiReduceMaxNanFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate reduce max has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static gi_float16_t GiReduceMaxNanFloat16(GI_FLOAT16_t x) {
     GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
@@ -488,7 +488,7 @@ static gi_float16_t GiReduceMaxNanFloat16(GI_FLOAT16_t x) {
     std::string GiReduceAddFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate reduce add has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static gi_float16_t GiReduceAddFloat16(GI_FLOAT16_t x) {
     GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
@@ -505,7 +505,7 @@ static gi_float16_t GiReduceAddFloat16(GI_FLOAT16_t x) {
     std::string GiReduceMultiplyFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate reduce mul has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static gi_float16_t GiReduceMultiplyFloat16(GI_FLOAT16_t x) {
     GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
@@ -522,7 +522,7 @@ static gi_float16_t GiReduceMultiplyFloat16(GI_FLOAT16_t x) {
     std::string GiMultiplyAddFloat16() {
         return R"(
 #if defined(GI_SUPPORT_F16)
-//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! Using fp16 to calculate muladd has the problem of lack of accuracy, so it is
 //! converted to fp32 for calculation.
 static GI_FLOAT16_t GiMultiplyAddFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y, GI_FLOAT16_t z) {
     GI_FLOAT32_V2_t fp32_x = GiCastFloat16ToFloat32(x);
