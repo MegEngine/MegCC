@@ -29,6 +29,12 @@ public:
     std::string GetKernelSymbol(TContext* context) const override;
 };
 
+class PoolingNchw88Fp16 : public PoolingImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* context) const override;
+};
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen
 }  // namespace megcc

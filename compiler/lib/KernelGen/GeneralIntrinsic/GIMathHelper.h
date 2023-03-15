@@ -452,8 +452,98 @@ static GI_FLOAT16_t GiDivideFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y) {
 #endif
         )";
     }
-};
+    std::string GiReduceMinNanFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static gi_float16_t GiReduceMinNanFloat16(GI_FLOAT16_t x) {
+    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+    float low_val = GiReduceMinNanFloat32(low);
+    float high_val = GiReduceMinNanFloat32(high);
+    return FastFp32toFp16((low_val < high_val?low_val: high_val));
+}
+#endif
+        )";
+    }
 
+    std::string GiReduceMaxNanFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static gi_float16_t GiReduceMaxNanFloat16(GI_FLOAT16_t x) {
+    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+    float low_val = GiReduceMaxNanFloat32(low);
+    float high_val = GiReduceMaxNanFloat32(high);
+    return FastFp32toFp16((low_val > high_val?low_val: high_val));
+}
+#endif
+        )";
+    }
+    std::string GiReduceAddFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static gi_float16_t GiReduceAddFloat16(GI_FLOAT16_t x) {
+    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+    float low_val = GiReduceAddFloat32(low);
+    float high_val = GiReduceAddFloat32(high);
+    return FastFp32toFp16((low_val + high_val));
+}
+#endif
+        )";
+    }
+
+    std::string GiReduceMultiplyFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static gi_float16_t GiReduceMultiplyFloat16(GI_FLOAT16_t x) {
+    GI_FLOAT32_V2_t fp32 = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low = GiGetSubVectorFloat32V2(fp32, 0);
+    GI_FLOAT32_t high = GiGetSubVectorFloat32V2(fp32, 1);
+    float low_val = GiReduceMultiplyFloat32(low);
+    float high_val = GiReduceMultiplyFloat32(high);
+    return FastFp32toFp16((low_val * high_val));
+}
+#endif
+        )";
+    }
+
+    std::string GiMultiplyAddFloat16() {
+        return R"(
+#if defined(GI_SUPPORT_F16)
+//! Using fp16 to calculate sigmoid has the problem of lack of accuracy, so it is
+//! converted to fp32 for calculation.
+static GI_FLOAT16_t GiMultiplyAddFloat16(GI_FLOAT16_t x, GI_FLOAT16_t y, GI_FLOAT16_t z) {
+    GI_FLOAT32_V2_t fp32_x = GiCastFloat16ToFloat32(x);
+    GI_FLOAT32_t low_x = GiGetSubVectorFloat32V2(fp32_x, 0);
+    GI_FLOAT32_t high_x = GiGetSubVectorFloat32V2(fp32_x, 1);
+    
+    GI_FLOAT32_V2_t fp32_y = GiCastFloat16ToFloat32(y);
+    GI_FLOAT32_t low_y = GiGetSubVectorFloat32V2(fp32_y, 0);
+    GI_FLOAT32_t high_y = GiGetSubVectorFloat32V2(fp32_y, 1);
+    
+    GI_FLOAT32_V2_t fp32_z = GiCastFloat16ToFloat32(z);
+    GI_FLOAT32_t low_z = GiGetSubVectorFloat32V2(fp32_z, 0);
+    GI_FLOAT32_t high_z = GiGetSubVectorFloat32V2(fp32_z, 1);
+    GI_FLOAT32_t low_val = GiMultiplyAddFloat32(low_x, low_y, low_z);
+    GI_FLOAT32_t high_val = GiMultiplyAddFloat32(high_x, high_y, high_z);
+    return GiCastFloat32ToFloat16(low_val, high_val);
+}
+#endif
+        )";
+    }
+};
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen
 }  // namespace megcc
