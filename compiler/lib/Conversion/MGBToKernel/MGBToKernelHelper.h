@@ -76,8 +76,29 @@ SmallVector<NamedAttribute, 4> ConvertConvLikeAttr(
                     kw = shape[dims - 3];
                 }
                 return;
+            case Format::NCHW88:
+                CC_ASSERT(dims > 4);
+                if (sparse == Sparse::GROUP) {
+                    if (dims == 7) {
+                        //! group conv with weight layout is g, ocpg/8, icpg/8,
+                        //! fh, fw, 8, 8
+                        kh = shape[dims - 4];
+                        kw = shape[dims - 3];
+                    } else {
+                        //! channel wise weight layout is g/8, 1, 1, fh, fw, 8
+                        kh = shape[dims - 3];
+                        kw = shape[dims - 2];
+                    }
+                } else {
+                    //! dense layout is oc/8, ic/8, fh, fw, 8, 8
+                    //! hybrid first layout oc/8, fh, fw, ic, 8
+                    kh = shape[dims - 4];
+                    kw = shape[dims - 3];
+                }
+                return;
             default:
-                llvm::errs() << "Unsupport Format " << (int)format << "\n";
+                llvm::errs() << "Unsupported Format "
+                             << mgb::reflection::nameOfEnumValue(format) << "\n";
                 abort();
         }
     };

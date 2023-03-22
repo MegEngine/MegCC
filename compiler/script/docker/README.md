@@ -10,6 +10,6 @@ building them on each pipeline for shorten testing time
 ## build image
 
     $ docker build \
-        -t registry.hh-d.brainpp.cn/megvii-engine/megbrain_ci:megcc_test_runner_v4 \
+        -t registry.hh-d.brainpp.cn/megvii-engine/megbrain_ci:megcc_test_runner_${version} \
         -f /path/to/megcc/compiler/script/docker/Dockerfile \
         /path/to/workspace

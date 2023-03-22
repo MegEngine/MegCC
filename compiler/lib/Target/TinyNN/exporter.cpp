@@ -1050,6 +1050,12 @@ private:
                 *ptr = i;
                 ++ptr;
             }
+        } else if (dense.getType().getElementType().isF16()) {
+            int16_t* ptr = reinterpret_cast<int16_t*>(data.data());
+            for (auto&& i : dense.getValues<int16_t>()) {
+                *ptr = i;
+                ++ptr;
+            }
         } else {
             std::string type_string;
             llvm::raw_string_ostream raw_os(type_string);
