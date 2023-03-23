@@ -355,3 +355,126 @@ TEST(NAIVE, ConvBackDataNCHWQS8Overflow) {
     checker.set_dtype(2, dtype::QuantizedS8(2.0f));
     nchw_backdata(checker);
 }
+#if ENABLE_KERNEL_FP16
+TEST(NAIVE, ConvBiasNCHWFp16) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("kernel_.*");
+    ConvBiasForward::Param param;
+
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    checker.set_epsilon(1e-3);
+
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH,
+          ConvBiasForward::Param::NonlineMode::SIGMOID})
+        for (size_t n : {2})
+            for (size_t oc : {1, 4})
+                for (size_t ic : {1, 4})
+                    for (size_t hw : {7, 12})
+                        for (size_t kernel : {1, 3})
+                            for (size_t pad : {(size_t)0, kernel / 2})
+                                for (size_t stride : {1, 2}) {
+                                    param.pad_h = pad;
+                                    param.pad_w = pad;
+                                    param.stride_h = stride;
+                                    param.stride_w = stride;
+                                    param.nonlineMode = noline;
+                                    param.sparse =
+                                            ConvBiasForward::Param::Sparse::DENSE;
+                                    checker.set_param(param);
+                                    checker.execs(
+                                            {{n, ic, hw, hw},
+                                             {oc, ic, kernel, kernel},
+                                             {1, oc, 1, 1},
+                                             {},
+                                             {}});
+                                    if (ic == oc) {
+                                        size_t group = oc;
+                                        param.sparse =
+                                                ConvBiasForward::Param::Sparse::GROUP;
+                                        checker.set_param(param);
+                                        checker.execs(
+                                                {{n, ic, hw, hw},
+                                                 {group, 1, 1, kernel, kernel},
+                                                 {1, oc, 1, 1},
+                                                 {},
+                                                 {}});
+                                    }
+                                }
+}
+
+TEST(NAIVE, ConvBiasFp16NCHW88) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("kernel_.*");
+    ConvBiasForward::Param param;
+    checker.set_epsilon(1e-3);
+
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW88;
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH,
+          ConvBiasForward::Param::NonlineMode::SIGMOID})
+        for (size_t n : {12})
+            for (size_t oc : {8, 12})
+                for (size_t ic : {8, 12})
+                    for (size_t hw : {7, 12})
+                        for (size_t kernel : {1, 3})
+                            for (size_t pad : {(size_t)0, kernel / 2})
+                                for (size_t stride : {1, 2}) {
+                                    param.pad_h = pad;
+                                    param.pad_w = pad;
+                                    param.stride_h = stride;
+                                    param.stride_w = stride;
+                                    param.nonlineMode = noline;
+                                    param.sparse =
+                                            ConvBiasForward::Param::Sparse::DENSE;
+                                    checker.set_param(param);
+                                    checker.execs(
+                                            {{n, ic / 8, hw, hw, 8},
+                                             {oc / 8, ic / 8, kernel, kernel, 8, 8},
+                                             {1, oc / 8, 1, 1, 8},
+                                             {},
+                                             {}});
+                                    if (ic == oc) {
+                                        size_t group = oc;
+                                        param.sparse =
+                                                ConvBiasForward::Param::Sparse::GROUP;
+                                        checker.set_param(param);
+                                        checker.execs(
+                                                {{n, ic / 8, hw, hw, 8},
+                                                 {group / 8, 1, 1, kernel, kernel, 8},
+                                                 {1, oc / 8, 1, 1, 8},
+                                                 {},
+                                                 {}});
+                                    }
+                                }
+    {
+        param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+        checker.set_param(param);
+        checker.execs({{2, 2, 5, 5, 8}, {4, 2, 3, 3, 8, 8}, {}, {}, {}});
+    }
+}
+#endif

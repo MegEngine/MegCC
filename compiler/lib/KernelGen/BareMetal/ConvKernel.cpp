@@ -24,7 +24,8 @@ using namespace BareMetal;
 
 bool ConvGeneral::IsAvailable(TContext* ctx) const {
     bool param_mode_ok = (ctx->getAttrStr("format") == "NCHW" ||
-                          ctx->getAttrStr("format") == "NCHW44") &&
+                          ctx->getAttrStr("format") == "NCHW44" ||
+                          ctx->getAttrStr("format") == "NCHW88") &&
                          ctx->getAttrStr("mode") == "CROSS_CORRELATION";
     bool type_float_ok = ctx->getAttrInt("nr_operands") >= 3 &&
                          ((ctx->getAttrOprand("operand:0").dtype == "f32" &&
@@ -35,6 +36,13 @@ bool ConvGeneral::IsAvailable(TContext* ctx) const {
             (Utils::is_quant_dtype(ctx->getAttrOprand("operand:0").dtype, 8) &&
              Utils::is_quant_dtype(ctx->getAttrOprand("operand:1").dtype, 8) &&
              Utils::is_quant_dtype(ctx->getAttrOprand("operand:2").dtype, 32));
+    bool type_fp16_ok =
+            ctx->getAttrInt("nr_operands") >= 3 &&
+            (Utils::is_float_dtype(ctx->getAttrOprand("operand:0").dtype, 16) &&
+             Utils::is_float_dtype(ctx->getAttrOprand("operand:1").dtype, 16) &&
+             Utils::is_float_dtype(ctx->getAttrOprand("operand:2").dtype, 16)) &&
+            (ctx->getAttrStr("format") == "NCHW" ||
+             ctx->getAttrStr("format") == "NCHW88");
     if (is_bias(ctx) && type_qint_ok) {
         auto scale_src = ctx->getAttrOprand("operand:0").scale;
         auto scale_flt = ctx->getAttrOprand("operand:1").scale;
@@ -42,7 +50,7 @@ bool ConvGeneral::IsAvailable(TContext* ctx) const {
         type_qint_ok = type_qint_ok && fabs(scale_src * scale_flt - scale_bias) < 1e-5;
     }
 
-    return param_mode_ok && (type_float_ok || type_qint_ok);
+    return param_mode_ok && (type_float_ok || type_qint_ok || type_fp16_ok);
 }
 namespace {
 std::string gen_filter_stride(std::string format_str, std::string sparse) {
@@ -53,14 +61,22 @@ std::string gen_filter_stride(std::string format_str, std::string sparse) {
     } else if (format_str == "NCHW_NCHW44") {
         CC_ASSERT(sparse == "DENSE");
         ss << R"(const int filter_stride[5] = {4 * fh * fw * icpg, fw * icpg * 4, icpg * 4, 4, 1};)";
-    } else {
-        CC_ASSERT(format_str == "NCHW44") << "format not support\n";
+    } else if (format_str == "NCHW44") {
         if (sparse == "DENSE") {
             ss << R"(const int filter_stride[7] = {ocpg * icpg * fh * fw, icpg * fh * fw * 4,
                                        fh * fw * 16, fw * 16, 16, 4, 1};)";
         } else {
             CC_ASSERT(sparse == "GROUP") << "spare must be GOURP or DENSE\n";
             ss << R"(const int filter_stride[4] = {fh * fw * 4, fw * 4, 4, 1};)";
+        }
+    } else {
+        CC_ASSERT(format_str == "NCHW88") << "format not support\n";
+        if (sparse == "DENSE") {
+            ss << R"(const int filter_stride[7] = {ocpg * icpg * fh * fw, icpg * fh * fw * 8,
+                                       fh * fw * 64, fw * 64, 64, 8, 1};)";
+        } else {
+            CC_ASSERT(sparse == "GROUP") << "spare must be GOURP or DENSE\n";
+            ss << R"(const int filter_stride[4] = {fh * fw * 8, fw * 8, 8, 1};)";
         }
     }
     return ss.str();
@@ -84,14 +100,22 @@ std::string gen_inline_addr(std::string format_str, std::string sparse) {
     } else if (format_str == "NCHW_NCHW44") {
         CC_ASSERT(sparse == "DENSE");
         ss << R"(return ocpg / 4 * stride[0] + fh * stride[1] + fw * stride[2] + icpg * stride[3] + (ocpg % 4) * stride[4];)";
-    } else {
-        CC_ASSERT(format_str == "NCHW44") << "format not support\n";
+    } else if (format_str == "NCHW44") {
         if (sparse == "DENSE") {
             ss << R"(return (size_t)group * stride[0] + ocpg / 4 * stride[1] + icpg / 4 * stride[2] +
            fh * stride[3] + fw * stride[4] + (icpg % 4) * stride[5] + (ocpg % 4) * stride[6];)";
         } else {
             CC_ASSERT(sparse == "GROUP") << "spare must be GOURP or DENSE\n";
             ss << R"(return (size_t)group / 4 * stride[0] + fh * stride[1] + fw * stride[2] + (group % 4) * stride[3];)";
+        }
+    } else {
+        CC_ASSERT(format_str == "NCHW88") << "format not support\n";
+        if (sparse == "DENSE") {
+            ss << R"(return (size_t)group * stride[0] + ocpg / 8 * stride[1] + icpg / 8 * stride[2] +
+           fh * stride[3] + fw * stride[4] + (icpg % 8) * stride[5] + (ocpg % 8) * stride[6];)";
+        } else {
+            CC_ASSERT(sparse == "GROUP") << "spare must be GOURP or DENSE\n";
+            ss << R"(return (size_t)group / 8 * stride[0] + fh * stride[1] + fw * stride[2] + (group % 8) * stride[3];)";
         }
     }
     ss << "}\n";
@@ -187,6 +211,9 @@ std::string ConvGeneral::GetKernelBody(TContext* context) const {
     if (src_specifier == "int8_t" && flt_specifier == "int8_t") {
         acc_specifier = "int";
     }
+    if (src_specifier == "gi_float16_t" && flt_specifier == "gi_float16_t") {
+        acc_specifier = "gi_float16_t";
+    }
 
     uint32_t spatial_start = 2;
     uint32_t channel_pos = 1;
@@ -209,6 +236,12 @@ std::string ConvGeneral::GetKernelBody(TContext* context) const {
         ocpg_ratio = 4;
         icpg_ratio = 1;
         CC_ASSERT(sparse_str == "DENSE");
+    } else if (filter_format_str == "NCHW88") {
+        ocpg_ratio = 8;
+        icpg_ratio = 8;
+        if (sparse_str == "GROUP") {
+            group_str = "filter_weight->layout.dims[0] * 8";
+        }
     } else {
         CC_ABORT << "not support filter_format_str " << filter_format_str;
     }
@@ -216,6 +249,11 @@ std::string ConvGeneral::GetKernelBody(TContext* context) const {
     ss << R"(
 #include <stdbool.h>
 )";
+    if (src_specifier == "gi_float16_t") {
+        ss << R"(
+#include "gi_float16.h"
+)";
+    }
     ss << GenActivation::gen_func_call_with_typecvt_dep(
                   noline_mode, acc_specifier, dst_specifier)
        << "\n";
