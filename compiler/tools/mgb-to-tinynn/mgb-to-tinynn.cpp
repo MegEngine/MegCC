@@ -6,6 +6,7 @@
  * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
  */
 
+#include <fstream>
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -25,6 +26,7 @@
 #include "compiler/Dialect/MGB/IR/MGBDialect.h"
 #include "compiler/Dialect/MGB/Transforms/Passes.h"
 #include "compiler/KernelGen/KernelGen.h"
+#include "compiler/Target/Hako/hako_parse.h"
 #include "compiler/Target/MGB/import.h"
 #include "compiler/Target/TinyNN/export.h"
 using namespace llvm;
@@ -59,6 +61,11 @@ cl::opt<bool> EnableCompressWeightToFp16(
         cl::desc("enable compress model weight from fp32 to fp16, enable this "
                  "may effect model precision."));
 
+cl::opt<bool> Decrypt(
+        "decrypt",
+        cl::desc("Only try to convert the input file to the mge format model and save "
+                 "it in the ./decryption/<model_name>.mge"));
+
 extern llvm::cl::opt<megcc::KernelGen::Arch> target_arch;
 struct DumpJson {
     struct ModelJson {
@@ -71,7 +78,6 @@ struct DumpJson {
             bool_options["add_nhwc2nchw_to_input"] = false;
             bool_options["mgb_fuse_kernel"] = false;
             bool_options["enable_compress_fp16"] = false;
-            int_options["hako_ver"] = 0;
         }
         static ModelJson parse(json::Object& obj) {
             ModelJson res;
@@ -88,27 +94,16 @@ struct DumpJson {
                     res.bool_options[key] = value.getValue();
                 }
             }
-            for (auto& kv : res.int_options) {
-                auto key = kv.first;
-                auto value = obj.getInteger(key);
-                if (value) {
-                    res.int_options[key] = value.getValue();
-                }
-            }
             return res;
         }
         std::map<std::string, std::string> str_options;
         std::map<std::string, bool> bool_options;
-        std::map<std::string, int> int_options;
         std::string to_string() const {
             std::stringstream ss;
             for (auto& kv : str_options) {
                 ss << kv.first << ": " << kv.second << "\n";
             }
             for (auto& kv : bool_options) {
-                ss << kv.first << ": " << kv.second << "\n";
-            }
-            for (auto& kv : int_options) {
                 ss << kv.first << ": " << kv.second << "\n";
             }
             return ss.str();
@@ -304,6 +299,10 @@ int main(int argc, char** argv) {
             [](raw_ostream& oss) { oss << megcc::getMegccVersionString(); });
     mlir::registerPassManagerCLOptions();
     cl::ParseCommandLineOptions(argc, argv);
+    if (Verbose) {
+        megcc::SetLogLevel(megcc::LogLevel::DEBUG);
+    }
+
     std::shared_ptr<DumpJson> dump_info;
     if (JsonFile.length() > 0) {
         dump_info = DumpJson::make(JsonFile.getValue());
@@ -313,7 +312,8 @@ int main(int argc, char** argv) {
         llvm::outs() << dump_info->to_string();
     } else {
         CC_ASSERT(InputFile.length() > 0);
-        CC_ASSERT(OutputDir.length() > 0);
+        if (!Decrypt)
+            CC_ASSERT(OutputDir.length() > 0);
         dump_info = std::make_shared<DumpJson>();
         dump_info->dump_dir = OutputDir.getValue();
         DumpJson::ModelJson model_json;
@@ -329,82 +329,115 @@ int main(int argc, char** argv) {
                 EnableCompressWeightToFp16.getValue();
         dump_info->models.push_back(model_json);
     }
-    auto dump_dir = dump_info->dump_dir;
-    mlir::KernelExporter kernel_exporter;
-    for (auto model : dump_info->models) {
-        mlir::MLIRContext ctx;
-        mlir::MGB::MGBImporterOptions options;
-        options.graph_opt_level = 2;
-        options.use_static_memory_plan = false;
-        options.enable_nchw44 = model.bool_options.at("enable_nchw44");
-        options.enable_nchw44_dot = model.bool_options.at("enable_nchw44_dot");
-        options.add_nhwc2nchw_to_input =
-                model.bool_options.at("add_nhwc2nchw_to_input");
-        bool model_mgb_fuse_kernel = model.bool_options.at("mgb_fuse_kernel");
-        if (Verbose) {
-            megcc::SetLogLevel(megcc::LogLevel::DEBUG);
-        }
-        if (failed(parseInputShapes(model.str_options["input_shape_str"], options))) {
-            return -1;
-        }
-        auto model_name = model.str_options.at("model_name");
-        if (model_name.size() > 0) {
-            options.module_name = model_name;
-        } else {
-            llvm::SmallVector<llvm::StringRef> dir_names;
-            llvm::SplitString(InputFile, dir_names, "/");
-            llvm::SmallVector<llvm::StringRef> names;
-            llvm::SplitString(dir_names[dir_names.size() - 1], names, ".");
-            options.module_name = names[0].str();
-        }
-        auto model_input = model.str_options.at("model_path");
-        llvm::outs() << "Import mgb/mge model from " << model_input << "\n";
-        mlir::OwningOpRef<mlir::ModuleOp> mod =
-                mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
-        auto status = mlir::MGB::import_mgb(
-                mod.get(), model_input, options, model.int_options["hako_ver"]);
-        if (mlir::failed(status)) {
-            llvm::outs() << "import megengine model failed\n";
-            return -1;
-        }
-        mlir::PassManager pm(&ctx);
-        if (model_mgb_fuse_kernel) {
-            pm.addNestedPass<mlir::FuncOp>(mlir::createMGBFuseKernelPass());
-        }
-        pm.addPass(mlir::createMGBToKernelPass());
-        pm.addNestedPass<mlir::FuncOp>(mlir::createMemoryForwardingPass());
-        pm.addPass(mlir::createKernelMaterializationPass());
-        pm.addNestedPass<mlir::FuncOp>(mlir::createStaticMemoryPlanningPass());
-        pm.addNestedPass<mlir::FuncOp>(mlir::createKernelFinalCleanPass());
-        //! Now all the memory is allocated in runtime, the Deallocation
-        //! instruction is not used.
-        // pm.addNestedPass<mlir::FuncOp>(mlir::createBufferDeallocationPass());
-        pm.addNestedPass<mlir::FuncOp>(
-                mlir::bufferization::createFinalizingBufferizePass());
-        llvm::outs() << "Apply createMGBToKernelPass and "
-                        "createKernelMaterializationPass to the dialect.\n";
-        if (failed(pm.run(mod.get()))) {
-            return -1;
-        }
-        llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir << "\n";
 
-        if (!llvm::sys::fs::exists(dump_dir.c_str())) {
-            llvm::sys::fs::create_directory(dump_dir.c_str());
-        } else {
-            CC_ASSERT(llvm::sys::fs::is_directory(dump_dir.c_str()))
-            "output: " << dump_dir
-                       << "is existed and not a directory, try remove it manually or "
-                          "choice another one";
+    if (Decrypt) {
+        for (auto model : dump_info->models) {
+            std::string model_path = model.str_options.at("model_path");
+            size_t found = model_path.find_last_of('/');
+            std::string file_name =
+                    model_path.substr((found == std::string::npos) ? 0 : found + 1);
+            std::ifstream fin(model_path, std::ios::in | std::ios::binary);
+            std::vector<uint8_t> model_buffer(std::istreambuf_iterator<char>(fin), {});
+            fin.close();
+
+            auto&& res = megcc::parse_model(model_buffer);
+            auto& mdl_model_buffer = res.first;
+            megcc::EncryptionType enc_type = res.second;
+            if (enc_type == megcc::EncryptionType::NONE) {
+                if (JsonFile.length() > 0) {
+                    llvm::outs()
+                            << "Warning: " << file_name << " NO need to decryption.\n";
+                } else {
+                    CC_ASSERT(0) << file_name << " NO need to decryption.\n";
+                }
+            }
+            llvm::sys::fs::create_directories("./decryption", true);
+            std::string out_name = "./decryption/" + file_name + ".mge";
+            std::ofstream fout(out_name, std::ios::out | std::ios::binary);
+            fout.write(
+                    reinterpret_cast<char*>(mdl_model_buffer.data()),
+                    mdl_model_buffer.size());
+            fout.close();
         }
-        mlir::export_tinynn_model(
-                mod.get(), dump_dir + "/" + options.module_name + ".tiny", SaveModel,
-                kernel_exporter, model.bool_options.at("enable_compress_fp16"));
-        llvm::outs() << "Mgb/mge model convert to tinynn model " << options.module_name
-                     << " done.\n";
+        llvm::outs() << "Decrypted model has been saved into ./decrption\n";
+    } else {
+        auto dump_dir = dump_info->dump_dir;
+        mlir::KernelExporter kernel_exporter;
+        for (auto model : dump_info->models) {
+            mlir::MLIRContext ctx;
+            mlir::MGB::MGBImporterOptions options;
+            options.graph_opt_level = 2;
+            options.use_static_memory_plan = false;
+            options.enable_nchw44 = model.bool_options.at("enable_nchw44");
+            options.enable_nchw44_dot = model.bool_options.at("enable_nchw44_dot");
+            options.add_nhwc2nchw_to_input =
+                    model.bool_options.at("add_nhwc2nchw_to_input");
+            bool model_mgb_fuse_kernel = model.bool_options.at("mgb_fuse_kernel");
+            if (failed(parseInputShapes(
+                        model.str_options["input_shape_str"], options))) {
+                return -1;
+            }
+            auto model_name = model.str_options.at("model_name");
+            if (model_name.size() > 0) {
+                options.module_name = model_name;
+            } else {
+                llvm::SmallVector<llvm::StringRef> dir_names;
+                llvm::SplitString(InputFile, dir_names, "/");
+                llvm::SmallVector<llvm::StringRef> names;
+                llvm::SplitString(dir_names[dir_names.size() - 1], names, ".");
+                options.module_name = names[0].str();
+            }
+            auto model_input = model.str_options.at("model_path");
+            llvm::outs() << "Import mgb/mge model from " << model_input << "\n";
+            mlir::OwningOpRef<mlir::ModuleOp> mod =
+                    mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
+            auto status = mlir::MGB::import_mgb(mod.get(), model_input, options);
+            if (mlir::failed(status)) {
+                llvm::outs() << "import megengine model failed\n";
+                return -1;
+            }
+            mlir::PassManager pm(&ctx);
+            if (model_mgb_fuse_kernel) {
+                pm.addNestedPass<mlir::FuncOp>(mlir::createMGBFuseKernelPass());
+            }
+            pm.addPass(mlir::createMGBToKernelPass());
+            pm.addNestedPass<mlir::FuncOp>(mlir::createMemoryForwardingPass());
+            pm.addPass(mlir::createKernelMaterializationPass());
+            pm.addNestedPass<mlir::FuncOp>(mlir::createStaticMemoryPlanningPass());
+            pm.addNestedPass<mlir::FuncOp>(mlir::createKernelFinalCleanPass());
+            //! Now all the memory is allocated in runtime, the Deallocation
+            //! instruction is not used.
+            // pm.addNestedPass<mlir::FuncOp>(mlir::createBufferDeallocationPass());
+            pm.addNestedPass<mlir::FuncOp>(
+                    mlir::bufferization::createFinalizingBufferizePass());
+            llvm::outs() << "Apply createMGBToKernelPass and "
+                            "createKernelMaterializationPass to the dialect.\n";
+            if (failed(pm.run(mod.get()))) {
+                return -1;
+            }
+            llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir
+                         << "\n";
+
+            if (!llvm::sys::fs::exists(dump_dir.c_str())) {
+                llvm::sys::fs::create_directories(dump_dir.c_str());
+            } else {
+                CC_ASSERT(llvm::sys::fs::is_directory(dump_dir.c_str()))
+                "output: "
+                        << dump_dir
+                        << "is existed and not a directory, try remove it manually or "
+                           "choice another one";
+            }
+            mlir::export_tinynn_model(
+                    mod.get(), dump_dir + "/" + options.module_name + ".tiny",
+                    SaveModel, kernel_exporter,
+                    model.bool_options.at("enable_compress_fp16"));
+            llvm::outs() << "Mgb/mge model convert to tinynn model "
+                         << options.module_name << " done.\n";
+        }
+        export_cv_opr(kernel_exporter, dump_info->cv_impl);
+        kernel_exporter.write(dump_dir);
+        llvm::outs() << "Mgb/mge model convert to tinynn kernel done.\n";
     }
-    export_cv_opr(kernel_exporter, dump_info->cv_impl);
-    kernel_exporter.write(dump_dir);
-    llvm::outs() << "Mgb/mge model convert to tinynn kernel done.\n";
     return 0;
 }
 

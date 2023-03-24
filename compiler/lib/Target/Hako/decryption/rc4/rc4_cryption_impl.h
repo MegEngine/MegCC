@@ -64,7 +64,7 @@ public:
     /*! \brief Read the input stream once in order to initialize the decryption
      *         state.
      */
-    void init_sfrc4_state();
+    bool init_sfrc4_state();
 
 private:
     const void* m_model_mem;

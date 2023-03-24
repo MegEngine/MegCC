@@ -45,8 +45,8 @@ function compare_output_with_mgb(){
   mkdir -p "${MGB_OUTPUT_DIR}"
   if [[ "$MODEL_PATH" == *".emod" ]];then
     HAKO_MODEL_PATH=$MODEL_PATH
-    MODEL_PATH="${MODEL_PATH}.mdl"
-    $COMPILER_BUILD_DIR/tools/hako-to-mgb/hako-to-mgb $HAKO_MODEL_PATH $MODEL_PATH
+    MODEL_PATH="./decryption/$(basename ${MODEL_PATH}).mge"
+    $COMPILER_BUILD_DIR/tools/mgb-to-tinynn/mgb-to-tinynn $HAKO_MODEL_PATH --decrypt
   fi
   $COMPILER_BUILD_DIR/tools/mgb-runner/mgb-runner "$MODEL_PATH" "$MGB_OUTPUT_DIR" --input-shapes="${INPUT_DATA_SHAPE_STR}" --input-data="${INPUT_DATA_STR}"
   python3 $PROJECT_PATH/ci/compare_output_bin.py $TINYNN_OUTPUT_DIR $MGB_OUTPUT_DIR --eps="$EPS"

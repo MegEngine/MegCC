@@ -11,7 +11,6 @@ bin
 ├── mgb-importer    : aux app, import mdl model and output model mlir
 ├── megcc-opt       : aux app, use megcc pass to optimize the mlir, it can show the detail of ir transform
 ├── mgb-runner      : aux app, run mdl model with mgb naive kernel, used to check megcc correctness
-├── hako-to-mgb     : aux app, unpack hako model to mgb model
 ├── mgb-to-tinynn   : core app, megcc compiler, compile mdl model to kernel and binded model
 └── kernel_exporter : aux app, export kernel C code of given kernel type 
 
@@ -100,6 +99,7 @@ Execute `./bin/mgb-to-tinynn ./example/mobilenet.mdl --input-shapes="data=(1,3,2
 Use `--arm64v7` rather than `--arm64` to dump both arm64 and armv7 kernel. It will make model bigger than the one only dumped for arm64 arch.   
 Use `--enable_nchw44_dot` to enable dot kernel support.    
 Use `--save-model` to pack tiny model to c file that you can embed model into runtime. It will be useful, if there is not file system in deploy environment   
+Use `--decrypt` to convert the model encrypted with hako to the MegEngine model, the output model file is saved in the `decryption` directory under the current folder.
 
 ### mgb-importer
 mgb-importer is used to parse megengine mdl or mge model to mlir text. Reading mlir text will help you make clear the model detail.   
@@ -108,9 +108,6 @@ Execute `./bin/mgb-importer example/mobilenet.mdl mobilenet.mlir` to dump mdl mo
 ### mgb-runner
 mgb-runner is used to run megengine model and write result to file. It is used to check correctness of megcc by test_model script.   
 Execute `./bin/mgb-runner ./example/mobilenet.mdl ./mgb_out --input-shapes="data=(1,3,224,224)" --input-data="data=input_1_3_224_224_fp32.bin"` with input bin file input_1_3_224_224_fp32.bin, result is stored in mgb_out directory  
-
-### hako-to-mgb
-hako-to-mgb is used to unpack hako model which end with '.emod'. Version 2 unpack is default, you can use `--hako 1` to unpack version 1 model.  
 
 ### megcc-opt
 megcc-opt is used to show intermediate result of mgb-to-tinynn. You can get origin mlir from mgb-importer, and trans it to final mlir by `--MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning` args.  

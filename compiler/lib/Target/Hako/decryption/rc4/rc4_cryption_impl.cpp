@@ -141,7 +141,7 @@ std::vector<uint8_t> RC4Impl::encrypt_model() {
  * \brief Read the input stream once in order to initialize the decryption
  *        state.
  */
-void SimpleFastRC4Impl::init_sfrc4_state() {
+bool SimpleFastRC4Impl::init_sfrc4_state() {
     rc4::RC4RandStream enc_stream(m_enc_key);
     rc4::FastHash64 dechash(m_hash_key);
 
@@ -169,16 +169,12 @@ void SimpleFastRC4Impl::init_sfrc4_state() {
 
     /*! \brief test the hash_val. */
     if (hashvalue != dechash.get()) {
-        printf("The checksum of the file cannot be verified. The file may "
-               "be encrypted in the wrong algorithm or different keys. %lld != "
-               "%lld",
-               static_cast<long long int>(hashvalue),
-               static_cast<long long int>(dechash.get()));
-        exit(-1);
+        return false;
     }
 
     m_state.hash_stream.reset(m_hash_key);
     m_state.enc_stream.reset(m_enc_key);
+    return true;
 }
 
 std::vector<uint8_t> SimpleFastRC4Impl::decrypt_model() {

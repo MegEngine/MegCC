@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <vector>
 namespace megcc {
-std::vector<uint8_t> parse_hako(
-        const std::vector<uint8_t>& model_buffer, int version = 2);
+enum class EncryptionType { NAIVE = 0, SFRC4, RC4, NONE };
+std::pair<std::vector<uint8_t>, EncryptionType> parse_model(
+        const std::vector<uint8_t>& model_buffer);
 }  // namespace megcc
