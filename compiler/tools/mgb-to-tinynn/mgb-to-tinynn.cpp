@@ -60,6 +60,8 @@ cl::opt<bool> EnableCompressWeightToFp16(
         "enable_compress_fp16",
         cl::desc("enable compress model weight from fp32 to fp16, enable this "
                  "may effect model precision."));
+cl::opt<bool> EnableIoc16("enable_ioc16", cl::desc("enable ioc16 trans"));
+cl::opt<bool> EnableNchw88("enable_nchw88", cl::desc("enable nchw88 trans"));
 
 cl::opt<bool> Decrypt(
         "decrypt",
@@ -78,6 +80,8 @@ struct DumpJson {
             bool_options["add_nhwc2nchw_to_input"] = false;
             bool_options["mgb_fuse_kernel"] = false;
             bool_options["enable_compress_fp16"] = false;
+            bool_options["enable_nchw88"] = false;
+            bool_options["enable_ioc16"] = false;
         }
         static ModelJson parse(json::Object& obj) {
             ModelJson res;
@@ -327,6 +331,8 @@ int main(int argc, char** argv) {
         model_json.bool_options["mgb_fuse_kernel"] = MGBFuseKernel.getValue();
         model_json.bool_options["enable_compress_fp16"] =
                 EnableCompressWeightToFp16.getValue();
+        model_json.bool_options["enable_nchw88"] = EnableNchw88.getValue();
+        model_json.bool_options["enable_ioc16"] = EnableIoc16.getValue();
         dump_info->models.push_back(model_json);
     }
 
@@ -372,7 +378,10 @@ int main(int argc, char** argv) {
             options.enable_nchw44_dot = model.bool_options.at("enable_nchw44_dot");
             options.add_nhwc2nchw_to_input =
                     model.bool_options.at("add_nhwc2nchw_to_input");
+            options.enable_nchw88 = model.bool_options.at("enable_nchw88");
+            options.enable_ioc16 = model.bool_options.at("enable_ioc16");
             bool model_mgb_fuse_kernel = model.bool_options.at("mgb_fuse_kernel");
+
             if (failed(parseInputShapes(
                         model.str_options["input_shape_str"], options))) {
                 return -1;

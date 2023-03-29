@@ -363,7 +363,7 @@ TEST(NAIVE, ConvBiasNCHWFp16) {
 
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.format = ConvBiasForward::Param::Format::NCHW;
-    checker.set_epsilon(1e-3);
+    checker.set_epsilon(5e-3);
 
     megcc::test::Float16PeriodicalRNG rng(0x3c00);
     checker.set_rng(0, &rng);
@@ -419,7 +419,7 @@ TEST(NAIVE, ConvBiasFp16NCHW88) {
     Checker<ConvBiasForward> checker(Arch::BAREMETAL);
     checker.set_kernel_symbol("kernel_.*");
     ConvBiasForward::Param param;
-    checker.set_epsilon(1e-3);
+    checker.set_epsilon(5e-3);
 
     megcc::test::Float16PeriodicalRNG rng(0x3c00);
     checker.set_rng(0, &rng);

@@ -31,7 +31,8 @@ cl::opt<bool> Add_nhwc2nchw_to_input(
         "add_nhwc2nchw_to_input", cl::desc("add nhwc2nchw dimshuffle to input"));
 cl::opt<bool> Enable_convbias_fusez(
         "enable_convbias_fusez", cl::desc("enable convbias_fusez trans"));
-
+cl::opt<bool> EnableIoc16("enable_ioc16", cl::desc("enable ioc16 trans"));
+cl::opt<bool> EnableNchw88("enable_nchw88", cl::desc("enable nchw88 trans"));
 int main(int argc, char** argv) {
     cl::AddExtraVersionPrinter(
             [](raw_ostream& oss) { oss << megcc::getMegccVersionString(); });
@@ -47,6 +48,8 @@ int main(int argc, char** argv) {
     options.enable_nchw44_dot = Enable_nchw44_dot;
     options.add_nhwc2nchw_to_input = Add_nhwc2nchw_to_input;
     options.enable_fuse_conv_bias_nonlinearity_z = Enable_convbias_fusez;
+    options.enable_ioc16 = EnableIoc16;
+    options.enable_nchw88 = EnableNchw88;
     if (failed(parseInputShapes(InputShapes.getValue(), options))) {
         CC_ABORT << "parseInputShapes error\n";
         return -1;

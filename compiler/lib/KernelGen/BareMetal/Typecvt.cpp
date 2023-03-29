@@ -127,9 +127,15 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
             SymbolHelper::gen_valid_dtype(context->getAttrOprand("operand:1").dtype);
     std::string src_specifier = Utils::cvt_dtype_specifier(src_dtype_str);
     std::string dst_specifier = Utils::cvt_dtype_specifier(dst_dtype_str);
+
     ss << R"(
         #include <math.h>
     )";
+    if (src_specifier == "f16" || dst_specifier == "f16") {
+        ss << R"(
+        #include "gi_float16.h"
+        )";
+    }
     ss << gen_staturate(dst_dtype_str);
     ss << gen_act(src_dtype_str, dst_dtype_str, src_specifier, dst_specifier);
     ss << GenCommonRet() << " " << GetKernelSignature(context);

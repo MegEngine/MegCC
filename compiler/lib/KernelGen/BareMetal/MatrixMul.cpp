@@ -45,6 +45,7 @@ std::string MatrixMulKernel::GetKernelSymbol(TContext* context) const {
     } else {
         ss << "n";
     }
+    ss << "_" << context->getAttrOprand("operand:0").dtype;
     return ss.str();
 }
 

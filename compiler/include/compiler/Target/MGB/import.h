@@ -25,6 +25,8 @@ struct MGBImporterOptions {
     bool enable_fuse_conv_bias_nonlinearity = true;
     bool enable_fuse_conv_bias_nonlinearity_z = false;
     bool add_nhwc2nchw_to_input = false;
+    bool enable_ioc16 = false;
+    bool enable_nchw88 = false;
     int8_t graph_opt_level = 2;
     std::string module_name;
     std::vector<std::map<std::string, megdnn::TensorShape>> input_map_vec;

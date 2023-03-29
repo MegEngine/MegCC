@@ -69,7 +69,7 @@ TEST(NAIVE, MatMulFp16) {
     Checker<MatrixMulForward> checker;
     checker.set_kernel_symbol("kernel_.*");
     MatrixMulForward::Param param;
-
+    checker.set_epsilon(1e-3);
     megcc::test::Float16PeriodicalRNG rng(0x3c00);
     checker.set_rng(0, &rng);
     checker.set_rng(1, &rng);

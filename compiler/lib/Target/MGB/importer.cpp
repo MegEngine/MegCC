@@ -1281,6 +1281,14 @@ private:
                 opt_for_inference.enable_nchw44_dot();
                 LOG_INFO << "enable nchw44_dot\n";
             }
+            if (options.enable_nchw88) {
+                opt_for_inference.enable_nchw88();
+                LOG_INFO << "enable nchw88\n";
+            }
+            if (options.enable_ioc16) {
+                opt_for_inference.enable_f16_io_comp();
+                LOG_INFO << "enable f16_io_comp\n";
+            }
             if (options.optimize_for_inference) {
                 LOG_DEBUG << "optimize mgb model for inference\n";
                 output_vars = mgb::gopt::optimize_for_inference(
