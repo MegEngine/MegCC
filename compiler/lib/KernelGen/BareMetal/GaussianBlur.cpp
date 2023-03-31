@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/GuassianBlur.cpp
+ * compiler/lib/KernelGen/BareMetal/GuassianBlur.cpp
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *
@@ -17,7 +17,7 @@
 
 using namespace megcc;
 using namespace KernelGen;
-using namespace GeneralIntrinsic;
+using namespace BareMetal;
 
 bool GaussianBlurKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
@@ -37,7 +37,7 @@ std::string GaussianBlurKernel::GetCVKernelSubSymbol(TContext* context) const {
     std::transform(bmode.begin(), bmode.end(), bmode.begin(), [](unsigned char c) {
         return std::tolower(c);
     });
-    ss << "tinycv_guassian_blur_" << bmode << "_" << src_dtype;
+    ss << "tinycv_gaussian_blur_" << bmode << "_" << src_dtype;
     return ss.str();
 }
 
@@ -92,7 +92,7 @@ std::string gen_border_interpolate(const std::string& bmode) {
         core_temp = R"(
             if (p < 0)
                 p -= ((p - len + 1) / len) * len;
-            
+
             while (p >= len) {
                 p -= len;
             }
@@ -351,7 +351,7 @@ std::string gen_kern_func(const std::string& bmode) {
             RowFilter* m_row_filter;
             ColFilter* m_column_filter;
             size_t m_ch;
-            
+
             //! the size of the kernel
             size_t m_ksize_row, m_ksize_col;
 
@@ -409,7 +409,7 @@ std::string gen_kern_func(const std::string& bmode) {
             self->m_anchor_x = self->m_row_filter->m_anchor;
             self->m_anchor_y = self->m_column_filter->m_anchor;
             self->m_buf_step = 0;
-            
+
             self->m_whole_w = cols;
             self->m_whole_h = rows;
 
@@ -418,7 +418,7 @@ std::string gen_kern_func(const std::string& bmode) {
 
             int cn = self->m_ch;
             self->m_src_row = (uint8_t*)tinynn_malloc(element_size * (self->m_whole_w + self->m_ksize_col - 1));
-            
+
             ${init_const_border_row}
 
             self->m_buf_step = buf_elem_size *
@@ -463,8 +463,8 @@ std::string gen_kern_func(const std::string& bmode) {
                     self->m_row_filter->m_filter(self->m_row_filter, row, brow, self->m_whole_w, self->m_ch);
                 }
 
-                int max_i = 
-                        self->m_ksize_row < self->m_whole_h - dy + (self->m_ksize_row - 1) ? 
+                int max_i =
+                        self->m_ksize_row < self->m_whole_h - dy + (self->m_ksize_row - 1) ?
                         self->m_ksize_row : self->m_whole_h - dy + (self->m_ksize_row - 1);
                 for (i = 0; i < max_i; i++) {
                     int src_y = border_interpolate(
@@ -572,7 +572,6 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
         #include <math.h>
         #include <stdlib.h>
         #include <string.h>
-        #include "gi_int.h"
         #include "tinycv_c.h"
         #include "utils.h"
     )";

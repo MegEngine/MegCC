@@ -41,7 +41,7 @@ TEST(AARCH64, WarpAffine) {
         }
 }
 
-TEST(AARCH64, WarpAffineU8) {
+TEST(AARCH64, AWarpAffineU8) {
     Checker<WarpAffineForward> checker(Arch::ARM64);
     UniformIntRNG rng(0, 255);
     checker.set_epsilon(1 + 1e-4);

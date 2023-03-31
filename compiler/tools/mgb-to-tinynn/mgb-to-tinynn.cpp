@@ -209,6 +209,14 @@ public:
         m_name2gen["rgb2gray"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
         m_name2gen["yuv2bgr_nv21"] = {
                 GenKerns::CvtColorKernel, 2, {{"mode", "YUV2BGR_NV21"}}};
+        m_name2gen["gaussian_blur_constant"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "CONSTANT"}}};
+        m_name2gen["gaussian_blur_replicate"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REPLICATE"}}};
+        m_name2gen["gaussian_blur_reflect"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT"}}};
+        m_name2gen["gaussian_blur_reflect_101"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT_101"}}};
     }
 
     Kerns get_kerns(const std::string& cv_name, megcc::KernelGen::Arch arch) {
@@ -368,6 +376,15 @@ int main(int argc, char** argv) {
         llvm::outs() << "Decrypted model has been saved into ./decrption\n";
     } else {
         auto dump_dir = dump_info->dump_dir;
+        if (!llvm::sys::fs::exists(dump_dir.c_str())) {
+            llvm::sys::fs::create_directories(dump_dir.c_str());
+        } else {
+            CC_ASSERT(llvm::sys::fs::is_directory(dump_dir.c_str()))
+            "output: " << dump_dir
+                       << "is existed and not a directory, try remove it manually or "
+                          "choice another one";
+        }
+
         mlir::KernelExporter kernel_exporter;
         for (auto model : dump_info->models) {
             mlir::MLIRContext ctx;
@@ -427,15 +444,6 @@ int main(int argc, char** argv) {
             llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir
                          << "\n";
 
-            if (!llvm::sys::fs::exists(dump_dir.c_str())) {
-                llvm::sys::fs::create_directories(dump_dir.c_str());
-            } else {
-                CC_ASSERT(llvm::sys::fs::is_directory(dump_dir.c_str()))
-                "output: "
-                        << dump_dir
-                        << "is existed and not a directory, try remove it manually or "
-                           "choice another one";
-            }
             mlir::export_tinynn_model(
                     mod.get(), dump_dir + "/" + options.module_name + ".tiny",
                     SaveModel, kernel_exporter,

@@ -171,6 +171,16 @@ size_t WorkloadOprProxy<megdnn::Flip>::get_compute_workload(
 }
 
 template <>
+size_t WorkloadOprProxy<megdnn::GaussianBlur>::get_compute_workload(
+        megdnn::GaussianBlur* opr, const TensorNDArray& tensors) {
+    auto param = opr->param();
+    auto dst_layout = tensors[1].layout;
+    float computation =
+            dst_layout.total_nr_elems() * param.kernel_height * param.kernel_width;
+    return computation;
+}
+
+template <>
 size_t WorkloadOprProxy<megdnn::Rotate>::get_compute_workload(
         megdnn::Rotate* opr, const TensorNDArray& tensors) {
     auto dst_layout = tensors[1].layout;

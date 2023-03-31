@@ -17,7 +17,7 @@ cmake -GNinja \
   "-H$SRC_DIR" \
   "-B$test_dir" \
   -DCMAKE_TOOLCHAIN_FILE="$RVV_TOOLCHAIN_FILE" \
-  -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=ON 
+  -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=ON
 
 cd "$test_dir"
 ninja

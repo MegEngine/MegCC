@@ -23,6 +23,7 @@
 #include "Fp32Gemv.h"
 #include "Fp32Gevm.h"
 #include "FusedElemwiseKernel.h"
+#include "GaussianBlur.h"
 #include "IndexingMultiAxisVec.h"
 #include "IndexingOneHot.h"
 #include "MatrixInv.h"
@@ -100,6 +101,8 @@ struct AllBareKernel {
                 std::make_shared<BareMetal::ConvBackDataGeneral>()};
         inner_map[KernelPack::KernType::FusedElemwiseKernel] = {
                 std::make_shared<BareMetal::FusedElmwiseKernel>()};
+        inner_map[KernelPack::KernType::CVGaussianBlur] = {
+                std::make_shared<BareMetal::GaussianBlurKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>

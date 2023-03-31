@@ -21,7 +21,8 @@ cmake -GNinja \
   -DANDROID_ABI=arm64-v8a \
   -DANDROID_NATIVE_API_LEVEL=21 \
   -DCMAKE_BUILD_TYPE=Debug \
-  -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=ON
+  -DMEGCC_COMPILER_KERNEL_ENABLE_FP16=ON \
+  -DMEGCC_COMPILER_KERNEL_WITH_ASAN=ON
 
 cmake --build "$test_dir" -j$(nproc)  --target megcc_test_run
 

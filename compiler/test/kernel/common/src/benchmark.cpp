@@ -232,5 +232,6 @@ DEF_CV_BENCHMARK(megdnn::CVtranspose);
 
 DEF_CV_BENCHMARK(megdnn::CVflip);
 DEF_CV_BENCHMARK(megdnn::CVRotate);
+DEF_CV_BENCHMARK(megdnn::CVGaussianBlur);
 }  // namespace test
 }  // namespace megcc

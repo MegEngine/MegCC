@@ -134,6 +134,82 @@ void tinycv_roi_copy_ui8(
         const TinyMat* src, const TinyMat* dst, size_t row_from, size_t row_to,
         size_t col_from, size_t col_to);
 
+/**
+ * \fn tinycv_gaussian_blur_constant_ui8
+ * \brief Gaussian blur on src and store to dst
+ *
+ *  boarder type constant  `000000|abcdefgh|000000`
+ *
+ * \param[in] src Input mat ptr.
+ * \param[out] dst Ouput mat ptr.
+ * \param[in] kernel_h Height of gaussian blur kernel.
+ * \param[in] kernel_w Width of gaussian blur kernel.
+ * \param[in] sigma_x The variance of the Gaussian function in the x-direction(width),
+ * used to calculate the kernel.
+ * \param[in] sigma_y The variance of the Gaussian function in the y-direction(height),
+ * used to calculate the kernel.
+ */
+void tinycv_gaussian_blur_constant_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
+/**
+ * \fn tinycv_gaussian_blur_reflect_ui8
+ * \brief Gaussian blur on src and store to dst
+ *
+ *  boarder type reflect  `hgfedcba|abcdefgh|hgfedcba`
+ *
+ * \param[in] src Input mat ptr.
+ * \param[out] dst Ouput mat ptr.
+ * \param[in] kernel_h Height of gaussian blur kernel.
+ * \param[in] kernel_w Width of gaussian blur kernel.
+ * \param[in] sigma_x The variance of the Gaussian function in the x-direction(width),
+ * used to calculate the kernel.
+ * \param[in] sigma_y The variance of the Gaussian function in the y-direction(height),
+ * used to calculate the kernel.
+ */
+void tinycv_gaussian_blur_reflect_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
+/**
+ * \fn tinycv_gaussian_blur_reflect_101_ui8
+ * \brief Gaussian blur on src and store to dst
+ *
+ *  boarder type reflect_101  `hgfedcb|abcdefgh|gfedcba`
+ *
+ * \param[in] src Input mat ptr.
+ * \param[out] dst Ouput mat ptr.
+ * \param[in] kernel_h Height of gaussian blur kernel.
+ * \param[in] kernel_w Width of gaussian blur kernel.
+ * \param[in] sigma_x The variance of the Gaussian function in the x-direction(width),
+ * used to calculate the kernel.
+ * \param[in] sigma_y The variance of the Gaussian function in the y-direction(height),
+ * used to calculate the kernel.
+ */
+void tinycv_gaussian_blur_reflect_101_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
+/**
+ * \fn tinycv_gaussian_blur_replicate_ui8
+ * \brief Gaussian blur on src and store to dst
+ *
+ *  boarder type replicate  `aaaaaaa|abcdefgh|hhhhhhhh`
+ *
+ * \param[in] src Input mat ptr.
+ * \param[out] dst Ouput mat ptr.
+ * \param[in] kernel_h Height of gaussian blur kernel.
+ * \param[in] kernel_w Width of gaussian blur kernel.
+ * \param[in] sigma_x The variance of the Gaussian function in the x-direction(width),
+ * used to calculate the kernel.
+ * \param[in] sigma_y The variance of the Gaussian function in the y-direction(height),
+ * used to calculate the kernel.
+ */
+void tinycv_gaussian_blur_replicate_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
 #ifdef __cplusplus
 }
 #endif

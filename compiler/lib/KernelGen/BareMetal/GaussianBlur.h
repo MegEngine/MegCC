@@ -1,6 +1,6 @@
 /**
  * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/GaussianBlur.h
+ * compiler/lib/KernelGen/BareMetal/GaussianBlur.h
  *
  * This file is part of MegCC, a deep learning compiler developed by Megvii.
  *
@@ -11,7 +11,7 @@
 #include "compiler/KernelGen/KernelGen.h"
 namespace megcc {
 namespace KernelGen {
-namespace GeneralIntrinsic {
+namespace BareMetal {
 
 class GaussianBlurKernel : public CVKernelImpl {
 public:
@@ -21,6 +21,6 @@ public:
     std::string GetCVKernelSignature(TContext* context) const override;
 };
 
-}  // namespace GeneralIntrinsic
+}  // namespace BareMetal
 }  // namespace KernelGen
 }  // namespace megcc
