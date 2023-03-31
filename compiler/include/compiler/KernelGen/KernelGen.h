@@ -191,6 +191,7 @@ struct KernelPack {
         InternelKernel,
         ConvBackDataKernel,
         FusedElemwiseKernel,
+        CVGaussianBlur,
     };
     static std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> GetKernel(
             KernelPack::KernType kernel_type, Arch arch);

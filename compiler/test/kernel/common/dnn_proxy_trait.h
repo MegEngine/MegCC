@@ -128,6 +128,7 @@ DEF(CVRotate, 2, false, false);
 DEF(CVRoicopy, 2, false, false);
 DEF(CVCvtColor, 2, false, false);
 DEF(CVWarpAffine, 2, false, false);
+DEF(CVGaussianBlur, 2, false, false);
 }  // namespace megdnn
 
 // vim: syntax=cpp.doxygen

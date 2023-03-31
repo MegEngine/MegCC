@@ -15,6 +15,7 @@
 #include "Elemwise/Elemwise.h"
 #include "Flip.h"
 #include "FusedElemwiseKernel.h"
+#include "GaussianBlur.h"
 #include "InternalKernel/InternalKernel.h"
 #include "MatMulKernel/Fp32MatMul.h"
 #include "MatMulKernel/fp16/Fp16MatMul.h"
@@ -98,6 +99,9 @@ struct AllGICommonKernel {
 
         inner_map[KernelPack::KernType::FusedElemwiseKernel] = {
                 std::make_shared<GeneralIntrinsic::FusedElmwiseKernel>()};
+
+        inner_map[KernelPack::KernType::CVGaussianBlur] = {
+                std::make_shared<GeneralIntrinsic::GaussianBlurKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>

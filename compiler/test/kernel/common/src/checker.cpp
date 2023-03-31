@@ -425,6 +425,7 @@ DEF_CV_OPR(megdnn::CVRotate);
 DEF_CV_OPR(megdnn::CVRoicopy);
 DEF_CV_OPR(megdnn::CVCvtColor);
 DEF_CV_OPR(megdnn::CVWarpAffine);
+DEF_CV_OPR(megdnn::CVGaussianBlur);
 
 }  // namespace test
 }  // namespace megcc

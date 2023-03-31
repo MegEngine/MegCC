@@ -99,4 +99,17 @@ private:
     Param m_param;
 };
 
+class CVGaussianBlur {
+public:
+    using DnnOpr = megdnn::GaussianBlur;
+    using Param = DnnOpr::Param;
+    Param& param() { return m_param; }
+
+    DnnOpr::Param dnn_param(Param ori_param) { return ori_param; }
+    static void reformat_layout(CVGaussianBlur* opr, TensorLayoutArray& layouts){};
+
+private:
+    Param m_param;
+};
+
 }  // namespace megdnn

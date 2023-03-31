@@ -176,6 +176,26 @@ private:
     megdnn::CVWarpAffine::Param m_param;
 };
 
+template <>
+class RunCvHelper<megdnn::CVGaussianBlur> {
+public:
+    typedef void (*CVGaussianBlurFunc)(
+            const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+            double sigma1, double sigma2);
+    RunCvHelper(megdnn::CVGaussianBlur* opr) { m_param = opr->param(); };
+    void run_cv_kernel(megdnn::SmallVector<TinyMat>& mat_array, void* func_ptr) {
+        CVGaussianBlurFunc func = (CVGaussianBlurFunc)func_ptr;
+        func(&mat_array[0], &mat_array[1], m_param.kernel_height, m_param.kernel_width,
+             m_param.sigma_x, m_param.sigma_y);
+    };
+    TensorNDArray on_tensor_before(TensorNDArray& tensor_array) {
+        return tensor_array;
+    };
+
+private:
+    megdnn::CVGaussianBlur::Param m_param;
+};
+
 static inline TinyMat tensor2TinyMat(const megdnn::TensorND& tensor) {
     auto layout = tensor.layout;
     mgb_assert(
@@ -313,6 +333,7 @@ DEF_CCOPRPROXY_CV(megdnn::CVRotate);
 DEF_CCOPRPROXY_CV(megdnn::CVRoicopy);
 DEF_CCOPRPROXY_CV(megdnn::CVCvtColor);
 DEF_CCOPRPROXY_CV(megdnn::CVWarpAffine);
+DEF_CCOPRPROXY_CV(megdnn::CVGaussianBlur);
 
 #undef DEF_CCOPRPROXY_CV
 }  // namespace test
