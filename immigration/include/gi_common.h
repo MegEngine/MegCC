@@ -103,7 +103,7 @@
 //! length is 256
 #if defined(GI_AVX_INTRINSICS) || defined(GI_AVX2_INTRINSICS) || \
         defined(GI_FMA_INTRINSICS)
-//! if neon and sse the simd lenght is 128
+//! if neon and sse the simd length is 128
 #define GI_SIMD_LEN      256
 #define GI_SIMD_LEN_BYTE 32
 #elif defined(GI_NEON_INTRINSICS) || defined(GI_SSE2_INTRINSICS) || \
@@ -430,6 +430,7 @@ typedef struct {
 //! case. when fix-len type in fact will do nothing
 #if defined(GI_RVV_INTRINSICS)
 typedef GI_FLOAT32_NAIVE_t GI_FLOAT32_FIXLEN_t;
+typedef float16_t GI_FLOAT16_FIXLEN_t __attribute__((vector_size(GI_SIMD_LEN_BYTE)));
 typedef GI_FLOAT32_V2_NAIVE_t GI_FLOAT32_FIXLEN_V2_t;
 typedef GI_UINT8_NAIVE_t GI_UINT8_FIXLEN_t;
 typedef GI_INT8_NAIVE_t GI_INT8_FIXLEN_t;
@@ -567,6 +568,21 @@ typedef GI_UINT32_NAIVE_t GI_UINT32_FIXLEN_t;
         d = vle32_v_u32m1((uint32_t*)&s, GI_SIMD_LEN_BYTE / sizeof(uint32_t)); \
         d;                                                                     \
     })
+
+#define GiFloat16Type2FixLenType(s)                                             \
+    __extension__({                                                             \
+        GI_FLOAT16_FIXLEN_t d;                                                  \
+        vse16_v_f16m1((float16_t*)&d, s, GI_SIMD_LEN_BYTE / sizeof(float16_t)); \
+        d;                                                                      \
+    })
+
+#define GiFixLenType2GiFloat16Type(s)                                            \
+    __extension__({                                                              \
+        GI_FLOAT16_t d;                                                          \
+        d = vle16_v_f16m1((float16_t*)&s, GI_SIMD_LEN_BYTE / sizeof(float16_t)); \
+        d;                                                                       \
+    })
+
 #else
 typedef GI_FLOAT32_t GI_FLOAT32_FIXLEN_t;
 typedef GI_FLOAT32_V2_t GI_FLOAT32_FIXLEN_V2_t;
@@ -575,6 +591,12 @@ typedef GI_INT8_t GI_INT8_FIXLEN_t;
 typedef GI_INT16_t GI_INT16_FIXLEN_t;
 typedef GI_INT32_t GI_INT32_FIXLEN_t;
 typedef GI_UINT32_t GI_UINT32_FIXLEN_t;
+
+#if __ARM_FEATURE_FP16_VECTOR_ARITHMETIC
+typedef GI_FLOAT16_t GI_FLOAT16_FIXLEN_t;
+#define GiFloat16Type2FixLenType(s)   s
+#define GiFixLenType2GiFloat16Type(s) s
+#endif
 #define GiFloat32Type2FixLenType(s)   s
 #define GiFixLenType2GiFloat32Type(s) s
 

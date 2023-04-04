@@ -277,6 +277,36 @@ private:
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
     Fp16MatmulM8N8MK8Kernel m_inner_gemm;
 };
+class ConvFloat16NCHWNCHW88 : public GIConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* ctx) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* context) const override;
+};
+
+class ChannelWiseFloat16Mk8 : public GIConvImpl {
+    //! gen channel wise k5s1 kernel
+    std::string GenBodyMk8K5S1(TContext* contxt) const;
+
+    //! gen channel wise k3s1 kernel
+    std::string GenBodyMk8K3S1(TContext* contxt) const;
+
+    //! gen channel wise k3s2 kernel
+    std::string GenBodyMk8K3S2(TContext* contxt) const;
+
+public:
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    std::string GetKernelSubSymbol(TContext* context) const override {
+        return "chanwise_fp16";
+    };
+};
+
 }  // namespace GeneralIntrinsic
 }  // namespace KernelGen
 }  // namespace megcc

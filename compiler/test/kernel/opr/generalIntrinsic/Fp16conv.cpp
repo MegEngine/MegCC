@@ -231,5 +231,157 @@ TEST(GI, Conv1x1NCHW88) {
         checker.execs({{2, 3, 5, 11, 8}, {3, 3, 1, 1, 8, 8}, {1, 3, 1, 1, 8}, {}, {}});
     }
 }
+
+TEST(GI, ConvBiasNCHWNCHW88FP16) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+    ConvBiasForward::Param param;
+    checker.set_kernel_symbol("GI_.*nchw_nchw88_fp16.*");
+    checker.set_epsilon(1e-2);
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    param.stride_h = 2;
+    param.stride_w = 2;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW88;
+    checker.set_param(param);
+    for (auto mode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH})
+        for (size_t filter_size : {2, 3, 5})
+            for (size_t ic : {3})
+                for (size_t iw = 13; iw < 33; iw++) {
+                    size_t pad = filter_size / 2;
+                    size_t oc_div8 = 3;
+                    param.pad_h = pad;
+                    param.pad_w = pad;
+                    param.nonlineMode = mode;
+                    checker.set_param(param);
+                    checker.execs(
+                            {{2, ic, 11, iw},
+                             {oc_div8, filter_size, filter_size, ic, 8},
+                             {1, oc_div8, 1, 1, 8},
+                             {},
+                             {}});
+                }
+}
+TEST(GI, ConvBiasChannelWiseNCHW8K3) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("GI_chanwise_fp16_kernel_conv2d_3x3_NCHW88.*");
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW88;
+    checker.set_epsilon(8e-3);
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto mode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH})
+        for (size_t stride : {1, 2}) {
+            param.nonlineMode = mode;
+            param.stride_h = stride;
+            param.stride_w = stride;
+            checker.set_param(param);
+            checker.execs(
+                    {{2, 8, 28, 28, 8}, {8, 1, 1, 3, 3, 8}, {1, 8, 1, 1, 8}, {}, {}});
+            checker.execs({{2, 8, 14, 28, 8}, {8, 1, 1, 3, 3, 8}, {}, {}, {}});
+            checker.execs(
+                    {{4, 3, 5, 11, 8}, {3, 1, 1, 3, 3, 8}, {1, 3, 1, 1, 8}, {}, {}});
+            checker.execs({{4, 3, 5, 11, 8}, {3, 1, 1, 3, 3, 8}, {}, {}, {}});
+        }
+}
+
+TEST(GI, ConvChannelWiseNCHW8K3) {
+    Checker<ConvolutionForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("GI_chanwise_fp16_kernel_conv2d_3x3_NCHW88.*");
+    checker.set_epsilon(8e-3);
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16());
+    ConvolutionForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW88;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (size_t stride : {1, 2}) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        checker.set_param(param);
+        checker.execs({{2, 8, 24, 28, 8}, {8, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{1, 3, 23, 23, 8}, {3, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{3, 3, 23, 23, 8}, {3, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{1, 3, 14, 14, 8}, {3, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{4, 3, 14, 14, 8}, {3, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{4, 5, 34, 7, 8}, {5, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{2, 8, 14, 28, 8}, {8, 1, 1, 3, 3, 8}, {}});
+        checker.execs({{2, 8, 28, 28, 8}, {8, 1, 1, 3, 3, 8}, {}});
+    }
+}
+
+TEST(GI, ConvBiasChannelWiseNCHW8K5) {
+    Checker<ConvBiasForward> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("GI_chanwise_fp16_kernel_conv2d_5x5_NCHW88.*");
+    checker.set_epsilon(8e-3);
+    megcc::test::Float16PeriodicalRNG rng(0x3c00);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_dtype(0, dtype::Float16())
+            .set_dtype(1, dtype::Float16())
+            .set_dtype(2, dtype::Float16())
+            .set_dtype(3, dtype::Float16())
+            .set_dtype(4, dtype::Float16());
+    ConvBiasForward::Param param;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW88;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto mode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH})
+        for (size_t stride : {1}) {
+            param.stride_h = stride;
+            param.stride_w = stride;
+            param.nonlineMode = mode;
+            checker.set_param(param);
+            checker.execs(
+                    {{2, 3, 6, 6, 8}, {3, 1, 1, 5, 5, 8}, {1, 3, 1, 1, 8}, {}, {}});
+            checker.execs(
+                    {{2, 3, 6, 7, 8}, {3, 1, 1, 5, 5, 8}, {1, 3, 1, 1, 8}, {}, {}});
+            checker.execs(
+                    {{2, 3, 7, 6, 8}, {3, 1, 1, 5, 5, 8}, {1, 3, 1, 1, 8}, {}, {}});
+            checker.execs(
+                    {{2, 3, 7, 7, 8}, {3, 1, 1, 5, 5, 8}, {1, 3, 1, 1, 8}, {}, {}});
+            checker.execs(
+                    {{2, 3, 17, 17, 8}, {3, 1, 1, 5, 5, 8}, {1, 3, 1, 1, 8}, {}, {}});
+        }
+}
+
 #endif
 // vim: syntax=cpp.doxygen
