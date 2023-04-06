@@ -7,7 +7,7 @@
  */
 
 #include "utils.h"
-LiteLogLevel g_log_level = WARN;
+LiteLogLevel g_log_level = LITE_WARN;
 /*************** callback imp ******************/
 #if TINYNN_CALLBACK_ENABLE
 static TinyNnCallBack g_cb;

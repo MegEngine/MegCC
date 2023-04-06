@@ -146,7 +146,7 @@ void run_tinynn_test(
 
 int main() {
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
-    LITE_set_log_level(DEBUG);
+    LITE_set_log_level(LITE_DEBUG);
     print_uart0("Hello world!\n");
     run_tinynn_test(
             model_tiny, model_tiny_len, input_bin, input_bin_len, print_uart0_ftm);

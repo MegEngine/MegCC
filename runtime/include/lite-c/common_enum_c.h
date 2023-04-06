@@ -16,10 +16,10 @@
  * \brief The log level.
  */
 typedef enum LiteLogLevel {
-    DEBUG = 0, /*!< The lowest level and most verbose */
-    INFO = 1,  /*!< print infos, warns and errors message */
-    WARN = 2,  /*!< Print only warning and errors */
-    ERROR = 3, /*!< Print only errors */
+    LITE_DEBUG = 0, /*!< The lowest level and most verbose */
+    LITE_INFO = 1,  /*!< print infos, warns and errors message */
+    LITE_WARN = 2,  /*!< Print only warning and errors */
+    LITE_ERROR = 3, /*!< Print only errors */
 } LiteLogLevel;
 
 typedef enum LiteBackend {

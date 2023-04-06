@@ -39,7 +39,7 @@ static TinyNnCallBack g_cb = {
 };
 
 int ta_init_megcc_deamo() {
-    // LITE_set_log_level(DEBUG);
+    // LITE_set_log_level(LITE_DEBUG);
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
     TEE_Time t;
     TEE_GetSystemTime(&t);

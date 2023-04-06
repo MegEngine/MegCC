@@ -20,7 +20,7 @@ static TinyNnCallBack g_cb = {
 };
 
 int ca_init_megcc_deamo() {
-    // LITE_set_log_level(DEBUG);
+    // LITE_set_log_level(LITE_DEBUG);
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
     return init_megcc_test("data", &g_cb);
 }

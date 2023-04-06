@@ -19,28 +19,28 @@ extern tinynn_log __tinynn_log__;
 extern LiteLogLevel g_log_level;
 
 #define LOG_ERROR(msg...)                                           \
-    if (ERROR >= g_log_level) {                                     \
+    if (LITE_ERROR >= g_log_level) {                                \
         __tinynn_log__("TinyNN ERROR:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                        \
     }
 #define LOG_WARNING(msg...)                                        \
-    if (WARN >= g_log_level) {                                     \
+    if (LITE_WARN >= g_log_level) {                                \
         __tinynn_log__("TinyNN WARN:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                       \
     }
 #define LOG_INFO(msg...)                                           \
-    if (INFO >= g_log_level) {                                     \
+    if (LITE_INFO >= g_log_level) {                                \
         __tinynn_log__("TinyNN INFO:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                       \
     }
 #define LOG_DEBUG(msg...)                                           \
-    if (DEBUG >= g_log_level) {                                     \
+    if (LITE_DEBUG >= g_log_level) {                                \
         __tinynn_log__("TinyNN DEBUG:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                        \
     }
-#define LOG_DEBUG_NO_PREFIX(msg...) \
-    if (DEBUG >= g_log_level) {     \
-        __tinynn_log__(msg);        \
+#define LOG_DEBUG_NO_PREFIX(msg...)  \
+    if (LITE_DEBUG >= g_log_level) { \
+        __tinynn_log__(msg);         \
     }
 
 #define TINYNN_ASSERT(exp)                                                      \

@@ -201,7 +201,7 @@ static void* dlsym(void* handle, const char* name) {
 const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int version);
 
 int main(int argc, char** argv) {
-    LITE_set_log_level(WARN);
+    LITE_set_log_level(LITE_WARN);
 #if TINYNN_CALLBACK_ENABLE
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
 #endif
@@ -272,9 +272,9 @@ int main(int argc, char** argv) {
     }
 
     if (print_out == 2) {
-        LITE_set_log_level(INFO);
+        LITE_set_log_level(LITE_INFO);
     } else if (print_out == 3) {
-        LITE_set_log_level(DEBUG);
+        LITE_set_log_level(LITE_DEBUG);
     }
 
     if (extern_so) {

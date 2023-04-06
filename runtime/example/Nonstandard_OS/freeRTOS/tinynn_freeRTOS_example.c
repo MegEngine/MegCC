@@ -100,7 +100,7 @@ void run_tinynn_test(
 }
 
 int tinynn_main() {
-    LITE_set_log_level(DEBUG);
+    LITE_set_log_level(LITE_DEBUG);
     register_tinynn_cb(TINYNN_CB_VERSION, g_cb);
     run_tinynn_test(
             model_tiny, model_tiny_len, input_bin, input_bin_len, "data", printf);
