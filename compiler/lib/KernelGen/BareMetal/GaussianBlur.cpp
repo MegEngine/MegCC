@@ -12,7 +12,8 @@ using namespace BareMetal;
 
 bool GaussianBlurKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool dtype_ok = Utils::is_int_dtype(src_dtype, 8);
+    bool dtype_ok =
+            Utils::is_int_dtype(src_dtype, 8) || Utils::is_float_dtype(src_dtype);
     std::string mode = context->getAttrStr("border_mode");
     bool bmode_ok =
             (mode == "CONSTANT" || mode == "REFLECT" || mode == "REFLECT_101" ||
@@ -168,7 +169,7 @@ std::string gen_create_gaussian_kernels() {
     return temp_str;
 }
 
-std::string gen_kern_func(const std::string& bmode) {
+std::string gen_kern_func(const std::string& bmode, const std::string& src_dtype) {
     std::string helper = R"(
         typedef struct RowFilter{
             TinyMat* m_kernel;
@@ -180,40 +181,39 @@ std::string gen_kern_func(const std::string& bmode) {
             TinyMat* m_kernel;
             int m_anchor, ksize;
             void(*m_filter)(struct ColFilter *self, const uint8_t** src, uint8_t* dst, int dststep, int count, int width);
-            uint8_t(*cast_op)(int);
         } ColFilter;
 
         static void symmRowSmallFilter(RowFilter* self, const uint8_t* src, uint8_t* dst, int width, int cn) {
             int ksize2 = self->ksize / 2, ksize2n = ksize2 * cn;
-            const int* kx = (int*)self->m_kernel->data + ksize2;
-            int* D = (int*)dst;
+            const ${filter_dtype}* kx = (${filter_dtype}*)self->m_kernel->data + ksize2;
+            ${filter_dtype}* D = (${filter_dtype}*)dst;
             int i = 0, j, k;
 
             //! The center
-            const uint8_t* S = (uint8_t*)src + i + ksize2n;
+            const ${src_dtype}* S = (${src_dtype}*)src + i + ksize2n;
             width *= cn;
 
             if (self->ksize == 1 && kx[0] == 1) {
                 for (; i <= width - 2; i += 2) {
-                    int s0 = S[i], s1 = S[i + 1];
+                    ${filter_dtype} s0 = S[i], s1 = S[i + 1];
                     D[i] = s0;
                     D[i + 1] = s1;
                 }
                 S += i;
             } else if (self->ksize == 3) {
-                int k0 = kx[0], k1 = kx[1];
+                ${filter_dtype} k0 = kx[0], k1 = kx[1];
                 for (; i <= width - 2; i += 2, S += 2) {
-                    int s0 = S[0] * k0 + (S[-cn] + S[cn]) * k1,
+                    ${filter_dtype} s0 = S[0] * k0 + (S[-cn] + S[cn]) * k1,
                     s1 = S[1] * k0 + (S[1 - cn] + S[1 + cn]) * k1;
                     D[i] = s0;
                     D[i + 1] = s1;
                 }
             } else if (self->ksize == 5) {
-                int k0 = kx[0], k1 = kx[1], k2 = kx[2];
+                ${filter_dtype} k0 = kx[0], k1 = kx[1], k2 = kx[2];
                 for (; i <= width - 2; i += 2, S += 2) {
-                    int s0 = S[0] * k0 + (S[-cn] + S[cn]) * k1 +
+                    ${filter_dtype} s0 = S[0] * k0 + (S[-cn] + S[cn]) * k1 +
                             (S[-cn * 2] + S[cn * 2]) * k2;
-                    int s1 = S[1] * k0 + (S[1 - cn] + S[1 + cn]) * k1 +
+                    ${filter_dtype} s1 = S[1] * k0 + (S[1 - cn] + S[1 + cn]) * k1 +
                             (S[1 - cn * 2] + S[1 + cn * 2]) * k2;
                     D[i] = s0;
                     D[i + 1] = s1;
@@ -221,7 +221,7 @@ std::string gen_kern_func(const std::string& bmode) {
             }
 
             for (; i < width; i++, S++) {
-                int s0 = kx[0] * S[0];
+                ${filter_dtype} s0 = kx[0] * S[0];
                 for (k = 1, j = cn; k <= ksize2; k++, j += cn)
                     s0 += kx[k] * (S[j] + S[-j]);
                 D[i] = s0;
@@ -229,15 +229,15 @@ std::string gen_kern_func(const std::string& bmode) {
         }
 
         static void rowFilter(RowFilter* self, const uint8_t* src, uint8_t* dst, int width, int cn){
-            const int *kx = (int*)self->m_kernel->data;
-            const uint8_t *S;
-            int *D = (int*)dst;
+            const ${filter_dtype} *kx = (${filter_dtype}*)self->m_kernel->data;
+            const ${src_dtype} *S;
+            ${filter_dtype} *D = (${filter_dtype}*)dst;
             int i = 0, k;
             width *= cn;
 
             for(; i + 3 < width; i += 4){
-                S = src + i;
-                int s0 = kx[0] * S[0], s1 = kx[0] * S[1], s2 = kx[0] * S[2], s3 = kx[0] * S[3];
+                S = (${src_dtype}*)src + i;
+                ${filter_dtype} s0 = kx[0] * S[0], s1 = kx[0] * S[1], s2 = kx[0] * S[2], s3 = kx[0] * S[3];
                 for (k = 1; k < self->ksize; ++k) {
                     S += cn;
                     s0 += kx[k] * S[0];
@@ -249,8 +249,8 @@ std::string gen_kern_func(const std::string& bmode) {
             }
 
             for(; i < width; ++i){
-                S = src + i;
-                int s0 = kx[0] * S[0];
+                S = (${src_dtype}*)src + i;
+                ${filter_dtype} s0 = kx[0] * S[0];
                 for (k = 1; k < self->ksize; ++k) {
                     S += cn;
                     s0 += kx[k] * S[0];
@@ -259,56 +259,55 @@ std::string gen_kern_func(const std::string& bmode) {
             }
         }
 
+        ${cast_op_func}
+
         static void symmColumnSmallFilter(ColFilter *self, const uint8_t** src, uint8_t* dst, int dststep, int count, int width) {
             int ksize2 = self->ksize / 2;
-            const int *ky = (int*)self->m_kernel->data + ksize2;
+            const ${filter_dtype} *ky = (${filter_dtype}*)self->m_kernel->data + ksize2;
             int i;
-            int f0 = ky[0], f1 = ky[1];
+            ${filter_dtype} f0 = ky[0], f1 = ky[1];
             src += ksize2;
 
             for (; count > 0; count--, dst += dststep, src++) {
-                uint8_t* D = (uint8_t*)dst;
+                ${dst_dtype}* D = (${dst_dtype}*)dst;
                 i = 0;
                 if (count == 0)
                     break;
-                const int* S0 = (const int*)src[-1];
-                const int* S1 = (const int*)src[0];
-                const int* S2 = (const int*)src[1];
+                const ${filter_dtype}* S0 = (const ${filter_dtype}*)src[-1];
+                const ${filter_dtype}* S1 = (const ${filter_dtype}*)src[0];
+                const ${filter_dtype}* S2 = (const ${filter_dtype}*)src[1];
 
                 {
                     for (; i <= width - 4; i += 4) {
-                        int s0 = (S0[i] + S2[i]) * f1 + S1[i] * f0;
-                        int s1 = (S0[i + 1] + S2[i + 1]) * f1 + S1[i + 1] * f0;
-                        D[i] = self->cast_op(s0);
-                        D[i + 1] = self->cast_op(s1);
+                        ${filter_dtype} s0 = (S0[i] + S2[i]) * f1 + S1[i] * f0;
+                        ${filter_dtype} s1 = (S0[i + 1] + S2[i + 1]) * f1 + S1[i + 1] * f0;
+                        ${filter_dtype} s2 = (S0[i + 2] + S2[i + 2]) * f1 + S1[i + 2] * f0;
+                        ${filter_dtype} s3 = (S0[i + 3] + S2[i + 3]) * f1 + S1[i + 3] * f0;
 
-                        s0 = (S0[i + 2] + S2[i + 2]) * f1 + S1[i + 2] * f0;
-                        s1 = (S0[i + 3] + S2[i + 3]) * f1 + S1[i + 3] * f0;
-                        D[i + 2] = self->cast_op(s0);
-                        D[i + 3] = self->cast_op(s1);
+                        ${store_unroll}
                     }
                     for (; i < width; i++) {
-                        int s0 = (S0[i] + S2[i]) * f1 + S1[i] * f0;
-                        D[i] = self->cast_op(s0);
+                        ${filter_dtype} s0 = (S0[i] + S2[i]) * f1 + S1[i] * f0;
+                        ${store}
                     }
                 }
             }
         }
 
         static void columnFilter(ColFilter *self, const uint8_t** src, uint8_t* dst, int dststep, int count, int width) {
-            const int* ky = (int*)self->m_kernel->data;
+            const ${filter_dtype}* ky = (${filter_dtype}*)self->m_kernel->data;
             int i = 0, k;
             {
                 for (; count > 0; count--, dst += dststep, src++) {
-                    uint8_t* D = (uint8_t*)dst;
+                    ${dst_dtype}* D = (${dst_dtype}*)dst;
                     i = 0;
                     for (; i <= width - 4; i += 4) {
-                        int f = ky[0];
-                        const int* S = (const int*)src[0] + i;
-                        int s0 = f * S[0], s1 = f * S[1], s2 = f * S[2], s3 = f * S[3];
+                        ${filter_dtype} f = ky[0];
+                        const ${filter_dtype}* S = (const ${filter_dtype}*)src[0] + i;
+                        ${filter_dtype} s0 = f * S[0], s1 = f * S[1], s2 = f * S[2], s3 = f * S[3];
 
                         for (k = 1; k < self->ksize; k++) {
-                            S = (const int*)src[k] + i;
+                            S = (const ${filter_dtype}*)src[k] + i;
                             f = ky[k];
                             s0 += f * S[0];
                             s1 += f * S[1];
@@ -316,26 +315,17 @@ std::string gen_kern_func(const std::string& bmode) {
                             s3 += f * S[3];
                         }
 
-                        D[i] = self->cast_op(s0);
-                        D[i + 1] = self->cast_op(s1);
-                        D[i + 2] = self->cast_op(s2);
-                        D[i + 3] = self->cast_op(s3);
+                        ${store_unroll}
                     }
                     for (; i < width; i++) {
-                        int s0 = 0;
+                        ${filter_dtype} s0 = 0;
                         for (k = 0; k < self->ksize; k++) {
-                            s0 += ky[k] * ((const int*)src[k])[i];
+                            s0 += ky[k] * ((const ${filter_dtype}*)src[k])[i];
                         }
-                        D[i] = self->cast_op(s0);
+                        ${store}
                     }
                 }
             }
-        }
-
-        static uint8_t castOp(int x){
-            int delta = (1 << 15);
-            int res = ((x + delta) >> 16);
-            return (uint8_t)((unsigned)res <= 255 ? res : (res < 0 ? 0 : 255));
         }
 
         typedef struct FilterEngine {
@@ -404,10 +394,9 @@ std::string gen_kern_func(const std::string& bmode) {
             self->m_whole_w = cols;
             self->m_whole_h = rows;
 
-            int element_size = (int)sizeof(uint8_t) * self->m_ch;
-            int buf_elem_size = (int)sizeof(int) * self->m_ch;
+            int element_size = (int)sizeof(${src_dtype}) * self->m_ch;
+            int buf_elem_size = (int)sizeof(${filter_dtype}) * self->m_ch;
 
-            int cn = self->m_ch;
             self->m_src_row = (uint8_t*)tinynn_malloc(element_size * (self->m_whole_w + self->m_ksize_col - 1));
 
             ${init_const_border_row}
@@ -418,14 +407,13 @@ std::string gen_kern_func(const std::string& bmode) {
             self->m_left_width = self->m_anchor_x;
             self->m_right_width = self->m_ksize_col - self->m_anchor_x - 1;
 
-            int src_elem_size = (int)sizeof(uint8_t) * self->m_ch;
-            self->m_border_elem_size = src_elem_size;
+            self->m_border_elem_size = element_size;
             ${init_non_const_border_table}
         }
 
         static int filterEngineProceed(
                 FilterEngine* self, const uint8_t* src, int srcstep, int count, uint8_t* dst, int dststep) {
-            int src_elem_size = (int)(sizeof(uint8_t) * self->m_ch);
+            int src_elem_size = (int)(sizeof(${src_dtype}) * self->m_ch);
             int dy = 0, i = 0;
 
             int row_count = 0;
@@ -546,11 +534,52 @@ std::string gen_kern_func(const std::string& bmode) {
                     }
     )"
                           : "");
+
+    bool is_ui8 = src_dtype == "uint8_t";
+    std::string cast_op_func = is_ui8 ? R"(
+        static uint8_t castOp(int x){
+            int delta = (1 << 15);
+            int res = ((x + delta) >> 16);
+            return (uint8_t)((unsigned)res <= 255 ? res : (res < 0 ? 0 : 255));
+        }
+    )"
+                                      : "";
+    std::string store_unroll = is_ui8 ? R"(
+                        D[i] = castOp(s0);
+                        D[i + 1] = castOp(s1);
+                        D[i + 2] = castOp(s2);
+                        D[i + 3] = castOp(s3);
+    )"
+                                      : R"(
+                        D[i] = s0;
+                        D[i + 1] = s1;
+                        D[i + 2] = s2;
+                        D[i + 3] = s3;
+    )";
+    std::string store = is_ui8 ? R"(
+                        D[i] = castOp(s0);
+    )"
+                               : R"(
+                        D[i] = s0;
+    )";
+    std::string dst_dtype = src_dtype;
+    std::string filter_dtype = "int";
+    if (src_dtype == "float") {
+        filter_dtype = "float";
+    } else {
+        CC_ASSERT(is_ui8);
+    }
     return StringTemplate::StringTemplateArgs()
             .add("init_const_border_row", init_const_border_row)
             .add("init_non_const_border_table", init_non_const_border_table)
             .add("set_non_const_border_value_by_border_table",
                  set_non_const_border_value_by_border_table)
+            .add("store_unroll", store_unroll)
+            .add("store", store)
+            .add("src_dtype", src_dtype)
+            .add("filter_dtype", filter_dtype)
+            .add("dst_dtype", dst_dtype)
+            .add("cast_op_func", cast_op_func)
             .render(helper);
 }
 }  // namespace
@@ -558,6 +587,8 @@ std::string gen_kern_func(const std::string& bmode) {
 std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
     auto kernel_sig = GetCVKernelSignature(context);
     std::string bmode = context->getAttrStr("border_mode");
+    auto src_specifier =
+            Utils::cvt_dtype_specifier(context->getAttrOprand("operand:0").dtype);
     std::stringstream writer;
     writer << R"(
         #include <math.h>
@@ -568,7 +599,7 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
     )";
     writer << gen_border_interpolate(bmode);
     writer << gen_create_gaussian_kernels();
-    writer << gen_kern_func(bmode);
+    writer << gen_kern_func(bmode, src_specifier);
 
     std::string body_temp = R"(
         void ${kernel_sig} {
@@ -580,13 +611,7 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
             kernel_col.data = (float*)tinynn_malloc(sizeof(float) * col);
             createGaussianKernels(&kernel_col, &kernel_row, row, col, sigma1, sigma2);
 
-            const uint8_t bits = 8;
-            for(size_t i = 0; i < kernel_row.cols; ++i){
-                ((int*)(kernel_row.data))[i] = (int)(((float*)(kernel_row.data))[i] * (1 << bits));
-            }
-            for(size_t i = 0; i < kernel_col.cols; ++i){
-                ((int*)(kernel_col.data))[i] = (int)(((float*)(kernel_col.data))[i] * (1 << bits));
-            }
+            ${cast_kernel_to_int}
 
             RowFilter rf;
             rf.m_kernel = &kernel_col;
@@ -607,7 +632,6 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
             } else {
                 cf.m_filter = columnFilter;
             }
-            cf.cast_op = castOp;
 
             FilterEngine fe;
             fe.ctor = filterEngineCtor;
@@ -617,7 +641,8 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
             fe.ctor(&fe, &rf, &cf, src->channels, src->cols, src->rows);
             uint8_t *src_ptr = (uint8_t*)src->data;
             uint8_t *dst_ptr = (uint8_t*)dst->data;
-            fe.proceed(&fe, src_ptr, src->cols * src->channels, fe.m_whole_h, dst_ptr, dst->cols * dst->channels);
+            fe.proceed(&fe, src_ptr, src->cols * src->channels * sizeof(${src_specifier}), fe.m_whole_h, 
+                        dst_ptr, dst->cols * dst->channels * sizeof(${dst_specifier}));
             fe.dtor(&fe);
 
             tinynn_free(kernel_row.data);
@@ -625,8 +650,22 @@ std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
         }
     )";
 
+    std::string cast_kernel_to_int = src_specifier == "uint8_t" ? R"(
+            const uint8_t bits = 8;
+            for(size_t i = 0; i < kernel_row.cols; ++i){
+                ((int*)(kernel_row.data))[i] = (int)(((float*)(kernel_row.data))[i] * (1 << bits));
+            }
+            for(size_t i = 0; i < kernel_col.cols; ++i){
+                ((int*)(kernel_col.data))[i] = (int)(((float*)(kernel_col.data))[i] * (1 << bits));
+            }
+    )"
+                                                                : "";
+    std::string dst_specifier = src_specifier;
     writer << StringTemplate::StringTemplateArgs()
                       .add("kernel_sig", kernel_sig)
+                      .add("cast_kernel_to_int", cast_kernel_to_int)
+                      .add("src_specifier", src_specifier)
+                      .add("dst_specifier", dst_specifier)
                       .render(body_temp);
     return writer.str();
 }

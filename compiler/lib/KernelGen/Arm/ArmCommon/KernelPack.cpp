@@ -14,7 +14,6 @@
 #include "Resize.h"
 #include "Rotate.h"
 #include "Typecvt.h"
-#include "WarpAffine.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace ArmCommon;
@@ -39,9 +38,6 @@ struct AllArmCommonKernel {
 
         inner_map[KernelPack::KernType::RelayoutKernel] = {
                 std::make_shared<ArmCommon::RelayoutKernel>()};
-
-        inner_map[KernelPack::KernType::WarpAffineKernel] = {
-                std::make_shared<ArmCommon::WarpAffineKernel>()};
 
         inner_map[KernelPack::KernType::TypeCvtKernel] = {
                 std::make_shared<ArmCommon::TypecvtKernel>()};
