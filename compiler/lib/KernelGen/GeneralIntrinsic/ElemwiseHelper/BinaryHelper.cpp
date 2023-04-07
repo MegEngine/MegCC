@@ -258,6 +258,50 @@ std::string BinaryCode<VEC_BV>() {
 }
 
 template <>
+std::string BinaryCode<VEC_BCAST110>() {
+    std::string body = R"(
+        size_t SIMD_WIDTH = ${simd_width};
+        Layout dst_layout = outputs[0]->layout;
+        Layout src_layout_0 = inputs[0]->layout;
+        Layout src_layout_1 = inputs[1]->layout;
+        size_t channel = 1;
+        size_t nr_elem_per_channel = dst_layout.dims[dst_layout.nr_dim - 1];
+        for (int i = 0; i < dst_layout.nr_dim - 1; ++i){
+            channel *= dst_layout.dims[i];
+        }
+        ${kernel_init()}
+        const ${dtype_specifier} * src0_base = ${source0};
+        const ${dtype_specifier} * src1_base = ${source1};
+        ${dtype_specifier} * dst = ${dst};
+        for(size_t c=0; c < channel; c++){
+            const ${dtype_specifier} * src0 = src0_base + c * nr_elem_per_channel;
+            const ${dtype_specifier} * src1 = src1_base + c;
+            ${simd_dtype_specifier} vsrc1 = ${broad_cast}(*src1);
+            size_t index = 0;
+            for(; index + SIMD_WIDTH * 2 - 1 < nr_elem_per_channel; index += SIMD_WIDTH * 2) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + 4);
+                ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1, vsrc0_1, vsrc1)}
+                src0 += SIMD_WIDTH * 2;
+                dst += SIMD_WIDTH * 2;
+            }
+            for(; index + SIMD_WIDTH - 1 < nr_elem_per_channel; index += SIMD_WIDTH) {
+                ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
+                ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1)}
+                src0 += SIMD_WIDTH;
+                dst += SIMD_WIDTH;
+            }
+            for(; index < nr_elem_per_channel; index++) {
+                ${kernel_naive_unroll(1, dst, src0, src1)}
+                src0 += 1;
+                dst += 1;
+            }
+        }
+        )";
+    return body;
+}
+
+template <>
 std::string BinaryCode<NAIVE>() {
     std::string body = R"(
         Layout dst_layout = outputs[0]->layout;
@@ -820,6 +864,10 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
             break;
         case DYNAMIC_TYPE:
             body = BinaryCode<DYNAMIC_TYPE>();
+            break;
+        case VEC_BCAST110:
+        case BCAST110_VEC:
+            body = BinaryCode<VEC_BCAST110>();
             break;
         default:
             CC_ABORT << "unsupported broadcast type in elemwise\n";

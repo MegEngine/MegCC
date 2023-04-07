@@ -87,6 +87,8 @@ std::string ElemwiseHelperFunc::BcastType2String(BcastType bcast_type) {
         CASE_BCAST_TYPE(VEC_BCAST101xX_VEC)
         CASE_BCAST_TYPE(VEC_SCALAR_VEC)
         CASE_BCAST_TYPE(VEC_SCALAR_SCALAR)
+        CASE_BCAST_TYPE(VEC_BCAST110)
+        CASE_BCAST_TYPE(BCAST110_VEC)
         CASE_BCAST_TYPE(UNKNOWN_BCAST_TYPE)
         default:
             CC_ABORT << "Unknown model " << bcast_type << ", " << VEC_BCAST101_VEC

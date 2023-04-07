@@ -35,7 +35,16 @@ TEST(AARCH64, ElementwiseUnique_asm) {
 TEST(AARCH64, ElementwiseBinary) {
     Checker<ElemwiseForward> checker(Arch::ARM64);
     ElemwiseForward::Param param;
+
+    megdnn::SmallVector<TensorShapeArray> vec_bcast110_case;
+    vec_bcast110_case.push_back({{1, 3, 1}, {1, 3, 251}, {1, 3, 251}});
+    vec_bcast110_case.push_back({{1, 3, 251}, {1, 3, 1}, {1, 3, 251}});
+    vec_bcast110_case.push_back({{9, 2, 3, 1}, {9, 2, 3, 251}, {9, 2, 3, 251}});
+    vec_bcast110_case.push_back({{9, 2, 3, 251}, {9, 2, 3, 1}, {9, 2, 3, 251}});
+
     auto normal_cases = get_elewise_binary_case();
+    normal_cases.insert(
+            normal_cases.end(), vec_bcast110_case.begin(), vec_bcast110_case.end());
     for (auto mode : {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU}) {
         param.mode = mode;
         checker.set_param(param);
@@ -45,6 +54,8 @@ TEST(AARCH64, ElementwiseBinary) {
     }
 
     auto bound_case = get_elewise_binary_bound_case();
+    bound_case.insert(
+            bound_case.end(), vec_bcast110_case.begin(), vec_bcast110_case.end());
     param.mode = MODE::SUB;
     checker.set_param(param);
     for (auto&& shapes : bound_case) {

@@ -112,6 +112,17 @@ BcastType GetBinaryBcastType(const CCOperand& operand0, const CCOperand& operand
                     return VEC_BV;
                 }
             }
+            bool flag = true;
+            for (size_t i = 0; i < small_shape.size() - 1; ++i) {
+                flag = (flag && (small_shape[i] == big_shape[i]));
+            }
+            if (flag && small_shape.back() == 1 && big_shape.back() > 1) {
+                if (nr_elem0 > nr_elem1) {
+                    return VEC_BCAST110;
+                } else {
+                    return BCAST110_VEC;
+                }
+            }
         }
         return NAIVE;
     }

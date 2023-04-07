@@ -252,6 +252,49 @@ std::string BinaryCode<VEC_BV>() {
 }
 
 template <>
+std::string BinaryCode<VEC_BCAST110>() {
+    std::string body = R"(
+        Layout dst_layout = outputs[0]->layout;
+        Layout src_layout_0 = inputs[0]->layout;
+        Layout src_layout_1 = inputs[1]->layout;
+        size_t channel = 1;
+        size_t nr_elem_per_channel = dst_layout.dims[dst_layout.nr_dim - 1];
+        for (int i = 0; i < dst_layout.nr_dim - 1; ++i){
+            channel *= dst_layout.dims[i];
+        }
+        ${kernel_init()}
+        const float * src0_base = ${source0};
+        const float * src1_base = ${source1};
+        float * dst = ${dst};
+        for(size_t c=0; c < channel; c++){
+            const float * src0 = src0_base + c * nr_elem_per_channel;
+            const float * src1 = src1_base + c;
+            float32x4_t vsrc1 = vdupq_n_f32(*src1);
+            size_t index = 0;
+            for(; index + 7 < nr_elem_per_channel; index += 8) {
+                float32x4_t vsrc0_0 = vld1q_f32(src0);
+                float32x4_t vsrc0_1 = vld1q_f32(src0 + 4);
+                ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1, vsrc0_1, vsrc1)}
+                src0 += 8;
+                dst += 8;
+            }
+            for(; index + 3 < nr_elem_per_channel; index += 4) {
+                float32x4_t vsrc0_0 = vld1q_f32(src0);
+                ${kernel_simd_unroll(1, dst, vsrc0_0, vsrc1)}
+                src0 += 4;
+                dst += 4;
+            }
+            for(; index < nr_elem_per_channel; index++) {
+                ${kernel_naive_unroll(1, dst, src0, src1)}
+                src0 += 1;
+                dst += 1;
+            }
+        }
+        )";
+    return body;
+}
+
+template <>
 std::string BinaryCode<NAIVE>() {
     std::string body = R"(
         Layout dst_layout = outputs[0]->layout;
@@ -663,6 +706,10 @@ std::string ElemwiseGenBinary::GenCodeBody(std::vector<std::string> strs) const 
             break;
         case DYNAMIC_TYPE:
             body = BinaryCode<DYNAMIC_TYPE>();
+            break;
+        case VEC_BCAST110:
+        case BCAST110_VEC:
+            body = BinaryCode<VEC_BCAST110>();
             break;
         default:
             CC_ABORT << "unsupported broadcast type in elemwise\n";

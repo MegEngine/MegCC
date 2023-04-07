@@ -50,6 +50,8 @@ TEST(GI, ElementwiseBinary) {
         checker.execs({{3, 9, 13}, {13}, {}});
         checker.execs({{1, 1, 1, 13}, {2, 3, 4, 13}, {}});
         checker.execs({{2, 100, 3, 96}, {1, 1, 1, 96}, {}});
+        checker.execs({{3, 6, 9, 5}, {3, 6, 9, 1}, {}});
+        checker.execs({{5, 32, 1}, {5, 32, 13}, {}});
     }
     checker.set_epsilon(1e-4);
     megcc::test::UniformRNG rng(3, 12);
@@ -70,6 +72,8 @@ TEST(GI, ElementwiseBinary) {
         checker.execs({{10, 50, 57}, {57}, {}});
         checker.execs({{1, 1, 1, 33}, {2, 30, 4, 33}, {}});
         checker.execs({{2, 100, 3, 69}, {1, 1, 1, 69}, {}});
+        checker.execs({{3, 6, 9, 5}, {3, 6, 9, 1}, {}});
+        checker.execs({{5, 32, 1}, {5, 32, 13}, {}});
     }
 #ifdef ENABLE_KERNEL_FP16
     checker.set_epsilon(1e-3);

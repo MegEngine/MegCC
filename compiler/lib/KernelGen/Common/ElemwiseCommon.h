@@ -22,6 +22,8 @@ enum BcastType {
     VEC = 0,
     VEC_VEC,
     VEC_BCAST101,
+    VEC_BCAST110,  // (x, y, ..., z) and (x, y, ..., 1)
+    BCAST110_VEC,  // (x, y, ..., 1) and (x, y, ..., z)
     VEC_BCAST101xX,
     BCAST111C_VEC,
     VEC_BCAST111C,
