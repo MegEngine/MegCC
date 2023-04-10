@@ -59,6 +59,14 @@ private:
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
 };
+
+class Fp16MatMulM8N8K8 : public Arm64KernelFunc {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+};
 }  // namespace Arm64
 }  // namespace KernelGen
 }  // namespace megcc

@@ -4,7 +4,7 @@
 #include "Elemwise/Elemwise.h"
 #include "InternalKernel/InternalKernel.h"
 #include "KernelPack.h"
-#include "MatMulKernel/Fp32MatMul.h"
+#include "MatMulKernel/MatMul.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace Arm64;
@@ -22,6 +22,7 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::ConvDotNCHWNCHW44Stride1>()};
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
+                std::make_shared<Arm64::Fp16MatMulM8N8K8>(),
                 std::make_shared<Arm64::Fp32MatMulM8N12>(),
                 std::make_shared<Arm64::Fp32MatMulM8N12K4>(),
                 std::make_shared<Arm64::Fp32MatMulM4N16K4>(),

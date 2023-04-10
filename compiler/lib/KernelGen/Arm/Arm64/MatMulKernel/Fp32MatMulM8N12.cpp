@@ -1,7 +1,7 @@
 #include <string>
 #include "../../../Utils/StringTemplate.h"
 #include "../InternalKernel/InternalKernel.h"
-#include "Fp32MatMul.h"
+#include "MatMul.h"
 namespace megcc {
 namespace KernelGen {
 namespace Arm64 {

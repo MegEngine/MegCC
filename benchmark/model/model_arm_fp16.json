@@ -1,5 +1,5 @@
 {
-    "dump_dir": "./benchmark_kernel_arm/",
+    "dump_dir": "./benchmark_kernel_arm_fp16/",
     "models": [
         {
             "model_name": "mobilenetv2",

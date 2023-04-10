@@ -1,5 +1,5 @@
 #include "../InternalKernel/InternalKernel.h"
-#include "Fp32MatMul.h"
+#include "MatMul.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/Utils.h"
 #include "compiler/Common/Logger.h"

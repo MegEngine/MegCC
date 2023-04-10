@@ -42,21 +42,21 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
 
         std::vector<const KernelFunc*> valid_kern;
         if (kernel_type == KernelPack::KernType::ConvKernel) {
-            std::vector<const KernelFunc*> sorted_kern(2);
+            std::vector<const KernelFunc*> sorted_kern;
             for (auto&& kern : gi_kerns) {
                 auto kern_sym = kern->GetKernelSymbol(nullptr);
-                auto is_f63 = std::regex_match(
-                        kern_sym, std::regex("^GI.*_winograd_f63_fp32.*"));
-                auto is_f43 = std::regex_match(
-                        kern_sym, std::regex("^GI.*_winograd_f43_fp32.*"));
+                auto is_f63 =
+                        std::regex_match(kern_sym, std::regex("^GI.*_winograd_f63.*"));
+                auto is_f43 =
+                        std::regex_match(kern_sym, std::regex("^GI.*_winograd_f43.*"));
                 auto if_match = is_f63 || is_f43;
                 if (!if_match) {
                     valid_kern.push_back(kern);
                 } else {
                     if (is_f43) {
-                        sorted_kern[0] = kern;
+                        sorted_kern.insert(sorted_kern.begin(), kern);
                     } else {
-                        sorted_kern[1] = kern;
+                        sorted_kern.insert(sorted_kern.end(), kern);
                     }
                 }
             }

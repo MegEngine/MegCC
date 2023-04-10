@@ -53,6 +53,14 @@ public:
     std::string GetPackBWorkspaceBody(TContext*) const override;
 };
 
+class Fp16MatmulM8N8MK8Kernel : public Arm64MatmulInternal {
+public:
+    std::string GetKernelSymbol(TContext*) const override;
+
+    std::string GetKernelSignature(TContext*) const override;
+
+    std::string GetKernelBody(TContext*) const override;
+};
 }  // namespace Arm64
 }  // namespace KernelGen
 }  // namespace megcc

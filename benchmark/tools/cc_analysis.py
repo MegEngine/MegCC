@@ -37,8 +37,11 @@ def main(passed_args=None):
             results = pattern.findall(data)
             pattern = re.compile(r"warmup iter \d+ finished.")
             warmup_cnt = len(pattern.findall(data))
+            warmup_cnt = 10 if warmup_cnt == 0 else warmup_cnt
             pattern = re.compile(r"execute iter \d+ finished.")
             execute_cnt = len(pattern.findall(data))
+            execute_cnt = 50 if execute_cnt == 0 else execute_cnt
+            print(execute_cnt)
             analyze_data = []
             op_totoal_nums = len(results)
             op_per_test = int(op_totoal_nums / (warmup_cnt + execute_cnt))

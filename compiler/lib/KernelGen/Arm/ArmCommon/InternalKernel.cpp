@@ -15,6 +15,10 @@ std::string MatmulInternal::GenNakedKernelCall(TContext* ctx) {
     if (Utils::is_float_dtype(dtype)) {
         return R"((const float* pack_a, const float* pack_b, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr))";
+    }
+    if (Utils::is_float_dtype(dtype, 16)) {
+        return R"((const __fp16* pack_a, const __fp16* pack_b, __fp16* C,
+            size_t LDC, size_t M, size_t N, size_t K, const __fp16* bias_ptr))";
     } else if (Utils::is_quant_dtype(dtype, 8)) {
         std::string last_dtype = "si8";
         if (ctx->haveAttr("last_dtype")) {
@@ -41,6 +45,9 @@ std::string MatmulInternal::GenKernelCall(TContext* ctx) {
     if (Utils::is_float_dtype(dtype)) {
         return R"((const float* A, size_t LDA, const float* B, size_t LDB, float* C,
             size_t LDC, size_t M, size_t N, size_t K, const float* bias_ptr, void* workspace))";
+    } else if (Utils::is_float_dtype(dtype, 16)) {
+        return R"((const __fp16* A, size_t LDA, const __fp16* B, size_t LDB, __fp16* C,
+            size_t LDC, size_t M, size_t N, size_t K, const __fp16* bias_ptr, void* workspace))";
     } else if (Utils::is_quant_dtype(dtype, 8)) {
         std::string last_dtype = "si8";
         if (ctx->haveAttr("last_dtype")) {
@@ -67,6 +74,9 @@ std::string MatmulInternal::GenPackACall(TContext* ctx) {
     if (Utils::is_float_dtype(dtype)) {
         return "(float* outptr, const float* inptr, int ldin, int y0, int "
                "ymax, int k0, int kmax)";
+    } else if (Utils::is_float_dtype(dtype, 16)) {
+        return "(__fp16* outptr, const __fp16* inptr, int ldin, int y0, int "
+               "ymax, int k0, int kmax)";
     } else if (Utils::is_quant_dtype(dtype, 8) || dtype == "8832") {
         return "(int8_t* outptr, const int8_t* inptr, int ldin, int y0, int "
                "ymax, int k0, int kmax)";
@@ -80,6 +90,9 @@ std::string MatmulInternal::GenPackBCall(TContext* ctx) {
     auto dtype = ctx->getAttrStr("dtype");
     if (Utils::is_float_dtype(dtype)) {
         return "(float* outptr, const float* inptr, int ldin, int x0, int "
+               "xmax, int k0, int kmax)";
+    } else if (Utils::is_float_dtype(dtype, 16)) {
+        return "(__fp16* outptr, const __fp16* inptr, int ldin, int x0, int "
                "xmax, int k0, int kmax)";
     } else if (Utils::is_quant_dtype(dtype, 8) || dtype == "8832") {
         return "(int8_t* outptr, const int8_t* inptr, int ldin, int x0, int "

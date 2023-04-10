@@ -40,6 +40,10 @@ void MGEBenchmarker::profile() {
     strategy = Strategy::PROFILE | Strategy::OPTIMIZED | strategy;
     mgb::gopt::modify_opr_algo_strategy_inplace(output_vars, strategy);
     mgb::gopt::OptimizeForInferenceOptions opt_for_inference;
+#ifdef ENABLE_MGE_FP16_NCHW88
+    opt_for_inference.enable_f16_io_comp();
+    opt_for_inference.enable_nchw88();
+#else
 #ifdef __ANDROID__
 #if __ARM_FEATURE_DOTPROD
     opt_for_inference.enable_nchw44_dot();
@@ -49,6 +53,7 @@ void MGEBenchmarker::profile() {
 #else
     output_vars = mgb::gopt::layout_transform(
             output_vars, mgb::gopt::GraphTuningOptions::Target::CPU);
+#endif
 #endif
     size_t nr_output = output_vars.size();
 

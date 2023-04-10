@@ -19,24 +19,28 @@ def prepare_megcc():
 
 def build_megcc_lib(arch_desc="x86",
                     model_config_json="",
-                    kernel_build_dir=""):
+                    kernel_build_dir="",
+                    dtype="fp32"):
     MEGCC_MGB_TO_TINYNN_PATH = os.environ.get("MEGCC_MGB_TO_TINYNN_PATH")
     # build prepare
     change_dir = ""
+    dtype_ = ""
+    if (dtype == "fp16"):
+        dtype_ = "_fp16"
     if model_config_json == "":
         arch_ = arch_desc
         if arch_desc == "arm64" or arch_desc == "armv7":
             arch_ = "arm"
-        model_config_json = "{}/benchmark/model/model_{}.json".format(
-            megcc_path, arch_)
+        model_config_json = "{}/benchmark/model/model_{}{}.json".format(
+            megcc_path, arch_, dtype_)
         change_dir = "cd {}/benchmark/model".format(megcc_path)
     else:
         change_dir = "cd {}".format(
             Path(model_config_json).parent().absolute())
     if kernel_build_dir == "":
         # WARNING: the dir path should be the same with path set in model_config_json file
-        kernel_build_dir = "{}/benchmark/model/benchmark_kernel_{}".format(
-            megcc_path, arch_desc)
+        kernel_build_dir = "{}/benchmark/model/benchmark_kernel_{}{}".format(
+            megcc_path, arch_desc, dtype_)
     if not os.path.exists(kernel_build_dir) or os.path.isfile(
             kernel_build_dir):
         os.makedirs(kernel_build_dir)
@@ -53,7 +57,8 @@ def build_megcc_lib(arch_desc="x86",
     elif arch_desc == "riscv":
         arch = "--baremetal"
         runtime_flag = "--cross_build --cross_build_target_arch rv64gcv0p7 --cross_build_target_os LINUX"
-
+    if dtype == "fp16":
+        runtime_flag = runtime_flag + " --enable_fp16"
     # convert model
     if len(change_dir) != 0:
         cmd = "{} && {}/mgb-to-tinynn -json={} {} --dump {}".format(
@@ -92,6 +97,7 @@ def build_model_and_megcc_lib(models, models_dir, arch_str):
             arch_desc,
             model_config_json="",
             kernel_build_dir=kernel_build_dirs[arch_desc],
+            dtype="fp32",
         )
 
 
