@@ -356,7 +356,7 @@ TEST(GI, ConvBiasChannelWiseNCHW8K5) {
          {ConvBiasForward::Param::NonlineMode::IDENTITY,
           ConvBiasForward::Param::NonlineMode::RELU,
           ConvBiasForward::Param::NonlineMode::H_SWISH})
-        for (size_t stride : {1}) {
+        for (size_t stride : {1, 2}) {
             param.stride_h = stride;
             param.stride_w = stride;
             param.nonlineMode = mode;

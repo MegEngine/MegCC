@@ -331,9 +331,6 @@ bool ChannelWiseFloat16Mk8::IsAvailable(TContext* ctx) const {
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
             (ctx->getAttrUInt("stride_h") == 1 || ctx->getAttrUInt("stride_h") == 2) &&
             ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
-    if (ctx->getAttrUInt("kernel_w") == 5) {
-        param_value_ok = param_value_ok && ctx->getAttrUInt("stride_h") == 1;
-    }
 
     bool param_mode_ok = ctx->getAttrStr("sparse") == "GROUP" &&
                          ctx->getAttrStr("format") == "NCHW88" &&
@@ -366,7 +363,7 @@ std::string ChannelWiseFloat16Mk8::GetKernelBody(TContext* ctx) const {
 
     std::string nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
-    bool flt_all_in_reg = (5 == kern_size && 1 == stride) ? false : true;
+    bool flt_all_in_reg = (5 == kern_size) ? false : true;
     auto border_compute =
             ComputPadBorder(kernel, stride, pad_h, pad_w, nonline_mode, flt_all_in_reg);
     std::stringstream writer;
@@ -384,6 +381,8 @@ std::string ChannelWiseFloat16Mk8::GetKernelBody(TContext* ctx) const {
         writer << GenBodyMk8K3S2(ctx);
     } else if (5 == kern_size && 1 == stride) {
         writer << GenBodyMk8K5S1(ctx);
+    } else if (5 == kern_size && 2 == stride) {
+        writer << GenBodyMk8K5S2(ctx);
     } else {
         CC_ABORT << "unsupported stride in mk8 channel wise kernel.\n";
     }
@@ -1098,4 +1097,240 @@ std::string ChannelWiseFloat16Mk8::GenBodyMk8K3S2(TContext* ctx) const {
     return ss.str();
 }
 
+std::string ChannelWiseFloat16Mk8::GenBodyMk8K5S2(TContext* ctx) const {
+    int kernel = ctx->getAttrUInt("kernel_h");
+    int pad_h = ctx->getAttrUInt("pad_h");
+    int pad_w = ctx->getAttrUInt("pad_w");
+    bool with_bias = is_bias(ctx);
+    int stride = 2;
+
+    std::string nonline_mode =
+            ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
+    std::stringstream writer;
+    writer << " {\n";
+    writer << R"(
+    size_t N = inputs[0]->layout.dims[0];
+    size_t ICB = inputs[0]->layout.dims[1];
+    size_t IH = inputs[0]->layout.dims[2];
+    size_t IW = inputs[0]->layout.dims[3];
+    size_t IHW = IH * IW;
+
+    size_t OCB = outputs[0]->layout.dims[1];
+    size_t OH = outputs[0]->layout.dims[2];
+    size_t OW = outputs[0]->layout.dims[3];
+    size_t OHW = OH * OW;
+    const size_t stride = 2;
+    const size_t flt_size = 5;
+
+    TINYNN_ASSERT(ICB == OCB);
+
+    gi_float16_t* input_data = inputs[0]->ptr;
+    gi_float16_t* output_data = outputs[0]->ptr;
+    gi_float16_t* weight_data = inputs[1]->ptr;
+    ${gen_bias_ptr()}
+
+    for(int n = 0; n < N; n++) {
+        for (int g = 0; g < ICB; g++) {
+            gi_float16_t* src = input_data + g * IHW * 8;
+            gi_float16_t* dst = output_data + g * OHW * 8;
+            const gi_float16_t* filter = weight_data + g * 25 * 8;
+            ${nonline_gen_init()}
+
+            ${gen_bias_load()}
+            GI_FLOAT16_FIXLEN_t bias_fix = GiFloat16Type2FixLenType(bias);
+            size_t oh_start = (${pad_h} + stride - 1) / stride;
+            size_t ow_start = (${pad_w} + stride - 1) / stride;
+            size_t oh_end = (IH + ${pad_h} - flt_size) / stride + 1;
+            size_t ow_end = (IW + ${pad_w} - flt_size) / stride + 1;
+
+            PaddingComputeK${kernel}P${pad_h}x${pad_w}S${stride}Bias${nonline_mode}(src, NULL, dst, 2, IH, IW, OH, OW, filter, &bias);
+            size_t oh = oh_start;
+            for (; oh + 1 < oh_end; oh += 2) {
+                size_t ih = oh * stride - ${pad_h};
+                size_t ow = ow_start;
+                for (; ow + 1 < ow_end; ow += 2) {
+                    size_t iw = ow * stride - ${pad_w};
+                    const gi_float16_t* input = src + ih * IW * 8 + iw * 8;
+                    gi_float16_t* output = dst + oh * OW * 8 + ow * 8;
+                    GI_FLOAT16_FIXLEN_t dst_v[2][2] = {bias_fix, bias_fix, bias_fix, bias_fix};
+                    GI_FLOAT16_FIXLEN_t src_v[2][7];
+                    GI_FLOAT16_FIXLEN_t kernel[3][5];
+                    //! line 0
+                    ${load_vec_x(7, src_v[0], input)}
+                    ${load_vec_x(5, kernel[0], filter + 0 * 5 * 8)}
+                    ${compute_vec(dst_v[0][0], &src_v[0][0], kernel[0])}
+                    ${compute_vec(dst_v[0][1], &src_v[0][2], kernel[0])}
+                    //! line 1
+                    ${load_vec_x(7,  src_v[1], input + 1 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 1 * 5 * 8)}
+                    ${compute_vec(dst_v[0][0], &src_v[1][0], kernel[1])}
+                    ${compute_vec(dst_v[0][1], &src_v[1][2], kernel[1])}
+                    //! line 2
+                    ${load_vec_x(7,  src_v[0], input + 2 * IW * 8)}
+                    ${load_vec_x(5, kernel[2], filter + 2 * 5 * 8)}
+                    ${compute_vec(dst_v[0][0], &src_v[0][0], kernel[2])}
+                    ${compute_vec(dst_v[0][1], &src_v[0][2], kernel[2])}
+                    ${compute_vec(dst_v[1][0], &src_v[0][0], kernel[0])}
+                    ${compute_vec(dst_v[1][1], &src_v[0][2], kernel[0])}
+                    //! line 3
+                    ${load_vec_x(7,  src_v[1], input + 3 * IW * 8)}
+                    ${load_vec_x(5, kernel[0], filter + 3 * 5 * 8)}
+                    ${compute_vec(dst_v[0][0], &src_v[1][0], kernel[0])}
+                    ${compute_vec(dst_v[0][1], &src_v[1][2], kernel[0])}
+                    ${compute_vec(dst_v[1][0], &src_v[1][0], kernel[1])}
+                    ${compute_vec(dst_v[1][1], &src_v[1][2], kernel[1])}
+                    //! line 4
+                    ${load_vec_x(7,  src_v[0], input + 4 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 4 * 5 * 8)}
+                    ${compute_vec(dst_v[0][0], &src_v[0][0], kernel[1])}
+                    ${compute_vec(dst_v[0][1], &src_v[0][2], kernel[1])}
+                    ${compute_vec(dst_v[1][0], &src_v[0][0], kernel[2])}
+                    ${compute_vec(dst_v[1][1], &src_v[0][2], kernel[2])}
+                    //! line 5
+                    ${load_vec_x(7,  src_v[1], input + 5 * IW * 8)}
+                    ${compute_vec(dst_v[1][0], &src_v[1][0], kernel[0])}
+                    ${compute_vec(dst_v[1][1], &src_v[1][2], kernel[0])}
+                    //! line 6
+                    ${load_vec_x(7, src_v[0], input + 6 * IW * 8)};
+                    ${compute_vec(dst_v[1][0], &src_v[0][0], kernel[1])};
+                    ${compute_vec(dst_v[1][1], &src_v[0][2], kernel[1])};
+                    GI_FLOAT16_t tmp0;
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[0][0]), tmp0)}
+                    GiStoreFloat16(output + 0 * 8, tmp0);
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[0][1]), tmp0)}
+                    GiStoreFloat16(output + 1 * 8, tmp0);
+
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[1][0]), tmp0)}
+                    GiStoreFloat16(output + OW * 8 + 0 * 8, tmp0);
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[1][1]), tmp0)}
+                    GiStoreFloat16(output + OW * 8 + 1 * 8, tmp0);
+                }
+                for (; ow < ow_end; ow++) {
+                    size_t iw = ow * stride - ${pad_w};
+                    const gi_float16_t* input = src + ih * IW * 8 + iw * 8;
+                    gi_float16_t* output = dst + oh * OW * 8 + ow * 8;
+                    GI_FLOAT16_FIXLEN_t dst_v[2] = {bias_fix, bias_fix};
+                    GI_FLOAT16_FIXLEN_t src_v[2][5];
+                    GI_FLOAT16_FIXLEN_t kernel[3][5];
+                    //! line 0
+                    ${load_vec_x(5, src_v[0], input)}
+                    ${load_vec_x(5, kernel[0], filter + 0 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[0])}
+                    //! line 1
+                    ${load_vec_x(5, src_v[1], input + 1 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 1 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[1][0], kernel[1])}
+                    //! line 2
+                    ${load_vec_x(5, src_v[0], input + 2 * IW * 8)}
+                    ${load_vec_x(5, kernel[2], filter + 2 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[2])}
+                    ${compute_vec(dst_v[1], &src_v[0][0], kernel[0])}
+                    //! line 3
+                    ${load_vec_x(5, src_v[1], input + 3 * IW * 8)}
+                    ${load_vec_x(5, kernel[0], filter + 3 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[1][0], kernel[0])}
+                    ${compute_vec(dst_v[1], &src_v[1][0], kernel[1])}
+                    //! line 4
+                    ${load_vec_x(5, src_v[0], input + 4 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 4 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[1])}
+                    ${compute_vec(dst_v[1], &src_v[0][0], kernel[2])}
+                    //! line 5
+                    ${load_vec_x(5, src_v[1], input + 5 * IW * 8)}
+                    ${compute_vec(dst_v[1], &src_v[1][0], kernel[0])}
+                    //! line 6
+                    ${load_vec_x(5, src_v[0], input + 6 * IW * 8)}
+                    ${compute_vec(dst_v[1], &src_v[0][0], kernel[1])}
+                    GI_FLOAT16_t tmp0;
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[0]), tmp0)}
+                    GiStoreFloat16(output + 0 * 8 * OW, tmp0);
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[1]), tmp0)}
+                    GiStoreFloat16(output + 1 * 8 * OW, tmp0);
+                }
+            }
+            for (; oh < oh_end; oh++) {
+                size_t ih = oh * stride - ${pad_h};
+                size_t ow = ow_start;
+
+                for (; ow < ow_end; ow++) {
+                    size_t iw = ow * stride - ${pad_w};
+                    const gi_float16_t* input = src + ih * IW * 8 + iw * 8;
+                    gi_float16_t* output = dst + oh * OW * 8 + ow * 8;
+                    GI_FLOAT16_FIXLEN_t dst_v[1] = {bias_fix};
+                    GI_FLOAT16_FIXLEN_t src_v[2][5];
+                    GI_FLOAT16_FIXLEN_t kernel[2][5];
+
+                    //! line 0
+                    ${load_vec_x(5, src_v[0], input + 0 * IW * 8)}
+                    ${load_vec_x(5, kernel[0], filter + 0 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[0])}
+                    //! line 1
+                    ${load_vec_x(5,  src_v[1], input + 1 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 1 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[1][0], kernel[1])}
+                    //! line 2
+                    ${load_vec_x(5,  src_v[0], input + 2 * IW * 8)}
+                    ${load_vec_x(5, kernel[0], filter + 2 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[0])}
+                    //! line 3
+                    ${load_vec_x(5,  src_v[1], input + 3 * IW * 8)}
+                    ${load_vec_x(5, kernel[1], filter + 3 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[1][0], kernel[1])}
+                    //! line 4
+                    ${load_vec_x(5,  src_v[0], input + 4 * IW * 8)}
+                    ${load_vec_x(5, kernel[0], filter + 4 * 5 * 8)}
+                    ${compute_vec(dst_v[0], &src_v[0][0], kernel[0])}
+                     GI_FLOAT16_t tmp0;
+                    ${nonline_gen_func(GiFixLenType2GiFloat16Type(dst_v[0]), tmp0)}
+                    GiStoreFloat16(output + 0 * 8, tmp0);
+                }
+            }
+        }
+        input_data += ICB * IHW * 8;
+        output_data += ICB * OHW * 8;
+    }
+    return TinyNN_SUCCESS;)";
+    writer << "\n}";
+
+    auto nonline_gen = create_activation_gener_instrinsic(nonline_mode, "f16");
+    auto nonline_gen_init = [&]() -> std::string {
+        return nonline_gen->GenIntrinsicInitFloat();
+    };
+    auto nonline_gen_func = [&](std::vector<std::string> str) -> std::string {
+        auto input = str[0];
+        auto output = str[1];
+        return nonline_gen->GenIntrinsicFloat(input, output);
+    };
+    auto gen_bias_load = [&]() {
+        if (with_bias) {
+            return "GI_FLOAT16_t bias = GiLoadFloat16(bias_data + g * 8);\n";
+        } else {
+            return "GI_FLOAT16_t bias = GiBroadcastFloat16(0.0);\n";
+        }
+    };
+    auto gen_bias_ptr = [&]() {
+        if (with_bias) {
+            return "gi_float16_t* bias_data = inputs[2]->ptr;\n";
+        } else {
+            return "";
+        }
+    };
+
+    std::stringstream ss;
+    ss << StringTemplate::StringTemplateArgs()
+                    .add("kernel", kernel)
+                    .add("pad_h", pad_h)
+                    .add("pad_w", pad_w)
+                    .add("stride", stride)
+                    .add("nonline_mode", nonline_mode)
+                    .add("compute_vec", compute_vec<5>)
+                    .add("load_vec_x", load_vec_x)
+                    .add("load_vec_x", load_vec_x)
+                    .add("nonline_gen_func", nonline_gen_func)
+                    .add("nonline_gen_init", nonline_gen_init)
+                    .add("gen_bias_ptr", gen_bias_ptr)
+                    .add("gen_bias_load", gen_bias_load)
+                    .render(writer.str());
+    return ss.str();
+}
 // vim: syntax=cpp.doxygen

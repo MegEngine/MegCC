@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/MatMulKernel/Fp16MatMulM8N8K8.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Arm/Arm64/InternalKernel/InternalKernel.h"
 #include "MatMul.h"
 #include "Utils/StringTemplate.h"
@@ -60,21 +51,19 @@ std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) {
 
 std::vector<KernelObj> Fp16MatMulM8N8K8::GetDependInternalSymbol(
         TContext* context) const {
-    auto matmul_kernel = Fp16MatmulM8N8MK8Kernel();
     auto ctx = GetInnerCtx(context);
     return {
-            {matmul_kernel.GetKernelSymbol(ctx.get()),
-             matmul_kernel.GetKernelBody(ctx.get()),
-             matmul_kernel.GetBodyGuardBegin(ctx.get()),
-             matmul_kernel.GetBodyGuardEnd(ctx.get()),
-             matmul_kernel.GetDependInternalSymbol(ctx.get())}};
+            {m_internal_kernel.GetKernelSymbol(ctx.get()),
+             m_internal_kernel.GetKernelBody(ctx.get()),
+             m_internal_kernel.GetBodyGuardBegin(ctx.get()),
+             m_internal_kernel.GetBodyGuardEnd(ctx.get()),
+             m_internal_kernel.GetDependInternalSymbol(ctx.get())}};
 }
 
 std::string Fp16MatMulM8N8K8::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     writer << "#include <arm_neon.h>\n";
-    auto matmul_kernel = Fp16MatmulM8N8MK8Kernel();
-    writer << "extern " << matmul_kernel.GetKernelSignature(context) << ";\n";
+    writer << "extern " << m_internal_kernel.GetKernelSignature(context) << ";\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";
     writer << R"(
@@ -112,7 +101,7 @@ std::string Fp16MatMulM8N8K8::GetKernelBody(TContext* context) const {
 
     std::stringstream ss;
     ss << StringTemplate::StringTemplateArgs()
-                    .add("matmul_symbol", matmul_kernel.GetKernelSymbol(context))
+                    .add("matmul_symbol", m_internal_kernel.GetKernelSymbol(context))
                     .render(writer.str());
     return ss.str();
 }

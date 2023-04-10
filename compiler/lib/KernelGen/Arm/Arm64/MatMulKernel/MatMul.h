@@ -66,6 +66,9 @@ public:
     std::string GetKernelSymbol(TContext* context) const override;
     std::string GetKernelBody(TContext* context) const override;
     std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+
+private:
+    Fp16MatmulM8N8MK8Kernel m_internal_kernel;
 };
 }  // namespace Arm64
 }  // namespace KernelGen

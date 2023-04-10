@@ -53,6 +53,9 @@ class ChannelWiseFloatMk4 : public GIConvImpl {
     //! gen channel wise k3s2 kernel
     std::string GenBodyMk4K3S2(TContext* contxt) const;
 
+    //! gen channel wise k5s2 kernel
+    std::string GenBodyMk4K5S2(TContext* contxt) const;
+
 public:
     bool IsAvailable(TContext* context) const override;
     //! kernel gen
@@ -289,6 +292,9 @@ class ChannelWiseFloat16Mk8 : public GIConvImpl {
 
     //! gen channel wise k3s2 kernel
     std::string GenBodyMk8K3S2(TContext* contxt) const;
+
+    //! gen channel wise k5s2 kernel
+    std::string GenBodyMk8K5S2(TContext* contxt) const;
 
 public:
     bool IsAvailable(TContext* context) const override;
