@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Arm64/ConvKernel/Fp32/Fp32WinogradNchw44.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <memory>
 #include "Arm/Arm64/Activation.h"
 #include "Arm/Arm64/ConvKernel.h"

@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/data_struct.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #ifndef DATA_STRUCT_H
 #define DATA_STRUCT_H
 

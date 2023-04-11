@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/freeRTOS/tinynn_freeRTOS_example.c
- *
- * This file is part of tinynn, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <stdarg.h>
 #include "FreeRTOS.h"
 #include "lite-c/common_enum_c.h"

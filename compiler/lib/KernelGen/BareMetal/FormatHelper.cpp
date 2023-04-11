@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/BareMetal/FormatHelper.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "FormatHelper.h"
 #include <sstream>
 

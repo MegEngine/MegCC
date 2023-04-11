@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/src/checker.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "test/kernel/common/dnn_helper.h"
 #include <numeric>
 #include "test/kernel/common/memory_manager.h"

@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/src/fast_run_cache.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "test/kernel/common/fast_run_cache.h"
 #include "megbrain/common.h"
 

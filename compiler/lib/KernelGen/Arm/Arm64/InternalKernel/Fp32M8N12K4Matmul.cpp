@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Arm64/InternalKernel/Fp32M8N12K4Matmul.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Arm/Arm64/Activation.h"
 #include "Arm/ArmCommon/MatmulCommon.h"
 #include "Arm/ArmCommon/common_asm_utils.h"

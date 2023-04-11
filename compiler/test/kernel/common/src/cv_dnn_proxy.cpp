@@ -1,4 +1,3 @@
-
 #include "test/kernel/common/dnn_proxy.h"
 using namespace megcc::test;
 namespace megdnn {

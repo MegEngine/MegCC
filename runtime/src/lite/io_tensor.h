@@ -1,10 +1,3 @@
-/**
- * \file runtime/src/lite/tensor.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "data_struct.h"
 
 static inline ComboIOTensor* get_empty_io_tensor(CombineModel* model) {

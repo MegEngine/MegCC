@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# This file is part of MegEngine.
-# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+
 import argparse
 import os
 import re

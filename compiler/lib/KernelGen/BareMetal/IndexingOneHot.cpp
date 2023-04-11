@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/BareMetal/IndexingOneHot.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "IndexingOneHot.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/Utils.h"

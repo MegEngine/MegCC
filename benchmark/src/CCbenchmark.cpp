@@ -1,10 +1,3 @@
-/**
- * \file benchmark/src/CCbenchmark.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "CCbenchmark.h"
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,11 +1,3 @@
-/**
- * \file compiler/lib/KernelGen/Jit/JitExe.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2021 Megvii Inc. All rights reserved.
- */
-
 #include "compiler/KernelGen/JitExe.h"
 #include <fstream>
 #include <mutex>

@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# file runtime/scripts/check_tinynn_lib.py
-# This file is part of MegCC, a deep learning compiler developed by Megvii.
-# copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
 
 import argparse
 import logging

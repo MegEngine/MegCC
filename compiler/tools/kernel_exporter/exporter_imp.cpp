@@ -1,11 +1,3 @@
-/**
- * \file compiler/tools/kernel_exporter/exporter_imp.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "exporter_imp.h"
 
 KPT KernelExporter::kernel_name_to_type() {

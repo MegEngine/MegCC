@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/opr/armv7/pooling.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "test/kernel/common/checker.h"
 using namespace megdnn;
 using namespace megcc::test;

@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-# file runtime/example/Nonstandard_OS/tee/test_optee.py
-# This file is part of MegCC, a deep learning compiler developed by Megvii.
-# copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
-
 import argparse
 import logging
 import os

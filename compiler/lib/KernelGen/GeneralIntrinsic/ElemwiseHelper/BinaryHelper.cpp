@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ElemwiseHelper/BinaryHelper.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "ElemwiseHelper.h"
 #include "Utils/SymbolHelper.h"
 #include "compiler/Common/Logger.h"

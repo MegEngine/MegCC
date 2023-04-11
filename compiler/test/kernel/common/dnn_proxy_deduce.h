@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/dnn_proxy_deduce.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #pragma once
 
 #include "megbrain/common.h"

@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/Fp16lWinogradNchw44.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <memory>
 #include "ConvKernel.h"
 #include "GeneralIntrinsic/Activation.h"

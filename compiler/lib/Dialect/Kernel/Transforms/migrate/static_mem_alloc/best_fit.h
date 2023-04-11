@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/Dialect/Kernel/Transforms/migrate/static_mem_alloc/best_fit.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #pragma once
 
 #include <map>

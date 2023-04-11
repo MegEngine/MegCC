@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/opr/naive/elementwise.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "test/kernel/common/checker.h"
 #include "test/kernel/common/rng.h"
 #include "test/kernel/opr/common/elemwise.h"

@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/vm/broadcast.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "common.h"
 #include "init.h"
 #include "math.h"

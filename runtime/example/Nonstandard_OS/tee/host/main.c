@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/host/main.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <megcc_inference_ta.h>
 #include <stdio.h>
 #include <string.h>

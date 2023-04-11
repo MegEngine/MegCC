@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/ta/api.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "api.h"
 #include <tee_internal_api.h>
 

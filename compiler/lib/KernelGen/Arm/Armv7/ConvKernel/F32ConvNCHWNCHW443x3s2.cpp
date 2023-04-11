@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Armv7/ConvKernel/F32ConvNCHWNCHW443x3s2.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <sstream>
 #include <string>
 #include "Arm/ARMBackend.h"

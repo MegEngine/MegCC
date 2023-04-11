@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/runner.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #pragma once
 #include <unordered_map>
 #include "compiler/KernelGen/KernelGen.h"

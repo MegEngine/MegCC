@@ -1,11 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/common_api/api.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "lite-c/common_enum_c.h"
 #include "lite-c/global_c.h"
 #include "lite-c/network_c.h"

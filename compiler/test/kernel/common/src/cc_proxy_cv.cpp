@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/src/cc_proxy_cv.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <regex>
 
 #include "test/kernel/common/cc_proxy.h"

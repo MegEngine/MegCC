@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/MatMulKernel/Fp32MatMulM4N8K4.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Fp32MatMul.h"
 #include "GeneralIntrinsic/InternalKernel/InternalKernel.h"
 #include "Utils/StringTemplate.h"

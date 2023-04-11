@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Armv7/KernelPack.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Arm/Armv7/KernelPack.h"
 #include <memory>
 #include "Arm/Armv7/ConvKernel/ConvKernel.h"

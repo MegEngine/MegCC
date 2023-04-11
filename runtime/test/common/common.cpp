@@ -1,10 +1,3 @@
-/**
- * \file runtime/test/common/common.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "common.h"
 #include <math.h>
 #include "float.h"

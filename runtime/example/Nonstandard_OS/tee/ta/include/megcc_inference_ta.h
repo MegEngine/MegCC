@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/ta/include/megcc_inference_ta.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #ifndef TA_MEGCC_INFERENCE_H
 #define TA_MEGCC_INFERENCE_H
 

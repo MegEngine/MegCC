@@ -1,11 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/common_api/api.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "api.h"
 
 extern unsigned char model_tiny[];

@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Armv7/ConvKernel/Winograd/WinogradF23Strategy4x8MK4.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "WinogradF23Strategy4x8MK4.h"
 #include <string>
 #include "Arm/Armv7/Activation.h"

@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/KernelGen.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <regex>
 #include "Arm/Arm64/KernelPack.h"
 #include "Arm/ArmCommon/KernelPack.h"

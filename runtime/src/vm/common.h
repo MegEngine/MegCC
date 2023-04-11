@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/vm/common.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #ifndef VM_COMMON_H
 #define VM_COMMON_H
 

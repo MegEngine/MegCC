@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/BareMetal/Argmax.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2021 Megvii Inc. All rights reserved.
- */
-
 #include "Argmax.h"
 #include "../Utils/Utils.h"
 #include "Utils/StringTemplate.h"

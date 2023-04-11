@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/script/tool/cv_remap_table.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 //! this file is used to gen
 //! compiler/lib/KernelGen/Arm/ArmCommon/InternalKernel/InternalKernel.h
 #include <limits.h>

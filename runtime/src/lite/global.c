@@ -1,10 +1,3 @@
-/**
- * \file runtime/src/lite/global.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "lite-c/global_c.h"
 #include "utils.h"
 extern LiteLogLevel g_log_level;

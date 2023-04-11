@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/bare_board/bare_board_qemu_arm_example.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <stdarg.h>
 #include <stdlib.h>
 #include "lite-c/common_enum_c.h"

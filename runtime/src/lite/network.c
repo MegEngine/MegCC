@@ -1,10 +1,3 @@
-/**
- * \file runtime/src/lite/network.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <stdbool.h>
 #include "data_struct.h"
 #include "init.h"

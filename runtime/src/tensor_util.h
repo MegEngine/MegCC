@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/tensor_util.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #ifndef TENSOR_UTIL_H
 #define TENSOR_UTIL_H
 #include <stdbool.h>

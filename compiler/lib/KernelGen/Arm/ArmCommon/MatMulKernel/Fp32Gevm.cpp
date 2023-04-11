@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/ArmCommon/MatMulKernel/Fp32Gevm.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Fp32Gevm.h"
 #include "Arm/ArmCommon/common_asm_utils.h"
 #include "compiler/Common/Logger.h"

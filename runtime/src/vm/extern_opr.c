@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/vm/extern_opr.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "extern_c_opr.h"
 #include "utils.h"
 #include "vm.h"

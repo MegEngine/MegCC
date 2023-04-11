@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/MatMulKernel/Fp16Gemv.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "Fp16MatMul.h"
 #include "GeneralIntrinsic/GIMathHelper.h"
 #include "compiler/Common/Logger.h"

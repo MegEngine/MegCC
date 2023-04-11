@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Armv7/ConvKernel/Fp32Conv1x1Mk4M8N12.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <sstream>
 #include <string>
 #include "Arm/Armv7/Activation.h"

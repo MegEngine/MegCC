@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/tools/kernel_exporter/config_attr.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "config_attr.h"
 #include <map>
 #include "compiler/Common/TContext.h"

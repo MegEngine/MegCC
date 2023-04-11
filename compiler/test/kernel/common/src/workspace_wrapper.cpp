@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/common/src/workspace_wrapper.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include "test/kernel/common/workspace_wrapper.h"
 #include "test/kernel/common/dnn_helper.h"
 namespace megdnn {

@@ -1,11 +1,3 @@
-/**
- * \file runtime/test/runtime/test_model_init.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <string.h>
 #include <memory>
 #include <vector>

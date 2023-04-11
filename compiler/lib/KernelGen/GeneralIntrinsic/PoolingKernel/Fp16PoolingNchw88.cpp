@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/PoolingKernel/Fp16PoolingNchw88.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <sstream>
 #include "../GIMathHelper.h"
 #include "Pooling.h"

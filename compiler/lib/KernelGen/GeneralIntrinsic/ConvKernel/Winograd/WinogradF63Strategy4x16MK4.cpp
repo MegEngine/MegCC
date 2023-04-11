@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradF63Strategy4x16MK4.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <string>
 #include "Arm/Arm64/InternalKernel/InternalKernel.h"
 #include "GeneralIntrinsic/Activation.h"

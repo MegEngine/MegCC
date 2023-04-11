@@ -1,11 +1,3 @@
-/**
- * \file compiler/lib/Dialect/Kernel/IR/KernelDialect.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "compiler/Dialect/Kernel/IR/KernelDialect.h"
 #include "compiler/Target/MGB/helper.h"
 

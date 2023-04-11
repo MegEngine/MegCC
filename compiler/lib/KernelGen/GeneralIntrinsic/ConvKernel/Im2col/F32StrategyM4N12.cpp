@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Im2col/F32StrategyM4N12.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "F32StrategyM4N12.h"
 #include <string>
 #include "GeneralIntrinsic/InternalKernel/InternalKernel.h"

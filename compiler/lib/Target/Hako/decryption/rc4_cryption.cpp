@@ -1,11 +1,3 @@
-/**
- * \file compiler/lib/Target/Hako/decryption/rc4_cryption.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "rc4_cryption.h"
 #include "rc4/rc4_cryption_impl.h"
 

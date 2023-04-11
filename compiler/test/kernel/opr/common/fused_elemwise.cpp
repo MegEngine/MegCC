@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/test/kernel/opr/common/fused_elementwise.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "fused_elemwise.h"
 #include <string>
 #include "compiler/Common/TContext.h"

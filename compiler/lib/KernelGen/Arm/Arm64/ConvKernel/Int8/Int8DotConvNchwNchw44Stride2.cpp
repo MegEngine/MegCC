@@ -1,11 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/Arm/Arm64/ConvKernel/Int8/Int8DotConvNchwNchw44Stride2.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #include <sstream>
 #include <string>
 #include "Arm/ARMBackend.h"

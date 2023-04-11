@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/GeneralIntrinsic/ConvKernel/Winograd/WinogradF43Strategy8x8MK8.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include <string>
 #include "GeneralIntrinsic/Activation.h"
 #include "GeneralIntrinsic/ConvKernel/ConvKernel.h"

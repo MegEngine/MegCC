@@ -1,10 +1,3 @@
-/**
- * \file runtime/example/Nonstandard_OS/tee/ta/user_ta_header_defines.h
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
 #ifndef USER_TA_HEADER_DEFINES_H
 #define USER_TA_HEADER_DEFINES_H
 

@@ -1,12 +1,3 @@
-/**
- * \file
- * compiler/lib/KernelGen/AutoBareMetal/KernelPack.cpp
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "KernelPack.h"
 #include <memory>
 #include "ElemwiseKernel.h"

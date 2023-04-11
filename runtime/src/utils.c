@@ -1,11 +1,3 @@
-/**
- * \file runtime/src/utils.c
- *
- * This file is part of MegCC, a deep learning compiler developed by Megvii.
- *
- * \copyright Copyright (c) 2021-2022 Megvii Inc. All rights reserved.
- */
-
 #include "utils.h"
 LiteLogLevel g_log_level = LITE_WARN;
 /*************** callback imp ******************/
