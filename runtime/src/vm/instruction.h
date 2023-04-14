@@ -86,6 +86,7 @@ typedef struct {
 typedef enum {
     TinyNN_MemForward_Reshape = 0,
     TinyNN_MemForward_Subtensor = 1,
+    TinyNN_MemForward_Dimshuffle = 2,
 } MemForwardType;
 
 typedef struct {

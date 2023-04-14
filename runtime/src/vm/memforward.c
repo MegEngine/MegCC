@@ -11,6 +11,8 @@ static MemForwardType get_forward_type(ns(MemForwardType_enum_t) type) {
             return TinyNN_MemForward_Reshape;
         case ns(MemForwardType_SUBTENSOR):
             return TinyNN_MemForward_Subtensor;
+        case ns(MemForwardType_DIMSHUFFLE):
+            return TinyNN_MemForward_Dimshuffle;
         default: {
             LOG_ERROR("no support forward type from fbs.\n");
         }

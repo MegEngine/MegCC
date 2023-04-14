@@ -21,10 +21,4 @@ def KernelMaterializationPass : Pass<"kernel-materialization", "ModuleOp"> {
   let constructor = "mlir::createKernelMaterializationPass()";
 }
 
-def KernelFinalCleanPass : Pass<"kernel-clean", "FuncOp"> {
-  let summary = "clean unused or forward kernel opr";
-  let dependentDialects = ["Kernel::KernelDialect"];
-  let constructor = "mlir::createKernelFinalCleanPass()";
-}
-
 #endif // KERNEL_TRANSFORM

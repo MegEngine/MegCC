@@ -14,8 +14,6 @@ void populateKernelMaterializationPatterns(RewritePatternSet& patterns);
 
 std::unique_ptr<OperationPass<ModuleOp>> createKernelMaterializationPass();
 
-std::unique_ptr<OperationPass<FuncOp>> createKernelFinalCleanPass();
-
 #define GEN_PASS_REGISTRATION
 #include "compiler/Dialect/Kernel/Transforms/Passes.h.inc"
 
