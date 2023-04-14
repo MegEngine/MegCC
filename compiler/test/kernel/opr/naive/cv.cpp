@@ -128,8 +128,6 @@ TEST(NAIVE, CVGaussianBlur) {
     Checker<megdnn::CVGaussianBlur> checker;
     megdnn::CVGaussianBlur::Param param;
     using BorderMode = megdnn::CVGaussianBlur::Param::BorderMode;
-    UniformIntRNG seq(0, 255);
-    checker.set_rng(0, &seq);
     auto run = [&checker, &param]() {
         for (auto mode :
              {BorderMode::CONSTANT, BorderMode::REFLECT, BorderMode::REFLECT_101,
@@ -159,10 +157,14 @@ TEST(NAIVE, CVGaussianBlur) {
             }
         }
     };
+    UniformIntRNG seq(0, 255);
+    checker.set_rng(0, &seq);
     checker.set_dtype(0, dtype::Uint8());
     checker.set_dtype(1, dtype::Uint8());
     run();
 
+    megcc::test::UniformRNG rng(-30, 30);
+    checker.set_rng(0, &rng);
     checker.set_dtype(0, dtype::Float32());
     checker.set_dtype(1, dtype::Float32());
     checker.set_epsilon(1e-4);

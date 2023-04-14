@@ -81,7 +81,7 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
 
 bool ResizeKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool dtype_ok = src_dtype == "ui8";
+    bool dtype_ok = src_dtype == "ui8" || Utils::is_float_dtype(src_dtype);
     bool mode_ok = context->getAttrStr("imode") == "LINEAR" &&
                    context->getAttrStr("format") == "NHWC";
     return dtype_ok && mode_ok;
@@ -99,283 +99,8 @@ std::string ResizeKernel::GetCVKernelSignature(TContext* context) const {
     return GetCVKernelSymbol(context) + "(const TinyMat* src, const TinyMat* dst)";
 }
 
-std::string ResizeKernel::GetCVKernelBody(TContext* context) const {
-    auto kernel_sig = GetCVKernelSignature(context);
-    std::stringstream writer;
-    writer << R"(
-        #include <string.h>
-        #include "gi_int.h"
-        #include "tinycv_c.h"
-        )";
-    std::string body_temp = R"(
-        #include <math.h>
-        #include <stdalign.h>
-        #define rep(i, n) for (int i = 0; i < (n); ++i)
-        #define SCALE 11
-        static inline uint8_t output_converter(float x){
-            x = fmin(255.0f, fmax(0.0f, x));
-            return (uint8_t) roundf(x);
-        }
-
-        static inline void get_nearest_linear_coord(float scale, int size, int idx, float* ah0, int* ih0, float* ah1, int* ih1){
-            if (size == 1) {
-                *ah0 = 1.f;
-                *ih0 = 0;
-                *ah1 = 0.f;
-                *ih1 = 0;
-            }
-
-            float alpha = (idx + 0.5f) / scale - 0.5f;
-            int origin_idx = (int)(floorf(alpha));
-            alpha -= origin_idx;
-
-            if (origin_idx < 0) {
-                origin_idx = 0;
-                alpha = 0;
-            } else if (origin_idx + 1 >= size) {
-                origin_idx = size - 2;
-                alpha = 1;
-            }
-
-            *ah0 = 1 - alpha;
-            *ih0 = origin_idx;
-            *ah1 = alpha;
-            *ih1 = origin_idx + 1;
-        }
-        static inline void calc_cache_8uc3_1(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                       const int* tabsx,
-                       const int* tabsy,
-                       const int* tabrx,
-                       const int* tabry, int dx,
-                       int* cache0, int* cache1) {
-            (void)tabrx;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-
-            int dy = 0, dy3 = 0;
-
-            for (; dy < OW; ++dy, dy3 += 3) {
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 3;
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 3;
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache1[dy3 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-                cache1[dy3 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
-                cache1[dy3 + 2] = pcsrc11[2] * ry + pcsrc10[2] * iry;
-            }
-        }
-        static inline void calc_cache_8uc3_2(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                       const int*  tabsx,
-                       const int*  tabsy,
-                       const int*  tabrx,
-                       const int*  tabry, int dx,
-                       int*  cache0, 
-                       int*  cache1) {
-            (void)tabrx;
-            const uint8_t* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-            int dstcols = OW;
-            int dy = 0, dy3 = 0;
-
-            // 4 pixels each time
-            for (; dy < dstcols; ++dy, dy3 += 3) {
-                const uint8_t* pcsrc00 = psrc0 + (tabsy[dy] + 0) * 3;
-                const uint8_t* pcsrc01 = psrc0 + (tabsy[dy] + 1) * 3;
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 3;
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 3;
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache0[dy3 + 0] = pcsrc01[0] * ry + pcsrc00[0] * iry;
-                cache1[dy3 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-                cache0[dy3 + 1] = pcsrc01[1] * ry + pcsrc00[1] * iry;
-                cache1[dy3 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
-                cache0[dy3 + 2] = pcsrc01[2] * ry + pcsrc00[2] * iry;
-                cache1[dy3 + 2] = pcsrc11[2] * ry + pcsrc10[2] * iry;
-            }
-        }
-
-        static inline void calc_cache_8uc2_1(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                       const int* tabsx,
-                       const int* tabsy,
-                       const int* tabrx,
-                       const int* tabry, int dx,
-                       int* cache0, int* cache1) {
-            (void)tabrx;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-
-            int dy = 0, dy2 = 0;
-
-            for (; dy < OW; ++dy, dy2 += 2) {
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 2;
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 2;
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache1[dy2 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-                cache1[dy2 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
-            }
-        }
-        static inline void calc_cache_8uc2_2(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                       const int*  tabsx,
-                       const int*  tabsy,
-                       const int*  tabrx,
-                       const int*  tabry, int dx,
-                       int*  cache0, 
-                       int*  cache1) {
-            (void)tabrx;
-            const uint8_t* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-            int dstcols = OW;
-            int dy = 0, dy2 = 0;
-
-            // 4 pixels each time
-            for (; dy < dstcols; ++dy, dy2 += 2) {
-                const uint8_t* pcsrc00 = psrc0 + (tabsy[dy] + 0) * 2;
-                const uint8_t* pcsrc01 = psrc0 + (tabsy[dy] + 1) * 2;
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 2;
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 2;
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache0[dy2 + 0] = pcsrc01[0] * ry + pcsrc00[0] * iry;
-                cache1[dy2 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-                cache0[dy2 + 1] = pcsrc01[1] * ry + pcsrc00[1] * iry;
-                cache1[dy2 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
-            }
-        }
-
-        static inline void build_tabs_linear_8u(int IH, int IW, int OH, int OW,
-                          int* tabsx, 
-                          int* tabsy,
-                          int* tabrx,
-                          int* tabry) {
-
-            const float fx = (float)(OH) / IH;
-            const float fy = (float)(OW) / IW;
-            const float ifx = 1.0f / fx;
-            const float ify = 1.0f / fy;
-            for (int dx = 0; dx < OH; ++dx) {
-                float rx = (dx + 0.5f) * ifx - 0.5f;
-                int sx = (int)(floor(rx));
-                rx -= sx;
-                if (sx < 0) {
-                    sx = 0;
-                    rx = 0;
-                } else if (sx + 1 >= IH) {
-                    sx = IH - 2;
-                    rx = 1;
-                }
-                tabsx[dx] = sx;
-                tabrx[dx] = (int)(rx * (1 << SCALE));
-            }
-            for (int dy = 0; dy < OW; ++dy) {
-                float ry = (dy + 0.5f) * ify - 0.5f;
-                int sy = (int)(floor(ry));
-                ry -= sy;
-                if (sy < 0) {
-                    sy = 0;
-                    ry = 0;
-                } else if (sy + 1 >= IW) {
-                    sy = IW - 2;
-                    ry = 1;
-                }
-                tabsy[dy] = sy;
-                tabry[dy] = (int)(ry * (1 << SCALE));
-            }
-        }
-
-        static inline void calc_cache_8uc1_1(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                       const int* tabsx,
-                       const int* tabsy,
-                       const int* tabrx,
-                       const int* tabry, int dx,
-                       int* cache0, 
-                       int* cache1) {
-            (void)tabrx;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-            int dstcols = OW;
-            int dy = 0;
-
-            
-            for (; dy < dstcols; ++dy) {
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0);
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1);
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache1[dy] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-            }
-        }
-
-        static inline void calc_cache_8uc1_2(const uint8_t* src, const int src_h_stride, const uint8_t* dst, const int OW,
-                            const int* tabsx,
-                            const int* tabsy,
-                            const int* tabrx,
-                            const int* tabry, int dx,
-                            int* cache0, 
-                            int* cache1) {
-            (void)tabrx;
-            const uint8_t* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
-            const uint8_t* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
-            int dstcols = OW;
-            int dy = 0;
-
-            // 4 pixels each time
-            for (; dy < dstcols; ++dy) {
-                const uint8_t* pcsrc00 = psrc0 + (tabsy[dy] + 0);
-                const uint8_t* pcsrc01 = psrc0 + (tabsy[dy] + 1);
-                const uint8_t* pcsrc10 = psrc1 + (tabsy[dy] + 0);
-                const uint8_t* pcsrc11 = psrc1 + (tabsy[dy] + 1);
-                int ry = tabry[dy];
-                int iry = (1 << SCALE) - ry;
-                cache0[dy] = pcsrc01[0] * ry + pcsrc00[0] * iry;
-                cache1[dy] = pcsrc11[0] * ry + pcsrc10[0] * iry;
-            }
-        }
-
-        void ${kernel_sig}{
-            uint8_t* sptr = src->data;
-            uint8_t* dptr = dst->data;
-            int IH = src->rows;
-            int IW = src->cols;
-            int C = src->channels;
-            int src_h_stride = IW * C;
-            int OH = dst->rows;
-            int OW = dst->cols;
-
-            
-            bool use_cache = OH >= 2 && OW >= 2 && IH >= 2 && IW >= 2;
-
-            if (C == 1 && use_cache) {
-                alignas(16) int tabsx[OH];
-                alignas(16) int tabsy[OW];
-                alignas(16) int tabrx[OH];
-                alignas(16) int tabry[OW];
-                build_tabs_linear_8u(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
-
-
-                int dstrows = OH;
-                int dstcols = OW;
-                alignas(16) int cache0_body[dstcols];
-                alignas(16) int cache1_body[dstcols];
-                int* cache0 = &cache0_body[0];
-                int* cache1 = &cache1_body[0];
-                for (int dx = 0; dx < dstrows; ++dx) {
-                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
-                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
-                            int* temp = cache0;
-                            cache0 = cache1;
-                            cache1 = temp;
-                            calc_cache_8uc1_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        } else {
-                            calc_cache_8uc1_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        }
-                    }
-                    int rx = tabrx[dx];
-                    int irx = (1 << SCALE) - rx;
-                    uint8_t* pdst = dptr + (dx) * OW;
-                    int dy = 0;
-
-                    const int* cache0_ptr = cache0;
-                    const int* cache1_ptr = cache1;
+inline std::string gen_gi_interpolate_c1_func(const bool is_ui8) {
+    std::string gi_interpolate_c1 = is_ui8 ? R"(
                     GI_INT32_t v_rx = GiBroadcastInt32(rx);
                     GI_INT32_t v_irx = GiBroadcastInt32(irx);
 #define RSCALE (SCALE + SCALE - 16)
@@ -424,81 +149,36 @@ std::string ResizeKernel::GetCVKernelBody(TContext* context) const {
                         GiStoreUint8(pdst + dy, v_all8_0);
                     }
 #undef RSCALE
-                    for (; dy < dstcols; ++dy) {
-                        uint8_t* pcdst = pdst + dy;
-                        pcdst[0] =
-                                (rx * cache1[dy] + irx * cache0[dy]) >> (SCALE + SCALE);
-                    }
-                }
-            }else if (C == 2 && use_cache) {
-                alignas(16) int tabsx[OH];
-                alignas(16) int tabsy[OW];
-                alignas(16) int tabrx[OH];
-                alignas(16) int tabry[OW];
-                build_tabs_linear_8u(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
-                int dstrows = OH;
-                int dstcols = OW * 2;
-                alignas(16) int cache0_body[dstcols];
-                alignas(16) int cache1_body[dstcols];
-                int* cache0 = &cache0_body[0];
-                int* cache1 = &cache1_body[0];
-                for (int dx = 0; dx < dstrows; ++dx) {
-                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
-                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
-                            int* temp = cache0;
-                            cache0 = cache1;
-                            cache1 = temp;
-                            calc_cache_8uc2_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        } else {
-                            calc_cache_8uc2_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        }
-                    }
-                    int rx = tabrx[dx];
-                    int irx = (1 << SCALE) - rx;
-                    uint8_t* pdst = dptr + dx * OW * C;
-                    int dy = 0;
+    )"
+                                           : R"(
+#define EXPAND(x)                                  \
+    v_cache0 = GiLoadFloat32(cache0_ptr + dy + x); \
+    v_cache1 = GiLoadFloat32(cache1_ptr + dy + x); \
+    GiStoreFloat32(                                \
+            pdst + dy + x,                         \
+            GiMlaqFloat32(GiMultiplyFloat32(v_rx, v_cache1), v_irx, v_cache0));
 
-                    for (; dy < dstcols; dy += 2) {
-                        uint8_t* pcdst = pdst + dy;
-                        pcdst[0] = (rx * cache1[dy + 0] + irx * cache0[dy + 0]) >>
-                                (SCALE + SCALE);
-                        pcdst[1] = (rx * cache1[dy + 1] + irx * cache0[dy + 1]) >>
-                                (SCALE + SCALE);
+                    GI_FLOAT32_t v_rx = GiBroadcastFloat32(rx);
+                    GI_FLOAT32_t v_irx = GiBroadcastFloat32(irx);
+                    for (; dy + 8 <= dstcols; dy += 8) {
+                        GI_FLOAT32_t v_cache0;
+                        GI_FLOAT32_t v_cache1;
+                        EXPAND(0);
+                        EXPAND(4);
                     }
-                }
-                
-            } else if (C == 3 && use_cache) {
-                alignas(16) int tabsx[OH];
-                alignas(16) int tabsy[OW];
-                alignas(16) int tabrx[OH];
-                alignas(16) int tabry[OW];
-                build_tabs_linear_8u(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
-                int dstrows = OH;
-                int dstcols = OW * 3;
-                alignas(16) int cache0_body[dstcols];
-                alignas(16) int cache1_body[dstcols];
-                int* cache0 = &cache0_body[0];
-                int* cache1 = &cache1_body[0];
-                for (int dx = 0; dx < dstrows; ++dx) {
-                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
-                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
-                            int* temp = cache0;
-                            cache0 = cache1;
-                            cache1 = temp;
-                            calc_cache_8uc3_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        } else {
-                            calc_cache_8uc3_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
-                                            cache0, cache1);
-                        }
+                    if (dy + 4 <= dstcols) {
+                        GI_FLOAT32_t v_cache0;
+                        GI_FLOAT32_t v_cache1;
+                        EXPAND(0);
+                        dy += 4;
                     }
-                    int rx = tabrx[dx];
-                    int irx = (1 << SCALE) - rx;
-                    uint8_t* pdst = dptr + dx * OW * C;
-                    int dy = 0;
+#undef EXPAND
+    )";
+    return gi_interpolate_c1;
+}
 
+inline std::string gen_gi_interpolate_c3_func(const bool is_ui8) {
+    std::string gi_interpolate_c3 = is_ui8 ? R"(
                     for (; dy < dstcols; dy += 3) {
                         uint8_t* pcdst = pdst + dy;
                         pcdst[0] = (rx * cache1[dy + 0] + irx * cache0[dy + 0]) >>
@@ -508,8 +188,408 @@ std::string ResizeKernel::GetCVKernelBody(TContext* context) const {
                         pcdst[2] = (rx * cache1[dy + 2] + irx * cache0[dy + 2]) >>
                                 (SCALE + SCALE);
                     }
+    )"
+                                           : R"(
+#define EXPAND(x)                                                                 \
+    v_cache0 = GiLoadUzipFloat32V3(cache0_ptr + dy + (x)*3);                      \
+    v_cache1 = GiLoadUzipFloat32V3(cache1_ptr + dy + (x)*3);                      \
+    a0 = GiMlaqFloat32(                                                           \
+            GiMultiplyFloat32(v_rx, GiGetSubVectorFloat32V3(v_cache1, 0)), v_irx, \
+            GiGetSubVectorFloat32V3(v_cache0, 0));                                \
+    GiSetSubVectorFloat32V3(v_dst, 0, a0);                                        \
+    a1 = GiMlaqFloat32(                                                           \
+            GiMultiplyFloat32(v_rx, GiGetSubVectorFloat32V3(v_cache1, 1)), v_irx, \
+            GiGetSubVectorFloat32V3(v_cache0, 1));                                \
+    GiSetSubVectorFloat32V3(v_dst, 1, a1);                                        \
+    a2 = GiMlaqFloat32(                                                           \
+            GiMultiplyFloat32(v_rx, GiGetSubVectorFloat32V3(v_cache1, 2)), v_irx, \
+            GiGetSubVectorFloat32V3(v_cache0, 2));                                \
+    GiSetSubVectorFloat32V3(v_dst, 2, a2);                                        \
+    GiStoreZipFloat32V3(pdst + dy + (x)*3, v_dst);
+                    GI_FLOAT32_t v_rx = GiBroadcastFloat32(rx);
+                    GI_FLOAT32_t v_irx = GiBroadcastFloat32(irx);
+                    GI_FLOAT32_t a0, a1, a2;
+                    for (; dy + 8 * 3 <= dstcols; dy += 8 * 3) {
+                        GI_FLOAT32_V3_t v_cache0;
+                        GI_FLOAT32_V3_t v_cache1;
+                        GI_FLOAT32_V3_t v_dst;
+
+                        EXPAND(0);
+                        EXPAND(4);
+                    }
+
+                    if (dy + 4 * 3 <= dstcols) {
+                        GI_FLOAT32_V3_t v_cache0;
+                        GI_FLOAT32_V3_t v_cache1;
+                        GI_FLOAT32_V3_t v_dst;
+
+                        EXPAND(0);
+
+                        dy += 4 * 3;
+                    }
+#undef EXPAND
+                    for (; dy < dstcols; dy += 3) {
+                        float* pcdst = pdst + dy;
+                        pcdst[0] = rx * cache1[dy + 0] + irx * cache0[dy + 0];
+                        pcdst[1] = rx * cache1[dy + 1] + irx * cache0[dy + 1];
+                        pcdst[2] = rx * cache1[dy + 2] + irx * cache0[dy + 2];
+                    }
+    )";
+    return gi_interpolate_c3;
+}
+
+std::string ResizeKernel::GetCVKernelBody(TContext* context) const {
+    auto kernel_sig = GetCVKernelSignature(context);
+    auto src_dtype =
+            Utils::cvt_dtype_specifier(context->getAttrOprand("operand:0").dtype);
+    std::stringstream writer;
+    writer << R"(
+        #include <string.h>
+        #include "tinycv_c.h"
+        )";
+    std::string body_temp = R"(
+        #include <math.h>
+        #include <stdalign.h>
+        #include "${gi_header}"
+        #define rep(i, n) for (int i = 0; i < (n); ++i)
+        ${define_scale}
+        ${output_converter_func}
+        
+        static inline void get_nearest_linear_coord(float scale, int size, int idx, float* ah0, int* ih0, float* ah1, int* ih1){
+            if (size == 1) {
+                *ah0 = 1.f;
+                *ih0 = 0;
+                *ah1 = 0.f;
+                *ih1 = 0;
+            }
+
+            float alpha = (idx + 0.5f) / scale - 0.5f;
+            int origin_idx = (int)(floorf(alpha));
+            alpha -= origin_idx;
+
+            if (origin_idx < 0) {
+                origin_idx = 0;
+                alpha = 0;
+            } else if (origin_idx + 1 >= size) {
+                origin_idx = size - 2;
+                alpha = 1;
+            }
+
+            *ah0 = 1 - alpha;
+            *ih0 = origin_idx;
+            *ah1 = alpha;
+            *ih1 = origin_idx + 1;
+        }
+
+        static inline void calc_cache_${func_tag}c3_1(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                       const int* tabsx,
+                       const int* tabsy,
+                       const ${calc_dtype}* tabrx,
+                       const ${calc_dtype}* tabry, int dx,
+                       ${calc_dtype}* cache0, ${calc_dtype}* cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+
+            int dy = 0, dy3 = 0;
+
+            for (; dy < OW; ++dy, dy3 += 3) {
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 3;
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 3;
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache1[dy3 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+                cache1[dy3 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
+                cache1[dy3 + 2] = pcsrc11[2] * ry + pcsrc10[2] * iry;
+            }
+        }
+        static inline void calc_cache_${func_tag}c3_2(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                       const int*  tabsx,
+                       const int*  tabsy,
+                       const ${calc_dtype}*  tabrx,
+                       const ${calc_dtype}*  tabry, int dx,
+                       ${calc_dtype}*  cache0, 
+                       ${calc_dtype}*  cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+            int dstcols = OW;
+            int dy = 0, dy3 = 0;
+
+            // 4 pixels each time
+            for (; dy < dstcols; ++dy, dy3 += 3) {
+                const ${src_dtype}* pcsrc00 = psrc0 + (tabsy[dy] + 0) * 3;
+                const ${src_dtype}* pcsrc01 = psrc0 + (tabsy[dy] + 1) * 3;
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 3;
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 3;
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache0[dy3 + 0] = pcsrc01[0] * ry + pcsrc00[0] * iry;
+                cache1[dy3 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+                cache0[dy3 + 1] = pcsrc01[1] * ry + pcsrc00[1] * iry;
+                cache1[dy3 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
+                cache0[dy3 + 2] = pcsrc01[2] * ry + pcsrc00[2] * iry;
+                cache1[dy3 + 2] = pcsrc11[2] * ry + pcsrc10[2] * iry;
+            }
+        }
+
+        static inline void calc_cache_${func_tag}c2_1(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                       const int* tabsx,
+                       const int* tabsy,
+                       const ${calc_dtype}* tabrx,
+                       const ${calc_dtype}* tabry, int dx,
+                       ${calc_dtype}* cache0, ${calc_dtype}* cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+
+            int dy = 0, dy2 = 0;
+
+            for (; dy < OW; ++dy, dy2 += 2) {
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 2;
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 2;
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache1[dy2 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+                cache1[dy2 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
+            }
+        }
+        static inline void calc_cache_${func_tag}c2_2(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                       const int*  tabsx,
+                       const int*  tabsy,
+                       const ${calc_dtype}*  tabrx,
+                       const ${calc_dtype}*  tabry, int dx,
+                       ${calc_dtype}*  cache0, 
+                       ${calc_dtype}*  cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+            int dstcols = OW;
+            int dy = 0, dy2 = 0;
+
+            // 4 pixels each time
+            for (; dy < dstcols; ++dy, dy2 += 2) {
+                const ${src_dtype}* pcsrc00 = psrc0 + (tabsy[dy] + 0) * 2;
+                const ${src_dtype}* pcsrc01 = psrc0 + (tabsy[dy] + 1) * 2;
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0) * 2;
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1) * 2;
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache0[dy2 + 0] = pcsrc01[0] * ry + pcsrc00[0] * iry;
+                cache1[dy2 + 0] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+                cache0[dy2 + 1] = pcsrc01[1] * ry + pcsrc00[1] * iry;
+                cache1[dy2 + 1] = pcsrc11[1] * ry + pcsrc10[1] * iry;
+            }
+        }
+
+        static inline void build_tabs_linear_${func_tag}(int IH, int IW, int OH, int OW,
+                          int* tabsx, 
+                          int* tabsy,
+                          ${calc_dtype}* tabrx,
+                          ${calc_dtype}* tabry) {
+
+            const float fx = (float)(OH) / IH;
+            const float fy = (float)(OW) / IW;
+            const float ifx = 1.0f / fx;
+            const float ify = 1.0f / fy;
+            for (int dx = 0; dx < OH; ++dx) {
+                float rx = (dx + 0.5f) * ifx - 0.5f;
+                int sx = (int)(floor(rx));
+                rx -= sx;
+                if (sx < 0) {
+                    sx = 0;
+                    rx = 0;
+                } else if (sx + 1 >= IH) {
+                    sx = IH - 2;
+                    rx = 1;
                 }
-                
+                tabsx[dx] = sx;
+                tabrx[dx] = ${calc_rx_func};
+            }
+            for (int dy = 0; dy < OW; ++dy) {
+                float ry = (dy + 0.5f) * ify - 0.5f;
+                int sy = (int)(floor(ry));
+                ry -= sy;
+                if (sy < 0) {
+                    sy = 0;
+                    ry = 0;
+                } else if (sy + 1 >= IW) {
+                    sy = IW - 2;
+                    ry = 1;
+                }
+                tabsy[dy] = sy;
+                tabry[dy] = ${calc_ry_func};
+            }
+        }
+
+        static inline void calc_cache_${func_tag}c1_1(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                       const int* tabsx,
+                       const int* tabsy,
+                       const ${calc_dtype}* tabrx,
+                       const ${calc_dtype}* tabry, int dx,
+                       ${calc_dtype}* cache0, 
+                       ${calc_dtype}* cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+            int dstcols = OW;
+            int dy = 0;
+
+            
+            for (; dy < dstcols; ++dy) {
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0);
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1);
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache1[dy] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+            }
+        }
+
+        static inline void calc_cache_${func_tag}c1_2(const ${src_dtype}* src, const int src_h_stride, const ${src_dtype}* dst, const int OW,
+                            const int* tabsx,
+                            const int* tabsy,
+                            const ${calc_dtype}* tabrx,
+                            const ${calc_dtype}* tabry, int dx,
+                            ${calc_dtype}* cache0, 
+                            ${calc_dtype}* cache1) {
+            (void)tabrx;
+            const ${src_dtype}* psrc0 = src + (tabsx[dx] + 0) * src_h_stride;
+            const ${src_dtype}* psrc1 = src + (tabsx[dx] + 1) * src_h_stride;
+            int dstcols = OW;
+            int dy = 0;
+
+            // 4 pixels each time
+            for (; dy < dstcols; ++dy) {
+                const ${src_dtype}* pcsrc00 = psrc0 + (tabsy[dy] + 0);
+                const ${src_dtype}* pcsrc01 = psrc0 + (tabsy[dy] + 1);
+                const ${src_dtype}* pcsrc10 = psrc1 + (tabsy[dy] + 0);
+                const ${src_dtype}* pcsrc11 = psrc1 + (tabsy[dy] + 1);
+                ${calc_dtype} ry = tabry[dy];
+                ${calc_dtype} iry = ${calc_iry_func};
+                cache0[dy] = pcsrc01[0] * ry + pcsrc00[0] * iry;
+                cache1[dy] = pcsrc11[0] * ry + pcsrc10[0] * iry;
+            }
+        }
+
+        void ${kernel_sig}{
+            ${src_dtype}* sptr = src->data;
+            ${src_dtype}* dptr = dst->data;
+            int IH = src->rows;
+            int IW = src->cols;
+            int C = src->channels;
+            int src_h_stride = IW * C;
+            int OH = dst->rows;
+            int OW = dst->cols;
+
+            
+            bool use_cache = OH >= 2 && OW >= 2 && IH >= 2 && IW >= 2;
+
+            if (C == 1 && use_cache) {
+                alignas(16) int tabsx[OH];
+                alignas(16) int tabsy[OW];
+                alignas(16) ${calc_dtype} tabrx[OH];
+                alignas(16) ${calc_dtype} tabry[OW];
+                build_tabs_linear_${func_tag}(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
+
+                int dstrows = OH;
+                int dstcols = OW;
+                alignas(16) ${calc_dtype} cache0_body[dstcols];
+                alignas(16) ${calc_dtype} cache1_body[dstcols];
+                ${calc_dtype}* cache0 = &cache0_body[0];
+                ${calc_dtype}* cache1 = &cache1_body[0];
+                for (int dx = 0; dx < dstrows; ++dx) {
+                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
+                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
+                            ${calc_dtype}* temp = cache0;
+                            cache0 = cache1;
+                            cache1 = temp;
+                            calc_cache_${func_tag}c1_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        } else {
+                            calc_cache_${func_tag}c1_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        }
+                    }
+                    ${calc_dtype} rx = tabrx[dx];
+                    ${calc_dtype} irx = ${calc_irx_func};
+                    ${src_dtype}* pdst = dptr + (dx) * OW;
+                    int dy = 0;
+
+                    const ${calc_dtype}* cache0_ptr = cache0;
+                    const ${calc_dtype}* cache1_ptr = cache1;
+                    ${gi_interpolate_c1}
+                    for (; dy < dstcols; ++dy) {
+                        ${src_dtype}* pcdst = pdst + dy;
+                        pcdst[0] =
+                                (rx * cache1[dy] + irx * cache0[dy]) ${right_shift_func};
+                    }
+                }
+            }else if (C == 2 && use_cache) {
+                alignas(16) int tabsx[OH];
+                alignas(16) int tabsy[OW];
+                alignas(16) ${calc_dtype} tabrx[OH];
+                alignas(16) ${calc_dtype} tabry[OW];
+                build_tabs_linear_${func_tag}(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
+                int dstrows = OH;
+                int dstcols = OW * 2;
+                alignas(16) ${calc_dtype} cache0_body[dstcols];
+                alignas(16) ${calc_dtype} cache1_body[dstcols];
+                ${calc_dtype}* cache0 = &cache0_body[0];
+                ${calc_dtype}* cache1 = &cache1_body[0];
+                for (int dx = 0; dx < dstrows; ++dx) {
+                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
+                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
+                            ${calc_dtype}* temp = cache0;
+                            cache0 = cache1;
+                            cache1 = temp;
+                            calc_cache_${func_tag}c2_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        } else {
+                            calc_cache_${func_tag}c2_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        }
+                    }
+                    ${calc_dtype} rx = tabrx[dx];
+                    ${calc_dtype} irx = ${calc_irx_func};
+                    ${src_dtype}* pdst = dptr + dx * OW * C;
+                    int dy = 0;
+
+                    for (; dy < dstcols; dy += 2) {
+                        ${src_dtype}* pcdst = pdst + dy;
+                        pcdst[0] = (rx * cache1[dy + 0] + irx * cache0[dy + 0]) ${right_shift_func};
+                        pcdst[1] = (rx * cache1[dy + 1] + irx * cache0[dy + 1]) ${right_shift_func};
+                    }
+                }
+            } else if (C == 3 && use_cache) {
+                alignas(16) int tabsx[OH];
+                alignas(16) int tabsy[OW];
+                alignas(16) ${calc_dtype} tabrx[OH];
+                alignas(16) ${calc_dtype} tabry[OW];
+                build_tabs_linear_${func_tag}(IH, IW, OH, OW, tabsx, tabsy, tabrx, tabry);
+                int dstrows = OH;
+                int dstcols = OW * 3;
+                alignas(16) ${calc_dtype} cache0_body[dstcols];
+                alignas(16) ${calc_dtype} cache1_body[dstcols];
+                ${calc_dtype}* cache0 = &cache0_body[0];
+                ${calc_dtype}* cache1 = &cache1_body[0];
+                for (int dx = 0; dx < dstrows; ++dx) {
+                    if (dx == 0 || tabsx[dx] != tabsx[dx - 1]) {
+                        if (dx > 0 && tabsx[dx] == tabsx[dx - 1] + 1) {
+                            ${calc_dtype}* temp = cache0;
+                            cache0 = cache1;
+                            cache1 = temp;
+                            calc_cache_${func_tag}c3_1(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        } else {
+                            calc_cache_${func_tag}c3_2(sptr, src_h_stride, dptr, OW, tabsx, tabsy, tabrx, tabry, dx,
+                                            cache0, cache1);
+                        }
+                    }
+                    ${calc_dtype} rx = tabrx[dx];
+                    ${calc_dtype} irx = ${calc_irx_func};
+                    ${src_dtype}* pdst = dptr + dx * OW * C;
+                    int dy = 0;
+                    const ${calc_dtype}* cache0_ptr = cache0;
+                    const ${calc_dtype}* cache1_ptr = cache1;
+                    ${gi_interpolate_c3}
+                }
             } else {
                 float scale_h = (float)(OH) / IH;
                 float scale_w = (float)(OW) / IW;
@@ -548,12 +628,51 @@ std::string ResizeKernel::GetCVKernelBody(TContext* context) const {
                     }
                 }
             }
-            
         }
     )";
 
+    bool is_ui8 = src_dtype == "uint8_t";
+    std::string gi_header = is_ui8 ? "gi_int.h" : "gi_float.h";
+    std::string calc_dtype = is_ui8 ? "int" : "float";
+    std::string func_tag = is_ui8 ? "8u" : "32f";
+    std::string define_scale = is_ui8 ? R"(
+        #define SCALE 11
+    )"
+                                      : "";
+    std::string output_converter_func = is_ui8 ? R"(
+        static inline uint8_t output_converter(float x){
+            x = fmin(255.0f, fmax(0.0f, x));
+            return (uint8_t) roundf(x);
+        }
+    )"
+                                               : R"(
+        static inline float output_converter(float x){
+            return x;
+        }
+    )";
+    std::string calc_rx_func = is_ui8 ? "(int)(rx * (1 << SCALE))" : "rx";
+    std::string calc_ry_func = is_ui8 ? "(int)(ry * (1 << SCALE))" : "ry";
+    std::string calc_irx_func = is_ui8 ? "(1 << SCALE) - rx" : "1.0f - rx";
+    std::string calc_iry_func = is_ui8 ? "(1 << SCALE) - ry" : "1.0f - ry";
+    std::string right_shift_func = is_ui8 ? ">> (SCALE + SCALE)" : "";
+    std::string gi_interpolate_c1 = gen_gi_interpolate_c1_func(is_ui8);
+    std::string gi_interpolate_c3 = gen_gi_interpolate_c3_func(is_ui8);
     writer << StringTemplate::StringTemplateArgs()
                       .add("kernel_sig", kernel_sig)
+                      .add("gi_header", gi_header)
+                      .add("src_dtype", src_dtype)
+                      .add("calc_dtype", calc_dtype)
+                      .add("func_tag", func_tag)
+                      .add("define_scale", define_scale)
+                      .add("calc_rx_func", calc_rx_func)
+                      .add("calc_ry_func", calc_ry_func)
+                      .add("calc_irx_func", calc_irx_func)
+                      .add("calc_iry_func", calc_iry_func)
+                      .add("right_shift_func", right_shift_func)
+                      .add("right_shift_func", right_shift_func)
+                      .add("gi_interpolate_c1", gi_interpolate_c1)
+                      .add("gi_interpolate_c3", gi_interpolate_c3)
+                      .add("output_converter_func", output_converter_func)
                       .render(body_temp);
     return writer.str();
 }

@@ -47,6 +47,18 @@ TEST(GI, CVresize) {
         }
     checker.exec({{1, 3, 5, 3}, {1, 6, 8, 3}});
     checker.exec({{1, 13, 11, 1}, {1, 3, 8, 1}});
+
+    megcc::test::UniformRNG rng_f32(-30, 30);
+    checker.set_rng(0, &rng_f32);
+    checker.set_dtype(0, dtype::Float32());
+    checker.set_dtype(1, dtype::Float32());
+    for (size_t h : {2, 3, 5, 6, 7, 9, 10})
+        for (size_t w : {2, 3, 5, 7, 8, 9, 10, 11}) {
+            checker.exec({{1, h, w, 3}, {1, w, h, 3}});
+            checker.exec({{1, h, w, 1}, {1, w, h, 1}});
+            checker.exec({{1, h, w, 2}, {1, w, h, 2}});
+            checker.exec({{1, h, w, 5}, {1, w, h, 5}});
+        }
 }
 
 TEST(GI, CVtranspose) {
