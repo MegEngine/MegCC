@@ -509,12 +509,14 @@ typedef int8_t MegCC_MemForwardType_enum_t;
 __flatbuffers_define_integer_type(MegCC_MemForwardType, MegCC_MemForwardType_enum_t, 8)
 #define MegCC_MemForwardType_RESHAPE ((MegCC_MemForwardType_enum_t)INT8_C(0))
 #define MegCC_MemForwardType_SUBTENSOR ((MegCC_MemForwardType_enum_t)INT8_C(1))
+#define MegCC_MemForwardType_DIMSHUFFLE ((MegCC_MemForwardType_enum_t)INT8_C(2))
 
 static inline const char *MegCC_MemForwardType_name(MegCC_MemForwardType_enum_t value)
 {
     switch (value) {
     case MegCC_MemForwardType_RESHAPE: return "RESHAPE";
     case MegCC_MemForwardType_SUBTENSOR: return "SUBTENSOR";
+    case MegCC_MemForwardType_DIMSHUFFLE: return "DIMSHUFFLE";
     default: return "";
     }
 }
@@ -524,6 +526,7 @@ static inline int MegCC_MemForwardType_is_known_value(MegCC_MemForwardType_enum_
     switch (value) {
     case MegCC_MemForwardType_RESHAPE: return 1;
     case MegCC_MemForwardType_SUBTENSOR: return 1;
+    case MegCC_MemForwardType_DIMSHUFFLE: return 1;
     default: return 0;
     }
 }

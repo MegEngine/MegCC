@@ -422,7 +422,6 @@ int main(int argc, char** argv) {
             pm.addNestedPass<mlir::FuncOp>(mlir::createMemoryForwardingPass());
             pm.addPass(mlir::createKernelMaterializationPass());
             pm.addNestedPass<mlir::FuncOp>(mlir::createStaticMemoryPlanningPass());
-            pm.addNestedPass<mlir::FuncOp>(mlir::createKernelFinalCleanPass());
             //! Now all the memory is allocated in runtime, the Deallocation
             //! instruction is not used.
             // pm.addNestedPass<mlir::FuncOp>(mlir::createBufferDeallocationPass());

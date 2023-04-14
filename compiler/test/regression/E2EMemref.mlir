@@ -1,4 +1,4 @@
-// RUN: megcc-opt --MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning --kernel-clean --canonicalize %s | FileCheck %s
+// RUN: megcc-opt --MGB-to-Kernel --finalizing-bufferize --memory-forwarding --static-memory-planning --canonicalize %s | FileCheck %s
 
 // CHECK-LABEL: func @concat_transpose
 func @concat_transpose(%arg0: tensor<1x1x2x3xf32> {mgb.func_arg_name = "d0"}, %arg1: tensor<1x4x2x3xf32> {mgb.func_arg_name = "d1"}) -> (tensor<1x2x3x5xf32> {mgb.func_result_name = "dimshuffle(concat[4])[6]"}) {

@@ -135,6 +135,7 @@ table DevMemFree {
 enum MemForwardType : byte {
     RESHAPE = 0,
     SUBTENSOR = 1,
+    DIMSHUFFLE = 2,
 }
 
 table MemForward {

@@ -399,7 +399,7 @@ public:
                         auto typed_tensor = value2typed_tensor.at(
                                 op->getOperand(0).getAsOpaquePointer());
                         if (typed_tensor.first != MegCC::TensorType_TENSOR) {
-                            CC_ABORT << "reshape instruction cannot be "
+                            CC_ABORT << "Reshape instruction cannot be "
                                         "applied on weight\n";
                         }
                         LOG_DEBUG << "Add MemForward instruction.\n";
@@ -439,6 +439,23 @@ public:
                                         createTensor(op), offset_out - offset_in,
                                         MegCC::MemForwardType_SUBTENSOR)
                                         .Union());
+                    })
+                    .Case([&](Kernel::Dimshuffle op) {
+                        kernel_exporter.addInst("MEMFORWARD");
+                        auto typed_tensor = value2typed_tensor.at(
+                                op->getOperand(0).getAsOpaquePointer());
+                        if (typed_tensor.first != MegCC::TensorType_TENSOR) {
+                            CC_ABORT << "Dimshuffle instruction cannot be "
+                                        "applied on weight\n";
+                        }
+                        LOG_DEBUG << "Add MemForward instruction.\n";
+                        instructions_type.push_back(MegCC::Instruction_MemForward);
+                        instructions.push_back(MegCC::CreateMemForward(
+                                                       m_fbs_builder,
+                                                       typed_tensor.second,
+                                                       createTensor(op), 0,
+                                                       MegCC::MemForwardType_DIMSHUFFLE)
+                                                       .Union());
                     })
                     .Case([&](Kernel::SubtensorIns op) {
                         kernel_exporter.addInst("SUBTENSOR");

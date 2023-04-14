@@ -103,10 +103,12 @@ MemRefType Dimshuffle::memoryForward(MemRefType input) {
     auto pattern = llvm::to_vector<4>(this->pattern().getAsRange<IntegerAttr>());
     llvm::SmallVector<int64_t> newStride(pattern.size());
     //! pattern with -1 means add axis
+    int add_axis_cnt = 0;
     for (size_t i = 0; i < pattern.size(); ++i) {
         if (pattern[i].getInt() < 0) {
+            ++add_axis_cnt;
             newStride[i] =
-                    i > 0 ? newStride[i - 1] : newStride[0] * input.getShape()[0];
+                    i > 0 ? stride[i - add_axis_cnt] : stride[0] * input.getShape()[0];
         } else {
             newStride[i] = stride[pattern[i].getInt()];
         }
@@ -160,16 +162,31 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
         int32_t index = static_cast<int32_t>(member[4].getInt());
         int32_t big_end_reverse = 0;
 
-        //! if index is not exist, step < 0, and begin is default value,
-        //! set begin to the end of the axis
-        if (index_flag == -1 && step < 0) {
-            if (begin_flag == -1)
-                begin = inpLayout.shape[axis] - 1;
-            if (end_flag == -1)
-                end = -1;
-            big_end_reverse = 1;
+        //! if index is not exist
+        if (index_flag == -1) {
+            // step < 0
+            if (step < 0) {
+                // begin is default value, set begin to the end of the axis
+                if (begin_flag == -1)
+                    begin = inpLayout.shape[axis] - 1;
+                // if end is default value, set end to -1 so that number of element of
+                // the axis can be calculate correctly.
+                if (end_flag == -1)
+                    end = -1;
+                big_end_reverse = 1;
+            } else {
+                // step > 0
+                CC_ASSERT(step > 0);
+                if (begin_flag == -1)
+                    begin = 0;
+                // if end is default value, set end to number of element of the axis
+                // because of [begin, end)
+                if (end_flag == -1)
+                    end = inpLayout.shape[axis];
+            }
         }
-        std_desc.push_back({axis, begin, end, step, index, big_end_reverse});
+        std_desc.push_back(
+                {axis, begin, end, step, index, big_end_reverse, begin_flag, end_flag});
     }
     //! sort in reverse order, so slice would work from low dim to high dim, to
     //! make it contiguous on shape-1 axes
@@ -184,14 +201,17 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
     auto merge = [&](const std::vector<int32_t>& desc) {
         int32_t axis = desc[0] < 0 ? desc[0] + input_dim : desc[0];
         int32_t begin = desc[1] < 0 ? desc[1] + inpLayout.shape[axis] : desc[1];
-        int32_t end = desc[2] < 0 ? desc[2] + inpLayout.shape[axis] + 1 : desc[2];
+        int32_t end = desc[2] < 0 ? desc[2] + inpLayout.shape[axis] : desc[2];
         auto step = desc[3];
         auto index = desc[4];
         //! reverse big end,
         auto big_end_reverse = desc[5];
         if (big_end_reverse != 0) {
-            begin = desc[1];
-            end = desc[2];
+            int32_t begin_flag = desc[6], end_flag = desc[7];
+            if (begin_flag == -1)
+                begin = desc[1];
+            if (end_flag == -1)
+                end = desc[2];
         }
         if (index != -1) {
             axis_to_remove.push_back(axis);
@@ -199,6 +219,7 @@ MemRefType Subtensor::memoryForward(MemRefType inpType) {
             step = 1;
             end = index + step;
         }
+        CC_ASSERT((step > 0 && begin < end) || (step < 0 && begin > end));
         dst_layout.shape[axis] =
                 (std::abs(end - begin) + std::abs(step) - 1) / std::abs(step);
         auto origin_stride = dst_layout.stride[axis];
