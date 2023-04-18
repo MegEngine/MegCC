@@ -1,9 +1,13 @@
 #include <fstream>
+#include <string>
+#include <vector>
+
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Parser.h"
@@ -349,9 +353,9 @@ int main(int argc, char** argv) {
             std::vector<uint8_t> model_buffer(std::istreambuf_iterator<char>(fin), {});
             fin.close();
 
-            auto&& res = megcc::parse_model(model_buffer);
-            auto& mdl_model_buffer = res.first;
-            megcc::EncryptionType enc_type = res.second;
+            megcc::DecryptedModel&& res = megcc::parse_model(model_buffer);
+            auto& mdl_model_buffer = res.model;
+            megcc::EncryptionType enc_type = res.enc_type;
             if (enc_type == megcc::EncryptionType::NONE) {
                 if (JsonFile.length() > 0) {
                     llvm::outs()
@@ -368,7 +372,7 @@ int main(int argc, char** argv) {
                     mdl_model_buffer.size());
             fout.close();
         }
-        llvm::outs() << "Decrypted model has been saved into ./decrption\n";
+        llvm::outs() << "Decrypted model has been saved into ./decryption\n";
     } else {
         auto dump_dir = dump_info->dump_dir;
         if (!llvm::sys::fs::exists(dump_dir.c_str())) {
@@ -412,7 +416,9 @@ int main(int argc, char** argv) {
             llvm::outs() << "Import mgb/mge model from " << model_input << "\n";
             mlir::OwningOpRef<mlir::ModuleOp> mod =
                     mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
-            auto status = mlir::MGB::import_mgb(mod.get(), model_input, options);
+            std::vector<uint8_t> hako_head;
+            auto status =
+                    mlir::MGB::import_mgb(mod.get(), model_input, options, &hako_head);
             if (mlir::failed(status)) {
                 llvm::outs() << "import megengine model failed\n";
                 return -1;
@@ -438,10 +444,34 @@ int main(int argc, char** argv) {
             llvm::outs() << "Export tinynn model and kernel to dir " << dump_dir
                          << "\n";
 
+            std::string out_model_path = dump_dir + "/" + options.module_name + ".tiny";
             mlir::export_tinynn_model(
-                    mod.get(), dump_dir + "/" + options.module_name + ".tiny",
-                    SaveModel, kernel_exporter,
+                    mod.get(), out_model_path, SaveModel, kernel_exporter,
                     model.bool_options.at("enable_compress_fp16"));
+
+            //! In some cases, users need the headers added when using hako encryption,
+            //! so they are saved here.
+            //! Before saving, the size of the model in the header needs to be
+            //! modified to the size of the `tiny` model (the original size was the
+            //! size of the `mge` model)
+            if (hako_head.size() >= sizeof(int)) {
+                std::ifstream fin(out_model_path, std::ios::binary);
+                fin.seekg(0, fin.end);
+                int size = static_cast<int>(fin.tellg());
+                fin.close();
+
+                *reinterpret_cast<int*>(
+                        hako_head.data() + hako_head.size() - sizeof(int)) = size;
+
+                std::string model_name(llvm::sys::path::filename(out_model_path).str());
+                std::string head_path = dump_dir + "/" + model_name + "_head.bin";
+                std::ofstream fout(head_path, std::ios::out | std::ios::binary);
+                fout.write(
+                        reinterpret_cast<const char*>(hako_head.data()),
+                        hako_head.size());
+                fout.close();
+            }
+
             llvm::outs() << "Mgb/mge model convert to tinynn model "
                          << options.module_name << " done.\n";
         }
