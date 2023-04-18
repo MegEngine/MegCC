@@ -322,13 +322,17 @@ public:
         m_context->loadDialect<mlir::StandardOpsDialect>();
     }
 
-    mlir::LogicalResult import_mgb(std::string model_path, Options options) {
+    mlir::LogicalResult import_mgb(
+            std::string model_path, Options options, std::vector<uint8_t>* const head) {
         std::unique_ptr<serialization::InputFile> inp_file;
         auto model_buffer = read_file(model_path);
-        auto&& parse_res = megcc::parse_model(model_buffer);
-        megcc::EncryptionType enc_type = parse_res.second;
+        megcc::DecryptedModel&& parse_res = megcc::parse_model(model_buffer);
+        if (head) {
+            head->assign(parse_res.hako_header.begin(), parse_res.hako_header.end());
+        }
+        megcc::EncryptionType enc_type = parse_res.enc_type;
         if (enc_type != megcc::EncryptionType::NONE) {
-            std::vector<uint8_t>& mdl_model_buffer = parse_res.first;
+            std::vector<uint8_t>& mdl_model_buffer = parse_res.model;
             std::shared_ptr<void> ptr;
             ptr.reset((char*)malloc(mdl_model_buffer.size()));
             memcpy(ptr.get(), mdl_model_buffer.data(), mdl_model_buffer.size());
@@ -1372,7 +1376,8 @@ mlir::LogicalResult removeUnusedParam(mlir::ModuleOp module) {
 }
 }  // namespace
 mlir::LogicalResult import_mgb(
-        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options) {
+        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options,
+        std::vector<uint8_t>* const head) {
     LOG_DEBUG << "\n\t\t\t Begin Import MBG \t\t\t\n";
     LOG_DEBUG << "load model from " << model_path
               << " with Options:\n\tuse_static_memory_plan="
@@ -1382,7 +1387,7 @@ mlir::LogicalResult import_mgb(
               << "\n\tgraph_opt_level=" << static_cast<int>(options.graph_opt_level)
               << "\n";
     Importer imp(module);
-    auto result = imp.import_mgb(model_path, options);
+    auto result = imp.import_mgb(model_path, options, head);
     LOG_DEBUG << "\t\t\t End Import MBG \t\t\t\n\n";
     if (failed(result))
         return result;

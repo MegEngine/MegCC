@@ -26,7 +26,8 @@ struct MGBImporterOptions {
 };
 
 mlir::LogicalResult import_mgb(
-        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options);
+        mlir::ModuleOp module, std::string model_path, MGBImporterOptions options,
+        std::vector<uint8_t>* const head);
 
 mlir::LogicalResult parseInputShapes(
         std::string s, mlir::MGB::MGBImporterOptions& options);

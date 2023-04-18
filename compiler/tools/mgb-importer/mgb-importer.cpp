@@ -52,7 +52,8 @@ int main(int argc, char** argv) {
     llvm::outs() << "Import mgb/mge model from " << InputFile.getValue() << "\n";
     mlir::OwningOpRef<mlir::ModuleOp> mod =
             mlir::ModuleOp::create(mlir::UnknownLoc::get(&ctx));
-    auto status = mlir::MGB::import_mgb(mod.get(), InputFile.getValue(), options);
+    auto status =
+            mlir::MGB::import_mgb(mod.get(), InputFile.getValue(), options, nullptr);
     if (mlir::failed(status)) {
         llvm::errs() << "import megengine model failed\n";
         return -1;
