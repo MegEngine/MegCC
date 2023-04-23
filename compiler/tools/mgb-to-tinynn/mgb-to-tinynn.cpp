@@ -84,8 +84,11 @@ struct DumpJson {
             for (auto& kv : res.str_options) {
                 auto key = kv.first;
                 auto value = obj.getString(key);
-                CC_ASSERT(value) << "need models/model/" << key << " string value\n";
-                res.str_options[key] = value.getValue().str();
+                if (key == "model_path")
+                    CC_ASSERT(value) << "`model_path' of every model must be specified "
+                                        "in given json file\n";
+                if (value)
+                    res.str_options[key] = value.getValue().str();
             }
             for (auto& kv : res.bool_options) {
                 auto key = kv.first;
@@ -404,7 +407,7 @@ int main(int argc, char** argv) {
                 options.module_name = model_name;
             } else {
                 llvm::SmallVector<llvm::StringRef> dir_names;
-                llvm::SplitString(InputFile, dir_names, "/");
+                llvm::SplitString(model.str_options.at("model_path"), dir_names, "/");
                 llvm::SmallVector<llvm::StringRef> names;
                 llvm::SplitString(dir_names[dir_names.size() - 1], names, ".");
                 options.module_name = names[0].str();
