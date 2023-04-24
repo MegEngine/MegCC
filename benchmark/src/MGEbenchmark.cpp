@@ -40,7 +40,7 @@ void MGEBenchmarker::profile() {
     strategy = Strategy::PROFILE | Strategy::OPTIMIZED | strategy;
     mgb::gopt::modify_opr_algo_strategy_inplace(output_vars, strategy);
     mgb::gopt::OptimizeForInferenceOptions opt_for_inference;
-#ifdef ENABLE_MGE_FP16_NCHW88
+#if ENABLE_MGE_FP16_NCHW88
     opt_for_inference.enable_f16_io_comp();
     opt_for_inference.enable_nchw88();
 #else
