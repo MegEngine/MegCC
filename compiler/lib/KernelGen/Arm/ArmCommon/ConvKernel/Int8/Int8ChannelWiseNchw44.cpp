@@ -1,12 +1,11 @@
 #include <string>
-#include "Arm/Arm64/Activation.h"
-#include "Arm/Arm64/ConvKernel.h"
+#include "Arm/ArmCommon/Activation.h"
+#include "Arm/ArmCommon/ConvKernel.h"
 #include "Utils/StringTemplate.h"
 #include "compiler/KernelGen/KernelGen.h"
 
 using namespace megcc;
 using namespace KernelGen;
-using namespace Arm64;
 using namespace ArmCommon;
 
 namespace {
@@ -100,9 +99,13 @@ static inline void accumulate_2_q_vector(
         int8x16_t src0, int8x16_t kern0, int8x16_t src1, int8x16_t kern1,
         int32x4_t* sum) {
     int16x8_t tmp_sum0 = vmull_s8(vget_low_s8(src0), vget_low_s8(kern0));
+#ifdef __aarch64__
     int16x8_t tmp_sum1 = vmull_high_s8(src0, kern0);
+#else
+    int16x8_t tmp_sum1 = vmull_s8(vget_high_s8(src0), vget_high_s8(kern0));
+#endif
     tmp_sum0 = vmlal_s8(tmp_sum0, vget_low_s8(src1), vget_low_s8(kern1));
-    tmp_sum1 = vmlal_high_s8(tmp_sum1, src1, kern1);
+    tmp_sum1 = vmlal_s8(tmp_sum1, vget_high_s8(src1), vget_high_s8(kern1));
     sum[0] = vaddw_s16(sum[0], vget_low_s16(tmp_sum0));
     sum[1] = vaddw_s16(sum[1], vget_high_s16(tmp_sum0));
     sum[2] = vaddw_s16(sum[2], vget_low_s16(tmp_sum1));
@@ -112,7 +115,11 @@ static inline void accumulate_2_q_vector(
 static inline void accumulate_1_q_vector(
         int8x16_t src0, int8x16_t kern0, int32x4_t* sum) {
     int16x8_t tmp_sum0 = vmull_s8(vget_low_s8(src0), vget_low_s8(kern0));
+#ifdef __aarch64__
     int16x8_t tmp_sum1 = vmull_high_s8(src0, kern0);
+#else
+    int16x8_t tmp_sum1 = vmull_s8(vget_high_s8(src0), vget_high_s8(kern0));
+#endif
     sum[0] = vaddw_s16(sum[0], vget_low_s16(tmp_sum0));
     sum[1] = vaddw_s16(sum[1], vget_high_s16(tmp_sum0));
     sum[2] = vaddw_s16(sum[2], vget_low_s16(tmp_sum1));
@@ -124,6 +131,13 @@ static inline void accumulate_1_line_horizon(
         const int8x8_t kern1, int32x4_t* sum) {
     int16x8_t tmp_sum = vmull_s8(src0, kern0);
     tmp_sum = vmlal_s8(tmp_sum, src1, kern1);
+    *sum = vaddw_s16(*sum, vget_low_s16(tmp_sum));
+    *sum = vaddw_s16(*sum, vget_high_s16(tmp_sum));
+}
+
+static inline void accumulate_1_d_vector(
+        const int8x8_t src0, const int8x8_t kern0, int32x4_t* sum) {
+    int16x8_t tmp_sum = vmull_s8(src0, kern0);
     *sum = vaddw_s16(*sum, vget_low_s16(tmp_sum));
     *sum = vaddw_s16(*sum, vget_high_s16(tmp_sum));
 }
@@ -243,7 +257,7 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* sptr, const int8_t* fp
             UNROLL_CALL_NOWRAPPER(4, cb);
 #undef cb
 //! gcc will report error of "more than 30 operands in 'asm'"
-#if defined(__clang__)
+#if defined(__aarch64__) && defined(__clang__)
             asm volatile(
                     //! load src 0,1
                     "ldr q21, [%[sptr0]]\n"
@@ -787,11 +801,584 @@ static inline void nchw44_chanwise_3x3_int8(const int8_t* src, const int8_t* fil
     return ss.str();
 }
 
+std::string gen_5x5_s1_kern(
+        TContext* ctx, bool with_bias, const std::string& nonline_mode) {
+    std::stringstream ss;
+    auto activate_gen = create_activation_gener_instrinsic(nonline_mode);
+    std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
+    std::string body_temp = R"(
+static inline void nchw44_chanwise_5x5_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, void* dst,
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+#define LOAD_1_LINE_SRC(sptr, src)        \
+    src[0] = vld1q_s8(sptr);              \
+    src[4] = vld1q_s8(sptr + 16);         \
+    src[1] = vextq_s8(src[0], src[4], 4); \
+    src[2] = vextq_s8(src[0], src[4], 8); \
+    src[3] = vextq_s8(src[0], src[4], 12);
+
+#define ACC_1_LINE(src, kern, sum)                                \
+    accumulate_2_q_vector(src[0], kern[0], src[1], kern[1], sum); \
+    accumulate_2_q_vector(src[2], kern[2], src[3], kern[3], sum); \
+    accumulate_1_q_vector(src[4], kern[4], sum);
+
+    int32x4_t init_v = ${bias_str};
+    const int32_t* filter_i32 = (const int32_t*)filter;
+    const int pack_c_size = 4;
+    
+    size_t oh = 0;
+    for (; oh + 2 <= OH; oh += 2) {
+        size_t ih = oh;
+        size_t ow = 0;
+        for (; ow + 4 <= OW; ow += 4) {
+            size_t iw = ow;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            const int8_t* sptr5 = sptr4 + pack_c_size * IW;
+            int32x4_t sum0[4], sum1[4];
+            int8x16_t src[2][5], kern[2][5];
+#define cb(i)         \
+    sum0[i] = init_v; \
+    sum1[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], filter_i32);
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 5));
+#undef cb
+            LOAD_1_LINE_SRC(sptr0, src[0]);
+            LOAD_1_LINE_SRC(sptr1, src[1]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+            LOAD_1_LINE_SRC(sptr2, src[0]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[1][i], kern[0][i], src[0][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum1);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr3, src[1]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 10));
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 15));
+#undef cb
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+            LOAD_1_LINE_SRC(sptr4, src[0]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[1][i], kern[0][i], src[0][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum1);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 20));
+#undef cb
+            ACC_1_LINE(src[0], kern[0], sum0);
+            LOAD_1_LINE_SRC(sptr5, src[1]);
+            ACC_1_LINE(src[1], kern[0], sum1);
+            ${init_store}
+            ${render_store_1_line(dst, 0, sum0)};
+            ${render_store_1_line(dst, 1, sum1)};
+        }
+        if (ow < OW) {
+            size_t remain = OW - ow;
+            size_t iw = ow;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            const int8_t* sptr5 = sptr4 + pack_c_size * IW;
+            int32x4_t sum0[4], sum1[4];
+            int8x16_t src[2][5], kern[2][5];
+#define cb(i)         \
+    sum0[i] = init_v; \
+    sum1[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], filter_i32);
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 5));
+#undef cb
+            LOAD_1_LINE_SRC(sptr0, src[0]);
+            LOAD_1_LINE_SRC(sptr1, src[1]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+            LOAD_1_LINE_SRC(sptr2, src[0]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[1][i], kern[0][i], src[0][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum1);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr3, src[1]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 10));
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 15));
+#undef cb
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+            LOAD_1_LINE_SRC(sptr4, src[0]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[1][i], kern[0][i], src[0][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum1);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 20));
+#undef cb
+            ACC_1_LINE(src[0], kern[0], sum0);
+            LOAD_1_LINE_SRC(sptr5, src[1]);
+            ACC_1_LINE(src[1], kern[0], sum1);
+            ${init_store}
+            ${render_store_1_line_remain(dst, 0, sum0, remain)};
+            ${render_store_1_line_remain(dst, 1, sum1, remain)};
+        }
+    }
+
+    for (; oh < OH; ++oh) {
+        size_t ih = oh;
+        size_t ow = 0;
+        for (; ow + 4 <= OW; ow += 4) {
+            size_t iw = ow;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            int32x4_t sum0[4];
+            int8x16_t src[2][5], kern[2][5];
+#define cb(i) sum0[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], filter_i32);
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 5));
+#undef cb
+            LOAD_1_LINE_SRC(sptr0, src[0]);
+            LOAD_1_LINE_SRC(sptr1, src[1]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr2, src[0]);
+            LOAD_1_LINE_SRC(sptr3, src[1]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 10));
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 15));
+#undef cb
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr4, src[0]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 20));
+#undef cb
+            ACC_1_LINE(src[0], kern[0], sum0);
+            ${init_store}
+            ${render_store_1_line(dst, 0, sum0)};
+        }
+        if (ow < OW) {
+            size_t remain = OW - ow;
+            size_t iw = ow;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            int32x4_t sum0[4];
+            int8x16_t src[2][5], kern[2][5];
+#define cb(i) sum0[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], filter_i32);
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 5));
+#undef cb
+            LOAD_1_LINE_SRC(sptr0, src[0]);
+            LOAD_1_LINE_SRC(sptr1, src[1]);
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr2, src[0]);
+            LOAD_1_LINE_SRC(sptr3, src[1]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 10));
+            UNROLL_CALL(5, cb, kern[1], (filter_i32 + 15));
+#undef cb
+#define cb(i, sum) \
+    accumulate_2_q_vector(src[0][i], kern[0][i], src[1][i], kern[1][i], sum);
+            UNROLL_CALL(5, cb, sum0);
+#undef cb
+
+            LOAD_1_LINE_SRC(sptr4, src[0]);
+#define cb(i, kern, filter) kern[i] = (int8x16_t)vld1q_dup_s32((filter) + i);
+            UNROLL_CALL(5, cb, kern[0], (filter_i32 + 20));
+#undef cb
+            ACC_1_LINE(src[0], kern[0], sum0);
+            ${init_store}
+            ${render_store_1_line_remain(dst, 0, sum0, remain)};
+        }
+    }
+
+#undef LOAD_1_LINE_SRC
+#undef ACC_1_LINE
+}
+    )";
+
+    ss << StringTemplate::StringTemplateArgs(ctx)
+                    .add("init_store", activate_gen->GenIntrinsicInitFloat())
+                    .add("render_store_1_line",
+                         [=](const std::string& dst, const std::string& idx,
+                             const std::string& sum) -> std::string {
+                             return render_store_1_line(
+                                     dst, "oh", "ow", "OW", sum, idx,
+                                     *activate_gen.get());
+                         })
+                    .add("render_store_1_line_remain",
+                         [=](const std::string& dst, const std::string& idx,
+                             const std::string& sum,
+                             const std::string& remain) -> std::string {
+                             return render_store_1_line_remain(
+                                     dst, "oh", "ow", "OW", sum, idx, remain,
+                                     *activate_gen.get());
+                         })
+                    .add("bias_str", bias_str)
+                    .add_ctx_int("pad_w")
+                    .render(body_temp);
+    return ss.str();
+}
+
+std::string gen_5x5_s2_kern(
+        TContext* ctx, bool with_bias, const std::string& nonline_mode) {
+    std::stringstream ss;
+    auto activate_gen = create_activation_gener_instrinsic(nonline_mode);
+    std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
+    std::string body_temp = R"(
+static inline void nchw44_chanwise_5x5_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, void* dst,
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+#define COMPUTE_ONE_VECTOR(                                            \
+        src00, src01, src02, src10, src11, src12, kern0, kern1, sum)   \
+    accumulate_1_line_horizon(src00, kern0[0], src10, kern1[0], &sum); \
+    accumulate_1_line_horizon(src01, kern0[1], src11, kern1[1], &sum); \
+    accumulate_1_line_horizon(src02, kern0[2], src12, kern1[2], &sum);
+
+#define COMPUTE_TWO_LINE(src0, src1, kern0, kern1, sum)                                     \
+    COMPUTE_ONE_VECTOR(vget_low_s8(src0[0]), vget_high_s8(src0[0]), vget_low_s8(src0[1]),   \
+                        vget_low_s8(src1[0]), vget_high_s8(src1[0]), vget_low_s8(src1[1]),  \
+                        kern0, kern1, sum[0])                                               \
+    COMPUTE_ONE_VECTOR(vget_high_s8(src0[0]), vget_low_s8(src0[1]), vget_high_s8(src0[1]),  \
+                        vget_high_s8(src1[0]), vget_low_s8(src1[1]), vget_high_s8(src1[1]), \
+                        kern0, kern1, sum[1])                                               \
+    COMPUTE_ONE_VECTOR(vget_low_s8(src0[1]), vget_high_s8(src0[1]), vget_low_s8(src0[2]),   \
+                        vget_low_s8(src1[1]), vget_high_s8(src1[1]), vget_low_s8(src1[2]),  \
+                        kern0, kern1, sum[2])                                               \
+    COMPUTE_ONE_VECTOR(vget_high_s8(src0[1]), vget_low_s8(src0[2]), vget_high_s8(src0[2]),  \
+                        vget_high_s8(src1[1]), vget_low_s8(src1[2]), vget_high_s8(src1[2]), \
+                        kern0, kern1, sum[3])
+
+#define COMPUTE_ONE_LINE(src, kern, sum)                                          \
+    accumulate_1_line_horizon(                                                    \
+            vget_low_s8(src[0]), kern[0], vget_high_s8(src[0]), kern[1], &sum[0]); \
+    accumulate_1_line_horizon(                                                    \
+            vget_high_s8(src[0]), kern[0], vget_low_s8(src[1]), kern[1], &sum[1]); \
+    accumulate_1_line_horizon(                                                    \
+            vget_low_s8(src[1]), kern[0], vget_high_s8(src[1]), kern[1], &sum[2]); \
+    accumulate_1_line_horizon(                                                    \
+            vget_high_s8(src[1]), kern[0], vget_low_s8(src[2]), kern[1], &sum[3]); \
+    accumulate_1_d_vector(vget_low_s8(src[1]), kern[2], &sum[0]);                  \
+    accumulate_1_d_vector(vget_high_s8(src[1]), kern[2], &sum[1]);                 \
+    accumulate_1_d_vector(vget_low_s8(src[2]), kern[2], &sum[2]);                  \
+    accumulate_1_d_vector(vget_high_s8(src[2]), kern[2], &sum[3])
+
+    int32x4_t init_v = ${bias_str};
+    const int pack_c_size = 4;
+
+    int8x8_t kern0[3], kern1[3], kern2[3], kern3[3], kern4[3];
+    int32x2_t zero = vdup_n_s32(0);
+
+    kern0[0] = vld1_s8(filter);
+    kern0[1] = vld1_s8(filter + 8);
+    kern0[2] = vreinterpret_s8_s32(
+        vzip_s32(vreinterpret_s32_s8(vld1_s8(filter + 16)), zero).val[0]);
+    
+    kern1[0] = vld1_s8(filter + 20);
+    kern1[1] = vld1_s8(filter + 28);
+    kern1[2] = vreinterpret_s8_s32(
+        vzip_s32(vreinterpret_s32_s8(vld1_s8(filter + 36)), zero).val[0]);
+    
+    kern2[0] = vld1_s8(filter + 40);
+    kern2[1] = vld1_s8(filter + 48);
+    kern2[2] = vreinterpret_s8_s32(
+        vzip_s32(vreinterpret_s32_s8(vld1_s8(filter + 56)), zero).val[0]);
+    
+    kern3[0] = vld1_s8(filter + 60);
+    kern3[1] = vld1_s8(filter + 68);
+    kern3[2] = vreinterpret_s8_s32(
+        vzip_s32(vreinterpret_s32_s8(vld1_s8(filter + 76)), zero).val[0]);
+    
+    kern4[0] = vld1_s8(filter + 80);
+    kern4[1] = vld1_s8(filter + 88);
+    kern4[2] = vreinterpret_s8_s32(
+        vzip_s32(vreinterpret_s32_s8(vld1_s8(filter + 92)), zero).val[1]);
+    
+    size_t oh = 0;
+    for (; oh + 2 <= OH; oh += 2) {
+        size_t ih = oh * 2;
+        size_t ow = 0;
+        for (; ow + 4 <= OW; ow += 4) {
+            size_t iw = ow * 2;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            const int8_t* sptr5 = sptr4 + pack_c_size * IW;
+            const int8_t* sptr6 = sptr5 + pack_c_size * IW;
+            int32x4_t sum0[4], sum1[4];
+            int8x16_t src[2][3];
+#define cb(i)         \
+    sum0[i] = init_v; \
+    sum1[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+            src[0][0] = vld1q_s8(sptr0);
+            src[0][1] = vld1q_s8(sptr0 + 16);
+            src[0][2] = vld1q_s8(sptr0 + 32);
+            src[1][0] = vld1q_s8(sptr1);
+            src[1][1] = vld1q_s8(sptr1 + 16);
+            src[1][2] = vld1q_s8(sptr1 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum0);
+
+            src[0][0] = vld1q_s8(sptr2);
+            src[0][1] = vld1q_s8(sptr2 + 16);
+            src[0][2] = vld1q_s8(sptr2 + 32);
+            src[1][0] = vld1q_s8(sptr3);
+            src[1][1] = vld1q_s8(sptr3 + 16);
+            src[1][2] = vld1q_s8(sptr3 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum0);
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum1);
+
+            src[0][0] = vld1q_s8(sptr4);
+            src[0][1] = vld1q_s8(sptr4 + 16);
+            src[0][2] = vld1q_s8(sptr4 + 32);
+            src[1][0] = vld1q_s8(sptr5);
+            src[1][1] = vld1q_s8(sptr5 + 16);
+            src[1][2] = vld1q_s8(sptr5 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum0);
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum1);
+
+            src[0][0] = vld1q_s8(sptr6);
+            src[0][1] = vld1q_s8(sptr6 + 16);
+            src[0][2] = vld1q_s8(sptr6 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum1);
+
+            ${init_store}
+            ${render_store_1_line(dst, 0, sum0)};
+            ${render_store_1_line(dst, 1, sum1)};
+        }
+        if (ow < OW) {
+            size_t remain = OW - ow;
+            size_t iw = ow * 2;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            const int8_t* sptr5 = sptr4 + pack_c_size * IW;
+            const int8_t* sptr6 = sptr5 + pack_c_size * IW;
+            int32x4_t sum0[4], sum1[4];
+            int8x16_t src[2][3];
+#define cb(i)         \
+    sum0[i] = init_v; \
+    sum1[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+            src[0][0] = vld1q_s8(sptr0);
+            src[0][1] = vld1q_s8(sptr0 + 16);
+            src[0][2] = vld1q_s8(sptr0 + 32);
+            src[1][0] = vld1q_s8(sptr1);
+            src[1][1] = vld1q_s8(sptr1 + 16);
+            src[1][2] = vld1q_s8(sptr1 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum0);
+
+            src[0][0] = vld1q_s8(sptr2);
+            src[0][1] = vld1q_s8(sptr2 + 16);
+            src[0][2] = vld1q_s8(sptr2 + 32);
+            src[1][0] = vld1q_s8(sptr3);
+            src[1][1] = vld1q_s8(sptr3 + 16);
+            src[1][2] = vld1q_s8(sptr3 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum0);
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum1);
+
+            src[0][0] = vld1q_s8(sptr4);
+            src[0][1] = vld1q_s8(sptr4 + 16);
+            src[0][2] = vld1q_s8(sptr4 + 32);
+            src[1][0] = vld1q_s8(sptr5);
+            src[1][1] = vld1q_s8(sptr5 + 16);
+            src[1][2] = vld1q_s8(sptr5 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum0);
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum1);
+
+            src[0][0] = vld1q_s8(sptr6);
+            src[0][1] = vld1q_s8(sptr6 + 16);
+            src[0][2] = vld1q_s8(sptr6 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum1);
+
+            ${init_store}
+            ${render_store_1_line_remain(dst, 0, sum0, remain)};
+            ${render_store_1_line_remain(dst, 1, sum1, remain)};
+        }
+    }
+
+    for (; oh < OH; ++oh) {
+        size_t ih = oh * 2;
+        size_t ow = 0;
+        for (; ow + 4 <= OW; ow += 4) {
+            size_t iw = ow * 2;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            int32x4_t sum0[4];
+            int8x16_t src[2][3];
+#define cb(i) sum0[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+            src[0][0] = vld1q_s8(sptr0);
+            src[0][1] = vld1q_s8(sptr0 + 16);
+            src[0][2] = vld1q_s8(sptr0 + 32);
+            src[1][0] = vld1q_s8(sptr1);
+            src[1][1] = vld1q_s8(sptr1 + 16);
+            src[1][2] = vld1q_s8(sptr1 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum0);
+
+            src[0][0] = vld1q_s8(sptr2);
+            src[0][1] = vld1q_s8(sptr2 + 16);
+            src[0][2] = vld1q_s8(sptr2 + 32);
+            src[1][0] = vld1q_s8(sptr3);
+            src[1][1] = vld1q_s8(sptr3 + 16);
+            src[1][2] = vld1q_s8(sptr3 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum0);
+
+            src[0][0] = vld1q_s8(sptr4);
+            src[0][1] = vld1q_s8(sptr4 + 16);
+            src[0][2] = vld1q_s8(sptr4 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum0);
+
+            ${init_store}
+            ${render_store_1_line(dst, 0, sum0)};
+        }
+        if (ow < OW) {
+            size_t remain = OW - ow;
+            size_t iw = ow * 2;
+            const int8_t* sptr0 = src + ih * IW * pack_c_size + iw * pack_c_size;
+            const int8_t* sptr1 = sptr0 + pack_c_size * IW;
+            const int8_t* sptr2 = sptr1 + pack_c_size * IW;
+            const int8_t* sptr3 = sptr2 + pack_c_size * IW;
+            const int8_t* sptr4 = sptr3 + pack_c_size * IW;
+            int32x4_t sum0[4];
+            int8x16_t src[2][3];
+#define cb(i) sum0[i] = init_v;
+            UNROLL_CALL_NOWRAPPER(4, cb);
+#undef cb
+
+            src[0][0] = vld1q_s8(sptr0);
+            src[0][1] = vld1q_s8(sptr0 + 16);
+            src[0][2] = vld1q_s8(sptr0 + 32);
+            src[1][0] = vld1q_s8(sptr1);
+            src[1][1] = vld1q_s8(sptr1 + 16);
+            src[1][2] = vld1q_s8(sptr1 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern0, kern1, sum0);
+
+            src[0][0] = vld1q_s8(sptr2);
+            src[0][1] = vld1q_s8(sptr2 + 16);
+            src[0][2] = vld1q_s8(sptr2 + 32);
+            src[1][0] = vld1q_s8(sptr3);
+            src[1][1] = vld1q_s8(sptr3 + 16);
+            src[1][2] = vld1q_s8(sptr3 + 32);
+
+            COMPUTE_TWO_LINE(src[0], src[1], kern2, kern3, sum0);
+
+            src[0][0] = vld1q_s8(sptr4);
+            src[0][1] = vld1q_s8(sptr4 + 16);
+            src[0][2] = vld1q_s8(sptr4 + 32);
+
+            COMPUTE_ONE_LINE(src[0], kern4, sum0);
+
+            ${init_store}
+            ${render_store_1_line_remain(dst, 0, sum0, remain)};
+        }
+    }
+
+#undef COMPUTE_ONE_VECTOR
+#undef COMPUTE_TWO_LINE
+#undef COMPUTE_ONE_LINE
+}
+    )";
+
+    ss << StringTemplate::StringTemplateArgs(ctx)
+                    .add("init_store", activate_gen->GenIntrinsicInitFloat())
+                    .add("render_store_1_line",
+                         [=](const std::string& dst, const std::string& idx,
+                             const std::string& sum) -> std::string {
+                             return render_store_1_line(
+                                     dst, "oh", "ow", "OW", sum, idx,
+                                     *activate_gen.get());
+                         })
+                    .add("render_store_1_line_remain",
+                         [=](const std::string& dst, const std::string& idx,
+                             const std::string& sum,
+                             const std::string& remain) -> std::string {
+                             return render_store_1_line_remain(
+                                     dst, "oh", "ow", "OW", sum, idx, remain,
+                                     *activate_gen.get());
+                         })
+                    .add("bias_str", bias_str)
+                    .add_ctx_int("pad_w")
+                    .render(body_temp);
+    return ss.str();
+}
+
 }  // namespace
 
-bool ChannelWiseInt8Mk4K3::IsAvailable(TContext* ctx) const {
+bool ChannelWiseInt8Nchw44::IsAvailable(TContext* ctx) const {
     bool param_value_ok =
-            ctx->getAttrUInt("kernel_h") == 3 && ctx->getAttrUInt("kernel_w") == 3 &&
+            (ctx->getAttrUInt("kernel_h") == 3 || ctx->getAttrUInt("kernel_h") == 5) &&
+            ctx->getAttrUInt("kernel_w") == ctx->getAttrUInt("kernel_h") &&
             //! stride_h == stride_w and stride == 1 or stride == 2
             ctx->getAttrUInt("stride_h") == ctx->getAttrUInt("stride_w") &&
             (ctx->getAttrUInt("stride_h") == 1 || ctx->getAttrUInt("stride_h") == 2) &&
@@ -814,11 +1401,11 @@ bool ChannelWiseInt8Mk4K3::IsAvailable(TContext* ctx) const {
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
            channel_wise_ok;
 }
-std::string ChannelWiseInt8Mk4K3::GetKernelSymbol(TContext* context) const {
-    return "Arm64_chanwise" + ConvImpl::GetKernelSymbol(context);
+std::string ChannelWiseInt8Nchw44::GetKernelSymbol(TContext* context) const {
+    return "ArmCommon_chanwise_" + ConvImpl::GetKernelSymbol(context);
 }
 
-std::string ChannelWiseInt8Mk4K3::GetWorkspaceBody(TContext* ctx) const {
+std::string ChannelWiseInt8Nchw44::GetWorkspaceBody(TContext* ctx) const {
     std::stringstream ss;
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
     std::string workspace_temp =
@@ -855,8 +1442,9 @@ std::string ChannelWiseInt8Mk4K3::GetWorkspaceBody(TContext* ctx) const {
     return ss.str();
 }
 
-std::string ChannelWiseInt8Mk4K3::GetKernelBody(TContext* ctx) const {
+std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
     int stride = ctx->getAttrUInt("stride_h");
+    int kernel = ctx->getAttrUInt("kernel_h");
     bool with_bias = ConvImpl::is_bias(ctx);
 
     std::string nonline_mode =
@@ -869,12 +1457,24 @@ std::string ChannelWiseInt8Mk4K3::GetKernelBody(TContext* ctx) const {
     writer << gen_common_code();
     writer << "\n\n";
 
-    if (1 == stride) {
-        writer << gen_3x3_s1_kern(ctx, with_bias, nonline_mode);
-    } else if (2 == stride) {
-        writer << gen_3x3_s2_kern(ctx, with_bias, nonline_mode);
+    if (kernel == 3) {
+        if (1 == stride) {
+            writer << gen_3x3_s1_kern(ctx, with_bias, nonline_mode);
+        } else if (2 == stride) {
+            writer << gen_3x3_s2_kern(ctx, with_bias, nonline_mode);
+        } else {
+            CC_ABORT << "unsupport stride in mk4 channel wise kernel.\n";
+        }
+    } else if (kernel == 5) {
+        if (1 == stride) {
+            writer << gen_5x5_s1_kern(ctx, with_bias, nonline_mode);
+        } else if (2 == stride) {
+            writer << gen_5x5_s2_kern(ctx, with_bias, nonline_mode);
+        } else {
+            CC_ABORT << "unsupport stride in mk4 channel wise kernel.\n";
+        }
     } else {
-        CC_ABORT << "unsupport stride in mk4 channel wise kernel.\n";
+        CC_ABORT << "unsupport kernel size in mk4 channel wise kernel.\n";
     }
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     std::string bias_str = with_bias ? "inputs[2]->ptr" : "0";
@@ -922,7 +1522,7 @@ std::string ChannelWiseInt8Mk4K3::GetKernelBody(TContext* ctx) const {
                     memcpy(padding_src + ((ih + PH) * IW2 + PW) * pack_ic_size,
                            src_ptr + ih * IW * pack_ic_size, sizeof(int8_t) * min_iw * pack_ic_size);
                 }
-                nchw44_chanwise_3x3_int8(padding_src, weight_ptr, bias_ptr, dst_ptr, IH2, IW2, OH, OW, scale);
+                nchw44_chanwise_${kernel_h}x${kernel_w}_int8(padding_src, weight_ptr, bias_ptr, dst_ptr, IH2, IW2, OH, OW, scale);
             }
             input_data += N_stride;
             output_data += ON_stride;

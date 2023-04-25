@@ -126,17 +126,6 @@ public:
     std::string GetKernelBody(TContext* context) const override;
 };
 
-class ChannelWiseInt8Mk4K3 : public Arm64ConvImpl {
-public:
-    bool IsAvailable(TContext* context) const override;
-    //! kernel gen
-    std::string GetKernelBody(TContext* context) const override;
-
-    std::string GetKernelSymbol(TContext* context) const override;
-
-    std::string GetWorkspaceBody(TContext* context) const override;
-};
-
 class WinogradFloatF23Nchw44 : public Arm64ConvImpl {
     mutable ArmCommon::WinogradFrameNchw44 m_framework;
     mutable WinogradF23Strategy4x16MK4 m_winograd_strategy;
