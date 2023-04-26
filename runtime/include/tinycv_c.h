@@ -143,6 +143,10 @@ void tinycv_gaussian_blur_constant_ui8(
         const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
         double sigma_x, double sigma_y);
 
+void tinycv_gaussian_blur_constant_f32(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
 /**
  * \fn tinycv_gaussian_blur_reflect_ui8
  * \brief Gaussian blur on src and store to dst
@@ -159,6 +163,10 @@ void tinycv_gaussian_blur_constant_ui8(
  * used to calculate the kernel.
  */
 void tinycv_gaussian_blur_reflect_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
+void tinycv_gaussian_blur_reflect_f32(
         const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
         double sigma_x, double sigma_y);
 
@@ -181,6 +189,10 @@ void tinycv_gaussian_blur_reflect_101_ui8(
         const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
         double sigma_x, double sigma_y);
 
+void tinycv_gaussian_blur_reflect_101_f32(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
 /**
  * \fn tinycv_gaussian_blur_replicate_ui8
  * \brief Gaussian blur on src and store to dst
@@ -197,6 +209,10 @@ void tinycv_gaussian_blur_reflect_101_ui8(
  * used to calculate the kernel.
  */
 void tinycv_gaussian_blur_replicate_ui8(
+        const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
+        double sigma_x, double sigma_y);
+
+void tinycv_gaussian_blur_replicate_f32(
         const TinyMat* src, const TinyMat* dst, int kernel_h, int kernel_w,
         double sigma_x, double sigma_y);
 
