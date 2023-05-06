@@ -54,6 +54,16 @@ public:
         return "chanwise";
     };
 };
+class ChannelWiseInt8Nchw44 : public ArmCommonConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+
+    std::string GetKernelSymbol(TContext* context) const override;
+
+    std::string GetWorkspaceBody(TContext* context) const override;
+};
 
 }  // namespace ArmCommon
 }  // namespace KernelGen

@@ -112,49 +112,6 @@ TEST(AARCH64, BenchmarkConv1x1NCHW4Dot) {
             ConvBiasForward::Param ::NonlineMode::RELU);
 }
 
-TEST(AARCH64, BenchmarkChannelWiseNCHW4) {
-    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
-    ConvBiasForward::Param param;
-    param.pad_h = 1;
-    param.pad_w = 1;
-    param.stride_h = 1;
-    param.stride_w = 1;
-    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
-    param.format = ConvBiasForward::Param::Format::NCHW44;
-    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
-    benchmarker.set_param(param);
-
-    benchmarker.set_before_exec_callback(
-            megdnn::test::AlgoChecker<ConvBiasForward>("F32_CHANNEL_WISE_NCHW44"));
-    for (size_t k : {3, 5})
-        for (size_t h : {112, 56, 28, 14}) {
-            for (size_t channel : {32, 64}) {
-                auto result = benchmarker.execs(
-                        {{1, channel, h, h, 4},
-                         {channel, 1, 1, k, k, 4},
-                         {1, channel, 1, 1, 4},
-                         {},
-                         {}});
-                printf("Bench kernel %zu channel=%zu, hxw=%zux%zu\n", k, channel, h, h);
-                result.print();
-            }
-        }
-}
-
-TEST(AARCH64, BenchmarkConvNCHWNCHW44) {
-    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
-    ConvBiasForward::Param param;
-    param.pad_h = 1;
-    param.pad_w = 1;
-    param.stride_h = 2;
-    param.stride_w = 2;
-    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
-    param.format = ConvBiasForward::Param::Format::NCHW44;
-    benchmarker.set_param(param);
-    benchmarker.execs({{1, 3, 224, 224}, {8, 3, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}})
-            .print();
-}
-
 TEST(AARCH64, BenchmarkConvDotNCHWNCHW44Stride1) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
     ConvBiasForward::Param param;

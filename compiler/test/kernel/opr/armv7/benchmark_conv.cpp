@@ -127,6 +127,7 @@ TEST(ARMV7, BenchmarkConvF32Winograd) {
     }
 }
 
+//! Test implement in `armv7' directory
 TEST(ARMV7, BenchmarkConvNCHWNCHW44) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
     ConvBiasForward::Param param;
