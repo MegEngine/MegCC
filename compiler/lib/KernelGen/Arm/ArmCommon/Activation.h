@@ -34,16 +34,7 @@ template <NonlineMode mode>
 struct ActivationGenIntrinsic : public ActivationGenIntrinsicBase {
 public:
     //! gen the const neon data, such as zero in relu
-    virtual std::string GenIntrinsicInitFloat() const override {
-        std::string res = R"(
-#ifndef __aarch64__
-            float32x4_t v_zero = vdupq_n_f32(0.f);
-            float32x4_t v_half = vdupq_n_f32(0.5f);
-            float32x4_t v_neg_half = vdupq_n_f32(-0.5f);
-#endif
-        )";
-        return res;
-    }
+    virtual std::string GenIntrinsicInitFloat() const override { return ""; }
 
     //! compute the input neon data and write to the output neon
     virtual std::string GenIntrinsicFloat(
@@ -63,12 +54,7 @@ public:
             {
                 float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
                 float32x4_t res = vmulq_n_f32(f32_res, ${scale_sym});
-#ifdef __aarch64__
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
-#else
-                float32x4_t res_inc = vbslq_f32(vcgeq_f32(res, v_zero), v_half, v_neg_half);
-                int32x4_t s32_res = vcvtq_s32_f32(vaddq_f32(res, res_inc));
-#endif
                 int16x4_t s16_res = vqmovn_s32(s32_res);
                 int8x8_t s8_res = vqmovn_s16(vcombine_s16(s16_res, s16_res));
                 vst1_lane_s32((int32_t*)(${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
@@ -88,10 +74,6 @@ public:
     std::string GenIntrinsicInitFloat() const override {
         std::stringstream writer;
         writer << "\nfloat32x4_t vzero = vdupq_n_f32(0.f);";
-        writer << "\n#ifndef __aarch64__";
-        writer << "\nfloat32x4_t v_half = vdupq_n_f32(0.5f);";
-        writer << "\nfloat32x4_t v_neg_half = vdupq_n_f32(-0.5f);";
-        writer << "\n#endif";
         return writer.str();
     }
     std::string GenIntrinsicFloat(
@@ -113,12 +95,7 @@ public:
             {
                 float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
                 float32x4_t res = vmaxq_f32(vmulq_n_f32(f32_res, ${scale_sym}), vzero);
-#ifdef __aarch64__
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
-#else
-                float32x4_t res_inc = vbslq_f32(vcgeq_f32(res, vzero), v_half, v_neg_half);
-                int32x4_t s32_res = vcvtq_s32_f32(vaddq_f32(res, res_inc));
-#endif
                 int16x4_t s16_res = vqmovn_s32(s32_res);
                 int8x8_t s8_res = vqmovn_s16(vcombine_s16(s16_res, s16_res));
                 vst1_lane_s32((int32_t*)(${output_ptr}), vreinterpret_s32_s8(s8_res), 0);

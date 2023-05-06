@@ -14,6 +14,7 @@ struct AllA64Kernel {
         inner_map[KernelPack::KernType::ConvKernel] = {
                 std::make_shared<Arm64::Conv1x1FloatMk4>(),
                 std::make_shared<Arm64::WinogradFloatF23Nchw44>(),
+                std::make_shared<Arm64::ChannelWiseInt8Mk4K3>(),
                 std::make_shared<Arm64::ConvIm2colFloat>(),
                 std::make_shared<Arm64::Conv1x1DotMk4>(),
                 std::make_shared<Arm64::ConvIm2colDot>(),

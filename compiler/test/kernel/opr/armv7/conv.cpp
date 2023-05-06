@@ -1,10 +1,74 @@
+#include "test/kernel/common/benchmark.h"
 #include "test/kernel/common/checker.h"
 
 using namespace megdnn;
 using namespace megcc::test;
 using namespace megcc::KernelGen;
 
-//! Test implement in `armv7' directory
+TEST(ARMV7, ConvBiasChannelWiseNCHW4K3) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (size_t stride : {1, 2}) {
+        param.nonlineMode = ConvBiasForward::Param::NonlineMode::RELU;
+        param.stride_h = stride;
+        param.stride_w = stride;
+        checker.set_param(param);
+        checker.execs({{2, 8, 28, 28, 4}, {8, 1, 1, 3, 3, 4}, {1, 8, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 8, 14, 28, 4}, {8, 1, 1, 3, 3, 4}, {}, {}, {}});
+        param.nonlineMode = ConvBiasForward::Param::NonlineMode::IDENTITY;
+        checker.set_param(param);
+        checker.execs({{4, 3, 5, 11, 4}, {3, 1, 1, 3, 3, 4}, {1, 3, 1, 1, 4}, {}, {}});
+        checker.execs({{4, 3, 5, 11, 4}, {3, 1, 1, 3, 3, 4}, {}, {}, {}});
+    }
+}
+
+TEST(ARMV7, ConvChannelWiseNCHW4K3) {
+    Checker<ConvolutionForward> checker(Arch::ARMV7);
+    ConvolutionForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (size_t stride : {1, 2}) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        checker.set_param(param);
+        checker.execs({{2, 8, 24, 28, 4}, {8, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{1, 3, 23, 23, 4}, {3, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{3, 3, 23, 23, 4}, {3, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{1, 3, 14, 14, 4}, {3, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{4, 3, 14, 14, 4}, {3, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{4, 5, 34, 7, 4}, {5, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{2, 8, 14, 28, 4}, {8, 1, 1, 3, 3, 4}, {}});
+        checker.execs({{2, 8, 28, 28, 4}, {8, 1, 1, 3, 3, 4}, {}});
+    }
+}
+TEST(ARMV7, ConvChannelWiseNCHW4K5) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+    ConvBiasForward::Param param;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (size_t stride : {1}) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        checker.set_param(param);
+        checker.execs({{2, 3, 6, 6, 4}, {3, 1, 1, 5, 5, 4}, {1, 3, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 3, 6, 7, 4}, {3, 1, 1, 5, 5, 4}, {1, 3, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 3, 7, 6, 4}, {3, 1, 1, 5, 5, 4}, {1, 3, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 3, 7, 7, 4}, {3, 1, 1, 5, 5, 4}, {1, 3, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 3, 17, 17, 4}, {3, 1, 1, 5, 5, 4}, {1, 3, 1, 1, 4}, {}, {}});
+    }
+}
+
 TEST(ARMV7, ConvBiasNCHWNCHW44) {
     Checker<ConvBiasForward> checker(Arch::ARMV7);
     ConvBiasForward::Param param;
@@ -17,7 +81,7 @@ TEST(ARMV7, ConvBiasNCHWNCHW44) {
     for (auto mode :
          {ConvBiasForward::Param::NonlineMode::IDENTITY,
           ConvBiasForward::Param::NonlineMode::RELU})
-        for (size_t filter_size : {3})
+        for (size_t filter_size : {2, 3, 5})
             for (size_t ic : {3})
                 for (size_t iw = 13; iw < 33; iw++) {
                     size_t pad = filter_size / 2;
@@ -232,6 +296,35 @@ TEST(ARMV7, ConvWinogradNCHW44) {
                                      {},
                                      {}});
                         }
+}
+
+TEST(ARMV7, BenchmarkChannelWiseNCHW4) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    benchmarker.set_param(param);
+
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>("F32_CHANNEL_WISE_NCHW44"));
+    for (size_t k : {3, 5})
+        for (size_t h : {112, 56, 28, 14}) {
+            for (size_t channel : {32, 64}) {
+                auto result = benchmarker.execs(
+                        {{1, channel, h, h, 4},
+                         {channel, 1, 1, k, k, 4},
+                         {1, channel, 1, 1, 4},
+                         {},
+                         {}});
+                printf("Bench kernel %zu channel=%zu, hxw=%zux%zu\n", k, channel, h, h);
+                result.print();
+            }
+        }
 }
 
 // vim: syntax=cpp.doxygen
