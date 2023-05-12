@@ -5,6 +5,7 @@
 #include "InternalKernel.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
+#include "compiler/Common/TContext.h"
 #include "compiler/KernelGen/KernelGen.h"
 
 namespace megcc {
@@ -73,6 +74,28 @@ public:
     std::string GetKernelBody(TContext* context) const override;
     //! init gen
     std::string GetInitBody(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* context) const override;
+};
+
+class Int8NchwNchw44ConvS1 : public ArmCommonConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetKernelSubSymbol(TContext* context) const override {
+        return "nchw_nchw44_s1";
+    }
+    std::string GetWorkspaceBody(TContext* context) const override;
+};
+
+class Int8NchwNchw44ConvS2 : public ArmCommonConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetKernelSubSymbol(TContext* context) const override {
+        return "nchw_nchw44_s2";
+    }
     std::string GetWorkspaceBody(TContext* context) const override;
 };
 

@@ -171,4 +171,40 @@ TEST(ARMCOMMON, BenchmarkConvNCHWNCHW44) {
     ;
 }
 
+TEST(ARMCOMMON, BenchmarkNchwNchw44Int8) {
+#ifdef __aarch64__
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
+#else
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
+#endif
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    auto run = [&](const int stride, const std::vector<size_t>& filter_size_v) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        benchmarker.set_param(param);
+        for (size_t filter_size : filter_size_v) {
+            printf("stride: %d, {1, 3, 224, 224}, {8, %zu, %zu, 3, 4}, {1, 8, 1, 1, "
+                   "4}\n",
+                   stride, filter_size, filter_size);
+            benchmarker
+                    .execs({{1, 3, 224, 224},
+                            {8, filter_size, filter_size, 3, 4},
+                            {1, 8, 1, 1, 4},
+                            {},
+                            {}})
+                    .print();
+        }
+    };
+    run(1, {1, 2, 3, 5, 7});
+    run(2, {2, 3, 5, 7});
+}
+
 #endif

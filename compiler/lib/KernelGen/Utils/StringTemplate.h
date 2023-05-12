@@ -27,6 +27,9 @@ public:
     using FuncTypeArg4 = std::function<std::string(
             const std::string&, const std::string&, const std::string&,
             const std::string&)>;
+    using FuncTypeArg5 = std::function<std::string(
+            const std::string&, const std::string&, const std::string&,
+            const std::string&, const std::string&)>;
     static std::string render(
             const std::string& template_str, const KvMap& kv_map,
             const FuncMap& func_map = {});
@@ -62,6 +65,13 @@ public:
         }
         StringTemplateArgs& add(const std::string& key, FuncType func) {
             m_func_map[key] = func;
+            return *this;
+        }
+        StringTemplateArgs& add(const std::string& key, FuncTypeArg5 func) {
+            m_func_map[key] = [=](std::vector<std::string> args) -> std::string {
+                CC_ASSERT(args.size() == 5);
+                return func(args[0], args[1], args[2], args[3], args[4]);
+            };
             return *this;
         }
         StringTemplateArgs& add(const std::string& key, FuncTypeArg4 func) {

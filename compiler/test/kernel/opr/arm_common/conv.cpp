@@ -228,4 +228,53 @@ TEST(ARMCOMMON, ConvBiasDirectNCHW44Int8) {
         }
 }
 
+TEST(ARMCOMMON, ConvBiasNCHWNCHW44Int8) {
+#ifdef __aarch64
+    Checker<ConvBiasForward> checker(Arch::ARM64);
+#else
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+#endif
+    ConvBiasForward::Param param;
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("ArmCommon_.+");
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    checker.set_param(param);
+    auto run = [&](const int stride, const std::vector<size_t>& filter_size_v) {
+        for (auto mode :
+             {ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::RELU})
+            for (size_t iw : {8, 16, 24, 32, 9, 19, 29, 39})
+                for (size_t ic : {1, 2, 3})
+                    for (size_t filter_size : filter_size_v) {
+                        size_t pad = filter_size / 2;
+                        size_t oc_div4 = 5;
+                        param.stride_h = stride;
+                        param.stride_w = stride;
+                        param.pad_h = pad;
+                        param.pad_w = pad;
+                        param.nonlineMode = mode;
+                        checker.set_param(param);
+                        checker.execs(
+                                {{1, ic, 10, iw},
+                                 {oc_div4, filter_size, filter_size, ic, 4},
+                                 {1, oc_div4, 1, 1, 4},
+                                 {},
+                                 {}});
+                        checker.execs(
+                                {{1, ic, 21, iw},
+                                 {oc_div4, filter_size, filter_size, ic, 4},
+                                 {1, oc_div4, 1, 1, 4},
+                                 {},
+                                 {}});
+                    }
+    };
+    run(1, {1, 2, 3, 5, 7});
+    run(2, {2, 3, 5, 7});
+}
+
 // vim: syntax=cpp.doxygen
