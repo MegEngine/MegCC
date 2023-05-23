@@ -24,6 +24,7 @@ struct AllArmCommonKernel {
                 std::make_shared<ArmCommon::ChannelWiseFloatMk4>(),
                 std::make_shared<ArmCommon::ConvFloatNCHWNCHW44>(),
                 std::make_shared<ArmCommon::ChannelWiseInt8Nchw44>(),
+                std::make_shared<ArmCommon::DirectInt8NCHW44>(),
         };
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {

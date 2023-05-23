@@ -65,6 +65,17 @@ public:
     std::string GetWorkspaceBody(TContext* context) const override;
 };
 
+class DirectInt8NCHW44 : public ArmCommonConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* ctx) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* context) const override;
+};
+
 }  // namespace ArmCommon
 }  // namespace KernelGen
 }  // namespace megcc

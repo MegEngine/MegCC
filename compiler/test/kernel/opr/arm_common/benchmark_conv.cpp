@@ -55,6 +55,67 @@ TEST(ARMCOMMON, BenchmarkChannelWiseNCHW4Int8) {
     run();
 }
 
+TEST(ARMCOMMON, BenchmarkDirectNCHW4Int8) {
+#ifdef __aarch64__
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
+#else
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
+#endif
+    benchmarker.set_kernel_symbol("ArmCommon_direct.+");
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.nonlineMode = ConvBiasForward::Param::NonlineMode::IDENTITY;
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>("S8_NCHW44_DIRECT"));
+    for (size_t s : {1, 2})
+        for (size_t k : {2, 3, 5, 7})
+            for (size_t h : {112, 56, 28, 14})
+                for (size_t cdiv4 : {8, 16}) {
+                    param.stride_h = s;
+                    param.stride_w = s;
+                    benchmarker.set_param(param);
+                    auto result = benchmarker.execs(
+                            {{1, cdiv4, h, h, 4},
+                             {cdiv4, cdiv4, k, k, 4, 4},
+                             {1, cdiv4, 1, 1, 4},
+                             {},
+                             {}});
+                    printf("Bench kernel %zu, stride=%zu, ic/4=%zu, oc/4=%zu, "
+                           "hxw=%zux%zu\n",
+                           k, s, cdiv4, cdiv4, h, h);
+                    result.print();
+                }
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (size_t s : {1, 2})
+        for (size_t k : {2, 3, 5, 7})
+            for (size_t h : {112, 56, 28, 14})
+                for (size_t cdiv4 : {8, 16})
+                    for (size_t g : {2, 8}) {
+                        param.stride_h = s;
+                        param.stride_w = s;
+                        benchmarker.set_param(param);
+                        auto result = benchmarker.execs(
+                                {{1, cdiv4, h, h, 4},
+                                 {g, cdiv4 / g, cdiv4 / g, k, k, 4, 4},
+                                 {1, cdiv4, 1, 1, 4},
+                                 {},
+                                 {}});
+                        printf("Bench kernel %zu, group=%zu, stride=%zu, ic/4=%zu, "
+                               "oc/4=%zu, "
+                               "hxw=%zux%zu\n",
+                               k, g, s, cdiv4, cdiv4, h, h);
+                        result.print();
+                    }
+}
+
 TEST(ARMCOMMON, BenchmarkChannelWiseNCHW4) {
 #ifdef __aarch64__
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);

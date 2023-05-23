@@ -170,4 +170,62 @@ TEST(ARMCOMMON, ConvBiasNCHWNCHW44) {
                     }
 }
 
+TEST(ARMCOMMON, ConvBiasDirectNCHW44Int8) {
+#ifdef __aarch64__
+    Checker<ConvBiasForward> checker(Arch::ARM64);
+#else
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+#endif
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("ArmCommon_direct.+");
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    param.nonlineMode = ConvBiasForward::Param::NonlineMode::IDENTITY;
+    for (size_t stride : {1, 2})
+        for (size_t kernel : {2, 3, 5, 7}) {
+            param.stride_h = stride;
+            param.stride_w = stride;
+            checker.set_param(param);
+            checker.execs(
+                    {{2, 6, 10, 10, 4},
+                     {2, 3, 3, kernel, kernel, 4, 4},
+                     {1, 6, 1, 1, 4},
+                     {},
+                     {}});
+            checker.execs(
+                    {{2, 2, 10, 10, 4},
+                     {2, 3, 1, kernel, kernel, 4, 4},
+                     {1, 6, 1, 1, 4},
+                     {},
+                     {}});
+        }
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (size_t stride : {1, 2})
+        for (size_t kernel : {2, 3, 5, 7}) {
+            param.stride_h = stride;
+            param.stride_w = stride;
+            checker.set_param(param);
+            checker.execs(
+                    {{2, 7, 10, 10, 4},
+                     {7, 7, kernel, kernel, 4, 4},
+                     {1, 7, 1, 1, 4},
+                     {},
+                     {}});
+            checker.execs(
+                    {{2, 3, 13, 10, 4},
+                     {13, 3, kernel, kernel, 4, 4},
+                     {1, 13, 1, 1, 4},
+                     {},
+                     {}});
+        }
+}
+
 // vim: syntax=cpp.doxygen
