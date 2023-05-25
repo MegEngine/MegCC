@@ -153,7 +153,7 @@ static inline void log_tensor(Tensor* output, char* post_fix, Tensor* input) {
         dump_name_len += sprintf(name + dump_name_len, "_%d", output->layout.dims[i]);
     }
     write_ptr = tinynn_fopen(name, "wb");  // w for write, b for binary
-    TINYNN_ASSERT(write_ptr);
+    TINYNN_ASSERT_MSG(write_ptr, "open file error");
     tinynn_fwrite(output->ptr, 1, total_length, write_ptr);
     tinynn_fclose(write_ptr);
 
@@ -176,7 +176,7 @@ static inline void log_tensor(Tensor* output, char* post_fix, Tensor* input) {
 
     dump_name_len = sprintf(name + dump_name_len, "_input0");
     write_ptr = tinynn_fopen(name, "wb");  // w for write, b for binary
-    TINYNN_ASSERT(write_ptr);
+    TINYNN_ASSERT_MSG(write_ptr, "open file error");
     tinynn_fwrite(input->ptr, 1, tensor_length_in_byte(input), write_ptr);
     tinynn_fclose(write_ptr);
     LOG_DEBUG("\n");
