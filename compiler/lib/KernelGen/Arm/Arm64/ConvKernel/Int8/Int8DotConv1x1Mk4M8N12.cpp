@@ -218,7 +218,7 @@ std::string Conv1x1DotMk4::GetKernelBody(TContext* ctx) const {
     const float dst_scale = outputs[0]->dtype.param.scale;
     const float temp_scale = src_scale * flt_scale;
     const float dst_scale_inv = 1.f / dst_scale;
-    const float scale = src_scale * flt_scale / dst_scale;
+    const float scale = src_scale * flt_scale * dst_scale_inv;
 
     const int out_c = out_layout.dims[1] * out_layout.dims[4];
     const int out_h = out_layout.dims[2];

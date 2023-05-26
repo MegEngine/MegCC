@@ -33,7 +33,7 @@ std::string MatmulInternal::GenNakedKernelCall(TContext* ctx) {
         }
     } else if (dtype == "8832") {
         return R"((const int8_t* pack_a, const int8_t* pack_b, int32_t* C,
-            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, float scale))";
+            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, float scale, float temp_scale, float dst_scale_inv))";
     } else {
         CC_ABORT << "not support dtype " << dtype << "\n";
     }
@@ -62,7 +62,7 @@ std::string MatmulInternal::GenKernelCall(TContext* ctx) {
         }
     } else if (dtype == "8832") {
         return R"((const int8_t* A, size_t LDA, const int8_t* B, size_t LDB, int32_t* C,
-            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale))";
+            size_t LDC, size_t M, size_t N, size_t K, const int32_t* bias_ptr, void* workspace, float scale, float temp_scale, float dst_scale_inv))";
     } else {
         CC_ABORT << "not support dtype " << dtype << "\n";
     }

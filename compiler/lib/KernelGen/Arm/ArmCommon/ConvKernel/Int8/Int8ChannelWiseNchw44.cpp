@@ -169,7 +169,7 @@ std::string render_store_1_line(
     for (int i = 0; i < 4; ++i) {
         ss << act.GenIntrinsicQuantStore(
                 reg_name + "[" + std::to_string(i) + "]",
-                "store_ptr + " + std::to_string(i) + " * 4", "scale");
+                "store_ptr + " + std::to_string(i) + " * 4", "src_scale", "dst_scale");
     }
     ss << "\n}";
     return ss.str();
@@ -195,7 +195,8 @@ std::string render_store_1_line_remain(
         for (int i = 0; i < remain_val; ++i) {
             ss << act.GenIntrinsicQuantStore(
                     reg_name + "[" + std::to_string(i) + "]",
-                    "store_ptr + " + std::to_string(i) + " * 4", "scale");
+                    "store_ptr + " + std::to_string(i) + " * 4", "src_scale",
+                    "dst_scale");
         }
         ss << "\n}";
     }
@@ -210,7 +211,7 @@ std::string gen_3x3_s1_kern(
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
     std::string body_temp = R"(
 static inline void nchw44_chanwise_3x3_int8(const int8_t* sptr, const int8_t* fptr, const int32_t* bias, void* dst,
-        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float src_scale, float dst_scale){
     int32x4_t init_v = ${bias_str};
     const int* filter = (int*)(fptr);
     int8x16_t kern[9];
@@ -583,7 +584,7 @@ std::string gen_3x3_s2_kern(
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
     std::string body_temp = R"(
 static inline void nchw44_chanwise_3x3_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, void* dst,
-        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float src_scale, float dst_scale){
 
     int32x4_t init_v = ${bias_str};
     int32x2_t zero = vdup_n_s32(0);
@@ -808,7 +809,7 @@ std::string gen_5x5_s1_kern(
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
     std::string body_temp = R"(
 static inline void nchw44_chanwise_5x5_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, void* dst,
-        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float src_scale, float dst_scale){
 #define LOAD_1_LINE_SRC(sptr, src)        \
     src[0] = vld1q_s8(sptr);              \
     src[4] = vld1q_s8(sptr + 16);         \
@@ -1073,7 +1074,7 @@ std::string gen_5x5_s2_kern(
     std::string bias_str = with_bias ? "vld1q_s32(bias)" : "vdupq_n_s32(0)";
     std::string body_temp = R"(
 static inline void nchw44_chanwise_5x5_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, void* dst,
-        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float scale){
+        const size_t IH, const size_t IW, const size_t OH, const size_t OW, float src_scale, float dst_scale){
 #define COMPUTE_ONE_VECTOR(                                            \
         src00, src01, src02, src10, src11, src12, kern0, kern1, sum)   \
     accumulate_1_line_horizon(src00, kern0[0], src10, kern1[0], &sum); \
@@ -1463,7 +1464,7 @@ std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
         } else if (2 == stride) {
             writer << gen_3x3_s2_kern(ctx, with_bias, nonline_mode);
         } else {
-            CC_ABORT << "unsupport stride in mk4 channel wise kernel.\n";
+            CC_ABORT << "unsupported stride in mk4 channel wise kernel.\n";
         }
     } else if (kernel == 5) {
         if (1 == stride) {
@@ -1471,10 +1472,10 @@ std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
         } else if (2 == stride) {
             writer << gen_5x5_s2_kern(ctx, with_bias, nonline_mode);
         } else {
-            CC_ABORT << "unsupport stride in mk4 channel wise kernel.\n";
+            CC_ABORT << "unsupported stride in mk4 channel wise kernel.\n";
         }
     } else {
-        CC_ABORT << "unsupport kernel size in mk4 channel wise kernel.\n";
+        CC_ABORT << "unsupported stride in mk4 channel wise kernel.\n";
     }
     writer << GenCommonRet() << " " << GetKernelSignature(ctx) << "{\n";
     std::string bias_str = with_bias ? "inputs[2]->ptr" : "0";
@@ -1502,7 +1503,8 @@ std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
         const float src_scale = inputs[0]->dtype.param.scale;
         const float flt_scale = inputs[1]->dtype.param.scale;
         const float dst_scale = outputs[0]->dtype.param.scale;
-        const float scale = src_scale * flt_scale / dst_scale;
+        const float dst_scale_inv = 1.f / dst_scale;
+        const float scale = src_scale * flt_scale;
 
 
         int8_t* input_data = inputs[0]->ptr;
@@ -1522,7 +1524,7 @@ std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
                     memcpy(padding_src + ((ih + PH) * IW2 + PW) * pack_ic_size,
                            src_ptr + ih * IW * pack_ic_size, sizeof(int8_t) * min_iw * pack_ic_size);
                 }
-                nchw44_chanwise_${kernel_h}x${kernel_w}_int8(padding_src, weight_ptr, bias_ptr, dst_ptr, IH2, IW2, OH, OW, scale);
+                nchw44_chanwise_${kernel_h}x${kernel_w}_int8(padding_src, weight_ptr, bias_ptr, dst_ptr, IH2, IW2, OH, OW, scale, dst_scale_inv);
             }
             input_data += N_stride;
             output_data += ON_stride;

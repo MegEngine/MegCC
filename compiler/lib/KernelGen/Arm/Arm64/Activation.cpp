@@ -16,7 +16,7 @@ std::shared_ptr<ActivationGenAsmBase> megcc::KernelGen::Arm64::create_activation
         //! SIGMOID should impl after matmul
         return std::make_shared<ActivationGenAsm<NonlineMode::IDENTITY>>();
     } else {
-        CC_ABORT << "UNsupport NonlineMode\n";
+        CC_ABORT << "unsupported NonlineMode\n";
         return nullptr;
     }
 }
@@ -67,7 +67,8 @@ std::string ActivationGenAsmBase::GenAsmQuantInit(
     return "";
 }
 std::string ActivationGenAsmBase::GenAsmQuantStore(
-        std::vector<std::string> int_regs, std::string scale_reg,
+        std::vector<std::string> int_regs, std::string src_scale_reg,
+        std::string dst_scale_ptr, std::string src_scale_ptr,
         const std::string& output_sym, const int elem_offset,
         const std::string dst_specifier, const std::vector<std::string> args_reg,
         const std::string& mode, bool with_store) {
@@ -101,10 +102,12 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
         }
         std::stringstream temp_ss;
         temp_ss << R"(
-                "scvtf  ${int_reg}.4s,   ${int_reg}.4s\n" )";
+                "scvtf  ${int_reg}.4s,   ${int_reg}.4s\n" 
+                "fmul   ${int_reg}.4s,   ${int_reg}.4s,   ${src_scale_reg}.4s\n")";
         if (int_regs.size() == 2) {
             temp_ss << R"(
-                "scvtf  ${int_reg_2}.4s,   ${int_reg_2}.4s\n" )";
+                "scvtf  ${int_reg_2}.4s,   ${int_reg_2}.4s\n"
+                "fmul   ${int_reg_2}.4s,   ${int_reg_2}.4s,   ${src_scale_reg}.4s\n" )";
         }
         if (mode == "RELU") {
             temp_ss << R"(
@@ -134,10 +137,12 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
         }
         if (int_regs.size() == 1) {
             temp_ss << R"(
-                "fmul   ${int_reg}.4s,   ${int_reg}.4s,   ${scale_reg}.4s\n"
+                "ld1r {${src_scale_reg}.4s}, [%[${arg_ptr_dst_scale}]]\n"
+                "fmul   ${int_reg}.4s,   ${int_reg}.4s,   ${src_scale_reg}.4s\n"
                 "fcvtas ${int_reg}.4s,   ${int_reg}.4s\n"
                 "sqxtn  ${int_reg}.4h,   ${int_reg}.4s\n"
                 "sqxtn  ${int_reg}.8b,   ${int_reg}.8h\n"
+                "ld1r {${src_scale_reg}.4s}, [%[${arg_ptr_src_scale}]]\n"
             )";
             if (with_store) {
                 temp_ss << R"(
@@ -147,8 +152,9 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
         } else {
             CC_ASSERT(int_regs.size() == 2);
             temp_ss << R"(
-                "fmul   ${int_reg}.4s,   ${int_reg}.4s,   ${scale_reg}.4s\n"
-                "fmul   ${int_reg_2}.4s,   ${int_reg_2}.4s,   ${scale_reg}.4s\n"
+                "ld1r {${src_scale_reg}.4s}, [%[${arg_ptr_dst_scale}]]\n" 
+                "fmul   ${int_reg}.4s,   ${int_reg}.4s,   ${src_scale_reg}.4s\n"
+                "fmul   ${int_reg_2}.4s,   ${int_reg_2}.4s,   ${src_scale_reg}.4s\n"
                 "fcvtas ${int_reg}.4s,   ${int_reg}.4s\n"
                 "fcvtas ${int_reg_2}.4s,   ${int_reg_2}.4s\n"
                 "sqxtn  ${int_reg}.4h,   ${int_reg}.4s\n"
@@ -156,6 +162,7 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
 
                 "sqxtn  ${int_reg}.8b,   ${int_reg}.8h\n"
                 "sqxtn  ${int_reg_2}.8b,   ${int_reg_2}.8h\n"
+                "ld1r {${src_scale_reg}.4s}, [%[${arg_ptr_src_scale}]]\n"
             )";
             if (with_store) {
                 temp_ss << R"(
@@ -167,7 +174,9 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
         auto gener = StringTemplate::StringTemplateArgs()
                              .add("int_reg", int_regs[0])
                              .add("st_int_reg", st_int_reg)
-                             .add("scale_reg", scale_reg)
+                             .add("src_scale_reg", src_scale_reg)
+                             .add("arg_ptr_dst_scale", dst_scale_ptr)
+                             .add("arg_ptr_src_scale", src_scale_ptr)
                              .add("output_sym", output_sym)
                              .add("byte_offset", elem_offset)
                              .add("zero_reg", reg_0)

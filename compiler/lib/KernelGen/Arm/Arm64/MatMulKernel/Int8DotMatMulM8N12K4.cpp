@@ -130,7 +130,7 @@ std::string Int8DotMatMulM8N12K4::GetKernelBody(TContext* context) const {
     void* workspace_ptr = workspace->ptr;
     TINYNN_ASSERT(workspace_ptr);
 
-    ${matmul_symbol}(A, LDA, B, LDB, C, LDC, M, N, K, 0, workspace_ptr, 1.f);
+    ${matmul_symbol}(A, LDA, B, LDB, C, LDC, M, N, K, 0, workspace_ptr, 1.f, 1.f, 1.f);
     return TinyNN_SUCCESS;
     })";
 

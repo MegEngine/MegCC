@@ -117,7 +117,7 @@ std::string render_store(
         ss << act.GenIntrinsicQuantStore(
                 "c[" + std::to_string(c_idx) + "][" + std::to_string(ow_idx) + "]",
                 "dst_ptr + " + store_offset + " + " + std::to_string(ow_idx) + " * 4",
-                "scale");
+                "scale", "dst_scale_inv");
     }
     return ss.str();
 }
@@ -125,7 +125,7 @@ std::string render_store(
 std::string render_kernel(TContext* ctx) {
     std::stringstream ss;
     ss << R"(typedef void kern_func (const int8_t* src_ptr, const int8_t* filter_ptr, const int32_t* bias_ptr,
-                                        int8_t* dst_ptr, const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale);
+                                        int8_t* dst_ptr, const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale, float dst_scale_inv);
     )";
 
     auto mode = ctx->getAttrStr("nonlineMode");
@@ -178,8 +178,8 @@ std::string render_kernel(TContext* ctx) {
                  })
             .add("activate", [=](std::vector<std::string> args) {
                 CC_ASSERT(args.size() == 2) << "args size = " << args.size();
-                auto str =
-                        activate_gen->GenIntrinsicQuantStore(args[0], args[1], "scale");
+                auto str = activate_gen->GenIntrinsicQuantStore(
+                        args[0], args[1], "scale", "dst_scale_inv");
                 return str;
             });
 
@@ -187,7 +187,7 @@ std::string render_kernel(TContext* ctx) {
         __attribute__((target("dotprod")))
         static inline void nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_${nr_ow}_oc${oc_step}(
             const int8_t* src_ptr, const int8_t* filter_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale
+            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale, float dst_scale_inv
         ){
             const int simd_len = ${simd_len};
             int32x4_t c[${oc_step} / ${packed_oc}][${ow_step}];
@@ -220,7 +220,7 @@ std::string render_kernel(TContext* ctx) {
         __attribute__((target("dotprod")))
         static inline void nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_remain_oc${oc_step}(
             const int8_t* src_ptr, const int8_t* filter_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const int ow_remain, const float scale
+            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const int ow_remain, const float scale, float dst_scale_inv
         ){
             const int simd_len = ${simd_len};
             int32x4_t c[${oc_step} / ${packed_oc}][${ow_step}];
@@ -260,7 +260,7 @@ std::string render_kernel(TContext* ctx) {
         static inline void
         nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_${nr_ow}_oc${oc_step}(
             const int8_t* src_ptr, const int8_t* filter_ptr, const int32_t* bias_ptr, int8_t* dst_ptr, 
-            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale
+            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const float scale, float dst_scale_inv
         ){
             const int simd_len = ${simd_len};
             int32x4_t c[${oc_step} / ${packed_oc}][${ow_step}];
@@ -291,7 +291,7 @@ std::string render_kernel(TContext* ctx) {
         __attribute__((target("dotprod")))
         static inline void nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_remain_oc${oc_step}(
             const int8_t* src_ptr, const int8_t* filter_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const int ow_remain, const float scale
+            const int packed_iw, const int packed_ic_stride, const int ld_dst_oc, const int ow_remain, const float scale, float dst_scale_inv
         ){
             const int simd_len = ${simd_len};
             int32x4_t c[${oc_step} / ${packed_oc}][${ow_step}];
@@ -421,7 +421,8 @@ static inline void copy_pad_src(int8_t* sptr_base, const int8_t* sptr_origin,
     const float src_scale = inputs[0]->dtype.param.scale;
     const float flt_scale = inputs[1]->dtype.param.scale;
     const float dst_scale = outputs[0]->dtype.param.scale;
-    const float scale = src_scale * flt_scale / dst_scale;
+    const float dst_scale_inv = 1.f / dst_scale;
+    const float scale = src_scale * flt_scale;
 
     const int oc = ${oc};
     const int oh = out_layout.dims[2];
@@ -451,7 +452,7 @@ static inline void copy_pad_src(int8_t* sptr_base, const int8_t* sptr_origin,
                                             (oh_idx * ow + ow_idx) * pack_oc_size;
                     nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_${ow_step}_oc8(
                         src_ptr + src_offset, weight_ptr + weight_offset, bias_ptr + oc_idx,
-                        output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, scale);
+                        output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, scale, dst_scale_inv);
                 }
                 if (ow_remain) {
                     const int src_offset =  oh_idx * stride_h * packed_iw +
@@ -460,7 +461,7 @@ static inline void copy_pad_src(int8_t* sptr_base, const int8_t* sptr_origin,
                                             (oh_idx * ow + ow_end) * pack_oc_size;
                     nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_remain_oc8(src_ptr + src_offset,
                      weight_ptr + weight_offset, bias_ptr + oc_idx, output_ptr + dst_offset, 
-                     packed_iw, packed_ic_stride, ld_dst_oc, ow_remain, scale);                    
+                     packed_iw, packed_ic_stride, ld_dst_oc, ow_remain, scale,dst_scale_inv);                    
                 }
             }
         }
@@ -474,14 +475,14 @@ static inline void copy_pad_src(int8_t* sptr_base, const int8_t* sptr_origin,
                                             (oh_idx * ow + ow_idx) * pack_oc_size;
                     nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_${ow_step}_oc4(
                         src_ptr + src_offset, weight_ptr + weight_offset, bias_ptr + oc_end, 
-                        output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, scale);
+                        output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, scale, dst_scale_inv);
                 }
                 if (ow_remain) {                    
                     const int src_offset =  oh_idx * stride_h * packed_iw +
                                             ow_end * stride_w * iw_pack_size;
                     const int dst_offset = oc_end * oc_stride +
                                             (oh_idx * ow + ow_end) * pack_oc_size;
-                    nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_remain_oc4(src_ptr + src_offset, weight_ptr + weight_offset, bias_ptr + oc_end, output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, ow_remain, scale);
+                    nchw_nchw44_s1_${filter_size}x${filter_size}_kernel_remain_oc4(src_ptr + src_offset, weight_ptr + weight_offset, bias_ptr + oc_end, output_ptr + dst_offset, packed_iw, packed_ic_stride, ld_dst_oc, ow_remain, scale, dst_scale_inv);
                 }
             }
         }

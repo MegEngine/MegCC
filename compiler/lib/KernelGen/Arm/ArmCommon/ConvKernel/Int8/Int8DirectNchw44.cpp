@@ -78,7 +78,7 @@ std::string gen_do_conv_code(TContext* ctx) {
     std::stringstream ss;
     std::string code_body = R"(
 static void do_conv_kern(int8_t* sptr_base, int8_t* packed_weight_base, int32_t* bptr_base, int8_t* dptr_base, size_t OH, size_t OW, size_t ICPG, size_t OCPG, size_t GROUP, size_t IH2, size_t IW2, 
-    size_t workspace_batch_id, size_t workspace_group_id, size_t batch_id, size_t group_id, size_t oc_id, size_t oc_block_num, float scale) {
+    size_t workspace_batch_id, size_t workspace_group_id, size_t batch_id, size_t group_id, size_t oc_id, size_t oc_block_num, float scale, float dst_scale) {
     size_t padding_group_size = IH2 * IW2 * ICPG;
     const size_t pack_c = 4;
     const size_t src_expand_size = 4;
@@ -101,7 +101,7 @@ static void do_conv_kern(int8_t* sptr_base, int8_t* packed_weight_base, int32_t*
         bptr = bptr_base + (group_id * OCPG + oc_idx);
     }
     int8_t* packed_weight = packed_weight_base + (group_id * OCPG * ICPG * ${kernel_h} * ${kernel_w} + oc_idx * ICPG * ${kernel_h} * ${kernel_w}) * sizeof(int8_t);
-    nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(sptr, packed_weight, bptr, dst_ptr, oc_block, ICPG, IH2, IW2, OH, OW, scale);
+    nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(sptr, packed_weight, bptr, dst_ptr, oc_block, ICPG, IH2, IW2, OH, OW, scale, dst_scale);
 }
 )";
     ss << StringTemplate::StringTemplateArgs(ctx)
@@ -115,7 +115,7 @@ std::string gen_oc4_kernel_common_code(TContext* ctx) {
     std::stringstream ss;
     std::string body_temp = R"(
 static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, int8_t* dst,
-        const size_t oc, const size_t ic, const size_t ih, const size_t iw, const size_t oh, const size_t ow, float scale){
+        const size_t oc, const size_t ic, const size_t ih, const size_t iw, const size_t oh, const size_t ow, float scale, float dst_scale){
     const size_t fh = ${kernel_h};
     const size_t fw = ${kernel_w};
     const size_t ic_step = 4;
@@ -140,7 +140,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                 const size_t dst_offset =
                         oc_idx * img_stride + (oh_idx * ow + ow_idx) * oc_step;  
                 nchw44_conv_direct_${kernel_h}x${kernel_w}_int8_impl(src + src_offset, filter + weight_offset, bias + oc_idx,
-                             dst + dst_offset, ic, ih, iw, scale);
+                             dst + dst_offset, ic, ih, iw, scale,dst_scale);
             }
             if (ow_remain > 0) {
                 const size_t src_offset =
@@ -148,7 +148,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                 const size_t dst_offset =
                         oc_idx * img_stride + (oh_idx * ow + ow_end) * oc_step;
                 nchw44_conv_direct_${kernel_h}x${kernel_w}_int8_impl_remain(src + src_offset, filter + weight_offset, bias + oc_idx,
-                        dst + dst_offset, ic, ih, iw, scale, ow_remain);
+                        dst + dst_offset, ic, ih, iw, scale,dst_scale, ow_remain);
             }
         }
     }
@@ -167,7 +167,7 @@ std::string gen_2x2_kernel_common_code(TContext* ctx) {
     std::stringstream ss;
     std::string body_temp = R"(
 static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t* src, const int8_t* filter, const int32_t* bias, int8_t* dst,
-        const size_t oc, const size_t ic, const size_t ih, const size_t iw, const size_t oh, const size_t ow, float scale){
+        const size_t oc, const size_t ic, const size_t ih, const size_t iw, const size_t oh, const size_t ow, float scale, float dst_scale){
     const int fh = ${kernel_h};
     const int fw = ${kernel_w};
     const int oc_step = 4;
@@ -195,7 +195,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                 const size_t dst_offset =
                         oc_idx * img_stride + (oh_idx * ow + ow_idx) * oc_step;
                 ker_neon_dirctconv_2x2s${stride_h}_oc8_ow8(src + src_offset, filter + weight_offset, bias + oc_idx,
-                        dst + dst_offset, ic, ih, iw, ld_oc, scale);
+                        dst + dst_offset, ic, ih, iw, ld_oc, scale, dst_scale);
             }
             if (ow_remain > 0) {
                 const size_t src_offset =
@@ -203,7 +203,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                 const size_t dst_offset =
                         oc_idx * img_stride + (oh_idx * ow + ow_end) * oc_step;
                 ker_neon_dirctconv_2x2s${stride_h}_oc8_ow8_remain(src + src_offset, filter + weight_offset, bias + oc_idx,
-                    dst + dst_offset, ic, ih, iw, ld_oc, scale, ow_remain);
+                    dst + dst_offset, ic, ih, iw, ld_oc, scale,dst_scale, ow_remain);
             }
         }
     }
@@ -217,7 +217,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                 const size_t dst_offset =
                         oc_idx * img_stride + (oh_idx * ow + ow_idx) * oc_step;
                 ker_neon_dirctconv_2x2s${stride_h}_oc4_ow8(src + src_offset, filter + weight_offset, bias + oc_idx,
-                        dst + dst_offset, ic, ih, iw, ld_oc, scale);
+                        dst + dst_offset, ic, ih, iw, ld_oc, scale,dst_scale);
             }
             if (ow_remain > 0) {
                 const size_t src_offset =
@@ -226,7 +226,7 @@ static inline void nchw44_conv_direct_${kernel_h}x${kernel_w}_int8(const int8_t*
                         oc_idx * img_stride + (oh_idx * ow + ow_end) * oc_step;
                 ker_neon_dirctconv_2x2s${stride_h}_oc4_ow8_remain(
                         src + src_offset, filter + weight_offset, bias + oc_idx,
-                        dst + dst_offset, ic, ih, iw, ld_oc, scale, ow_remain);
+                        dst + dst_offset, ic, ih, iw, ld_oc, scale, dst_scale,ow_remain);
             }
         }
     }
@@ -307,7 +307,7 @@ std::string gen_res_store_code(
     for (int i = 0; i < 8; ++i) {
         ss << act.GenIntrinsicQuantStore(
                 reg_name + "[" + std::to_string(i) + "]",
-                dst_name + " + " + std::to_string(i) + " * 4", "scale");
+                dst_name + " + " + std::to_string(i) + " * 4", "scale", "dst_scale");
     }
     return ss.str();
 }
@@ -317,7 +317,8 @@ std::string gen_res_store_code_remain(
         const ActivationGenIntrinsicBase& act, std::string remain) {
     std::stringstream ss;
     ss << "rep(i, " << remain << ")\n";
-    ss << act.GenIntrinsicQuantStore(reg_name + "[i]", dst_name + " + i * 4", "scale");
+    ss << act.GenIntrinsicQuantStore(
+            reg_name + "[i]", dst_name + " + i * 4", "scale", "dst_scale");
     return ss.str();
 }
 
@@ -326,7 +327,7 @@ std::string gen_2x2_s1_oc8_ow8_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, int ld_dst_oc, float scale ${remain_param}){
+        int ic, int ih, int iw, int ld_dst_oc, float scale, float dst_scale ${remain_param}){
     const int filter_size = 2;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -443,7 +444,7 @@ std::string gen_2x2_s1_oc4_ow8_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, int ld_dst_oc, float scale ${remain_param}){
+        int ic, int ih, int iw, int ld_dst_oc, float scale, float dst_scale ${remain_param}){
     const int filter_size = 2;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -536,7 +537,7 @@ std::string gen_2x2_s2_oc8_ow8_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, int ld_dst_oc, float scale ${remain_param}){
+        int ic, int ih, int iw, int ld_dst_oc, float scale, float dst_scale ${remain_param}){
     const int filter_size = 2;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -660,7 +661,7 @@ std::string gen_2x2_s2_oc4_ow8_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, int ld_dst_oc, float scale ${remain_param}){
+        int ic, int ih, int iw, int ld_dst_oc, float scale,float dst_scale ${remain_param}){
     const int filter_size = 2;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -760,7 +761,7 @@ std::string gen_3x3_s1_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale, float dst_scale ${remain_param}){
     const int filter_size = 3;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -863,7 +864,7 @@ std::string gen_3x3_s2_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale,float dst_scale ${remain_param}){
     const int filter_size = 3;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -973,7 +974,7 @@ std::string gen_5x5_s1_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale,float dst_scale ${remain_param}){
     const int filter_size = 5;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -1097,7 +1098,7 @@ std::string gen_5x5_s2_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale,float dst_scale ${remain_param}){
     const int filter_size = 5;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -1227,7 +1228,7 @@ std::string gen_7x7_s1_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale,float dst_scale ${remain_param}){
     const int filter_size = 7;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -1372,7 +1373,7 @@ std::string gen_7x7_s2_kern(
     std::stringstream ss;
     std::string kernel_impl = R"(
 static inline void ${func_name}(const int8_t* src_ptr, const int8_t* weight_ptr, const int32_t* bias_ptr, int8_t* dst_ptr,
-        int ic, int ih, int iw, float scale ${remain_param}){
+        int ic, int ih, int iw, float scale,float dst_scale ${remain_param}){
     const int filter_size = 7;
     const int fh = filter_size;
     const int fw = filter_size;
@@ -1687,8 +1688,9 @@ std::string DirectInt8NCHW44::GetKernelBody(TContext* context) const {
         } else if (kernel == 7) {
             writer << gen_7x7_s1_kern(context, with_bias, nonline_mode);
         } else {
-            CC_ABORT << "unsupport kernel size for stride1 in int8 nchw44 direct conv "
-                        "kernel.\n";
+            CC_ABORT
+                    << "unsupported kernel size for stride1 in int8 nchw44 direct conv "
+                       "kernel.\n";
         }
     } else if (2 == stride) {
         if (kernel == 2) {
@@ -1701,11 +1703,12 @@ std::string DirectInt8NCHW44::GetKernelBody(TContext* context) const {
         } else if (kernel == 7) {
             writer << gen_7x7_s2_kern(context, with_bias, nonline_mode);
         } else {
-            CC_ABORT << "unsupport kernel size for stride2 in int8 nchw44 direct conv "
-                        "kernel.\n";
+            CC_ABORT
+                    << "unsupported kernel size for stride2 in int8 nchw44 direct conv "
+                       "kernel.\n";
         }
     } else {
-        CC_ABORT << "unsupport stride in int8 nchw44 direct conv kernel.\n";
+        CC_ABORT << "unsupported stride in int8 nchw44 direct conv kernel.\n";
     }
     if (kernel == 2) {
         writer << gen_2x2_kernel_common_code(context);
@@ -1738,7 +1741,9 @@ std::string DirectInt8NCHW44::GetKernelBody(TContext* context) const {
     const float src_scale = inputs[0]->dtype.param.scale;
     const float flt_scale = inputs[1]->dtype.param.scale;
     const float dst_scale = outputs[0]->dtype.param.scale;
-    const float scale = src_scale * flt_scale / dst_scale;
+    // this must be 1.f/dst_scale for quant data
+    const float dst_scale_inv = 1.f / dst_scale;
+    const float scale = src_scale * flt_scale;
 
     int8_t* input_data = inputs[0]->ptr;
     int8_t* output_data = outputs[0]->ptr;
@@ -1773,7 +1778,7 @@ std::string DirectInt8NCHW44::GetKernelBody(TContext* context) const {
             const int8_t* src_ptr = input_data + batch_offset + group_offset;
             copy_padding_kern(src_ptr, padding_src, IH, IW, icpg, IH2, IW2);
             do_conv_kern(padding_src, weight_data, bias_data, output_data, OH, OW, icpg, ocpg, Group, IH2, IW2, 
-                0, 0, batch_id, group_id, 0, 1, scale);
+                0, 0, batch_id, group_id, 0, 1, scale, dst_scale_inv);
         }
     }
 )"
@@ -1791,7 +1796,7 @@ std::string DirectInt8NCHW44::GetKernelBody(TContext* context) const {
     rep(batch_id, N){
         rep(oc_id, oc_block_num){
             do_conv_kern(padding_src, weight_data, bias_data, output_data, OH, OW, icpg, ocpg, Group, IH2, IW2, 
-                batch_id, 0, batch_id, 0, oc_id, oc_block_num, scale);
+                batch_id, 0, batch_id, 0, oc_id, oc_block_num, scale, dst_scale_inv);
         }
     }
 )";

@@ -27,7 +27,7 @@ struct ActivationGenIntrinsicBase {
     //! compute the input neon data and write to the output ptr
     virtual std::string GenIntrinsicQuantStore(
             const std::string& input, const std::string& outptr,
-            const std::string& scale_sym) const = 0;
+            const std::string& src_scale, const std::string& dst_scale) const = 0;
 };
 
 template <NonlineMode mode>
@@ -58,11 +58,12 @@ public:
     }
     std::string GenIntrinsicQuantStore(
             const std::string& input, const std::string& outptr,
-            const std::string& scale_sym) const override {
+            const std::string& src_scale, const std::string& dst_scale) const override {
         std::string store_temp = R"(
             {
                 float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
-                float32x4_t res = vmulq_n_f32(f32_res, ${scale_sym});
+                float32x4_t res = vmulq_n_f32(f32_res, ${src_scale});
+                res = vmulq_n_f32(res, ${dst_scale}); 
 #ifdef __aarch64__
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
 #else
@@ -76,7 +77,8 @@ public:
         )";
         return StringTemplate::StringTemplateArgs()
                 .add("input_reg", input)
-                .add("scale_sym", scale_sym)
+                .add("src_scale", src_scale)
+                .add("dst_scale", dst_scale)
                 .add("output_ptr", outptr)
                 .render(store_temp);
     }
@@ -108,11 +110,12 @@ public:
     }
     std::string GenIntrinsicQuantStore(
             const std::string& input, const std::string& outptr,
-            const std::string& scale_sym) const override {
+            const std::string& src_scale, const std::string& dst_scale) const override {
         std::string store_temp = R"(
             {
                 float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
-                float32x4_t res = vmaxq_f32(vmulq_n_f32(f32_res, ${scale_sym}), vzero);
+                 float32x4_t res = vmaxq_f32(vmulq_n_f32(f32_res, ${src_scale}), vzero);
+                res = vmulq_n_f32(res, ${dst_scale}); 
 #ifdef __aarch64__
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
 #else
@@ -126,7 +129,8 @@ public:
         )";
         return StringTemplate::StringTemplateArgs()
                 .add("input_reg", input)
-                .add("scale_sym", scale_sym)
+                .add("src_scale", src_scale)
+                .add("dst_scale", dst_scale)
                 .add("output_ptr", outptr)
                 .render(store_temp);
     }
@@ -178,7 +182,7 @@ public:
     }
     std::string GenIntrinsicQuantStore(
             const std::string& input, const std::string& outptr,
-            const std::string& scale_sym) const override {
+            const std::string& src_scale, const std::string& dst_scale) const override {
         CC_ASSERT(0) << "not impl quant hswish act\n";
         return "";
     }

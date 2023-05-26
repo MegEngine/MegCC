@@ -107,13 +107,14 @@ static std::string kern_8x12(
     __attribute__((target("dotprod")))
     static inline void kern_8x12_bias_relu(const int8_t* packA, const int8_t* packB,
                           int K, ${dst_specifier}* output, int LDC,
-                          const int32_t* bias_ptr, float scale) {
+                          const int32_t* bias_ptr, float src_scale,  float dst_scale) {
         K /= 4;
         const int8_t* a_ptr = packA;
         const int8_t* b_ptr = packB;
         ${dst_specifier}* output0 = output;
         ${dst_specifier}* output1 = output0 + LDC;
-        float* scale_ptr = &scale;
+        float* src_scale_ptr = &src_scale;
+        float* dst_scale_ptr = &dst_scale; 
         const float inv_6 = 1.f / 6.f;
         const float* inv_6_ptr = &inv_6;
 
@@ -454,7 +455,7 @@ static std::string kern_8x12(
             "6:\n"
             : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
               [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
-              [ output0 ] "+r"(output0), [ output1 ] "+r"(output1), [scale_ptr] "+r" (scale_ptr)
+              [ output0 ] "+r"(output0), [ output1 ] "+r"(output1), [src_scale_ptr] "+r" (src_scale_ptr), [dst_scale_ptr] "+r" (dst_scale_ptr)
             :
             : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
               "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19",
@@ -579,7 +580,7 @@ static std::string kern_8x12(
             "6:\n"
             : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
               [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
-              [ output0 ] "+r"(output0), [ output1 ] "+r"(output1), [scale_ptr] "+r" (scale_ptr), [inv6_ptr] "+r" (inv_6_ptr)
+              [ output0 ] "+r"(output0), [ output1 ] "+r"(output1), [src_scale_ptr] "+r" (src_scale_ptr), [inv6_ptr] "+r" (inv_6_ptr), [dst_scale_ptr] "+r" (dst_scale_ptr)
             :
             : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
               "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18", "v19",
@@ -589,15 +590,16 @@ static std::string kern_8x12(
     if (nonline_mode == "H_SWISH") {
         std::string postprocess_reg_init = activation_gen->GenAsmQuantInit(
                 {"v0", "v1", "v2", "v3", "v7"}, nonline_mode,
-                {"inv6_ptr", "scale_ptr"});
+                {"inv6_ptr", "src_scale_ptr"});
         writer << StringTemplate::StringTemplateArgs()
                           .add("dst_specifier", dst_specifier)
                           .add("GenAsmGenAsmQuantStore",
                                [=](std::vector<std::string> args) {
                                    CC_ASSERT(args.size() == 4);
                                    return activation_gen->GenAsmQuantStore(
-                                           {args[0], args[1]}, "v7", args[2],
-                                           std::stoi(args[3]), dst_specifier,
+                                           {args[0], args[1]}, "v7", "dst_scale_ptr",
+                                           "src_scale_ptr", args[2], std::stoi(args[3]),
+                                           dst_specifier,
                                            {"v0", "v1", "v2", "v3", "v4", "v5"},
                                            nonline_mode);
                                })
@@ -605,14 +607,15 @@ static std::string kern_8x12(
                           .render(tail_many_reg_temp);
     } else {
         std::string postprocess_reg_init = activation_gen->GenAsmQuantInit(
-                {"v7", "v6"}, nonline_mode, {"scale_ptr"});
+                {"v7", "v6"}, nonline_mode, {"src_scale_ptr"});
         writer << StringTemplate::StringTemplateArgs()
                           .add("dst_specifier", dst_specifier)
                           .add("GenAsmGenAsmQuantStore",
                                [=](std::vector<std::string> args) {
                                    CC_ASSERT(args.size() == 3);
                                    return activation_gen->GenAsmQuantStore(
-                                           {args[0]}, "v6", args[1], std::stoi(args[2]),
+                                           {args[0]}, "v6", "dst_scale_ptr",
+                                           "src_scale_ptr", args[1], std::stoi(args[2]),
                                            dst_specifier, {"v7"}, nonline_mode);
                                })
                           .add("gen_postprocess_reg_init", postprocess_reg_init)
@@ -633,7 +636,7 @@ static std::string kern_4x12(
                       .render(R"(
         __attribute__((target("dotprod")))
         static inline void kern_4x12_bias_relu(const int8_t* packA, const int8_t* packB, int K,
-                          ${dst_specifier}* output, int LDC, const int32_t* bias_ptr, float scale) {
+                          ${dst_specifier}* output, int LDC, const int32_t* bias_ptr, float src_scale, float dst_scale) {
         K /= 4;
         const int8_t* a_ptr = packA;
         const int8_t* b_ptr = packB;
@@ -642,7 +645,8 @@ static std::string kern_4x12(
 
         int oddk = (K & 1);
         K = ((K + 1) / 2) - 1;
-        float* scale_ptr = &scale;
+        float* src_scale_ptr = &src_scale;
+        float* dst_scale_ptr = &dst_scale;
         const float inv_6 = 1.f / 6.f;
         const float* inv_6_ptr = &inv_6;
 
@@ -794,7 +798,7 @@ static std::string kern_4x12(
                 "6:\n"
                 : [a_ptr] "+r"(a_ptr), [b_ptr] "+r"(b_ptr), [K] "+r"(K),
                   [oddk] "+r"(oddk), [bias_ptr] "+r"(bias_ptr),
-                  [output0] "+r"(output0), [scale_ptr] "+r" (scale_ptr), [inv6_ptr] "+r" (inv_6_ptr)
+                  [output0] "+r"(output0), [src_scale_ptr] "+r" (src_scale_ptr), [inv6_ptr] "+r" (inv_6_ptr), [dst_scale_ptr] "+r" (dst_scale_ptr)
                 :
                 : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9",
                   "v10", "v11", "v12", "v13", "v14", "v15", "v16", "v17", "v18",
@@ -804,14 +808,15 @@ static std::string kern_4x12(
 
     std::string postprocess_reg_init = activation_gen->GenAsmQuantInit(
             {"v20", "v21", "v22", "v23", "v27"}, nonline_mode,
-            {"inv6_ptr", "scale_ptr"});
+            {"inv6_ptr", "src_scale_ptr"});
     writer << StringTemplate::StringTemplateArgs()
                       .add("GenAsmGenAsmQuantStore",
                            [=](std::vector<std::string> args) {
                                CC_ASSERT(args.size() == 4);
                                return activation_gen->GenAsmQuantStore(
-                                       {args[0], args[1]}, "v27", args[2],
-                                       std::stoi(args[3]), dst_specifier,
+                                       {args[0], args[1]}, "v27", "dst_scale_ptr",
+                                       "src_scale_ptr", args[2], std::stoi(args[3]),
+                                       dst_specifier,
                                        {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode);
                            })
@@ -865,13 +870,14 @@ static std::string kern_8x4(
         //
         __attribute__((target("dotprod")))
         static inline void kern_8x4_bias_relu(const int8_t* packA, const int8_t* packB, int K,
-                            ${dst_specifier}* output, int LDC, const int32_t* bias_ptr, int n_remain, float scale) {
+                            ${dst_specifier}* output, int LDC, const int32_t* bias_ptr, int n_remain, float src_scale, float dst_scale) {
             K /= 4;
             const int8_t* a_ptr = packA;
             const int8_t* b_ptr = packB;
             ${dst_specifier}* output0 = output;
             ${dst_specifier}* output1 = output0 + LDC;
-            float* scale_ptr = &scale;
+            float* src_scale_ptr = &src_scale;
+            float* dst_scale_ptr = &dst_scale;
             const float inv_6 = 1.f / 6.f;
             const float* inv_6_ptr = &inv_6;
             
@@ -1058,7 +1064,7 @@ static std::string kern_8x4(
             : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
               [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
               [ output0 ] "+r"(output0), [ output1 ] "+r"(output1),
-              [ n_remain ] "+r"(n_remain), [scale_ptr] "+r" (scale_ptr), [inv6_ptr] "+r" (inv_6_ptr)
+              [ n_remain ] "+r"(n_remain), [src_scale_ptr] "+r" (src_scale_ptr), [inv6_ptr] "+r" (inv_6_ptr),  [dst_scale_ptr] "+r" (dst_scale_ptr)
             :
             : "v0", "v1", "v2", "v3", "v8", "v9", "v10", "v11", "v12", "v13",
               "v14", "v15", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27", "cc", "memory");
@@ -1068,15 +1074,15 @@ static std::string kern_8x4(
 
     std::string postprocess_reg_init = activation_gen->GenAsmQuantInit(
             {"v20", "v21", "v22", "v23", "v27"}, nonline_mode,
-            {"inv6_ptr", "scale_ptr"});
+            {"inv6_ptr", "src_scale_ptr"});
     writer << StringTemplate::StringTemplateArgs()
                       .add("gen_store", store_str)
                       .add("GenAsmGenAsmQuantStore",
                            [=](std::vector<std::string> args) {
                                CC_ASSERT(args.size() == 2);
                                return activation_gen->GenAsmQuantStore(
-                                       {args[0], args[1]}, "v27", "None", 0,
-                                       dst_specifier,
+                                       {args[0], args[1]}, "v27", "dst_scale_ptr",
+                                       "src_scale_ptr", "None", 0, dst_specifier,
                                        {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode, false);
                            })
@@ -1125,12 +1131,13 @@ static std::string kern_4x4(
             //                        Accumulator
             static inline void kern_4x4_bias_relu(const int8_t* packA, const int8_t* packB, int K,
                                            ${dst_specifier}* output, int LDC, const int32_t* bias_ptr,
-                                           int n_remain, float scale) {
+                                           int n_remain, float src_scale, float dst_scale) {
                 K /= 4;
                 const int8_t* a_ptr = packA;
                 const int8_t* b_ptr = packB;
                 ${dst_specifier}* output0 = output;
-                float* scale_ptr = &scale;
+                float* src_scale_ptr = &src_scale;
+                float* dst_scale_ptr = &dst_scale;
                 const float inv_6 = 1.f / 6.f;
                 const float* inv_6_ptr = &inv_6;
 
@@ -1260,7 +1267,7 @@ static std::string kern_4x4(
 
                 : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
                   [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
-                  [ output0 ] "+r"(output0), [ n_remain ] "+r"(n_remain), [scale_ptr] "+r" (scale_ptr), [inv6_ptr] "+r" (inv_6_ptr)
+                  [ output0 ] "+r"(output0), [ n_remain ] "+r"(n_remain), [src_scale_ptr] "+r" (src_scale_ptr), [inv6_ptr] "+r" (inv_6_ptr), [dst_scale_ptr] "+r" (dst_scale_ptr)
                 :
                 : "v0", "v1", "v2", "v3", "v8", "v9", "v10", "v11", "v20", "v21", "v22", "v23", "v24", "v25", "v26", "v27",
                   "cc", "memory");
@@ -1269,15 +1276,15 @@ static std::string kern_4x4(
         })";
     std::string postprocess_reg_init = activation_gen->GenAsmQuantInit(
             {"v20", "v21", "v22", "v23", "v27"}, nonline_mode,
-            {"inv6_ptr", "scale_ptr"});
+            {"inv6_ptr", "src_scale_ptr"});
     writer << StringTemplate::StringTemplateArgs()
                       .add("gen_store", store_str)
                       .add("GenAsmGenAsmQuantStore",
                            [=](std::vector<std::string> args) {
                                CC_ASSERT(args.size() == 2);
                                return activation_gen->GenAsmQuantStore(
-                                       {args[0], args[1]}, "v27", "None", 0,
-                                       dst_specifier,
+                                       {args[0], args[1]}, "v27", "dst_scale_ptr",
+                                       "src_scale_ptr", "None", 0, dst_specifier,
                                        {"v20", "v21", "v22", "v23", "v24", "v25"},
                                        nonline_mode, false);
                            })
@@ -1427,14 +1434,14 @@ std::string gen_kernel(
             const int8_t* cur_pack_b = pack_b;
             for (; n + n_block <= N; n += n_block) {
                 kern_8x12_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                    bias_ptr, scale);
+                                    bias_ptr, temp_scale, dst_scale_inv);
                 output += n_block * pack_mk;
                 cur_pack_b += K12;
             }
 
             for (; n < N; n += 4) {                
                 kern_8x4_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                   bias_ptr, N - n > 4 ? 4 : N - n, scale);
+                                   bias_ptr, N - n > 4 ? 4 : N - n, temp_scale, dst_scale_inv);
                 output += 4 * pack_mk;
                 cur_pack_b += K4;
             }
@@ -1447,13 +1454,13 @@ std::string gen_kernel(
             const int8_t* cur_pack_b = pack_b;
             for (; n + n_block - 1 < N; n += n_block) {                
                 kern_4x12_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                    bias_ptr, scale);
+                                    bias_ptr, temp_scale, dst_scale_inv);
                 output += n_block * pack_mk;
                 cur_pack_b += K12;
             }
             for (; n < N; n += 4) {                
                 kern_4x4_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                   bias_ptr, N - n > 4 ? 4 : N - n, scale);
+                                   bias_ptr, N - n > 4 ? 4 : N - n, temp_scale, dst_scale_inv);
                 output += 4 * pack_mk;
                 cur_pack_b += K4;
             }

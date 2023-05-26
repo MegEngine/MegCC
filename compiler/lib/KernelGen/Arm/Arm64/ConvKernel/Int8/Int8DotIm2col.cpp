@@ -110,9 +110,9 @@ bool ConvIm2colDot::IsAvailable(TContext* ctx) const {
                     (ctx->getAttrStr("sparse") == "DENSE" &&
                      ctx->getAttrOprand("operand:1").shape.size() == 6);
     }
-    bool availabe = param_value_ok && param_mode_ok && type_ok && noline_ok &&
-                    layout_ok && weight_ok;
-    return availabe;
+    bool available = param_value_ok && param_mode_ok && type_ok && noline_ok &&
+                     layout_ok && weight_ok;
+    return available;
 }
 
 std::string ConvIm2colDot::GetInitBody(TContext* ctx) const {
@@ -326,7 +326,7 @@ std::string ConvIm2colDot::GetKernelBody(TContext* ctx) const {
         const float dst_scale = outputs[0]->dtype.param.scale;
         const float temp_scale = src_scale * flt_scale;
         const float dst_scale_inv = 1.f / dst_scale;
-        const float scale = src_scale * flt_scale / dst_scale;
+        const float scale = src_scale * flt_scale * dst_scale_inv;
 
         int8_t* input_data = inputs[0]->ptr;
         int8_t* output_data = outputs[0]->ptr;

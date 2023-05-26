@@ -27,7 +27,8 @@ struct ActivationGenAsmBase {
             const std::vector<std::string> args_reg, const std::string& mode,
             const std::vector<std::string> args_ptr);
     virtual std::string GenAsmQuantStore(
-            std::vector<std::string> int_regs, std::string scale_reg,
+            std::vector<std::string> int_regs, std::string src_scale_reg,
+            std::string dst_scale_ptr, std::string src_scale_ptr,
             const std::string& output_sym, const int elem_offset,
             const std::string dst_specifier, const std::vector<std::string> args_reg,
             const std::string& mode, bool with_store = true);

@@ -1,3 +1,5 @@
+#include "megbrain/reflection.h"
+#include "test/kernel/common/benchmark.h"
 #include "test/kernel/common/checker.h"
 
 using namespace megdnn;
@@ -48,6 +50,10 @@ TEST(AARCH64, ConvBias1x1NCHW44Dot) {
           ConvBiasForward::Param::NonlineMode::RELU,
           ConvBiasForward::Param::NonlineMode::H_SWISH}) {
         param.nonlineMode = noline;
+        printf("mode=%s\n",
+               mgb::reflection::nameOfEnumValue<ConvBiasForward::Param::NonlineMode>(
+                       noline)
+                       .c_str());
         checker.set_param(param);
         for (size_t ic : {3, 4, 5}) {
             for (size_t ohw = 7; ohw < 27; ++ohw) {
