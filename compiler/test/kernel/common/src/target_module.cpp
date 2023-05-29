@@ -20,8 +20,6 @@ void write_map(
         if (!is_cv) {
             out_file << GenCommonInclude() << "\n";
         }
-        out_file << "#include <stdio.h>\n";
-        out_file << "#include <math.h>\n";
         out_file << kv.second;
         out_file.close();
     }

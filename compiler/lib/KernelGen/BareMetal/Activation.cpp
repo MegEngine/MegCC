@@ -46,6 +46,7 @@ std::string GenActivation::gen_func_call_with_typecvt_dep(
     auto act_dep = gen_func_dep(mode);
     if (src_specifier == "int" && dst_specifier == "int8_t") {
         return act_dep + R"(
+            #include <math.h>
             static inline int8_t fp32_to_int8(float src){
                 int res = roundf(src);
                 res = res > 127? 127:res;

@@ -12,6 +12,7 @@ public:
         CC_ASSERT(imode == "LINEAR");
         CC_ASSERT(specifier == "float");
         std::string body = R"(
+        #include <math.h>
         static inline void get_coord(float scale, int size, int idx, float* ah0, int* ih0, float* ah1, int* ih1){
             if (size == 1) {
                 *ah0 = 1.f;

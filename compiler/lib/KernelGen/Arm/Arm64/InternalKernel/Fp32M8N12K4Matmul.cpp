@@ -1202,6 +1202,7 @@ std::string MatmulM8N12MK4Kernel::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include <string.h>\n";
     writer << "#include <arm_neon.h>\n";
+    writer << "#include <math.h>\n";
     writer << prefetch();
     writer << transpose_1x12();
     writer << kern_8x12(ctx);

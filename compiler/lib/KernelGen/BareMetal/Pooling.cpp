@@ -168,6 +168,7 @@ std::string PoolingKernel::GetKernelBody(TContext* context) const {
     const uint32_t window_w = context->getAttrInt("window_w");
     Pooler pooler(mode_str, window_h * window_w, acc_specifier);
     ss << R"(
+#include <math.h>
 #include <stdbool.h>
 )";
     ss << pooler.gen_dep();

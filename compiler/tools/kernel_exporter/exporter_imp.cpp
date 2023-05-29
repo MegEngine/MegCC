@@ -48,8 +48,6 @@ void KernelExporter::gen_kenrels() {
             kernel_name_to_type(), m_kernel_name, m_use_default_attr);
     std::string common_header = R"(
 #include <data_struct.h>
-#include <math.h>
-#include <stdio.h>
 )";
     for (auto& i : kernels) {
         for (auto& ctx : attrs) {

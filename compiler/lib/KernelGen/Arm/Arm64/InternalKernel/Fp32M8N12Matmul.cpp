@@ -1677,6 +1677,7 @@ std::string MatmulM8N12Kernel::GetKernelBody(TContext* ctx) const {
     auto kern_sym = GetKernelSymbol(ctx);
     writer << "#include <arm_neon.h>\n";
     writer << "#include <string.h>\n";
+    writer << "#include <math.h>\n";
     writer << prefetch();
     writer << transpose_8x4_1_s();
     writer << utilsFunc();

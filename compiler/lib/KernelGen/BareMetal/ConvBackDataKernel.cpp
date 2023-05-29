@@ -55,6 +55,7 @@ std::string gen_inline_addr(std::string format_str, std::string sparse) {
 
 std::string gen_dep() {
     return R"(
+        #include <math.h>
         static inline int8_t fp32_to_int8(float src){
                 int res = roundf(src);
                 if(res > 127){
