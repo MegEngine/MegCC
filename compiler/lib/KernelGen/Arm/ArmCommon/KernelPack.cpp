@@ -8,6 +8,7 @@
 #include "InternalKernel.h"
 #include "MatMulKernel/Fp32Gemv.h"
 #include "MatMulKernel/Fp32Gevm.h"
+#include "MatMulKernel/Int16MatMulM8N8K8.h"
 #include "Pooling.h"
 #include "Reduce.h"
 #include "Relayout.h"
@@ -31,7 +32,8 @@ struct AllArmCommonKernel {
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
                 std::make_shared<ArmCommon::Fp32GevmKernel>(),
-                std::make_shared<ArmCommon::Fp32GemvKernel>()};
+                std::make_shared<ArmCommon::Fp32GemvKernel>(),
+                std::make_shared<ArmCommon::Int16MatMulM8N8K8>()};
 
         inner_map[KernelPack::KernType::PoolingKernel] = {
                 std::make_shared<ArmCommon::PoolingNchw44Fp32>(),
