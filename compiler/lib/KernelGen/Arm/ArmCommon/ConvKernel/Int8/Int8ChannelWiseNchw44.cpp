@@ -14,84 +14,6 @@ std::string gen_common_code() {
     std::stringstream ss;
     ss << R"(
 #define rep(i, n)            for (int i = 0; i < (n); ++i)
-#define UNROLL_RAW1(cb, v0, a...) cb(0, ##a)
-#define UNROLL_RAW2(cb, v0, a...) cb(0, ##a) cb(1, ##a)
-#define UNROLL_RAW3(cb, v0, a...) UNROLL_RAW2(cb, v0, ##a) cb(2, ##a)
-#define UNROLL_RAW4(cb, v0, a...) \
-    UNROLL_RAW2(cb, v0, ##a)      \
-    cb(2, ##a) cb(3, ##a)
-#define UNROLL_RAW5(cb, v0, a...) \
-    UNROLL_RAW4(cb, v0, ##a)      \
-    cb(4, ##a)
-#define UNROLL_RAW6(cb, v0, a...) \
-    UNROLL_RAW4(cb, v0, ##a)      \
-    cb(4, ##a) cb(5, ##a)
-#define UNROLL_RAW7(cb, v0, a...) \
-    UNROLL_RAW4(cb, v0, ##a)      \
-    cb(4, ##a) cb(5, ##a) cb(6, ##a)
-#define UNROLL_RAW8(cb, v0, a...) \
-    UNROLL_RAW4(cb, v0, ##a)      \
-    cb(4, ##a) cb(5, ##a) cb(6, ##a) cb(7, ##a)
-#define UNROLL_RAW9(cb, v0, a...) \
-    UNROLL_RAW8(cb, v0, ##a)      \
-    cb(8, ##a)
-#define UNROLL_RAW10(cb, v0, a...) \
-    UNROLL_RAW9(cb, v0, ##a)       \
-    cb(9, ##a)
-#define UNROLL_RAW11(cb, v0, a...) \
-    UNROLL_RAW10(cb, v0, ##a)      \
-    cb(10, ##a)
-#define UNROLL_RAW12(cb, v0, a...) \
-    UNROLL_RAW11(cb, v0, ##a)      \
-    cb(11, ##a)
-#define UNROLL_RAW13(cb, v0, a...) \
-    UNROLL_RAW12(cb, v0, ##a)      \
-    cb(12, ##a)
-#define UNROLL_RAW14(cb, v0, a...) \
-    UNROLL_RAW13(cb, v0, ##a)      \
-    cb(13, ##a)
-#define UNROLL_RAW15(cb, v0, a...) \
-    UNROLL_RAW14(cb, v0, ##a)      \
-    cb(14, ##a)
-
-// clang-format off
-#define UNROLL_RAW16(cb, v0, a...)                                        \
-    UNROLL_RAW8(cb, v0, ##a)                                              \
-    cb(8, ##a) cb(9, ##a) cb(10, ##a) cb(11, ##a) cb(12, ##a) cb(13, ##a) \
-            cb(14, ##a) cb(15, ##a)
-#define UNROLL_RAW17(cb, v0, a...) \
-    UNROLL_RAW16(cb, v0, ##a)      \
-    cb(16, ##a)
-#define UNROLL_RAW24(cb, v0, a...)                                          \
-    UNROLL_RAW16(cb, v0, ##a)                                               \
-    cb(16, ##a) cb(17, ##a) cb(18, ##a) cb(19, ##a) cb(20, ##a) cb(21, ##a) \
-            cb(22, ##a) cb(23, ##a)
-#define UNROLL_RAW25(cb, v0, a...) \
-    UNROLL_RAW24(cb, v0, ##a)      \
-    cb(24, ##a)
-#define UNROLL_RAW49(cb, v0, a...)                                          \
-    UNROLL_RAW25(cb, v0, ##a)                                               \
-    cb(25, ##a) cb(26, ##a) cb(27, ##a) cb(28, ##a) cb(29, ##a) cb(30, ##a) \
-    cb(31, ##a) cb(32, ##a) cb(33, ##a) cb(34, ##a) cb(35, ##a) cb(36, ##a) \
-    cb(37, ##a) cb(38, ##a) cb(39, ##a) cb(40, ##a) cb(41, ##a) cb(42, ##a) \
-    cb(43, ##a) cb(44, ##a) cb(45, ##a) cb(46, ##a) cb(47, ##a) cb(48, ##a)
-
-#define UNROLL_CALL0(step, cb, v...) UNROLL_RAW##step(cb, 0, ##v)
-#define UNROLL_CALL1(step, cb, v...) UNROLL_CALL0(step, cb, ##v)
-#define UNROLL_CALL(step, cb, v...)  \
-    do {                             \
-        UNROLL_CALL1(step, cb, ##v); \
-    } while (0)
-
-#define UNROLL_CALL_RAW(step, cb, v...) UNROLL_CALL1(step, cb, ##v);
-#define UNROLL_CALL_NOWRAPPER(step, cb) UNROLL_CALL_RAW(step, cb)
-
-#define UNROLL_CALL0(step, cb, v...) UNROLL_RAW##step(cb, 0, ##v)
-#define UNROLL_CALL1(step, cb, v...) UNROLL_CALL0(step, cb, ##v)
-#define UNROLL_CALL(step, cb, v...)  \
-    do {                             \
-        UNROLL_CALL1(step, cb, ##v); \
-    } while (0)
 )";
 
     ss << R"(
@@ -99,11 +21,7 @@ static inline void accumulate_2_q_vector(
         int8x16_t src0, int8x16_t kern0, int8x16_t src1, int8x16_t kern1,
         int32x4_t* sum) {
     int16x8_t tmp_sum0 = vmull_s8(vget_low_s8(src0), vget_low_s8(kern0));
-#ifdef __aarch64__
     int16x8_t tmp_sum1 = vmull_high_s8(src0, kern0);
-#else
-    int16x8_t tmp_sum1 = vmull_s8(vget_high_s8(src0), vget_high_s8(kern0));
-#endif
     tmp_sum0 = vmlal_s8(tmp_sum0, vget_low_s8(src1), vget_low_s8(kern1));
     tmp_sum1 = vmlal_s8(tmp_sum1, vget_high_s8(src1), vget_high_s8(kern1));
     sum[0] = vaddw_s16(sum[0], vget_low_s16(tmp_sum0));
@@ -115,11 +33,7 @@ static inline void accumulate_2_q_vector(
 static inline void accumulate_1_q_vector(
         int8x16_t src0, int8x16_t kern0, int32x4_t* sum) {
     int16x8_t tmp_sum0 = vmull_s8(vget_low_s8(src0), vget_low_s8(kern0));
-#ifdef __aarch64__
     int16x8_t tmp_sum1 = vmull_high_s8(src0, kern0);
-#else
-    int16x8_t tmp_sum1 = vmull_s8(vget_high_s8(src0), vget_high_s8(kern0));
-#endif
     sum[0] = vaddw_s16(sum[0], vget_low_s16(tmp_sum0));
     sum[1] = vaddw_s16(sum[1], vget_high_s16(tmp_sum0));
     sum[2] = vaddw_s16(sum[2], vget_low_s16(tmp_sum1));
@@ -1452,8 +1366,9 @@ std::string ChannelWiseInt8Nchw44::GetKernelBody(TContext* ctx) const {
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     std::stringstream writer;
     writer << R"(
-        #include <arm_neon.h>
         #include <string.h>
+        #include "marm_neon.h"
+        #include "unroll_macro.h"
     )";
     writer << gen_common_code();
     writer << "\n\n";

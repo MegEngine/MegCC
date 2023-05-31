@@ -52,6 +52,7 @@ TEST(GI, CVresize) {
     checker.set_rng(0, &rng_f32);
     checker.set_dtype(0, dtype::Float32());
     checker.set_dtype(1, dtype::Float32());
+    checker.set_epsilon(1e-4);
     for (size_t h : {2, 3, 5, 6, 7, 9, 10})
         for (size_t w : {2, 3, 5, 7, 8, 9, 10, 11}) {
             checker.exec({{1, h, w, 3}, {1, w, h, 3}});
