@@ -27,6 +27,7 @@ cp -r "${RUNTIME_PATH}/include" "${OUT_DIR}/runtime/include"
 cp -r "${RUNTIME_PATH}/schema" "${OUT_DIR}/runtime/schema"
 cp -r "${RUNTIME_PATH}/example" "${OUT_DIR}/runtime/example"
 cp -r "${RUNTIME_PATH}/src" "${OUT_DIR}/runtime/src"
+cp -r "${RUNTIME_PATH}/toolchains" "${OUT_DIR}/runtime/toolchains"
 cp -r "${PROJECT_PATH}/immigration" "${OUT_DIR}/immigration"
 cp "${RUNTIME_PATH}/CMakeLists.txt" "${OUT_DIR}/runtime/CMakeLists.txt"
 MODEL_FILE=`find ${OUT_DIR}/kern/ -name "*.tiny"`
