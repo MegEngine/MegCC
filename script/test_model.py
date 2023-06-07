@@ -208,7 +208,7 @@ def parse_env(dump_dir, bin_dir=None):
     return env
 
 
-def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
+def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, user_input_dir):
     build_script = env["build_script"]
     mgb_runner_path = env["mgb_runner_path"]
     mgb_to_tinynn_path = env["mgb_to_tinynn_path"]
@@ -245,8 +245,17 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
             model_info_path = os.path.join(model_info_dir, model_file + ".txt")
             assert os.path.exists(model_info_path)
             model_infos = read_json(model_info_path)
-            input_dir = os.path.join(work_dir, model_name + "_input")
-            os.mkdir(input_dir)
+            input_dir = None
+            if user_input_dir is None:
+                input_dir = os.path.join(work_dir, model_name + "_input")
+                os.mkdir(input_dir)
+                is_user_input_dir = False
+            else:
+                input_dir = user_input_dir
+                is_user_input_dir = True
+                assert os.path.exists(user_input_dir), "Specified input directory {} DO NOT exist".format(
+                    user_input_dir)
+            assert input_dir
             local_run_dir = os.path.join(work_dir, model_name + "_rundir")
             os.mkdir(local_run_dir)
             (
@@ -258,6 +267,8 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str):
             ) = parse_model_info(model_infos, input_dir)
             for input_info in input_list:
                 if not os.path.exists(input_info["input_path"]):
+                    assert is_user_input_dir is False, "The file name in specified directory {} should be {}.".format(
+                        user_input_dir, input_info["input_path"])
                     gen_input(
                         input_info["input_path"],
                         input_info["shape"],
@@ -361,6 +372,13 @@ def main():
         default=None,
         help="bin dir contains mgb-runner",
     )
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        required=False,
+        default=None,
+        help="specify input directory"
+    )
     args = parser.parse_args()
     eps = args.eps
     dump_dir = os.path.abspath(args.dump_dir)
@@ -374,6 +392,7 @@ def main():
         target_host=args.target,
         env=env,
         mdl_str=args.mdl,
+        user_input_dir=args.input_dir
     )
 
 
