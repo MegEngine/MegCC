@@ -95,11 +95,6 @@ def Pooling: MgbHashableOp<"Pooling", [PoolingParam]> {
   let results = (outs AnyType);
 }
 
-def AdaptivePooling : MgbHashableOp<"AdaptivePooling", [AdaptivePoolingParam]>{
-  let inputs = (ins AnyType:$input);
-  let results = (outs AnyType);
-}
-
 def ROIPooling: MgbHashableOp<"ROIPooling", [ROIPoolingParam]>;
 
 def DeformablePSROIPooling : MgbHashableOp<"DeformablePSROIPooling", [DeformablePSROIPoolingParam]>;

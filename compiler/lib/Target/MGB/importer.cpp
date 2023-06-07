@@ -677,9 +677,26 @@ private:
         } else if (auto adapt_pooling = opr->try_cast_final<opr::AdaptivePooling>()) {
             auto&& p = adapt_pooling->param();
             auto&& out = opr->output(0);
-            mlir::Value value = m_builder.create<mlir::MGB::AdaptivePooling>(
+            auto&& input = opr->input(0);
+            size_t ih, iw, oh, ow;
+            if (p.format == megdnn::param::Convolution::Format::NCHW ||
+                p.format == megdnn::param::Convolution::Format::NCHW44 ||
+                p.format == megdnn::param::Convolution::Format::NCHW44_DOT ||
+                p.format == megdnn::param::Convolution::Format::NCHW88) {
+                ih = input->shape()[2];
+                iw = input->shape()[3];
+                oh = out->shape()[2];
+                ow = out->shape()[3];
+            } else {
+                CC_ABORT << "Adaptive pooling only support format "
+                            "NCHW/NCHW44/NCHW44_DOT/NCHW88.";
+            }
+            size_t sh = ih / oh, sw = iw / ow;
+            size_t kh = ih - (oh - 1) * sh, kw = iw - (ow - 1) * sw;
+            mlir::Value value = m_builder.create<mlir::MGB::Pooling>(
                     m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                    m_var2value.at(opr->input(0)), p.mode, p.format);
+                    m_var2value.at(opr->input(0)), p.mode, 0, 0, sh, sw, kh, kw,
+                    p.format);
             m_var2value.emplace(out, value);
         } else if (auto matmul = opr->try_cast_final<opr::MatrixMul>()) {
             auto&& p = matmul->param();
