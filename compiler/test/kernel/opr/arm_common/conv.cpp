@@ -228,6 +228,67 @@ TEST(ARMCOMMON, ConvBiasDirectNCHW44Int8) {
         }
 }
 
+TEST(ARMCOMMON, WinogradF23NCHW44MK8Int8) {
+#ifdef __aarch64__
+    Checker<ConvBiasForward> checker(Arch::ARM64, 0);
+    checker.set_before_exec_callback(megdnn::test::AlgoChecker<ConvBiasForward>(
+            "WINOGRAD_NCHW44:AARCH64_INT16X16X32_MK8_8X8:8:2:32"));
+#else
+    Checker<ConvBiasForward> checker(Arch::ARMV7, 0);
+    checker.set_before_exec_callback(megdnn::test::AlgoChecker<ConvBiasForward>(
+            "WINOGRAD_NCHW44:ARMV7_INT16X16X32_MK8_4X8:8:2:32"));
+#endif
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol(".+_winograd_f23_int8_nchw44_mk8");
+    ConvBiasForward::Param param;
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.nonlineMode = ConvBiasForward::Param::NonlineMode::IDENTITY;
+    size_t kernel = 3;
+    param.stride_h = 1;
+    param.stride_w = 1;
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    checker.set_param(param);
+    checker.execs(
+            {{1, 2, 4, 4, 4}, {2, 2, kernel, kernel, 4, 4}, {1, 2, 1, 1, 4}, {}, {}});
+    checker.execs(
+            {{2, 8, 10, 10, 4}, {8, 8, kernel, kernel, 4, 4}, {1, 8, 1, 1, 4}, {}, {}});
+    checker.execs(
+            {{1, 2, 73, 11, 4},
+             {12, 2, kernel, kernel, 4, 4},
+             {1, 12, 1, 1, 4},
+             {},
+             {}});
+
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    checker.set_param(param);
+    checker.execs(
+            {{1, 8, 5, 3, 4},
+             {2, 4, 4, kernel, kernel, 4, 4},
+             {1, 8, 1, 1, 4},
+             {},
+             {}});
+    checker.execs(
+            {{2, 16, 10, 10, 4},
+             {4, 2, 4, kernel, kernel, 4, 4},
+             {1, 8, 1, 1, 4},
+             {},
+             {}});
+    checker.execs(
+            {{1, 4, 73, 11, 4},
+             {2, 4, 2, kernel, kernel, 4, 4},
+             {1, 8, 1, 1, 4},
+             {},
+             {}});
+}
+
 TEST(ARMCOMMON, ConvBiasNCHWNCHW44Int8) {
 #ifdef __aarch64
     Checker<ConvBiasForward> checker(Arch::ARM64);

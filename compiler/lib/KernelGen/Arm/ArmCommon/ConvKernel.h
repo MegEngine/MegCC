@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include <string>
+#include "Arm/ArmCommon/ConvKernel/Int8/Winograd/WinogradCommon.h"
+#include "Arm/ArmCommon/ConvKernel/Int8/Winograd/WinogradF23Strategy8x8Nchw44MK8Int8.h"
 #include "Common/ConvKernel.h"
 #include "InternalKernel.h"
 #include "Utils/StringTemplate.h"
@@ -97,6 +99,23 @@ public:
         return "nchw_nchw44_s2";
     }
     std::string GetWorkspaceBody(TContext* context) const override;
+};
+
+class WinogradFloatF23Nchw44MK8Int8 : public ArmCommonConvImpl {
+    mutable ArmCommon::WinogradFrameNchw44Int8 m_framework;
+    mutable WinogradF23Strategy8x8Nchw44MK8Int8 m_winograd_strategy;
+
+public:
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* context) const override;
+
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+
+    std::string GetKernelSymbol(TContext* context) const override;
 };
 
 }  // namespace ArmCommon

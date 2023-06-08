@@ -22,6 +22,7 @@ namespace {
 struct AllArmCommonKernel {
     AllArmCommonKernel() {
         inner_map[KernelPack::KernType::ConvKernel] = {
+                std::make_shared<ArmCommon::WinogradFloatF23Nchw44MK8Int8>(),
                 std::make_shared<ArmCommon::ChannelWiseFloatMk4>(),
                 std::make_shared<ArmCommon::ConvFloatNCHWNCHW44>(),
                 std::make_shared<ArmCommon::ChannelWiseInt8Nchw44>(),
