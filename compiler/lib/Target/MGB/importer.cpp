@@ -333,11 +333,11 @@ public:
         megcc::EncryptionType enc_type = parse_res.enc_type;
         if (enc_type != megcc::EncryptionType::NONE) {
             std::vector<uint8_t>& mdl_model_buffer = parse_res.model;
-            std::shared_ptr<void> ptr;
-            ptr.reset((char*)malloc(mdl_model_buffer.size()));
-            memcpy(ptr.get(), mdl_model_buffer.data(), mdl_model_buffer.size());
+            m_decrypted_model.reset((char*)malloc(mdl_model_buffer.size()));
+            memcpy(m_decrypted_model.get(), mdl_model_buffer.data(),
+                   mdl_model_buffer.size());
             inp_file = serialization::InputFile::make_mem_proxy(
-                    ptr, mdl_model_buffer.size());
+                    m_decrypted_model.get(), mdl_model_buffer.size());
         } else {
             inp_file = serialization::InputFile::make_fs(model_path.c_str());
         }
@@ -1378,6 +1378,7 @@ private:
     }
     mgb::serialization::GraphLoadConfig m_load_config;
     std::unique_ptr<mgb::serialization::GraphLoader> m_loader;
+    std::shared_ptr<void> m_decrypted_model;
     mlir::ModuleOp m_module;
     mlir::MLIRContext* m_context;
     mlir::OpBuilder m_builder;
