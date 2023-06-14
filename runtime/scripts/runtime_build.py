@@ -78,11 +78,6 @@ class Build:
             help="Build with Debug mode, default Release mode",
         )
         parser.add_argument(
-            "--build_shared_library",
-            action="store_true",
-            help="Build with dynamic library, default build static lib",
-        )
-        parser.add_argument(
             "--build_achieve_all",
             action="store_true",
             help=
@@ -370,8 +365,6 @@ class Build:
             args.kernel_dir)
         cmake_config = cmake_config + " -DCMAKE_BUILD_TYPE={}".format(
             "Debug" if args.build_for_debug else "Release")
-        cmake_config = cmake_config + " -DTINYNN_SHARED_ENABLE={}".format(
-            "ON" if args.build_shared_library else "OFF")
         cmake_config = cmake_config + " -DTINYNN_SANITY_ALLOC={}".format(
             "ON" if args.build_tensor_alloc_sanity else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ACHIEVE_ALL={}".format(

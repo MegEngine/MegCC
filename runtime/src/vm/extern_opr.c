@@ -89,7 +89,7 @@ static void free_loader_maps(LoaderMapVec* lm) {
 }
 
 //! get API ptr for specific version; return nullptr if version mismatch
-const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int version) {
+const MGBExternCOprApi* get_extern_c_opr_api_versioned(int version) {
     static MGBExternCOprApi api;
     api.unregister_loader = unregister_loader;
     TINYNN_ASSERT_MSG(
@@ -280,7 +280,7 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* 
             *(void**)&func = dlsym(handle, c_opr_lib_interface);
             tinynn_free(c_opr_lib_interface);
             TINYNN_ASSERT_MSG(func, "load init interface of loader failed.\n");
-            func(megcc_get_extern_c_opr_api_versioned);
+            func(get_extern_c_opr_api_versioned);
         }
         has_set_env_and_loader = 1;
     }
@@ -371,7 +371,7 @@ void register_extern_opr(VM* vm) {
 #else
 void register_extern_opr(VM* vm) {}
 
-const MGBExternCOprApi* megcc_get_extern_c_opr_api_versioned(int i) {
+const MGBExternCOprApi* get_extern_c_opr_api_versioned(int i) {
     TINYNN_ASSERT_MSG(
             0,
             "Should NOT execute here!!!\n"

@@ -66,7 +66,7 @@ popd
 pushd ${PROJECT_PATH}/compiler
     GIT_ID=`git rev-parse --short HEAD`
 popd
-cp -a $RUNTIME_PATH/{flatcc,include,schema,example,src,CMakeLists.txt,scripts,toolchains,docker_env} ${OUT_DIR}/runtime/
+cp -a $RUNTIME_PATH/{flatcc,include,schema,example,src,CMakeLists.txt,scripts,toolchains,docker_env,version.ld} ${OUT_DIR}/runtime/
 strip ${OUT_DIR}/bin/*
 rm -fr ${OUT_DIR}/build_host
 MEGCC_VER=`${OUT_DIR}/bin/mgb-to-tinynn --version | grep MegCC | awk '{print $3}'`

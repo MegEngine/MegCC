@@ -13,7 +13,7 @@ MegCC runtime目前只支持Cmake编译，目前也支持android编译。编译�
 - 执行 python3 ./scripts/runtime_build.py --cross_build --kernel_dir ../models/mobilenetv1/kernels  将完成编译，默认编译为静态库，Release版本，非asan检查
 
 目前编译脚本支持如下编译选项
-- 编译动态库：python3 ./scripts/runtime_build.py --build_shared_library --cross_build --kernel_dir ../models/mobilenetv1/kernels --remove_old_build
+- 编译动态库：python3 ./scripts/runtime_build.py --cross_build --kernel_dir ../models/mobilenetv1/kernels --remove_old_build
 - 静态链接所有libc：python3 ./scripts/runtime_build.py --build_achieve_all --cross_build --kernel_dir ../models/mobilenetv1/kernels --remove_old_build
 - 开启asan检查：python3 ./scripts/runtime_build.py --build_with_asan --cross_build --kernel_dir ../models/mobilenetv1/kernels --remove_old_build
 - 编译debug版本：python3 ./scripts/runtime_build.py --build_for_debug --cross_build --kernel_dir ../models/mobilenetv1/kernels --remove_old_build

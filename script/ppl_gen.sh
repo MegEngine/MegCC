@@ -31,6 +31,7 @@ cp -r "${RUNTIME_PATH}/toolchains" "${OUT_DIR}/runtime/toolchains"
 cp -r "${RUNTIME_PATH}/docker_env" "${OUT_DIR}/runtime/docker_env"
 cp -r "${PROJECT_PATH}/immigration" "${OUT_DIR}/immigration"
 cp "${RUNTIME_PATH}/CMakeLists.txt" "${OUT_DIR}/runtime/CMakeLists.txt"
+cp "${RUNTIME_PATH}/version.ld" "${OUT_DIR}/runtime/version.ld"
 MODEL_FILE=`find ${OUT_DIR}/kern/ -name "*.tiny"`
 if [ ! -z "${MODEL_FILE}" ];then
   mv ${OUT_DIR}/kern/*.tiny "${OUT_DIR}/model"

@@ -5,7 +5,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
 
 project(TinyNN LANGUAGES C ASM)
 
-option(TINYNN_SHARED_ENABLE "enable TinyNN build with shared library." OFF)
 option(TINYNN_ENABLE_ASAN "Build with asan to check memory issue." OFF)
 option(TINYNN_ENABLE_FP16 "enable fp16 feature" OFF)
 option(TINYNN_ACHIEVE_ALL "Build with achieve all lic static." OFF)
@@ -27,7 +26,6 @@ endif()
 message(STATUS "TinyNN BUILD INFO:")
 message(STATUS "\tSystem:                                 ${CMAKE_SYSTEM_NAME}")
 message(STATUS "\tProcessor:                              ${CMAKE_SYSTEM_PROCESSOR}")
-message(STATUS "\tEnable shared libarys:                  ${TINYNN_SHARED_ENABLE}")
 message(STATUS "\tEnable asan check:                      ${TINYNN_ENABLE_ASAN}")
 message(STATUS "\tEnabel achieve all staitc:              ${TINYNN_ACHIEVE_ALL}")
 message(STATUS "\tEnabel alloc tensor dynamic:            ${TINYNN_SANITY_ALLOC}")
@@ -43,10 +41,8 @@ message(STATUS "\tBuild kernel dir:                       ${RUNTIME_KERNEL_DIR}"
 if(TINYNN_BUILD_FOR_NOT_STANDARD_OS)
   message(
     WARNING
-      "force disable (TINYNN_SHARED_ENABLE/TINYNN_ENABLE_ASAN/TINYNN_ACHIEVE_ALL) when build for Not standard os"
+      "force disable (TINYNN_ENABLE_ASAN/TINYNN_ACHIEVE_ALL) when build for Not standard os"
   )
-  # can only build static lib, for example TEE env can not use shared library
-  set(TINYNN_SHARED_ENABLE OFF)
   # clang do not build with asan when with --target do not worry about this, you can run
   # same model at linux or android env to test asan issue
   set(TINYNN_ENABLE_ASAN OFF)
@@ -177,18 +173,30 @@ file(GLOB_RECURSE IMMIGRATION ${IMMIGRATION_DIR}/include/*.h)
 file(GLOB_RECURSE SRC src/*.c src/*.h ${RUNTIME_KERNEL_DIR}/*.h
      ${RUNTIME_KERNEL_DIR}/*.c)
 
-if(TINYNN_SHARED_ENABLE)
-  add_library(TinyNN SHARED ${SRC} ${IMMIGRATION})
+if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
+  add_library(TinyNN_share SHARED ${SRC} ${IMMIGRATION})
   set(_VER_FILE ${PROJECT_SOURCE_DIR}/version.ld)
-  target_link_options(TinyNN PRIVATE -Wl,--version-script=${_VER_FILE})
-  set_target_properties(TinyNN PROPERTIES LINK_DEPENDS ${_VER_FILE})
+  target_link_options(TinyNN_share PRIVATE -Wl,--version-script=${_VER_FILE})
+  set_target_properties(TinyNN_share PROPERTIES LINK_DEPENDS ${_VER_FILE})
+  add_dependencies(TinyNN_share flatcc_gen_header)
+  set_target_properties(TinyNN_share PROPERTIES LINKER_LANGUAGE C)
+  target_include_directories(
+    TinyNN_share
+    PUBLIC $<INSTALL_INTERFACE:${CMAKE_INSTALL_PREFIX}/include>
+           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+           $<BUILD_INTERFACE:${RUNTIME_KERNEL_DIR}>
+           $<BUILD_INTERFACE:${SCHEMA_OUTPUT}>
+           $<BUILD_INTERFACE:${FLATCC_DIR}/include>
+           $<BUILD_INTERFACE:${IMMIGRATION_DIR}/include>)
 else()
-  add_library(TinyNN STATIC ${SRC} ${IMMIGRATION})
-  message(
-    WARNING
-      "build static tinynn, if you want strip and mangle sym, please run python3 runtime/scripts/strip_and_mangling_static_tinynn.py manually "
-  )
+  message(WARNING "Can NOT build shared library when build for Not standard os")
 endif()
+add_library(TinyNN STATIC ${SRC} ${IMMIGRATION})
+message(
+  WARNING
+    "build static tinynn, if you want strip and mangle sym, please run python3 runtime/scripts/strip_and_mangling_static_tinynn.py manually "
+)
 
 add_dependencies(TinyNN flatcc_gen_header)
 set_target_properties(TinyNN PROPERTIES LINKER_LANGUAGE C)
@@ -206,6 +214,8 @@ target_include_directories(
 if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
   add_executable(tinynn_test_lite example/standard_OS/lite_main.c)
   target_link_libraries(tinynn_test_lite TinyNN m dl)
+  add_executable(tinynn_test_lite_share example/standard_OS/lite_main.c)
+  target_link_libraries(tinynn_test_lite_share TinyNN_share m dl)
 endif()
 
 if(TINYNN_ACHIEVE_ALL AND NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
@@ -257,6 +267,9 @@ endif()
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include DESTINATION ${CMAKE_INSTALL_PREFIX})
 install(TARGETS TinyNN LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
+  install(TARGETS TinyNN_share LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+endif()
 install(FILES ${IMMIGRATION_DIR}/include/extern_c_opr.h
         DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
