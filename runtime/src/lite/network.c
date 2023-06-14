@@ -48,6 +48,7 @@ int LITE_make_network(
         LiteNetwork* network, const LiteConfig config, const LiteNetworkIO network_io) {
     CombineModel* model = tinynn_malloc(sizeof(CombineModel));
     memset(model, 0, sizeof(CombineModel));
+    model->combo_iotensor = create_combo_io_tensor();
     vm_attach(model);
     *network = model;
     LOG_DEBUG("create model and ignore all config\n");
@@ -110,19 +111,22 @@ int LITE_get_io_tensor(
     }
     DeviceModel* model = get_active_device_model(cb_model);
 
-    ComboIOTensor* tensor_pack = get_empty_io_tensor(cb_model);
     if (phase == LITE_INPUT || phase == LITE_IO) {
         int nr_input = model->nr_input;
         for (int i = 0; i < nr_input; i++) {
             Tensor* tensor = *(model->inputs + i);
             if (!strcmp(io_name, tensor->name)) {
-                for (int model_idx = 0; model_idx < cb_model->nr_device_model;
-                     ++model_idx) {
-                    Tensor* tensor_ptr =
-                            *(cb_model->device_models[model_idx]->inputs + i);
+                ComboIOTensor* tensor_pack =
+                        find_combo_io_tensor_by_name(cb_model, io_name);
+                TINYNN_ASSERT(tensor_pack->tensors);
+                if (!tensor_pack->tensors[0])
+                    for (int model_idx = 0; model_idx < cb_model->nr_device_model;
+                         ++model_idx) {
+                        Tensor* tensor_ptr =
+                                *(cb_model->device_models[model_idx]->inputs + i);
 
-                    tensor_pack->tensors[model_idx] = tensor_ptr;
-                }
+                        tensor_pack->tensors[model_idx] = tensor_ptr;
+                    }
                 *res_tensor = tensor_pack;
                 return TinyNN_SUCCESS;
             }
@@ -134,11 +138,15 @@ int LITE_get_io_tensor(
         for (int i = 0; i < nr_output; i++) {
             Tensor* tensor = *(model->outputs + i);
             if (!strcmp(io_name, tensor->name)) {
-                for (int model_idx = 0; model_idx < cb_model->nr_device_model;
-                     ++model_idx) {
-                    tensor_pack->tensors[model_idx] =
-                            *(cb_model->device_models[model_idx]->outputs + i);
-                }
+                ComboIOTensor* tensor_pack =
+                        find_combo_io_tensor_by_name(cb_model, io_name);
+                TINYNN_ASSERT(tensor_pack->tensors);
+                if (!tensor_pack->tensors[0])
+                    for (int model_idx = 0; model_idx < cb_model->nr_device_model;
+                         ++model_idx) {
+                        tensor_pack->tensors[model_idx] =
+                                *(cb_model->device_models[model_idx]->outputs + i);
+                    }
                 *res_tensor = tensor_pack;
                 return TinyNN_SUCCESS;
             }
@@ -347,6 +355,8 @@ int LITE_destroy_network(LiteNetwork network) {
         FREE(model);
     }
     FREE(cb_model->device_models);
+    destroy_combo_io_tensor(cb_model->combo_iotensor);
+    cb_model->combo_iotensor = NULL;
 
     //! free combine model struct
     vm_detach(cb_model);

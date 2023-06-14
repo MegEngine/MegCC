@@ -2,9 +2,11 @@
 
 #include <gtest/gtest.h>
 #include <string>
+#include <vector>
 extern "C" {
 #include "data_struct.h"
 #include "init.h"
+#include "lite/io_tensor.h"
 #include "vm.h"
 #include "vm/common.h"
 #include "vm/instruction.h"
@@ -43,8 +45,27 @@ std::shared_ptr<Tensor> create_scalar_tensor(T val, TinyNNDType dtype_enum) {
 
 class SimpleCombineModel {
 public:
-    SimpleCombineModel(int nr_device_model, int nr_instruction) {
+    SimpleCombineModel(
+            int nr_device_model, int nr_instruction, int nr_input = 1,
+            int nr_output = 1, const std::vector<const char*>& input_name = {"data"},
+            const std::vector<const char*>& output_name = {"output"},
+            const std::vector<std::vector<std::vector<size_t>>>& input_shape =
+                    {{{1, 3, 224, 224}}},
+            const std::vector<std::vector<std::vector<size_t>>>& output_shape = {
+                    {{1, 2}}}) {
+        TINYNN_ASSERT(
+                nr_device_model > 0 && nr_device_model == input_shape.size() &&
+                nr_device_model == output_shape.size());
+        TINYNN_ASSERT(
+                nr_input > 0 && nr_input == input_name.size() && nr_output > 0 &&
+                nr_output == output_name.size());
+        for (size_t i = 0; i < nr_device_model; ++i) {
+            TINYNN_ASSERT(
+                    nr_input == input_shape[i].size() &&
+                    nr_output == output_shape[i].size());
+        }
         m_combine_model = (CombineModel*)malloc(sizeof(CombineModel));
+        m_combine_model->combo_iotensor = create_combo_io_tensor();
         m_combine_model->nr_device_model = nr_device_model;
         m_combine_model->device_models =
                 (DeviceModel**)malloc(sizeof(DeviceModel*) * nr_device_model);
@@ -54,6 +75,31 @@ public:
             m_device_models.push_back(dev_model);
             m_combine_model->device_models[i] = dev_model;
             dev_model->tensors = (Tensor*)malloc(sizeof(Tensor) * 10);
+
+            dev_model->nr_input = nr_input;
+            dev_model->inputs = (Tensor**)malloc(sizeof(Tensor*) * dev_model->nr_input);
+            for (size_t j = 0; j < dev_model->nr_input; ++j) {
+                dev_model->inputs[j] = (Tensor*)malloc(sizeof(Tensor));
+                memset(dev_model->inputs[j], 0, sizeof(Tensor));
+                dev_model->inputs[j]->name = (char*)input_name[j];
+                dev_model->inputs[j]->layout.nr_dim = input_shape[i][j].size();
+                for (size_t k = 0; k < dev_model->inputs[j]->layout.nr_dim; ++k) {
+                    dev_model->inputs[j]->layout.dims[k] = input_shape[i][j][k];
+                }
+            }
+
+            dev_model->nr_output = nr_output;
+            dev_model->outputs =
+                    (Tensor**)malloc(sizeof(Tensor*) * dev_model->nr_output);
+            for (size_t j = 0; j < dev_model->nr_output; ++j) {
+                dev_model->outputs[j] = (Tensor*)malloc(sizeof(Tensor));
+                memset(dev_model->outputs[j], 0, sizeof(Tensor));
+                dev_model->outputs[j]->name = (char*)output_name[j];
+                dev_model->outputs[j]->layout.nr_dim = output_shape[i][j].size();
+                for (size_t k = 0; k < dev_model->outputs[j]->layout.nr_dim; ++k) {
+                    dev_model->outputs[j]->layout.dims[k] = output_shape[i][j][k];
+                }
+            }
 
             dev_model->device.device_type = TinyNN_BARE_METAL;
             init_device(&dev_model->device);
@@ -86,12 +132,19 @@ public:
                 free(opr->inputs);
                 free(opr->outputs);
             }
+            for (int j = 0; j < dev_model->nr_input; ++j)
+                free(dev_model->inputs[j]);
+            free(dev_model->inputs);
+            for (int j = 0; j < dev_model->nr_output; ++j)
+                free(dev_model->outputs[j]);
+            free(dev_model->outputs);
             free(dev_model->instructions);
             free(dev_model->tensors);
             free(dev_model);
         }
         free(m_combine_model->device_models);
         free(m_combine_model->weights);
+        destroy_combo_io_tensor(m_combine_model->combo_iotensor);
         free(m_combine_model);
     }
 

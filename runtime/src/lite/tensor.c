@@ -125,10 +125,6 @@ int LITE_get_tensor_layout(const LiteTensor tensor_, LiteLayout* layout) {
 }
 
 int LITE_destroy_tensor(LiteTensor tensor_) {
-    ComboIOTensor* tensor = (ComboIOTensor*)tensor_;
-    CombineModel* model = tensor->model;
-    model->combo_iotensor = NULL;
-    tinynn_free(tensor->tensors);
-    tinynn_free(tensor);
+    (void*)tensor_;
     return TinyNN_SUCCESS;
 }

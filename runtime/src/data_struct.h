@@ -108,6 +108,7 @@ typedef struct {
 
     void* model_ptr;
     size_t model_len;
+    //! suppose that input and output tensors' name won't be same with each other
     struct ComboIOTensorS* combo_iotensor;
     //! make CombineModel(always user network) bind with vm
     void* vm;
@@ -119,6 +120,9 @@ typedef struct ComboIOTensorS {
 
     //! ref to model
     CombineModel* model;
+
+    //! next node
+    struct ComboIOTensorS* next;
 } ComboIOTensor;
 
 //! the uniform kernel function for all kernels of all operators

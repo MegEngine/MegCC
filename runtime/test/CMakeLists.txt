@@ -43,6 +43,9 @@ file(
   ./../src/init.c
   ./../src/utils.c
   ./../src/lite/global.c
+  ./../src/lite/network.c
+  ./../src/lite/tensor.c
+  ./../src/parse.c
   ./main.cpp
   common/*.cpp
   runtime/*.cpp

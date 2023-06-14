@@ -3,6 +3,10 @@
 #include <vector>
 #include "./common/common.h"
 #include "init.h"
+extern "C" {
+#include "lite-c/network_c.h"
+#include "lite-c/tensor_c.h"
+}
 #include "math.h"
 using namespace test;
 
@@ -11,9 +15,11 @@ InitFunc init_kernels[10];
 WorkspaceFunc workspace_func[10];
 DeduceFunc deduce_func[10];
 
+extern "C" {
 //! not thread safe
 void load_kernel_init_function() {
     return;
+}
 }
 
 namespace {
@@ -129,7 +135,8 @@ TEST(RUNTIME, ShareWithOldWeights) {
 }
 
 TEST(RUNTIME, ShareWithOldWeightsAndCrossDeviceModel) {
-    SimpleCombineModel simple_model = SimpleCombineModel(2, 2);
+    SimpleCombineModel simple_model = SimpleCombineModel(
+            2, 2, 1, 1, {"data"}, {"out"}, {{{1, 3}}, {{1, 5}}}, {{{1}}, {{2}}});
     std::vector<float> weight1(10, 0);
     std::vector<float> weight2(40, 0);
     auto combine_model = simple_model.m_combine_model;
@@ -222,4 +229,76 @@ TEST(RUNTIME, BindVmWithModel) {
 
     vm_detach(m1);
     vm_detach(m2);
+}
+
+TEST(RUNTIME, GetComboIOTensor) {
+    std::vector<std::vector<std::vector<size_t>>> input_shape{
+            {{1, 3, 224, 224}, {1, 11}}, {{2, 5, 224, 224}, {2, 13}}};
+    std::vector<std::vector<std::vector<size_t>>> output_shape{
+            {{3, 2}, {3, 1}}, {{5, 2}, {5, 1}}};
+    SimpleCombineModel simple_model = SimpleCombineModel(
+            2, 2, 2, 2, {"d0", "d1"}, {"out0", "out1"}, input_shape, output_shape);
+    CombineModel* cb_model = simple_model.m_combine_model;
+
+    LiteTensor d0, d1, out0, out1;
+    LiteLayout layout;
+
+    LITE_get_io_tensor(cb_model, "d0", LITE_INPUT, &d0);
+    LITE_get_io_tensor(cb_model, "d1", LITE_INPUT, &d1);
+    LITE_get_io_tensor(cb_model, "out0", LITE_OUTPUT, &out0);
+    LITE_get_io_tensor(cb_model, "out1", LITE_OUTPUT, &out1);
+
+    for (int active_idx = 0; active_idx < cb_model->nr_device_model; ++active_idx) {
+        cb_model->active_device_model_idx = active_idx;
+
+        LITE_get_tensor_layout(d0, &layout);
+        ASSERT_EQ(layout.ndim, input_shape[active_idx][0].size());
+        for (size_t i = 0; i < input_shape[active_idx][0].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], input_shape[active_idx][0][i]);
+
+        LITE_get_tensor_layout(d1, &layout);
+        ASSERT_EQ(layout.ndim, input_shape[active_idx][1].size());
+        for (size_t i = 0; i < input_shape[active_idx][1].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], input_shape[active_idx][1][i]);
+
+        LITE_get_tensor_layout(out0, &layout);
+        ASSERT_EQ(layout.ndim, output_shape[active_idx][0].size());
+        for (size_t i = 0; i < output_shape[active_idx][0].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], output_shape[active_idx][0][i]);
+
+        LITE_get_tensor_layout(out1, &layout);
+        ASSERT_EQ(layout.ndim, output_shape[active_idx][1].size());
+        for (size_t i = 0; i < output_shape[active_idx][1].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], output_shape[active_idx][1][i]);
+    }
+
+    //! repeat
+    LITE_get_io_tensor(cb_model, "d0", LITE_INPUT, &d0);
+    LITE_get_io_tensor(cb_model, "d1", LITE_INPUT, &d1);
+    LITE_get_io_tensor(cb_model, "out0", LITE_OUTPUT, &out0);
+    LITE_get_io_tensor(cb_model, "out1", LITE_OUTPUT, &out1);
+
+    for (int active_idx = 0; active_idx < cb_model->nr_device_model; ++active_idx) {
+        cb_model->active_device_model_idx = active_idx;
+
+        LITE_get_tensor_layout(d0, &layout);
+        ASSERT_EQ(layout.ndim, input_shape[active_idx][0].size());
+        for (size_t i = 0; i < input_shape[active_idx][0].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], input_shape[active_idx][0][i]);
+
+        LITE_get_tensor_layout(d1, &layout);
+        ASSERT_EQ(layout.ndim, input_shape[active_idx][1].size());
+        for (size_t i = 0; i < input_shape[active_idx][1].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], input_shape[active_idx][1][i]);
+
+        LITE_get_tensor_layout(out0, &layout);
+        ASSERT_EQ(layout.ndim, output_shape[active_idx][0].size());
+        for (size_t i = 0; i < output_shape[active_idx][0].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], output_shape[active_idx][0][i]);
+
+        LITE_get_tensor_layout(out1, &layout);
+        ASSERT_EQ(layout.ndim, output_shape[active_idx][1].size());
+        for (size_t i = 0; i < output_shape[active_idx][1].size(); ++i)
+            ASSERT_EQ(layout.shapes[i], output_shape[active_idx][1][i]);
+    }
 }
