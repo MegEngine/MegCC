@@ -38,6 +38,7 @@ struct AllArmCommonKernel {
 
         inner_map[KernelPack::KernType::PoolingKernel] = {
                 std::make_shared<ArmCommon::PoolingNchw44Fp32>(),
+                std::make_shared<ArmCommon::PoolingNchw44Int8>(),
                 std::make_shared<ArmCommon::PoolingNchw44QInt8>()};
 
         inner_map[KernelPack::KernType::ResizeKernel] = {
