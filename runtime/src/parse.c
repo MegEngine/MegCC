@@ -414,14 +414,15 @@ static inline bool valid_device_check(TinyNNDevice device) {
 
 //! all resource are allocate here
 TinyNNStatus parse_model(
-        void* buffer, size_t size, CombineModel* model, int share_weights) {
+        void* buffer, size_t size, int is_own_buffer, CombineModel* model,
+        int share_weights) {
     load_kernel_init_function();
     ns(Model_table_t) fbs_model;
     if (!(fbs_model = ns(Model_as_root(buffer)))) {
         LOG_ERROR("Model not available\n");
         return -1;
     }
-    if (share_weights) {
+    if (is_own_buffer) {
         model->model_ptr = buffer;
         model->model_len = size;
     } else {

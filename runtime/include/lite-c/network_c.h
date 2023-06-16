@@ -227,7 +227,7 @@ LITE_API int LITE_load_model_from_mem(
 /**
  * \brief load the model to network form memory, the weights of the model will
  * share the memory with model_mem, the model_mem will be managed by lite, user
- * can't free it
+ * can't free it before call LITE_destroy_network.
  *
  * \param[in] model_mem The model in memory
  * \param[in] size The size of the model memory

@@ -56,7 +56,7 @@ int LITE_make_network(
 }
 
 int LITE_load_model_from_mem(LiteNetwork network, void* model_mem, size_t size) {
-    TinyNNStatus parse_status = parse_model(model_mem, size, network, 0);
+    TinyNNStatus parse_status = parse_model(model_mem, size, 0, network, 0);
     if (parse_status != TinyNN_SUCCESS) {
         LOG_DEBUG("load model from memory failed\n");
         return parse_status;
@@ -65,7 +65,10 @@ int LITE_load_model_from_mem(LiteNetwork network, void* model_mem, size_t size) 
 }
 
 int LITE_load_model_with_shared_mem(LiteNetwork network, void* model_mem, size_t size) {
-    TinyNNStatus parse_status = parse_model(model_mem, size, network, 1);
+    LOG_WARNING(
+            "The model buffer 'model_mem' can NOT be freed before call "
+            "LITE_destroy_network");
+    TinyNNStatus parse_status = parse_model(model_mem, size, 0, network, 1);
     if (parse_status != TinyNN_SUCCESS) {
         LOG_DEBUG("load model from memory failed\n");
         return parse_status;
@@ -88,7 +91,7 @@ int LITE_load_model_from_path(LiteNetwork network, const char* model_path) {
     size_t read_bytes = tinynn_fread(ptr, 1, size, fin);
     TINYNN_ASSERT(size == read_bytes);
     tinynn_fclose(fin);
-    TinyNNStatus parse_status = parse_model(ptr, size, network, 1);
+    TinyNNStatus parse_status = parse_model(ptr, size, 1, network, 1);
     if (parse_status != TinyNN_SUCCESS) {
         LOG_DEBUG("load model from memory failed\n");
         return parse_status;

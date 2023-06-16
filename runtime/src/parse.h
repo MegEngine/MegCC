@@ -30,7 +30,8 @@ TinyNNStatus parse_device_model(
 
 //! all resource are allocate here
 TinyNNStatus parse_model(
-        void* buffer, size_t size, CombineModel* model, int share_weights);
+        void* buffer, size_t size, int is_own_buffer, CombineModel* model,
+        int share_weights);
 
 #endif
 
