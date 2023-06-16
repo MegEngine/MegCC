@@ -22,6 +22,10 @@ struct MGBImporterOptions {
     bool enable_nchw88 = false;
     int8_t graph_opt_level = 2;
     std::string module_name;
+    std::string extern_opr_output_shape;
+    std::string extern_opr_output_dtype;
+    std::string extern_opr_loader_env;
+    std::string extern_opr_loader_path_with_interface;
     std::vector<std::map<std::string, megdnn::TensorShape>> input_map_vec;
 };
 

@@ -8,6 +8,7 @@
 #include "llvm/Support/JSON.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/raw_ostream.h"
 #include "mlir/Dialect/Bufferization/Transforms/Passes.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Parser.h"
@@ -51,6 +52,10 @@ cl::opt<bool> Add_nhwc2nchw_to_input(
 cl::opt<std::string> JsonFile(
         "json", cl::Optional, cl::desc("config app by json"),
         cl::value_desc("<path/to/json/file>"));
+cl::opt<std::string> GenJsonTemplate(
+        "json-template", cl::Optional,
+        cl::desc("specify directory stored the output json template"),
+        cl::value_desc("path/to/out_dir"));
 
 cl::opt<bool> EnableCompressWeightToFp16(
         "enable_compress_fp16",
@@ -65,19 +70,162 @@ cl::opt<bool> Decrypt(
                  "it in the ./decryption/<model_name>.mge"));
 
 extern llvm::cl::opt<megcc::KernelGen::Arch> target_arch;
+class DumpCVHelper {
+public:
+    using Kerns = std::vector<const megcc::KernelGen::KernelFunc*>;
+    using GenKerns = megcc::KernelGen::KernelPack::KernType;
+    struct CVConfig {
+        GenKerns kernel_type;
+        int nr_operands;
+        std::map<std::string, std::string> str_param;
+        std::map<std::string, float> flt_param;
+    };
+
+    DumpCVHelper() {
+        m_name2gen["transpose"] = {GenKerns::CVTransposeKernel, 2};
+        m_name2gen["roicopy"] = {GenKerns::RoiCopyKernel, 2};
+        m_name2gen["rotate"] = {GenKerns::RotateKernel, 2};
+        m_name2gen["resize_linear"] = {
+                GenKerns::ResizeKernel, 2, {{"imode", "LINEAR"}, {"format", "NHWC"}}};
+        m_name2gen["flip"] = {GenKerns::FlipKernel, 2};
+        m_name2gen["warp_affine_replicate_linear"] = {
+                GenKerns::WarpAffineKernel,
+                3,
+                {{"imode", "LINEAR"},
+                 {"format", "NHWC"},
+                 {"border_mode", "REPLICATE"}}};
+        m_name2gen["warp_affine_replicate_linear"].flt_param["border_val"] = 0.f;
+        m_name2gen["warp_affine_constant_linear"] = {
+                GenKerns::WarpAffineKernel,
+                4,
+                {{"imode", "LINEAR"}, {"format", "NHWC"}, {"border_mode", "CONSTANT"}}};
+        m_name2gen["warp_affine_constant_linear"].flt_param["border_val"] = 0.f;
+        m_name2gen["rgb2bgr"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2BGR"}}};
+        m_name2gen["rgb2yuv"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2YUV"}}};
+        m_name2gen["rgb2gray"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
+        m_name2gen["yuv2bgr_nv21"] = {
+                GenKerns::CvtColorKernel, 2, {{"mode", "YUV2BGR_NV21"}}};
+        m_name2gen["gaussian_blur_constant"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "CONSTANT"}}};
+        m_name2gen["gaussian_blur_replicate"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REPLICATE"}}};
+        m_name2gen["gaussian_blur_reflect"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT"}}};
+        m_name2gen["gaussian_blur_reflect_101"] = {
+                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT_101"}}};
+    }
+
+    Kerns get_kerns(const std::string& cv_name, megcc::KernelGen::Arch arch) {
+        CC_ASSERT(m_name2gen.find(cv_name) != m_name2gen.end())
+                << "can not find cv " << cv_name << "\n";
+        auto kernel_type = m_name2gen[cv_name].kernel_type;
+        auto kernels =
+                megcc::KernelGen::KernelPack::GetKernel(kernel_type, target_arch).first;
+        {
+            auto bare_kernels = megcc::KernelGen::KernelPack::GetKernel(
+                                        kernel_type, megcc::KernelGen::Arch::BAREMETAL)
+                                        .first;
+            for (auto x : bare_kernels) {
+                kernels.push_back(x);
+            }
+        }
+        return kernels;
+    }
+
+    CVConfig get_kern_config(const std::string& cv_name) {
+        CC_ASSERT(m_name2gen.find(cv_name) != m_name2gen.end())
+                << "not support cv " << cv_name << "\n";
+        return m_name2gen[cv_name];
+    }
+
+    std::vector<std::string> get_all_cv_name() const {
+        std::vector<std::string> res;
+        for (auto name2gen : m_name2gen) {
+            res.push_back(name2gen.first);
+        }
+        return res;
+    }
+
+private:
+    std::unordered_map<std::string, CVConfig> m_name2gen;
+};
 struct DumpJson {
     struct ModelJson {
         ModelJson() {
             str_options["model_name"] = "";
+            str_options_template["model_name"] = std::make_pair(
+                    "[Optional], specify the name of the tiny model to be generated.",
+                    "model_nchw44");
+
             str_options["model_path"] = "";
+            str_options_template["model_path"] = std::make_pair(
+                    "[Required], specify the input model path", "path/to/model");
+
             str_options["input_shape_str"] = "";
+            str_options_template["input_shape_str"] = std::make_pair(
+                    "[Optional], modify the input shape",
+                    "data=(1,1,384,288):data=(1,1,288,384)");
+
+            str_options["extern_opr_output_shape"] = "";
+            str_options_template["extern_opr_output_shape"] = std::make_pair(
+                    "[Optional], specific extern opr output shapes",
+                    "loader_1=(1,3,5,5);(1,1);(3,3):loader_2=(2,2);(1,1,3,3)");
+
+            str_options["extern_opr_output_dtype"] = "";
+            str_options_template["extern_opr_output_dtype"] = std::make_pair(
+                    "[Optional], specific extern opr output dtypes. The available "
+                    "values are float32, int32, uint8, float16 and int16. Default "
+                    "value is float32.",
+                    "float32;int32;uint8:float16;int16");
+
+            str_options["extern_opr_loader_env"] = "";
+            str_options_template["extern_opr_loader_env"] = std::make_pair(
+                    "[Optional], specific extern opr loader path with interface. If "
+                    "\"interface\" "
+                    "is not provided, using \"mgb_c_opr_init\" default.",
+                    "loader_path:interface");
+
+            str_options["extern_opr_loader_path_with_interface"] = "";
+            str_options_template["extern_opr_loader_path_with_interface"] =
+                    std::make_pair(
+                            "[Optional], set ENV for all extern opr loader",
+                            "ENV_1=VALUE_1;ENV_2=VALUE_2");
+
             bool_options["enable_nchw44"] = false;
+            bool_options_template["enable_nchw44"] = std::make_pair(
+                    "[Optional], whether to enable nchw44 optimization, default false",
+                    true);
+
             bool_options["enable_nchw44_dot"] = false;
+            bool_options_template["enable_nchw44_dot"] = std::make_pair(
+                    "[Optional], whether to enable nchw44 dot optimization for int8, "
+                    "default false",
+                    false);
+
             bool_options["add_nhwc2nchw_to_input"] = false;
+            bool_options_template["add_nhwc2nchw_to_input"] = std::make_pair(
+                    "[Optional], add nhwc2nchw dimshuffle to input", false);
+
             bool_options["mgb_fuse_kernel"] = false;
+            bool_options_template["mgb_fuse_kernel"] =
+                    std::make_pair("[Optional], fuse mgb kernel as possible", false);
+
             bool_options["enable_compress_fp16"] = false;
+            bool_options_template["enable_compress_fp16"] = std::make_pair(
+                    "[Optional], whether to enable the optimization of using float16 "
+                    "storage to compress the model size",
+                    false);
+
             bool_options["enable_nchw88"] = false;
+            bool_options_template["enable_nchw88"] = std::make_pair(
+                    "[Optional], whether to enable nchw88 optimization, default false",
+                    false);
+
             bool_options["enable_ioc16"] = false;
+            bool_options_template["enable_ioc16"] = std::make_pair(
+                    "[Optional], whether to enable optimization using float16 "
+                    "calculation, default false",
+                    false);
         }
         static ModelJson parse(json::Object& obj) {
             ModelJson res;
@@ -101,6 +249,8 @@ struct DumpJson {
         }
         std::map<std::string, std::string> str_options;
         std::map<std::string, bool> bool_options;
+        std::map<std::string, std::pair<std::string, std::string>> str_options_template;
+        std::map<std::string, std::pair<std::string, bool>> bool_options_template;
         std::string to_string() const {
             std::stringstream ss;
             for (auto& kv : str_options) {
@@ -171,78 +321,78 @@ struct DumpJson {
         }
         return res;
     }
-};
 
-class DumpCVHelper {
-public:
-    using Kerns = std::vector<const megcc::KernelGen::KernelFunc*>;
-    using GenKerns = megcc::KernelGen::KernelPack::KernType;
-    struct CVConfig {
-        GenKerns kernel_type;
-        int nr_operands;
-        std::map<std::string, std::string> str_param;
-        std::map<std::string, float> flt_param;
-    };
+    static void gen_json_template(const std::string& out_dir) {
+        llvm::json::Object res;
+        //! dump dir
+        res["dump_dir@"] = llvm::json::Value(
+                "[Required], specify the directory where the output kernel and model "
+                "are stored");
+        res["dump_dir"] = llvm::json::Value("kernel_dir");
 
-    DumpCVHelper() {
-        m_name2gen["transpose"] = {GenKerns::CVTransposeKernel, 2};
-        m_name2gen["roicopy"] = {GenKerns::RoiCopyKernel, 2};
-        m_name2gen["rotate"] = {GenKerns::RotateKernel, 2};
-        m_name2gen["resize_linear"] = {
-                GenKerns::ResizeKernel, 2, {{"imode", "LINEAR"}, {"format", "NHWC"}}};
-        m_name2gen["flip"] = {GenKerns::FlipKernel, 2};
-        m_name2gen["warp_affine_replicate_linear"] = {
-                GenKerns::WarpAffineKernel,
-                3,
-                {{"imode", "LINEAR"},
-                 {"format", "NHWC"},
-                 {"border_mode", "REPLICATE"}}};
-        m_name2gen["warp_affine_replicate_linear"].flt_param["border_val"] = 0.f;
-        m_name2gen["warp_affine_constant_linear"] = {
-                GenKerns::WarpAffineKernel,
-                4,
-                {{"imode", "LINEAR"}, {"format", "NHWC"}, {"border_mode", "CONSTANT"}}};
-        m_name2gen["warp_affine_constant_linear"].flt_param["border_val"] = 0.f;
-        m_name2gen["rgb2bgr"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2BGR"}}};
-        m_name2gen["rgb2yuv"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2YUV"}}};
-        m_name2gen["rgb2gray"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
-        m_name2gen["yuv2bgr_nv21"] = {
-                GenKerns::CvtColorKernel, 2, {{"mode", "YUV2BGR_NV21"}}};
-        m_name2gen["gaussian_blur_constant"] = {
-                GenKerns::CVGaussianBlur, 2, {{"border_mode", "CONSTANT"}}};
-        m_name2gen["gaussian_blur_replicate"] = {
-                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REPLICATE"}}};
-        m_name2gen["gaussian_blur_reflect"] = {
-                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT"}}};
-        m_name2gen["gaussian_blur_reflect_101"] = {
-                GenKerns::CVGaussianBlur, 2, {{"border_mode", "REFLECT_101"}}};
-    }
-
-    Kerns get_kerns(const std::string& cv_name, megcc::KernelGen::Arch arch) {
-        CC_ASSERT(m_name2gen.find(cv_name) != m_name2gen.end())
-                << "can not find cv " << cv_name << "\n";
-        auto kernel_type = m_name2gen[cv_name].kernel_type;
-        auto kernels =
-                megcc::KernelGen::KernelPack::GetKernel(kernel_type, target_arch).first;
-        {
-            auto bare_kernels = megcc::KernelGen::KernelPack::GetKernel(
-                                        kernel_type, megcc::KernelGen::Arch::BAREMETAL)
-                                        .first;
-            for (auto x : bare_kernels) {
-                kernels.push_back(x);
-            }
+        //! model
+        auto model_array = llvm::json::Array();
+        auto model = llvm::json::Object();
+        ModelJson model_json;
+        for (auto str_option : model_json.str_options) {
+            model[str_option.first + "@"] = llvm::json::Value(
+                    model_json.str_options_template.at(str_option.first).first);
+            model[str_option.first] = llvm::json::Value(
+                    model_json.str_options_template.at(str_option.first).second);
         }
-        return kernels;
-    }
+        for (auto bool_option : model_json.bool_options) {
+            model[bool_option.first + "@"] = llvm::json::Value(
+                    model_json.bool_options_template.at(bool_option.first).first);
+            model[bool_option.first] = llvm::json::Value(
+                    model_json.bool_options_template.at(bool_option.first).second);
+        }
+        model_array.push_back(llvm::json::Value(std::move(model)));
+        res["model"] = llvm::json::Value(std::move(model_array));
 
-    CVConfig get_kern_config(const std::string& cv_name) {
-        CC_ASSERT(m_name2gen.find(cv_name) != m_name2gen.end())
-                << "not support cv " << cv_name << "\n";
-        return m_name2gen[cv_name];
-    }
+        //! cv
+        auto cv_oprs = llvm::json::Object();
+        auto&& cv_names = DumpCVHelper().get_all_cv_name();
+        for (auto&& cv_name : cv_names) {
+            auto cv_opr_dtype = llvm::json::Array();
+            cv_opr_dtype.push_back(llvm::json::Value("ui8"));
+            //! TODO: Automatically determine if dtype float32 is supported. Hard code
+            //! for now.
+            if (cv_name.find("resize") != std::string::npos ||
+                cv_name.find("gaussian_blur") != std::string::npos)
+                cv_opr_dtype.push_back(llvm::json::Value("f32"));
+            cv_oprs[cv_name] =
+                    llvm::json::Value(llvm::json::Value(std::move(cv_opr_dtype)));
+        }
+        res["cv@"] = llvm::json::Value(
+                "[Optional], specify the cv operator used in non-models (e.g. in pre "
+                "and post processing)");
+        res["cv"] = llvm::json::Value(std::move(cv_oprs));
 
-private:
-    std::unordered_map<std::string, CVConfig> m_name2gen;
+        std::string JSONString;
+        llvm::raw_string_ostream JSONStream(JSONString);
+        JSONStream << llvm::json::Value(std::move(res));
+
+        if (!llvm::sys::fs::exists(out_dir.c_str())) {
+            llvm::sys::fs::create_directories(out_dir.c_str());
+        } else {
+            CC_ASSERT(llvm::sys::fs::is_directory(out_dir.c_str()))
+                    << out_dir
+                    << "is existed and not a directory, try remove it manually or "
+                       "choice another one\n";
+        }
+
+        std::error_code EC;
+        std::string out_path = out_dir + "/config.json";
+        llvm::raw_fd_ostream File(out_path, EC, llvm::sys::fs::OF_Text);
+        if (EC) {
+            llvm::errs() << "Error opening file: " << EC.message() << "\n";
+            CC_ABORT;
+        }
+
+        File << JSONString << "\n";
+        File.close();
+        llvm::outs() << "Json template has been saved into " << out_path << ".\n";
+    }
 };
 
 static inline std::unordered_map<std::string, megcc::CCAttr> get_attr_map(
@@ -312,6 +462,11 @@ int main(int argc, char** argv) {
     cl::ParseCommandLineOptions(argc, argv);
     if (Verbose) {
         megcc::SetLogLevel(megcc::LogLevel::DEBUG);
+    }
+
+    if (GenJsonTemplate.length() > 0) {
+        DumpJson::gen_json_template(GenJsonTemplate);
+        return 0;
     }
 
     std::shared_ptr<DumpJson> dump_info;
@@ -396,6 +551,14 @@ int main(int argc, char** argv) {
                     model.bool_options.at("add_nhwc2nchw_to_input");
             options.enable_nchw88 = model.bool_options.at("enable_nchw88");
             options.enable_ioc16 = model.bool_options.at("enable_ioc16");
+            options.extern_opr_output_shape =
+                    model.str_options.at("extern_opr_output_shape");
+            options.extern_opr_output_dtype =
+                    model.str_options.at("extern_opr_output_dtype");
+            options.extern_opr_loader_env =
+                    model.str_options.at("extern_opr_loader_env");
+            options.extern_opr_loader_path_with_interface =
+                    model.str_options.at("extern_opr_loader_path_with_interface");
             bool model_mgb_fuse_kernel = model.bool_options.at("mgb_fuse_kernel");
 
             if (failed(parseInputShapes(

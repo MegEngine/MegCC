@@ -172,15 +172,18 @@ inline std::vector<std::string> split(std::string str, const std::string& delimi
     return res;
 }
 
-inline void parse_extern_loader_info() {
+inline void parse_extern_loader_info(
+        const std::string& externOprOutputShape,
+        const std::string& externOprOutputDType, const std::string& externOprLoaderEnv,
+        const std::string& externOprLoaderPathWithInterface) {
     auto& name2outputinfo = loaderInfo.m_name_2_outputinfo;
 
-    std::string extern_opr_output_shapes = ExternOprOutputShape;
+    std::string extern_opr_output_shapes = externOprOutputShape;
     if (extern_opr_output_shapes.size()) {
         auto&& output_shapes_loaders = split(extern_opr_output_shapes, ":");
         size_t nr_loader = output_shapes_loaders.size();
 
-        std::string extern_opr_output_dtypes = ExternOprOutputDType;
+        std::string extern_opr_output_dtypes = externOprOutputDType;
         bool specify_dtype = (extern_opr_output_dtypes.size() != 0);
         auto&& output_dtypes_loaders = split(extern_opr_output_dtypes, ":");
         if (specify_dtype)
@@ -284,7 +287,7 @@ inline void parse_extern_loader_info() {
     }
 
     // parse ENV
-    std::string env = ExternOprLoaderEnv;
+    std::string env = externOprLoaderEnv;
     if (env.size()) {
         auto&& env_values = split(env, ";");
         for (auto&& env_value : env_values) {
@@ -296,7 +299,7 @@ inline void parse_extern_loader_info() {
     }
 
     // parse loader path and interface
-    std::string loaderPathWithInterface = ExternOprLoaderPathWithInterface;
+    std::string loaderPathWithInterface = externOprLoaderPathWithInterface;
     if (loaderPathWithInterface.size()) {
         auto&& loaderPath_interface = split(loaderPathWithInterface, ":");
         CC_ASSERT((loaderPath_interface.size() <= 2))
@@ -345,7 +348,18 @@ public:
         CC_ASSERT(format.valid()) << "invalid model: unknown model format.\n";
         m_loader = serialization::GraphLoader::make(std::move(inp_file), format.val());
 
-        parse_extern_loader_info();
+        if (options.extern_opr_output_shape != "" ||
+            options.extern_opr_output_dtype != "" ||
+            options.extern_opr_loader_env != "" ||
+            options.extern_opr_loader_path_with_interface != "")
+            parse_extern_loader_info(
+                    options.extern_opr_output_shape, options.extern_opr_output_dtype,
+                    options.extern_opr_loader_env,
+                    options.extern_opr_loader_path_with_interface);
+        else
+            parse_extern_loader_info(
+                    ExternOprOutputShape, ExternOprOutputDType, ExternOprLoaderEnv,
+                    ExternOprLoaderPathWithInterface);
         dummy_mgb_c_opr_init(mgb_get_extern_c_opr_api_versioned);
 
         LOG_DEBUG << "Process mgb graph\n";
