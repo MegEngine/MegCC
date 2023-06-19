@@ -1,5 +1,6 @@
 #include "IndexingMultiAxisVec.h"
 #include "Utils/StringTemplate.h"
+#include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
 #include "compiler/Common/Logger.h"
 
@@ -11,8 +12,11 @@ bool IndexingMultiAxisKernel::IsAvailable(TContext* context) const {
     int nr_operand = context->getAttrInt("nr_operands");
     bool ok_operand = nr_operand > 2;
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool ok_dtype =
-            Utils::is_int_dtype(src_dtype, 32) || Utils::is_float_dtype(src_dtype, 32);
+    std::string src_specifier =
+            Utils::cvt_dtype_specifier(SymbolHelper::gen_valid_dtype(src_dtype));
+    std::string dst_specifier = Utils::cvt_dtype_specifier(
+            SymbolHelper::gen_valid_dtype(Utils::get_last_operand(context).dtype));
+    bool ok_dtype = (src_specifier == dst_specifier);
     for (int i = 1; i < nr_operand - 1; ++i) {
         ok_operand =
                 ok_operand &&
@@ -38,6 +42,7 @@ std::string IndexingMultiAxisKernel::GetKernelSymbol(TContext* context) const {
     for (int i = 0; i < nr_operand - 2; ++i) {
         ss << "_" << context->getAttrInt("axis:" + std::to_string(i));
     }
+    ss << "_" << context->getAttrOprand("operand:0").dtype;
     return ss.str();
 }
 
@@ -49,15 +54,17 @@ std::string IndexingMultiAxisKernel::GetKernelBody(TContext* context) const {
                      << "] = " << context->getAttrInt("axis:" + std::to_string(i))
                      << ";\n";
     }
+    std::string dtype_specifier = Utils::cvt_dtype_specifier(
+            SymbolHelper::gen_valid_dtype(Utils::get_last_operand(context).dtype));
     std::stringstream writer;
     writer << "#include <string.h>\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";
     // clang-format off
-    writer << StringTemplate::StringTemplateArgs(context).add("axis_init_str",axis_init_ss.str()).render(
-     R"(
-    float* src = (float*)inputs[0]->ptr;
-    float* dst = (float*)outputs[0]->ptr;
+    writer << StringTemplate::StringTemplateArgs(context).add("axis_init_str",axis_init_ss.str()).add("dtype_specifier", dtype_specifier).render(
+    R"(
+    ${dtype_specifier}* src = (${dtype_specifier}*)inputs[0]->ptr;
+    ${dtype_specifier}* dst = (${dtype_specifier}*)outputs[0]->ptr;
 
     const Tensor* src_tensor = inputs[0];
     const Tensor* dst_tensor = outputs[0];
@@ -81,8 +88,8 @@ std::string IndexingMultiAxisKernel::GetKernelBody(TContext* context) const {
     int batch_stride_dst = first_last_index - 1 >= 0? dst_layout.stride[first_last_index - 1]:0;
     int last_stride = src_layout.stride[last_index_axis];
     for(int batch_idx = 0; batch_idx < batch; ++batch_idx) {
-        float* src_ptr = src + batch_idx * batch_stride_src;
-        float* dst_ptr = dst + batch_idx * batch_stride_dst;
+        ${dtype_specifier}* src_ptr = src + batch_idx * batch_stride_src;
+        ${dtype_specifier}* dst_ptr = dst + batch_idx * batch_stride_dst;
         for(int i = 0; i < idx_tensors[0]->layout.dims[0]; ++i) {
             int src_offet = 0;
             int shape_prod = 1;
@@ -91,7 +98,7 @@ std::string IndexingMultiAxisKernel::GetKernelBody(TContext* context) const {
                 src_offet += index_ptr[i] * shape_prod;
                 shape_prod *= src_layout.dims[axis_vec[axis_id]];
             }
-            memcpy(dst_ptr + i * last_stride, src_ptr + src_offet * last_stride, last_stride * sizeof(float));
+            memcpy(dst_ptr + i * last_stride, src_ptr + src_offet * last_stride, last_stride * sizeof(${dtype_specifier}));
         }
     }
 
