@@ -37,6 +37,10 @@ if [ ! -z "${MODEL_FILE}" ];then
   mv ${OUT_DIR}/kern/*.tiny "${OUT_DIR}/model"
   mv ${OUT_DIR}/kern/*.tiny.txt "${OUT_DIR}/model_info"
 fi
+MODEL_HEAD_FILE=`find ${OUT_DIR}/kern/ -name "*.tiny_head.bin"`
+if [ ! -z "${MODEL_HEAD_FILE}" ];then
+  mv ${OUT_DIR}/kern/*.tiny_head.bin "${OUT_DIR}/model"
+fi
 cp -a "${PROJECT_PATH}"/script/{ppl_build.sh,test_model.py} "${OUT_DIR}/"
 cp "${RUNTIME_PATH}/scripts/runtime_build.py" "${OUT_DIR}/runtime/script/"
 cp "${JSON_PATH}" "${OUT_DIR}/"
