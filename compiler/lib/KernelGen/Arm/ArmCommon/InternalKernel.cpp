@@ -77,7 +77,9 @@ std::string MatmulInternal::GenPackACall(TContext* ctx) {
     } else if (Utils::is_float_dtype(dtype, 16)) {
         return "(__fp16* outptr, const __fp16* inptr, int ldin, int y0, int "
                "ymax, int k0, int kmax)";
-    } else if (Utils::is_quant_dtype(dtype, 8) || dtype == "8832") {
+    } else if (
+            Utils::is_quant_dtype(dtype, 8) || Utils::is_int_dtype(dtype, 8) ||
+            dtype == "8832") {
         return "(int8_t* outptr, const int8_t* inptr, int ldin, int y0, int "
                "ymax, int k0, int kmax)";
     } else {
@@ -94,7 +96,9 @@ std::string MatmulInternal::GenPackBCall(TContext* ctx) {
     } else if (Utils::is_float_dtype(dtype, 16)) {
         return "(__fp16* outptr, const __fp16* inptr, int ldin, int x0, int "
                "xmax, int k0, int kmax)";
-    } else if (Utils::is_quant_dtype(dtype, 8) || dtype == "8832") {
+    } else if (
+            Utils::is_quant_dtype(dtype, 8) || Utils::is_int_dtype(dtype, 8) ||
+            dtype == "8832") {
         return "(int8_t* outptr, const int8_t* inptr, int ldin, int x0, int "
                "xmax, int k0, int kmax)";
     } else {

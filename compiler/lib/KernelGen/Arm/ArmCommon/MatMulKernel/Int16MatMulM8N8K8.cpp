@@ -1,7 +1,6 @@
 #include "Int16MatMulM8N8K8.h"
 #include "Utils/StringTemplate.h"
 #include "compiler/Common/Logger.h"
-#include "stdio.h"
 using namespace megcc;
 using namespace KernelGen;
 using namespace ArmCommon;

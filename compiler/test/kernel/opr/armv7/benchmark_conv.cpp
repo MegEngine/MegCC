@@ -145,4 +145,17 @@ TEST(ARMV7, BenchmarkConvNCHWNCHW44) {
     ;
 }
 
+TEST(ARMV7, BenchmarkInt8Conv1x1NCHW44) {
+    std::string cc_algo = "Armv7_int8_Conv1x1_.*";
+    std::string dnn_algo = "CONV1x1:ARMV7_INT8X8X32_MK4_4X2X16:24";
+    for (auto mode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        run_conv(
+                1, 32, 71, 32, 1, 1, 0, cc_algo, dnn_algo,
+                ConvBiasForward::Param::Format::NCHW44, true, mode);
+    }
+}
+
 #endif

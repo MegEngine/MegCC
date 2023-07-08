@@ -16,7 +16,9 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
     std::stringstream declare_ss;
     auto nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
-    if ((nonline_mode == "SIGMOID" || nonline_mode == "H_SWISH") && need_postprocess) {
+    if ((nonline_mode == "SIGMOID" || nonline_mode == "H_SWISH" ||
+         nonline_mode == "RELU" || nonline_mode == "IDENTITY") &&
+        need_postprocess) {
         std::vector<CCOperand> operands;
         operands.resize(2);
         auto dtype = ctx->getAttrStr("dtype");
@@ -25,6 +27,12 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
                     std::string dst_dtype) -> std::shared_ptr<ElemwiseGenUnary> {
             if (nonline_mode == "SIGMOID") {
                 return std::make_shared<ElemwiseGenUnarySigmoid>(
+                        src_dtype, dst_dtype, true);
+            } else if (nonline_mode == "RELU") {
+                return std::make_shared<ElemwiseGenUnaryRelu>(
+                        src_dtype, dst_dtype, true);
+            } else if (nonline_mode == "IDENTITY") {
+                return std::make_shared<ElemwiseGenUnaryIdentity>(
                         src_dtype, dst_dtype, true);
             } else {
                 CC_ASSERT(nonline_mode == "H_SWISH");
@@ -53,15 +61,28 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
         } else if (ctx->getAttrStr("format") == "MK4") {
             post_process_temp = R"(
             if (LDC == (4 * N)){
-                ${ElemwiseImplName}(C, C, M * N);
+                ${ElemwiseImplName}(gemm_output, C, M * N, temp_scale, dst_scale_inv);
             }else{
                 int cnt = 0;
                 for(int m_idx = 0; m_idx < M; m_idx += 4){
-                    ${ElemwiseImplName}(C + cnt * LDC, C + cnt * LDC, 4 * N);
+                    ${ElemwiseImplName}(gemm_output + cnt * LDC, C + cnt * LDC, 4 * N, temp_scale, dst_scale_inv);
                     ++cnt;
                 }
             }
         )";
+            if (dtype == "f32") {
+                post_process_temp = R"(
+                if (LDC == (4 * N)){
+                    ${ElemwiseImplName}(C, C, M * N);
+                }else{
+                    int cnt = 0;
+                    for(int m_idx = 0; m_idx < M; m_idx += 4){
+                        ${ElemwiseImplName}(C + cnt * LDC, C + cnt * LDC, 4 * N);
+                        ++cnt;
+                    }
+                }
+            )";
+            }
         } else {
             CC_ASSERT(ctx->getAttrStr("format") == "MK4_DOT")
                     << ", but get " << ctx->getAttrStr("format") << "\n";

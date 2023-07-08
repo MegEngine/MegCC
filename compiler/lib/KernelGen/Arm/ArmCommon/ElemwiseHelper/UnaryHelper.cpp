@@ -111,10 +111,42 @@ std::string ElemwiseGenUnaryRelu::GenKernelSimdInit(std::vector<std::string>) co
 std::string ElemwiseGenUnaryRelu::GenKernelSimdUnroll(
         std::vector<std::string> strs) const {
     int unroll = std::stoi(strs[0]);
+    auto input_ptr = strs[1];
+    auto output_ptr = strs[2];
     std::stringstream writer;
     for (int i = 0; i < unroll; i++) {
-        writer << "\n float32x4_t " << strs[2 * i + 2] << " = vmaxq_f32(("
-               << strs[2 * i + 1] << "), vzero);";
+        std::string input_reg_str = "";
+        auto input_render = StringTemplate::StringTemplateArgs().add("idx", i).add(
+                "input_reg", strs[2 * i + 1]);
+        if (m_i32_to_qs8) {
+            input_reg_str = input_render.render(R"(
+                float32x4_t input_reg_${idx} = vmulq_n_f32(vcvtq_f32_s32(${input_reg}), src_scale);
+            )");
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32))
+                    << "not support dst_type " << m_dst_dtype;
+            input_reg_str = input_render.render(R"(
+                float32x4_t input_reg_${idx} = ${input_reg};
+            )");
+        }
+        writer << input_reg_str;
+
+        writer << "\n float32x4_t dst_temp_" << i << " = vmaxq_f32(input_reg_" << i
+               << ", vzero);";
+        if (m_i32_to_qs8) {
+            std::string quant_temp = R"(
+                int16x4_t temp_s16_${idx} = vqmovn_s32(vcvtaq_s32_f32(vmulq_n_f32(dst_temp_${idx}, dst_scale)));
+                int8x8_t ${dst_reg_name} = vqmovn_s16(vcombine_s16(temp_s16_${idx}, temp_s16_${idx}));
+            )";
+            writer << StringTemplate::StringTemplateArgs()
+                              .add("dst_reg_name", strs[2 * i + 2])
+                              .add("idx", i)
+                              .render(quant_temp);
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << "\n float32x4_t " << strs[2 * i + 2] << " = dst_temp_" << i
+                   << ";";
+        }
     }
     return writer.str();
 }
@@ -125,9 +157,26 @@ std::string ElemwiseGenUnaryRelu::GenKernelNaiveUnroll(
     auto input_ptr = strs[1];
     auto output_ptr = strs[2];
     std::stringstream writer;
+    auto body_render = StringTemplate::StringTemplateArgs()
+                               .add("dst_ptr", output_ptr)
+                               .add("src_ptr", input_ptr);
     for (int i = 0; i < unroll; i++) {
-        writer << "\n(" << output_ptr << ")[" << i << "] =  fmax((" << input_ptr << ")["
-               << i << "], 0.0f);";
+        body_render.add("i", i);
+        if (m_i32_to_qs8) {
+            writer << body_render.render(R"(
+                float res = ${src_ptr}[${i}] * src_scale;
+                res = fmax(res, 0.f);
+                int res_i32 = (int)roundf(res * dst_scale);
+                res_i32 = res_i32 > 127 ? 127 : res_i32;
+                res_i32 = res_i32 < -128 ? -128 : res_i32;
+                (${dst_ptr})[${i}] = res_i32;
+            )");
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << body_render.render(R"(
+                (${dst_ptr})[${i}] =  fmax((${src_ptr})[${i}], 0.f);
+            )");
+        }
     }
     return writer.str();
 }
@@ -232,18 +281,19 @@ std::string ElemwiseGenUnarySigmoid::GenKernelNaiveUnroll(
                                .add("dst_ptr", output_ptr)
                                .add("src_ptr", input_ptr);
     for (int i = 0; i < unroll; i++) {
+        body_render.add("i", i);
         if (m_i32_to_qs8) {
             writer << body_render.render(R"(
-                float res = 1.f / ( 1.f + expf(-(${src_ptr}[0] * src_scale)));
+                float res = 1.f / ( 1.f + expf(-(${src_ptr}[${i}] * src_scale)));
                 int res_i32 = (int)roundf(res * dst_scale);
                 res_i32 = res_i32 > 127 ? 127 : res_i32;
                 res_i32 = res_i32 < -128 ? -128 : res_i32;
-                (${dst_ptr})[0] = res_i32;
+                (${dst_ptr})[${i}] = res_i32;
             )");
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
             writer << body_render.render(R"(
-                (${dst_ptr})[0] =  1.f / ( 1.f + expf(-(${src_ptr})[0]));
+                (${dst_ptr})[${i}] =  1.f / ( 1.f + expf(-(${src_ptr})[${i}]));
             )");
         }
     }
@@ -322,24 +372,104 @@ std::string ElemwiseGenUnaryHswish::GenKernelNaiveUnroll(
                                .add("dst_ptr", output_ptr)
                                .add("src_ptr", input_ptr);
     for (int i = 0; i < unroll; i++) {
+        body_render.add("i", i);
         if (m_i32_to_qs8) {
             writer << body_render.render(R"(
-                float temp = ${src_ptr}[0] + 3;
+                float temp = ${src_ptr}[${i}] + 3;
                 temp = temp > 6? 6 : temp;
                 temp = temp < 0? 0 : temp;
-                float res = ${src_ptr}[0] * temp / 6.f;
+                float res = ${src_ptr}[${i}] * temp / 6.f;
                 int res_i32 = (int)roundf(res * dst_scale);
                 res_i32 = res_i32 > 127 ? 127 : res_i32;
                 res_i32 = res_i32 < -128 ? -128 : res_i32;
-                (${dst_ptr})[0] = res_i32;
+                (${dst_ptr})[${i}] = res_i32;
             )");
         } else {
             CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
             writer << body_render.render(R"(
-                float temp = ${src_ptr}[0] + 3;
+                float temp = ${src_ptr}[${i}] + 3;
                 temp = temp > 6? 6 : temp;
                 temp = temp < 0? 0 : temp;
-                (${dst_ptr})[0] =  ${src_ptr}[0] * temp / 6.f;
+                (${dst_ptr})[${i}] =  ${src_ptr}[${i}] * temp / 6.f;
+            )");
+        }
+    }
+    return writer.str();
+}
+
+//! IDENTITY
+std::string ElemwiseGenUnaryIdentity::GenInlineName() const {
+    return "ElemwiseGenUnaryIdentity";
+}
+std::string ElemwiseGenUnaryIdentity::GenKernelSimdInit(
+        std::vector<std::string>) const {
+    return "";
+}
+
+std::string ElemwiseGenUnaryIdentity::GenKernelSimdUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto input_ptr = strs[1];
+    auto output_ptr = strs[2];
+    std::stringstream writer;
+    for (int i = 0; i < unroll; i++) {
+        std::string input_reg_str = "";
+        auto input_render = StringTemplate::StringTemplateArgs().add("idx", i).add(
+                "input_reg", strs[2 * i + 1]);
+        if (m_i32_to_qs8) {
+            input_reg_str = input_render.render(R"(
+                float32x4_t input_reg_${idx} = vmulq_n_f32(vcvtq_f32_s32(${input_reg}), src_scale);
+            )");
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32))
+                    << "not support dst_type " << m_dst_dtype;
+            input_reg_str = input_render.render(R"(
+                float32x4_t input_reg_${idx} = ${input_reg};
+            )");
+        }
+        writer << input_reg_str;
+
+        if (m_i32_to_qs8) {
+            std::string quant_temp = R"(
+                int16x4_t temp_s16_${idx} = vqmovn_s32(vcvtaq_s32_f32(vmulq_n_f32(input_reg_${idx}, dst_scale)));
+                int8x8_t ${dst_reg_name} = vqmovn_s16(vcombine_s16(temp_s16_${idx}, temp_s16_${idx}));
+            )";
+            writer << StringTemplate::StringTemplateArgs()
+                              .add("dst_reg_name", strs[2 * i + 2])
+                              .add("idx", i)
+                              .render(quant_temp);
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << "\n float32x4_t " << strs[2 * i + 2] << " = input_reg_" << i
+                   << ";";
+        }
+    }
+    return writer.str();
+}
+
+std::string ElemwiseGenUnaryIdentity::GenKernelNaiveUnroll(
+        std::vector<std::string> strs) const {
+    int unroll = std::stoi(strs[0]);
+    auto input_ptr = strs[1];
+    auto output_ptr = strs[2];
+    std::stringstream writer;
+    auto body_render = StringTemplate::StringTemplateArgs()
+                               .add("dst_ptr", output_ptr)
+                               .add("src_ptr", input_ptr);
+    for (int i = 0; i < unroll; i++) {
+        body_render.add("i", i);
+        if (m_i32_to_qs8) {
+            writer << body_render.render(R"(
+                float res = ${src_ptr}[${i}] * src_scale * dst_scale;
+                int res_i32 = (int)roundf(res * dst_scale);
+                res_i32 = res_i32 > 127 ? 127 : res_i32;
+                res_i32 = res_i32 < -128 ? -128 : res_i32;
+                (${dst_ptr})[${i}] = res_i32;
+            )");
+        } else {
+            CC_ASSERT(Utils::is_float_dtype(m_dst_dtype, 32));
+            writer << body_render.render(R"(
+                (${dst_ptr})[${i}] =  ${src_ptr}[${i}];
             )");
         }
     }

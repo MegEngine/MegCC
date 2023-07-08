@@ -492,7 +492,6 @@ std::string gen_pack_b_workspace(const std::string& sig) {
 std::string gen_kernel(
         const std::string& sig, TContext* ctx, const std::string& postprocess_call,
         const std::string& preset_str = "") {
-    auto post_process_strs = gen_postprocess_inline(ctx);
     std::string keren_body =
             R"(
     ${kernel_sig}{

@@ -125,6 +125,7 @@ DEFINE_NNARY_OP(ElemwiseGenUnaryRelu)
 DEFINE_NNARY_OP(ElemwiseGenUnaryExp)
 DEFINE_NNARY_OP(ElemwiseGenUnarySigmoid)
 DEFINE_NNARY_OP(ElemwiseGenUnaryHswish)
+DEFINE_NNARY_OP(ElemwiseGenUnaryIdentity)
 #undef DEFINE_NNARY_OP
 
 //! TODO: add more unary elemwise here

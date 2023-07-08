@@ -58,4 +58,30 @@ TEST(ARMV7, BenchmarkFP32M4N8K4) {
             }
 }
 
+TEST(ARMV7, BenchmarkInt8x8x32MatMulMK4) {
+    Benchmarker<MatrixMulForward> benchmarker(Arch::ARMV7, 0);
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<MatrixMulForward>("ARMV7_INT8X8X32_MK4_4X2X16"));
+    MatrixMulForward::Param param;
+    UniformIntRNG rng(-127, 127);
+    benchmarker.set_rng(0, &rng);
+    benchmarker.set_rng(1, &rng);
+    benchmarker.set_dtype(0, dtype::Int8())
+            .set_dtype(1, dtype::Int8())
+            .set_dtype(2, dtype::Int32());
+    benchmarker.set_kernel_symbol("Armv7_kernel_int8x8x32_matmul_mk4_.*");
+    param.transposeA = false;
+    param.transposeB = false;
+    param.format = param::MatrixMul::Format::MK4;
+    benchmarker.set_param(param);
+    for (size_t m : {64, 128})
+        for (size_t n : {256, 384})
+            for (size_t k : {128, 256}) {
+                auto result =
+                        benchmarker.execs({{m / 4, k / 4, 4, 4}, {k / 4, n, 4}, {}});
+                printf("m=%zu, n=%zu, k=%zu\n", m, n, k);
+                result.print();
+            }
+}
+
 #endif

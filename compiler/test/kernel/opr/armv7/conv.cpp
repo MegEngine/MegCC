@@ -234,4 +234,35 @@ TEST(ARMV7, ConvWinogradNCHW44) {
                         }
 }
 
+TEST(ARMV7, ConvBiasConv1x1NCHW44Int8) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("Armv7_int8_Conv1x1.*");
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    size_t kernel = 1;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs({{2, 7, 11, 11, 4}, {7, 7, kernel, kernel, 4, 4}, {}, {}, {}});
+        checker.execs(
+                {{2, 3, 13, 10, 4},
+                 {13, 3, kernel, kernel, 4, 4},
+                 {1, 13, 1, 1, 4},
+                 {},
+                 {}});
+    }
+}
+
 // vim: syntax=cpp.doxygen
