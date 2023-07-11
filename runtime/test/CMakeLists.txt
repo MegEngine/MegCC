@@ -46,6 +46,7 @@ file(
   ./../src/lite/network.c
   ./../src/lite/tensor.c
   ./../src/parse.c
+  ./../src/tinynn.c
   ./main.cpp
   common/*.cpp
   runtime/*.cpp

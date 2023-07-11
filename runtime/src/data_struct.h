@@ -48,6 +48,8 @@ typedef struct Tensor {
     size_t size;
     //! flag whether the memory is shared from model memory
     int is_shared;
+    //! memory of input tensor must be malloced by user
+    int is_input;
 } Tensor;
 
 typedef struct {

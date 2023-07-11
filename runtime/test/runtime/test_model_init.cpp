@@ -302,3 +302,13 @@ TEST(RUNTIME, GetComboIOTensor) {
             ASSERT_EQ(layout.shapes[i], output_shape[active_idx][1][i]);
     }
 }
+
+TEST(RUNTIME, GetInputTensorMemory) {
+    SimpleCombineModel simple_model = SimpleCombineModel(1, 2);
+    CombineModel* cb_model = simple_model.m_combine_model;
+
+    LiteTensor d0;
+    LITE_get_io_tensor(cb_model, "data", LITE_INPUT, &d0);
+    void* input_ptr;
+    EXPECT_DEATH(LITE_get_tensor_memory(d0, &input_ptr), "");
+}

@@ -138,12 +138,14 @@ TinyNNStatus parse_tensor(
     LOG_DEBUG("Tensor layout: [");
     for (int i = 0; i < tensor->layout.nr_dim; i++) {
         tensor->layout.dims[i] = flatbuffers_int32_vec_at(fbs_dims, i);
-        LOG_DEBUG("%d,", tensor->layout.dims[i]);
+        LOG_DEBUG_NO_PREFIX("%d,", tensor->layout.dims[i]);
         tensor->layout.stride[i] = flatbuffers_int32_vec_at(fbs_stride, i);
     }
     //! format
     tensor->layout.format = format_from_fbs(ns(Layout_format(fbs_layout)));
-    LOG_DEBUG("], format=%d\n", tensor->layout.format);
+    LOG_DEBUG_NO_PREFIX(
+            "], format=%s, Dtype=%s\n", format2string(tensor->layout.format),
+            dtype2string(tensor->dtype.type_enum));
 
     tensor->is_weight = 0;
 
@@ -339,6 +341,7 @@ TinyNNStatus parse_device_model(
     for (int i = 0; i < model->nr_input; i++) {
         int index = flatbuffers_int32_vec_at(fbs_inputs, i);
         *(model->inputs + i) = model->tensors + index;
+        (*(model->inputs + i))->is_input = 1;
     }
     //! outputs
     flatbuffers_int32_vec_t fbs_outputs = ns(DeviceModel_outputs(fbs_device_model));

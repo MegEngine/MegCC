@@ -62,6 +62,15 @@ int LITE_get_tensor_memory(const LiteTensor tensor_, void** data) {
         return TinyNN_ERROR_NULL_PTR;
     }
     Tensor* tensor = get_active_tensor((ComboIOTensor*)tensor_);
+    if (tensor->ptr == NULL && tensor->is_input) {
+        TINYNN_ASSERT_MSG(
+                0,
+                "The input tensor memory is NULL, you should set input tensor memory "
+                "using "
+                "`LITE_reset_tensor_memory' firstly.");
+    }
+    TINYNN_ASSERT_MSG(tensor->ptr, "The tensor memory is NULL, issue us please.");
+
     *data = tensor->ptr;
     return TinyNN_SUCCESS;
 }

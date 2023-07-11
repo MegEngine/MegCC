@@ -456,7 +456,12 @@ TinyNNStatus init_model_memory(CombineModel* combo_model) {
         for (int i = 0; i < model->nr_tensor; i++) {
             Tensor* tensor = model->tensors + i;
             TINYNN_ASSERT(tensor);
-            if (!tensor->is_dynamic) {
+            if (tensor->is_input) {
+                tensor->ptr = NULL;
+                LOG_DEBUG(
+                        "Init model %d input tensor %s to %p\n", model_idx,
+                        tensor->name, tensor->ptr);
+            } else if (!tensor->is_dynamic) {
                 tensor->ptr = tensor_memory + tensor->offset;
 
                 LOG_DEBUG(

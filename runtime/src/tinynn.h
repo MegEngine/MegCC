@@ -52,5 +52,8 @@ typedef enum {
     TinyNN_OPENCL_MALI,
 } TinyNNDevice;
 
+const char* dtype2string(TinyNNDType type);
+const char* format2string(TinyNNFormat format);
+
 #endif
 // vim: syntax=cpp.doxygen
