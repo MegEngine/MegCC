@@ -15,6 +15,10 @@ extern LiteLogLevel g_log_level;
         __tinynn_log__("TinyNN ERROR:%s@%d: ", __func__, __LINE__); \
         __tinynn_log__(msg);                                        \
     }
+#define LOG_ERROR_NO_PREFIX(msg...)  \
+    if (LITE_ERROR >= g_log_level) { \
+        __tinynn_log__(msg);         \
+    }
 #define LOG_WARNING(msg...)                                        \
     if (LITE_WARN >= g_log_level) {                                \
         __tinynn_log__("TinyNN WARN:%s@%d: ", __func__, __LINE__); \

@@ -323,6 +323,48 @@ static TinyNNStatus load(flatbuffers_generic_t fbs_inst, Instruction* inst, VM* 
         }
     }
 
+#define LOG_ERROR_SHAPE                                                                \
+    LOG_ERROR(                                                                         \
+            "The loader output shapes specified are wrong. The correct loader output " \
+            "shapes "                                                                  \
+            "are:\n\"");                                                               \
+    int nr_output = extern_opr->nr_output;                                             \
+    for (int x = 0; x < nr_output - 1; ++x) {                                          \
+        uint32_t dims = extern_opr->mgb_outputs[x].layout.shape.ndim;                  \
+        LOG_ERROR_NO_PREFIX("(");                                                      \
+        for (int y = 0; y < dims - 1; ++y) {                                           \
+            LOG_ERROR_NO_PREFIX(                                                       \
+                    "%u,", extern_opr->mgb_outputs[x].layout.shape.shape[y]);          \
+        }                                                                              \
+        LOG_ERROR_NO_PREFIX(                                                           \
+                "%u);", extern_opr->mgb_outputs[x].layout.shape.shape[dims - 1]);      \
+    }                                                                                  \
+    uint32_t dims = extern_opr->mgb_outputs[nr_output - 1].layout.shape.ndim;          \
+    LOG_ERROR_NO_PREFIX("(");                                                          \
+    for (int y = 0; y < dims - 1; ++y) {                                               \
+        LOG_ERROR_NO_PREFIX(                                                           \
+                "%u,", extern_opr->mgb_outputs[nr_output - 1].layout.shape.shape[y]);  \
+    }                                                                                  \
+    LOG_ERROR_NO_PREFIX(                                                               \
+            "%u)\"\n",                                                                 \
+            extern_opr->mgb_outputs[nr_output - 1].layout.shape.shape[dims - 1]);
+
+    for (int i = 0; i < extern_opr->nr_output; ++i) {
+        if (extern_opr->mgb_outputs[i].layout.shape.ndim ==
+            extern_opr->outputs[i]->layout.nr_dim) {
+            for (int j = 0; j < extern_opr->mgb_outputs[i].layout.shape.ndim; ++j) {
+                if (extern_opr->mgb_outputs[i].layout.shape.shape[j] !=
+                    extern_opr->outputs[i]->layout.dims[j]) {
+                    LOG_ERROR_SHAPE
+                    TINYNN_ASSERT(0);
+                }
+            }
+        } else {
+            LOG_ERROR_SHAPE
+            TINYNN_ASSERT(0);
+        }
+    }
+
     tinynn_free(outputs_shape);
     tinynn_free(outputs_type);
 
