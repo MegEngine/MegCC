@@ -40,6 +40,10 @@ TEST(NAIVE, IndexingMultiAxisVec) {
 
     checker.set_dtype(0, dtype::Float32()).set_dtype(1, dtype::Float32());
     run();
+#if ENABLE_KERNEL_FP16
+    checker.set_dtype(0, dtype::Float16()).set_dtype(1, dtype::Float16());
+    run();
+#endif
     checker.set_dtype(0, dtype::Int32()).set_dtype(1, dtype::Int32());
     run();
     checker.set_dtype(0, dtype::Int8()).set_dtype(1, dtype::Int8());

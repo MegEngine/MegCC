@@ -25,6 +25,7 @@ TEST(NAIVE, ElementwiseUnique) {
         checker.set_param(param);
         megcc::test::UniformRNG rng(1e-5, 3);
         checker.set_rng(0, &rng);
+        checker.execs({{1, 10}, {}});
     }
 }
 
@@ -94,6 +95,155 @@ TEST(NAIVE, ElementwiseBinary) {
         checker.execs({{1}, {2, 3, 4}, {}});
     }
 }
+
+#if ENABLE_KERNEL_FP16
+
+TEST(NAIVE, ElementwiseUniqueFp16) {
+    Checker<ElemwiseForward> checker;
+    checker.set_kernel_symbol("kernel_.*");
+    checker.set_dynamic_megcc(true);
+    checker.set_epsilon(4e-3);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+    ElemwiseForward::Param param;
+    for (auto mode :
+         {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::NEGATE, MODE::ROUND,
+          MODE::H_SWISH, MODE::ABS}) {
+        param.mode = mode;
+        checker.set_param(param);
+        checker.execs({{1}, {}});
+        checker.execs({{1, 10}, {}});
+        checker.execs({{1, 10, 12, 13}, {}});
+    }
+    {
+        param.mode = MODE::LOG;
+        checker.set_param(param);
+        megcc::test::UniformRNG rng(1e-5, 3);
+        checker.set_rng(0, &rng);
+        checker.execs({{1, 10}, {}});
+    }
+}
+
+TEST(NAIVE, ElementwiseBinaryFp16) {
+    //! only support 1x11 broadcast
+    Checker<ElemwiseForward> checker;
+    checker.set_kernel_symbol("kernel_.*");
+    checker.set_dynamic_megcc(true);
+    checker.set_epsilon(4e-3);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+    checker.set_dtype(2, dtype::Float16());
+
+    ElemwiseForward::Param param;
+    for (auto mode :
+         {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::FUSE_ADD_SIGMOID,
+          MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT, MODE::EQ, MODE::FUSE_ADD_TANH}) {
+        param.mode = mode;
+        checker.set_param(param);
+        // scalar_scalar
+        checker.execs({{1}, {1}, {}});
+        // vec_vec
+        checker.execs({{1, 10}, {1, 10}, {}});
+        // vec_broadcast101
+        checker.execs({{2, 10}, {1}, {}});
+        checker.execs({{1}, {2, 10}, {}});
+        // vec_broadcast101
+        checker.execs({{2, 3, 4, 5}, {1, 3, 1, 1}, {}});
+        checker.execs({{1, 3, 1, 1}, {2, 3, 4, 5}, {}});
+        // vec_broadcast101x4
+        checker.execs({{2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {}});
+        checker.execs({{1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {}});
+        // vec_scalar
+        checker.execs({{2, 3, 4}, {1}, {}});
+        // sclar_vec
+        checker.execs({{1}, {2, 3, 4}, {}});
+    }
+
+    megcc::test::UniformRNG rng(3, 12);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    for (auto mode : {MODE::TRUE_DIV, MODE::FLOOR_DIV}) {
+        param.mode = mode;
+        checker.set_param(param);
+        checker.execs({{1}, {1}, {}});
+        checker.execs({{1, 10}, {1, 10}, {}});
+        checker.execs({{1, 10}, {1, 1}, {}});
+        checker.execs({{2, 3, 4, 5}, {2, 3, 4, 5}, {}});
+        checker.execs({{2, 3, 4, 5}, {1, 3, 1, 1}, {}});
+        checker.execs({{1, 3, 1, 1}, {2, 3, 4, 5}, {}});
+        checker.execs({{2, 3, 4}, {1}, {}});
+        checker.execs({{1}, {2, 3, 4}, {}});
+    }
+}
+
+TEST(NAIVE, ElementwiseTernaryFp16) {
+    Checker<ElemwiseForward> checker;
+    checker.set_kernel_symbol("kernel_.*");
+    ElemwiseForward::Param param;
+    checker.set_dynamic_megcc(true);
+    param.mode = MODE::FUSE_MUL_ADD3;
+    checker.set_param(param);
+    checker.set_epsilon(4e-3);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+    checker.set_dtype(2, dtype::Float16());
+    checker.set_dtype(3, dtype::Float16());
+
+    checker.execs({{1}, {1}, {1}, {}});
+    checker.execs({{2, 3, 4, 5}, {2, 3, 4, 5}, {2, 3, 4, 5}, {}});
+    checker.execs({{2, 3, 4, 5}, {2, 3, 4, 5}, {1}, {}});
+    checker.execs({{1, 3, 1, 1}, {2, 3, 4, 5}, {1, 3, 1, 1}, {}});
+    // broadcast_vector_broadcast
+    checker.execs({{1, 3, 1, 1, 4}, {2, 3, 4, 4, 4}, {1, 3, 1, 1, 4}, {}});
+
+    checker.execs({{2, 3, 4, 5}, {1, 3, 1, 1}, {2, 3, 4, 5}, {}});
+    checker.execs({{2, 3, 4, 4}, {1, 3, 1, 1}, {2, 3, 4, 4}, {}});
+    checker.execs({{2, 3, 4, 5}, {1}, {2, 3, 4, 5}, {}});
+    checker.execs({{2, 3, 4, 5}, {1}, {1}, {}});
+    checker.execs({{1}, {2, 3, 4, 5}, {1}, {}});
+    // multi batch broadcast
+    checker.execs({{2, 32, 32, 20}, {2, 32, 1, 1}, {2, 32, 32, 20}, {}});
+    checker.execs({{2, 32, 32, 20, 4}, {2, 32, 1, 1, 4}, {2, 32, 32, 20, 4}, {}});
+}
+
+TEST(NAIVE, ElementwiseQuaterFp16) {
+    Checker<ElemwiseForward> checker;
+    checker.set_kernel_symbol("kernel_.*");
+    ElemwiseForward::Param param;
+    checker.set_dynamic_megcc(true);
+    param.mode = MODE::FUSE_MUL_ADD4;
+    checker.set_param(param);
+
+    checker.set_epsilon(1e-2);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+    checker.set_dtype(2, dtype::Float16());
+    checker.set_dtype(3, dtype::Float16());
+    checker.set_dtype(4, dtype::Float16());
+
+    checker.execs({{1}, {1}, {1}, {1}, {}});
+    checker.execs({{3, 3}, {3, 3}, {3, 3}, {3, 3}, {}});
+    checker.execs({{2, 3, 4, 5}, {2, 3, 4, 5}, {2, 3, 4, 5}, {2, 3, 4, 5}, {}});
+    //! dnn require layout 0==2, 1==3
+    checker.execs({{1}, {2, 3, 4, 5}, {1}, {2, 3, 4, 5}, {}});
+    checker.execs({{1}, {1, 33}, {1}, {1, 33}, {}});
+    checker.execs({{1}, {1, 3, 11}, {1}, {1, 3, 11}, {}});
+    checker.execs({{2, 3, 4, 5}, {1}, {2, 3, 4, 5}, {1}, {}});
+    checker.execs({{2, 3, 4, 5}, {1, 3, 1, 1}, {2, 3, 4, 5}, {1, 3, 1, 1}, {}});
+    checker.execs({{1, 3, 1, 1}, {2, 3, 4, 5}, {1, 3, 1, 1}, {2, 3, 4, 5}, {}});
+    checker.execs(
+            {{2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {}});
+    checker.execs(
+            {{1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {1, 3, 1, 1, 4}, {2, 3, 4, 5, 4}, {}});
+    // multi batch broadcast
+    checker.execs(
+            {{2, 32, 32, 20, 4},
+             {2, 32, 1, 1, 4},
+             {2, 32, 32, 20, 4},
+             {2, 32, 1, 1, 4},
+             {}});
+}
+#endif
 
 TEST(NAIVE, ElementwiseBinaryInt) {
     //! only support 1x11 broadcast

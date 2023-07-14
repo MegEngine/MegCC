@@ -3,6 +3,7 @@
 #include "Common/ElemwiseCommon.h"
 #include "ElemwiseKernel.h"
 #include "FormatHelper.h"
+#include "Fp16Common.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
@@ -438,6 +439,8 @@ std::string ElmwiseKernel::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     writer << "#include <math.h> \n";
     writer << "#include <stdbool.h> \n";
+    if (specifier == "gi_float16_t")
+        writer << gen_fp16_define();
     writer << gen_dep_func(mode);
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context);

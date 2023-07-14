@@ -8,23 +8,34 @@ TEST(NAIVE, PoolingNCHW) {
     checker.set_kernel_symbol("kernel_.*");
     PoolingForward::Param param;
     checker.set_param(param);
-    for (auto mode : {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
-        for (size_t window : {2, 3, 5})
-            for (size_t stride : {(size_t)1, window})
-                for (size_t pad : {(size_t)0, window / 2})
-                    for (size_t n : {1, 3})
-                        for (size_t c : {1, 3})
-                            for (size_t hw : {5, 23}) {
-                                param.mode = mode;
-                                param.pad_h = pad;
-                                param.pad_w = pad;
-                                param.window_h = window;
-                                param.window_w = window;
-                                param.stride_h = stride;
-                                param.stride_w = stride;
-                                checker.set_param(param);
-                                checker.execs({{n, c, hw, hw}, {}});
-                            }
+#if ENABLE_KERNEL_FP16
+    checker.set_epsilon(3e-3);
+    for (auto type : {(DType)dtype::Float16(), (DType)dtype::Float32()})
+#else
+    for (auto type : {(DType)dtype::Float32()})
+#endif
+    {
+        checker.set_dtype(0, type);
+        checker.set_dtype(1, type);
+        for (auto mode :
+             {Mode::MAX, Mode::AVERAGE, Mode::AVERAGE_COUNT_EXCLUDE_PADDING})
+            for (size_t window : {2, 3, 5})
+                for (size_t stride : {(size_t)1, window})
+                    for (size_t pad : {(size_t)0, window / 2})
+                        for (size_t n : {1, 3})
+                            for (size_t c : {1, 3})
+                                for (size_t hw : {5, 23}) {
+                                    param.mode = mode;
+                                    param.pad_h = pad;
+                                    param.pad_w = pad;
+                                    param.window_h = window;
+                                    param.window_w = window;
+                                    param.stride_h = stride;
+                                    param.stride_w = stride;
+                                    checker.set_param(param);
+                                    checker.execs({{n, c, hw, hw}, {}});
+                                }
+    }
 }
 
 TEST(NAIVE, PoolingNCHWQuant) {

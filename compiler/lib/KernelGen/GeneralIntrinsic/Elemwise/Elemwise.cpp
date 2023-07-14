@@ -31,7 +31,7 @@ bool ElemwiseKernel::IsAvailable(TContext* ctx) const {
         is_fp16_ok &=
                 (ctx->getAttrOprand("operand:" + std::to_string(i)).dtype == "f16");
     }
-    bool usable = (type_ok && mode_ok && ok_input) || is_fp16_ok;
+    bool usable = (type_ok || is_fp16_ok) && mode_ok && ok_input;
     return usable;
 }
 

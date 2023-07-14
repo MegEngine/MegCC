@@ -1,5 +1,7 @@
 #include "Argsort.h"
+#include "Fp16Common.h"
 #include "Utils/StringTemplate.h"
+#include "Utils/Utils.h"
 #include "compiler/Common/Logger.h"
 
 namespace megcc {
@@ -7,7 +9,8 @@ namespace KernelGen {
 namespace BareMetal {
 
 bool ArgSortKernel::IsAvailable(TContext* context) const {
-    bool ok_dtype = context->getAttrOprand("operand:0").dtype == "f32";
+    bool ok_dtype = context->getAttrOprand("operand:0").dtype == "f32" ||
+                    context->getAttrOprand("operand:0").dtype == "f16";
     return ok_dtype;
 }
 //! kernel gen
@@ -20,14 +23,19 @@ std::string ArgSortKernel::GetKernelSymbol(TContext* context) const {
 
 std::string ArgSortKernel::GetKernelBody(TContext* context) const {
     std::stringstream writer;
+    std::string src_dtype_specifier =
+            Utils::cvt_dtype_specifier(context->getAttrOprand("operand:0").dtype);
     bool ascend = context->getAttrStr("order") == "ASCENDING";
     std::string compare_sign = ascend ? "<" : ">";
     writer << "#include <string.h>\n";
+    if (src_dtype_specifier == "gi_float16_t")
+        writer << gen_fp16_define();
     writer << StringTemplate::StringTemplateArgs(context)
                       .add("compare_sign", compare_sign)
+                      .add("dtype_specifier", src_dtype_specifier)
                       .render(R"(
-      static inline void swap(float* val, int a, int b){
-        float temp = val[a];
+      static inline void swap(${dtype_specifier}* val, int a, int b){
+        ${dtype_specifier} temp = val[a];
         val[a] = val[b];
         val[b] = temp;
       }
@@ -38,7 +46,7 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
       }
       typedef struct Heap {
           int size;
-          float* val;
+          ${dtype_specifier}* val;
           int* idx;
       } Heap;
       static inline void shift_down(Heap * heap, int idx) {
@@ -67,7 +75,7 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
           shift_down(heap, last_dad);
       }
       static inline void sort(
-              float* dst_val, int* dst_idx, const int vec_len) {
+              ${dtype_specifier}* dst_val, int* dst_idx, const int vec_len) {
         Heap heap;
         heap.size = vec_len;
         heap.val = dst_val;
@@ -81,19 +89,20 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
     )");
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";
-    // clang-format off
-    writer << R"(
-    const float* src_data = (float*)inputs[0]->ptr;
+    writer << StringTemplate::StringTemplateArgs()
+                      .add("dtype_specifier", src_dtype_specifier)
+                      .render(R"(
+    const ${dtype_specifier}* src_data = (${dtype_specifier}*)inputs[0]->ptr;
     Layout src_layout = inputs[0]->layout;
-    float* val_data = (float*)outputs[0]->ptr;
+    ${dtype_specifier}* val_data = (${dtype_specifier}*)outputs[0]->ptr;
     int* idx_data = (int*)outputs[1]->ptr;
     
     int batch = src_layout.dims[0];
     int vec_len = src_layout.dims[1];
-    memcpy(val_data, src_data, sizeof(float) * batch * vec_len);
+    memcpy(val_data, src_data, sizeof(${dtype_specifier}) * batch * vec_len);
 
     for(int batch_id = 0; batch_id < batch; ++batch_id){
-      float* out_data = val_data + batch_id * vec_len;
+      ${dtype_specifier}* out_data = val_data + batch_id * vec_len;
       int* out_idx = idx_data + batch_id * vec_len;
       for(int i = 0; i < vec_len; ++i){
         out_idx[i] = i;
@@ -103,8 +112,7 @@ std::string ArgSortKernel::GetKernelBody(TContext* context) const {
 
     return TinyNN_SUCCESS;
 
-    })";
-    // clang-format on
+    })");
     return writer.str();
 }
 

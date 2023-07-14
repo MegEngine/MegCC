@@ -1,4 +1,5 @@
 #include "IndexingMultiAxisVec.h"
+#include "Fp16Common.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
@@ -58,6 +59,8 @@ std::string IndexingMultiAxisKernel::GetKernelBody(TContext* context) const {
             SymbolHelper::gen_valid_dtype(Utils::get_last_operand(context).dtype));
     std::stringstream writer;
     writer << "#include <string.h>\n";
+    if (dtype_specifier == "gi_float16_t")
+        writer << gen_fp16_define();
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";
     // clang-format off

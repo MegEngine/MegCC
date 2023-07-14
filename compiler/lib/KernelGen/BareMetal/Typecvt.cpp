@@ -5,6 +5,7 @@
 #include "../Utils/SymbolHelper.h"
 #include "../Utils/Utils.h"
 #include "FormatHelper.h"
+#include "Fp16Common.h"
 #include "Typecvt.h"
 
 using namespace megcc;
@@ -19,7 +20,9 @@ bool TypecvtKernel::IsAvailable(TContext* context) const {
     bool ok_type =
             !(!Utils::is_quant_dtype(src_dtype) && !Utils::is_quant_dtype(dst_dtype) &&
               Utils::is_int_dtype(dst_dtype)) ||
-            (Utils::is_float_dtype(src_dtype, 32) && Utils::is_int_dtype(dst_dtype, 8));
+            ((Utils::is_float_dtype(src_dtype, 32) ||
+              Utils::is_float_dtype(src_dtype, 16)) &&
+             Utils::is_int_dtype(dst_dtype, 8));
     if (Utils::is_quant_dtype(src_dtype)) {
         CC_ASSERT(context->getAttrOprand("operand:0").scale > 0);
     }
@@ -92,13 +95,6 @@ std::string gen_act(
                  return staturate(val * src_scale / dst_scale );
              }
          )";
-    } else if (
-            Utils::is_float_dtype(src_dtype, 32) && Utils::is_int_dtype(dst_dtype, 8)) {
-        naive_body_temp = R"(
-             static inline ${dst_specifier} act(${src_specifier} val, const float src_scale, const uint8_t src_zp, const float dst_scale, const uint8_t dst_zp){
-                 return staturate(val * src_scale / dst_scale );
-             }
-         )";
     } else {
         CC_ABORT << "not support cvt " << src_dtype << "->" << dst_dtype << "\n";
     }
@@ -122,10 +118,8 @@ std::string TypecvtKernel::GetKernelBody(TContext* context) const {
     ss << R"(
         #include <math.h>
     )";
-    if (src_specifier == "f16" || dst_specifier == "f16") {
-        ss << R"(
-        #include "gi_float16.h"
-        )";
+    if (src_dtype_str == "f16" || dst_dtype_str == "f16") {
+        ss << gen_fp16_define();
     }
     ss << gen_staturate(dst_dtype_str);
     ss << gen_act(src_dtype_str, dst_dtype_str, src_specifier, dst_specifier);

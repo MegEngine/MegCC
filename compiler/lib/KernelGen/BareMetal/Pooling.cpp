@@ -2,6 +2,7 @@
 #include <sstream>
 
 #include "FormatHelper.h"
+#include "Fp16Common.h"
 #include "Pooling.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
@@ -16,6 +17,7 @@ bool PoolingKernel::IsAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     auto dst_dtype = context->getAttrOprand("operand:1").dtype;
     bool dtype_ok = (src_dtype == dst_dtype) && (Utils::is_float_dtype(src_dtype) ||
+                                                 Utils::is_float_dtype(src_dtype, 16) ||
                                                  Utils::is_quant_dtype(src_dtype));
     if (Utils::is_quant_dtype(src_dtype)) {
         CC_ASSERT(
@@ -46,6 +48,8 @@ std::string get_acc_dtype_specifier(
         const std::string& src_dtype, const std::string& mode) {
     if (Utils::is_float_dtype(src_dtype)) {
         return "float";
+    } else if (Utils::is_float_dtype(src_dtype, 16)) {
+        return "gi_float16_t";
     } else if (Utils::is_quant_dtype(src_dtype, 8)) {
         if (mode == "MAX") {
             return "int8_t";
@@ -81,6 +85,11 @@ static inline ${acc_specifier} max(${acc_specifier} a, ${acc_specifier} b){
         if (m_mode == "MAX") {
             if (m_acc_specifier == "float") {
                 return "float res = - __FLT_MAX__;";
+            } else if (m_acc_specifier == "gi_float16_t") {
+                return R"(
+                    int16_t int_min = -1;
+                    gi_float16_t res = *(gi_float16_t*)(&int_min); //! the minimum float16
+                )";
             } else if (m_acc_specifier == "int8_t") {
                 return "int8_t res = -128;";
             } else {
@@ -171,6 +180,8 @@ std::string PoolingKernel::GetKernelBody(TContext* context) const {
 #include <math.h>
 #include <stdbool.h>
 )";
+    if (src_specifier == "gi_float16_t")
+        ss << gen_fp16_define();
     ss << pooler.gen_dep();
     ss << GenFormatIter::gen_inline_format_iter_body(format_str);
     auto format_iter_symbol = GenFormatIter::gen_inline_format_iter_symbol(format_str);

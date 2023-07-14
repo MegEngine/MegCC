@@ -208,7 +208,7 @@ def parse_env(dump_dir, bin_dir=None):
     return env
 
 
-def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, user_input_dir):
+def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, user_input_dir, enable_fp16):
     build_script = env["build_script"]
     mgb_runner_path = env["mgb_runner_path"]
     mgb_to_tinynn_path = env["mgb_to_tinynn_path"]
@@ -224,7 +224,7 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, us
     if not os.path.exists(build_dir):
         print("build not exit!!")
         os.mkdir(build_dir)
-    subprocess.run([
+    build_runtime_cmd = [
         build_script,
         "--cross_build",
         "--remove_old_build",
@@ -234,7 +234,10 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, us
         target_arch,
         "--specify_build_dir",
         build_dir,
-    ])
+    ]
+    if enable_fp16:
+        build_runtime_cmd.append("--enable_fp16")
+    subprocess.run(build_runtime_cmd)
 
     for model_file in os.listdir(model_dir):
         if model_file.endswith(".tiny"):
@@ -379,10 +382,16 @@ def main():
         default=None,
         help="specify input directory"
     )
+    parser.add_argument(
+        "--enable-fp16",
+        action="store_true",
+        help="megcc enable float16"
+    )
     args = parser.parse_args()
     eps = args.eps
     dump_dir = os.path.abspath(args.dump_dir)
     model_name_2_mdl = parse_dump_dir(args.mdl)
+    enable_fp16 = args.enable_fp16
     env = parse_env(dump_dir, args.bin_dir)
     print(env)
     auto_check(
@@ -392,7 +401,8 @@ def main():
         target_host=args.target,
         env=env,
         mdl_str=args.mdl,
-        user_input_dir=args.input_dir
+        user_input_dir=args.input_dir,
+        enable_fp16=enable_fp16
     )
 
 

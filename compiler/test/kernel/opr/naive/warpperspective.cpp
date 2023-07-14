@@ -31,7 +31,6 @@ TEST(NAIVE, WarpPerspective) {
             checker.execs({{5, 7, 22, 33}, {5, 3, 3}, {5, 7, 7, 5}});
         }
 
-    checker.set_epsilon(1e-4);
     for (auto fmt : {Format::NCHW, Format::NHWC})
         for (auto bmode :
              {WarpPerspective::BorderMode::WRAP, WarpPerspective::BorderMode::REFLECT,
@@ -41,12 +40,21 @@ TEST(NAIVE, WarpPerspective) {
             param.border_val = 1.25;
             param.bmode = bmode;
             checker.set_param(param);
-            checker.set_dtype(0, dtype::Float32());
-            checker.set_dtype(2, dtype::Float32());
-            checker.execs({{1, 13, 13, 17}, {1, 3, 3}, {1, 13, 7, 17}});
-            checker.execs({{1000, 13, 13, 17}, {1000, 3, 3}, {1000, 13, 7, 17}});
-            checker.execs({{2, 13, 22, 17}, {2, 3, 3}, {2, 13, 7, 17}});
-            checker.execs({{5, 13, 33, 17}, {5, 3, 3}, {5, 13, 7, 17}});
+#if ENABLE_KERNEL_FP16
+            checker.set_epsilon(2e-3);
+            for (auto dtype : {(DType)dtype::Float16(), (DType)dtype::Float32()})
+#else
+            checker.set_epsilon(1e-4);
+            for (auto dtype : {(DType)dtype::Float32()})
+#endif
+            {
+                checker.set_dtype(0, dtype);
+                checker.set_dtype(2, dtype);
+                checker.execs({{1, 13, 13, 17}, {1, 3, 3}, {1, 13, 7, 17}});
+                checker.execs({{1000, 13, 13, 17}, {1000, 3, 3}, {1000, 13, 7, 17}});
+                checker.execs({{2, 13, 22, 17}, {2, 3, 3}, {2, 13, 7, 17}});
+                checker.execs({{5, 13, 33, 17}, {5, 3, 3}, {5, 13, 7, 17}});
+            }
         }
 }
 TEST(NAIVE, WarpPerspectiveCv) {
@@ -96,27 +104,38 @@ TEST(NAIVE, WarpPerspectiveResize) {
     ResizeMatRNG rng;
 
     checker.set_rng(1, &rng);
-    checker.set_epsilon(1e-4);
     using BMode = param::WarpPerspective::BorderMode;
     param.imode = param::WarpPerspective::InterpolationMode::LINEAR;
 
-    param.format = Format::NCHW;
-    for (auto mode :
-         {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
-          BMode::CONSTANT}) {
-        param.bmode = mode;
-        param.border_val = 1.737;
-        checker.set_param(param);
-        checker.exec({{1000, 2, 10, 11}, {1000, 3, 3}, {1000, 2, 12, 13}});
-    }
+#if ENABLE_KERNEL_FP16
+    checker.set_epsilon(2e-3);
+    for (auto dtype : {(DType)dtype::Float16(), (DType)dtype::Float32()})
+#else
+    checker.set_epsilon(1e-4);
+    for (auto dtype : {(DType)dtype::Float32()})
+#endif
+    {
+        checker.set_dtype(0, dtype);
+        checker.set_dtype(2, dtype);
 
-    param.format = Format::NHWC;
-    for (auto mode :
-         {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
-          BMode::CONSTANT}) {
-        param.bmode = mode;
-        param.border_val = 0.439;
-        checker.set_param(param);
-        checker.exec({{1000, 10, 11, 4}, {1000, 3, 3}, {1000, 12, 15, 4}});
+        param.format = Format::NCHW;
+        for (auto mode :
+             {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
+              BMode::CONSTANT}) {
+            param.bmode = mode;
+            param.border_val = 1.737;
+            checker.set_param(param);
+            checker.exec({{1000, 2, 10, 11}, {1000, 3, 3}, {1000, 2, 12, 13}});
+        }
+
+        param.format = Format::NHWC;
+        for (auto mode :
+             {BMode::REFLECT_101, BMode::REPLICATE, BMode::REFLECT, BMode::WRAP,
+              BMode::CONSTANT}) {
+            param.bmode = mode;
+            param.border_val = 0.439;
+            checker.set_param(param);
+            checker.exec({{1000, 10, 11, 4}, {1000, 3, 3}, {1000, 12, 15, 4}});
+        }
     }
 }

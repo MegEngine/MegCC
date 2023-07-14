@@ -1,6 +1,7 @@
 #include "WarpPerspective.h"
 #include "../Utils/StringTemplate.h"
 #include "../Utils/Utils.h"
+#include "Fp16Common.h"
 #include "compiler/Common/Logger.h"
 
 using namespace megcc;
@@ -17,7 +18,8 @@ bool WarpPerspectiveKernel::IsAvailable(TContext* ctx) const {
     } else {
         CC_ASSERT(nr_operands == 3);
     }
-    bool dtype_valid = (src_layout.dtype == "f32" || src_layout.dtype == "ui8") &&
+    bool dtype_valid = (src_layout.dtype == "f32" || src_layout.dtype == "ui8" ||
+                        src_layout.dtype == "f16") &&
                        mat_layout.dtype == "f32" &&
                        dst_layout.dtype == src_layout.dtype;
     bool shape_valid =
@@ -366,6 +368,8 @@ std::string WarpPerspectiveKernel::GetKernelBody(TContext* ctx) const {
     uint32_t mid_idx = is_dynamic ? 3 : 2;
 
     std::stringstream ss;
+    if (src_ctype == "gi_float16_t")
+        ss << gen_fp16_define();
     ss << R"(
         #include <math.h>
         #define rep(i, n) for (int i = 0; i < (n); ++i)
@@ -379,7 +383,11 @@ std::string WarpPerspectiveKernel::GetKernelBody(TContext* ctx) const {
     )";
     ss << StringTemplate::StringTemplateArgs()
                     .add("dst_ctype", dst_ctype)
-                    .add("round_func", Utils::is_float_dtype(dst_dtype) ? "" : "roundf")
+                    .add("round_func",
+                         Utils::is_float_dtype(dst_dtype)
+                                 ? ""
+                                 : (Utils::is_float_dtype(dst_dtype, 16) ? ""
+                                                                         : "roundf"))
                     .render(visit_dst_temp);
     ss << gen_naive(src_ctype, dst_ctype);
     ss << gen_is_resize_optimizable();

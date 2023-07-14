@@ -22,7 +22,11 @@ TEST(NAIVE, Typecvt2Int8) {
     checker.set_dynamic_megcc(true);
     megcc::test::UniformRNG rng(100, 600);
     checker.set_rng(0, &rng);
-    for (auto src_dtype : {dtype::Float32()})
+#if ENABLE_KERNEL_FP16
+    for (auto src_dtype : {(DType)dtype::Float32(), (DType)dtype::Float16()})
+#else
+    for (auto src_dtype : {(DType)dtype::Float32()})
+#endif
         for (DType dst_dtype : {(DType)dtype::Int8(), (DType)dtype::Uint8()}) {
             checker.set_dtype(0, src_dtype);
             checker.set_dtype(1, dst_dtype);

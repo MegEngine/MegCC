@@ -1,5 +1,7 @@
 #include "Topk.h"
+#include "Fp16Common.h"
 #include "Utils/StringTemplate.h"
+#include "Utils/Utils.h"
 #include "compiler/Common/Logger.h"
 
 namespace megcc {
@@ -7,7 +9,8 @@ namespace KernelGen {
 namespace BareMetal {
 
 bool TopkKernel::IsAvailable(TContext* ctx) const {
-    bool ok_dtype = ctx->getAttrOprand("operand:0").dtype == "f32";
+    bool ok_dtype = ctx->getAttrOprand("operand:0").dtype == "f32" ||
+                    ctx->getAttrOprand("operand:0").dtype == "f16";
     bool ok_mode = ctx->getAttrStr("mode") == "KTH_ONLY" ||
                    ctx->getAttrStr("mode") == "VALUE_IDX_SORTED" ||
                    ctx->getAttrStr("mode") == "VALUE_IDX_NOSORT";
@@ -39,6 +42,14 @@ std::string TopkKernel::GetKernelSymbol(TContext* ctx) const {
 
 std::string TopkKernel::GetWorkspaceBody(TContext* ctx) const {
     std::stringstream ss;
+    std::string src_dtype = ctx->getAttrOprand("operand:0").dtype;
+    int src_size = 0;
+    if (src_dtype == "f32") {
+        src_size = 4;
+    } else {
+        CC_ASSERT(src_dtype == "f16");
+        src_size = 2;
+    }
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
     bool with_index;
     bool only_kth;
@@ -49,11 +60,12 @@ std::string TopkKernel::GetWorkspaceBody(TContext* ctx) const {
         TINYNN_ASSERT(workspace);
         const Layout in_layout = inputs[0]->layout;        
         const uint32_t n = in_layout.dims[1];
-        *workspace = n * sizeof(float) + ${index_workspace};
+        *workspace = n * ${src_size} + ${index_workspace};
         return TinyNN_SUCCESS;
     })";
     ss << StringTemplate::StringTemplateArgs(ctx)
                     .add("index_workspace", index_workspace)
+                    .add("src_size", src_size)
                     .render(workspace_temp);
     return ss.str();
 }
@@ -62,6 +74,8 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     auto mode = ctx->getAttrStr("mode");
     int k = ctx->getAttrInt("k");
+    std::string src_dtype_specifier =
+            Utils::cvt_dtype_specifier(ctx->getAttrOprand("operand:0").dtype);
     std::string compare_sign = k > 0 ? "<" : ">";
     bool with_index;
     bool only_kth;
@@ -73,10 +87,12 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     std::string write_back_val;
     std::string write_back_index;
     if (with_index) {
-        declear_index = R"(
+        declear_index = StringTemplate::StringTemplateArgs()
+                                .add("dtype_specifier", src_dtype_specifier)
+                                .render(R"(
                 int* idx_data = (int*)outputs[1]->ptr;
-                int* idx_workspace = workspace->ptr + vec_len * sizeof(float);
-                )";
+                int* idx_workspace = workspace->ptr + vec_len * sizeof(${dtype_specifier});
+                )");
         init_index = R"(
                 for(int i = 0; i < vec_len; ++i){
                   idx_workspace[i] = i;
@@ -93,32 +109,40 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
                     int* out_idx = idx_data + batch_id * k_len;
                     memcpy(out_idx, idx_workspace, k_len * sizeof(int));
                 )";
-            write_back_val = R"(
-                    float* out_data = val_data + batch_id * k_len;
-                    memcpy(out_data, val_workspace, k_len * sizeof(float));
-                  )";
+            write_back_val = StringTemplate::StringTemplateArgs()
+                                     .add("dtype_specifier", src_dtype_specifier)
+                                     .render(R"(
+                    ${dtype_specifier}* out_data = val_data + batch_id * k_len;
+                    memcpy(out_data, val_workspace, k_len * sizeof(${dtype_specifier}));
+                  )");
         }
     }
     if (only_kth) {
         init_k = "int k = " + std::to_string(std::abs(k)) + ";\n";
         call_sort = "kth_element_no_sort(val_workspace, 0, vec_len - 1, k - 1);\n";
-        write_back_val = R"(
-          float* out_data = val_data + batch_id;
+        write_back_val = StringTemplate::StringTemplateArgs()
+                                 .add("dtype_specifier", src_dtype_specifier)
+                                 .render(R"(
+          ${dtype_specifier}* out_data = val_data + batch_id;
           *out_data = val_workspace[k - 1];
-        )";
+        )");
     }
 
     writer << "#include <string.h>\n";
+    if (src_dtype_specifier == "gi_float16_t")
+        writer << gen_fp16_define();
     if (mode != "VALUE_IDX_SORTED")
         writer << "#include <stdlib.h>\n";
 
-    writer << R"(
-      static inline void swap(float* val, int a, int b){
-        float temp = val[a];
+    writer << StringTemplate::StringTemplateArgs()
+                      .add("dtype_specifier", src_dtype_specifier)
+                      .render(R"(
+      static inline void swap(${dtype_specifier}* val, int a, int b){
+        ${dtype_specifier} temp = val[a];
         val[a] = val[b];
         val[b] = temp;
       }
-    )";
+    )");
 
     if (with_index) {
         writer << R"(
@@ -133,9 +157,10 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     if (mode == "KTH_ONLY") {
         writer << StringTemplate::StringTemplateArgs(ctx)
                           .add("compare_sign", compare_sign)
+                          .add("dtype_specifier", src_dtype_specifier)
                           .render(R"(
-        static inline int partition(float* val, int left, int right) {
-          float x = val[right];
+        static inline int partition(${dtype_specifier}* val, int left, int right) {
+          ${dtype_specifier} x = val[right];
           int i = left - 1;
           for (int j = left; j < right; ++j) {
               if (val[j] ${compare_sign} x) {
@@ -147,12 +172,12 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
           swap(val, i, right);
           return i;
         }
-        static inline int randomized_partition(float* val, int left, int right) {
+        static inline int randomized_partition(${dtype_specifier}* val, int left, int right) {
           int rdm_idx = left + rand() % (right - left + 1);
           swap(val, rdm_idx, right);
           return partition(val, left, right);
         }
-        static inline void kth_element_no_sort(float* val, int left, int right, const int k) {
+        static inline void kth_element_no_sort(${dtype_specifier}* val, int left, int right, const int k) {
           if (left >= right)
               return;
           int i = randomized_partition(val, left, right);
@@ -170,9 +195,10 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     if (mode == "VALUE_IDX_NOSORT") {
         writer << StringTemplate::StringTemplateArgs(ctx)
                           .add("compare_sign", compare_sign)
+                          .add("dtype_specifier", src_dtype_specifier)
                           .render(R"(
-          static inline int partition(float* val, int* idx, int left, int right) {
-            float x = val[right];
+          static inline int partition(${dtype_specifier}* val, int* idx, int left, int right) {
+            ${dtype_specifier} x = val[right];
             int i = left - 1;
             for (int j = left; j < right; ++j) {
                 if (val[j] ${compare_sign} x) {
@@ -186,14 +212,14 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
             swap_int(idx, i, right);
             return i;
           }
-          static inline int randomized_partition(float* val, int* idx, int left, int right) {
+          static inline int randomized_partition(${dtype_specifier}* val, int* idx, int left, int right) {
             int rdm_idx = left + rand() % (right - left + 1);
             swap(val, rdm_idx, right);
             swap_int(idx, rdm_idx, right);
             return partition(val, idx, left, right);
           }
           static inline void kth_element_no_sort(
-                float* val, int* idx, int left, int right, const int k) {
+                ${dtype_specifier}* val, int* idx, int left, int right, const int k) {
             if (left >= right)
                 return;
             int i = randomized_partition(val, idx, left, right);
@@ -211,10 +237,11 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     if (mode == "VALUE_IDX_SORTED") {
         writer << StringTemplate::StringTemplateArgs(ctx)
                           .add("compare_sign", compare_sign)
+                          .add("dtype_specifier", src_dtype_specifier)
                           .render(R"(
           typedef struct Heap {
               int size;
-              float* val;
+              ${dtype_specifier}* val;
               int* idx;
           } Heap;
           static inline void shift_down(Heap * heap, int idx) {
@@ -241,7 +268,7 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
                 shift_up(heap, dad);
             }
           }
-          static inline void insert(Heap * heap, float val, int idx) {
+          static inline void insert(Heap * heap, ${dtype_specifier} val, int idx) {
             heap->val[heap->size] = val;
             heap->idx[heap->size] = idx;
             shift_up(heap, heap->size);
@@ -253,9 +280,9 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
             swap_int(heap->idx, 0, heap->size);
             shift_down(heap, 0);
           }
-          static inline float top(Heap * heap) { return heap->val[0]; }
+          static inline ${dtype_specifier} top(Heap * heap) { return heap->val[0]; }
           static inline void kth_element_sorted(
-                  const float* val, const int* idx, float* dst_val, int* dst_idx,
+                  const ${dtype_specifier}* val, const int* idx, ${dtype_specifier}* dst_val, int* dst_idx,
                   const int vec_len, const int k) {
             Heap heap;
             heap.size = 0;
@@ -281,21 +308,21 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
     writer << GetKernelSignature(ctx) << "{\n";
     // clang-format off
     std::string body_temp = R"(
-    const float* src_data = (float*)inputs[0]->ptr;
+    const ${dtype_specifier}* src_data = (${dtype_specifier}*)inputs[0]->ptr;
     Layout src_layout = inputs[0]->layout;
     Layout dst_layout = outputs[0]->layout;
-    float* val_data = (float*)outputs[0]->ptr;
+    ${dtype_specifier}* val_data = (${dtype_specifier}*)outputs[0]->ptr;
     
     int batch = src_layout.dims[0];
     int vec_len = src_layout.dims[1];
     int k_len = dst_layout.dims[1];
     ${init_k}
 
-    float* val_workspace = workspace->ptr;
+    ${dtype_specifier}* val_workspace = workspace->ptr;
     ${declear_index}
 
     for(int batch_id = 0; batch_id < batch; ++batch_id){
-      memcpy(val_workspace, src_data + batch_id * vec_len, sizeof(float) * vec_len);
+      memcpy(val_workspace, src_data + batch_id * vec_len, sizeof(${dtype_specifier}) * vec_len);
 
       ${init_index}
       ${call_sort}
@@ -315,6 +342,7 @@ std::string TopkKernel::GetKernelBody(TContext* ctx) const {
                       .add("write_back_index", write_back_index)
                       .add("write_back_val", write_back_val)
                       .add("init_k", init_k)
+                      .add("dtype_specifier", src_dtype_specifier)
                       .render(body_temp);
     return writer.str();
 }
