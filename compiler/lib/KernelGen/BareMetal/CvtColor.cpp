@@ -65,6 +65,25 @@ CvtColorGen gen_rgb_gray(TContext* ctx) {
     return res;
 }
 
+CvtColorGen gen_gray_rgb(TContext* ctx) {
+    CvtColorGen res;
+    auto src_dtype = ctx->getAttrOprand("operand:0").dtype;
+    auto src_stype_specifier = Utils::cvt_dtype_specifier(src_dtype);
+    res.cvt_code = StringTemplate::StringTemplateArgs()
+                           .add("dtype_specifier", src_stype_specifier)
+                           .render(R"(
+        size_t dtype_size = sizeof(${dtype_specifier});
+        ${dtype_specifier}* _dptr = (${dtype_specifier}*)dptr;
+        ${dtype_specifier}* _sptr = (${dtype_specifier}*)sptr;
+        for(int i = 0; i < hw; ++i){
+            _dptr[0] = _dptr[1] = _dptr[2] = _sptr[0];
+            _dptr += 3;
+            ++_sptr;
+        }
+    )");
+    return res;
+}
+
 CvtColorGen gen_rgb_bgr(TContext* ctx) {
     CvtColorGen res;
     res.aux_func = R"(
@@ -210,7 +229,8 @@ struct CvtColorReg {
                 {"RGB2YUV", {gen_rgb_yuv, "rgb2yuv"}},
                 {"YUV2BGR_NV21", {gen_yuv_bgr_nv21, "yuv2bgr_nv21"}},
                 {"RGB2BGR", {gen_rgb_bgr, "rgb2bgr"}},
-                {"RGB2GRAY", {gen_rgb_gray, "rgb2gray"}}
+                {"RGB2GRAY", {gen_rgb_gray, "rgb2gray"}},
+                {"GRAY2RGB", {gen_gray_rgb, "gray2rgb"}}
 
         };
     }
@@ -228,7 +248,8 @@ static CvtColorReg g_cvt_reg;
 
 bool CvtColorKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool dtype_ok = Utils::is_int_dtype(src_dtype, 8);
+    bool dtype_ok = Utils::is_int_dtype(src_dtype, 8) ||
+                    (context->getAttrStr("mode") == "GRAY2RGB" && src_dtype == "f32");
     bool mode_ok = g_cvt_reg.usable(context->getAttrStr("mode"));
     return dtype_ok && mode_ok;
 }

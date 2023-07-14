@@ -51,6 +51,10 @@ void tinycv_cvt_rgb2yuv_ui8(const TinyMat* src, const TinyMat* dst);
 
 void tinycv_cvt_rgb2gray_ui8(const TinyMat* src, const TinyMat* dst);
 
+void tinycv_cvt_gray2rgb_ui8(const TinyMat* src, const TinyMat* dst);
+
+void tinycv_cvt_gray2rgb_f32(const TinyMat* src, const TinyMat* dst);
+
 /**
  * \fn tinycv_resize_linear_ui8
  * \brief Resize an image, The Interpolation Mode is linear

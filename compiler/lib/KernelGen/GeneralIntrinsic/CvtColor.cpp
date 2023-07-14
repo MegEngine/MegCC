@@ -182,6 +182,34 @@ CvtColorGen gen_rgb_bgr(TContext* ctx) {
     return res;
 }
 
+CvtColorGen gen_gray_rgb(TContext* ctx) {
+    CvtColorGen res;
+    res.aux_func = R"(
+    )";
+    res.cvt_code = R"(
+    size_t i = 0;
+    for (; i + 15 < hw; i += 16) {
+        GI_UINT8_t v_src, v_dst0, v_dst1, v_dst2;
+        v_src = GiLoadUint8(sptr);
+        sptr += 16;
+        v_dst0 = v_src;
+        v_dst1 = v_src;
+        v_dst2 = v_src;
+        GiStoreZipUint8V3(dptr, v_dst0, v_dst1, v_dst2);
+        dptr += 48;
+    }
+    for (; i < hw; ++i) {
+        uint8_t t = *sptr;
+        ++sptr;
+        dptr[0] = t;
+        dptr[1] = t;
+        dptr[2] = t;
+        dptr += 3;
+    }
+    )";
+    return res;
+}
+
 CvtColorGen gen_yuv_bgr_nv21(TContext* ctx) {
     CvtColorGen res;
     res.aux_func = R"(
@@ -403,7 +431,8 @@ struct CvtColorReg {
         reg_map = {
                 {"RGB2YUV", {gen_rgb_yuv, "rgb2yuv"}},
                 {"YUV2BGR_NV21", {gen_yuv_bgr_nv21, "yuv2bgr_nv21"}},
-                {"RGB2BGR", {gen_rgb_bgr, "rgb2bgr"}}};
+                {"RGB2BGR", {gen_rgb_bgr, "rgb2bgr"}},
+                {"GRAY2RGB", {gen_gray_rgb, "gray2rgb"}}};
     }
 
     bool usable(const std::string& mode) { return reg_map.find(mode) != reg_map.end(); }

@@ -71,16 +71,20 @@ TEST(NAIVE, Topk) {
                         }
                     }
             };
+
+            checker.reset_rng();
+            checker.set_dtype(0, dtype::Float32());
+            checker.set_dtype(1, dtype::Float32());
+            checker.set_output_canonizer(OutputCanonizer<float>(mode));
+            run();
 #if ENABLE_KERNEL_FP16
+            megcc::test::Float16PeriodicalRNG rng;
+            checker.set_rng(0, &rng);
             checker.set_dtype(0, dtype::Float16());
             checker.set_dtype(1, dtype::Float16());
             checker.set_output_canonizer(OutputCanonizer<dt_float16>(mode));
             run();
 #endif
-            checker.set_dtype(0, dtype::Float32());
-            checker.set_dtype(1, dtype::Float32());
-            checker.set_output_canonizer(OutputCanonizer<float>(mode));
-            run();
         }
 }
 

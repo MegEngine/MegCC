@@ -103,6 +103,7 @@ public:
         m_name2gen["rgb2bgr"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2BGR"}}};
         m_name2gen["rgb2yuv"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2YUV"}}};
         m_name2gen["rgb2gray"] = {GenKerns::CvtColorKernel, 2, {{"mode", "RGB2GRAY"}}};
+        m_name2gen["gray2rgb"] = {GenKerns::CvtColorKernel, 2, {{"mode", "GRAY2RGB"}}};
         m_name2gen["yuv2bgr_nv21"] = {
                 GenKerns::CvtColorKernel, 2, {{"mode", "YUV2BGR_NV21"}}};
         m_name2gen["gaussian_blur_constant"] = {
@@ -358,7 +359,8 @@ struct DumpJson {
             //! TODO: Automatically determine if dtype float32 is supported. Hard code
             //! for now.
             if (cv_name.find("resize") != std::string::npos ||
-                cv_name.find("gaussian_blur") != std::string::npos)
+                cv_name.find("gaussian_blur") != std::string::npos ||
+                cv_name.find("gray2rgb") != std::string::npos)
                 cv_opr_dtype.push_back(llvm::json::Value("f32"));
             cv_oprs[cv_name] =
                     llvm::json::Value(llvm::json::Value(std::move(cv_opr_dtype)));

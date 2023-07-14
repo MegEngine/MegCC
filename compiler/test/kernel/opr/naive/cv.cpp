@@ -96,6 +96,14 @@ TEST(NAIVE, CVcvtcolor) {
         checker.exec({{1, 3, 18, 1}, {}});
         checker.exec({{1, 18, 18, 1}, {}});
     }
+    param.mode = CvtMode::GRAY2RGB;
+    checker.set_param(param);
+    for (auto dtype : {(DType)dtype::Uint8(), (DType)dtype::Float32()}) {
+        checker.set_dtype(0, dtype);
+        checker.set_dtype(1, dtype);
+        checker.exec({{1, 3, 18, 1}, {}});
+        checker.exec({{1, 18, 18, 1}, {}});
+    }
 }
 
 TEST(NAIVE, CVWarpAffine) {

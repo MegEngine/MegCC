@@ -13,6 +13,6 @@ trusted-host =
     pypi.i.brainpp.cn
 EOF
 
-python3 -m pip install boto3
+python3 -m pip install boto3==1.28.5
 python3 -m pip install redis
-aws --version || python3 -m pip install awscli
+aws --version || python3 -m pip install awscli==1.29.6
