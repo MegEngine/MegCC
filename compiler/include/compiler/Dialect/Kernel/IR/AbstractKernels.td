@@ -63,6 +63,7 @@ def ExpKernel: UnaryElemwiseKernel<"EXP">;
 def NegateKernel: UnaryElemwiseKernel<"NEGATE">;
 def RoundKernel: UnaryElemwiseKernel<"ROUND">;
 def SILUKernel: UnaryElemwiseKernel<"SILU">;
+def ERFKernel: UnaryElemwiseKernel<"ERF">;
 
 def AddKernel: BinaryElemwiseKernel<"ADD">;
 def SubKernel: BinaryElemwiseKernel<"SUB">;

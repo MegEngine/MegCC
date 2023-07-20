@@ -216,6 +216,8 @@ public:
                 return createOp<Kernel::EqualKernel>(op, operands, rewriter);
             case Mode::SILU:
                 return createOp<Kernel::SILUKernel>(op, operands, rewriter);
+            case Mode::ERF:
+                return createOp<Kernel::ERFKernel>(op, operands, rewriter);
             default:
                 CC_ABORT << "Unsupport Elemwise mode :" << static_cast<int>(op.mode())
                          << "\n";

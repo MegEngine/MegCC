@@ -13,7 +13,7 @@ TEST(NAIVE, ElementwiseUnique) {
     ElemwiseForward::Param param;
     for (auto mode :
          {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::NEGATE, MODE::ROUND,
-          MODE::H_SWISH, MODE::ABS}) {
+          MODE::H_SWISH, MODE::ABS, MODE::ERF}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {}});
