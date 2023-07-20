@@ -376,7 +376,29 @@ int main(int argc, char** argv) {
     }
     //! if no input data set, just run the model with random input data
     if (instance_cnt == 0) {
+        void* input_data[nr_input];
+        for (size_t i = 0; i < nr_input; ++i) {
+            LiteTensor input;
+            LITE_CAPI_CHECK(
+                    LITE_get_io_tensor(model, input_name_ptr[i], LITE_INPUT, &input),
+                    "get input tensor failed\n");
+
+            size_t length;
+            LITE_CAPI_CHECK(
+                    LITE_get_tensor_total_size_in_byte(input, &length),
+                    "get input tensor size failed\n");
+            input_data[i] = malloc(length);
+            LITE_CAPI_CHECK(
+                    LITE_reset_tensor_memory(input, input_data[i], length),
+                    "set input ptr failed\n");
+            LITE_CAPI_CHECK(LITE_destroy_tensor(input), "destory input tensor");
+        }
+
         run_model(model, output_dir, instance_cnt, print_out, warmup_count, iter);
+
+        for (size_t i = 0; i < nr_input; ++i) {
+            free(input_data[i]);
+        }
     }
 
     LITE_CAPI_CHECK(LITE_destroy_network(model), "delete model failed\n");

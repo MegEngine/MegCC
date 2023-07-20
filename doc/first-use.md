@@ -101,7 +101,7 @@ fun.dump("shufflenetv2.mge", arg_names=["data"])
 可以看到头文件，静态库，以及可以运行这个模型的可执行文件 tinynn_test_lite 都已经编译安装好了。如果需要进行进一步集成可以 include 头文件并链接 libTinyNN.a，这里我们将 tinynn_test_lite 拷贝到手机上，并把 path/to/shufflenetv2_generate/shufflenetv2.tiny 都拷贝到手机上同一目录下面，运行
 
 ```
-    tinynn_test_lite shufflenetv2.tiny
+    tinynn_test_lite -m shufflenetv2.tiny -d "data=path/to/input.bin"
 ```
 
 可以看到推理输出。
