@@ -861,9 +861,15 @@ private:
         } else if (auto idx_multi = opr->try_cast_final<opr::IndexingMultiAxisVec>()) {
             auto&& out = opr->output(0);
             int slice_node_cnt = 0;
+            VarNodeArray index_opr_inputs;
+            index_opr_inputs.push_back(opr->input(0));
             std::vector<int> axiss;
+            int i = 1;
             for (auto idx_desc : idx_multi->index_desc()) {
-                axiss.push_back(idx_desc.axis.get_raw());
+                if (idx_desc.idx.node()) {
+                    axiss.push_back(idx_desc.axis.get_raw());
+                    index_opr_inputs.push_back(opr->input(i));
+                }
                 if (idx_desc.begin.node()) {
                     slice_node_cnt++;
                 }
@@ -873,9 +879,10 @@ private:
                 if (idx_desc.step.node()) {
                     slice_node_cnt++;
                 }
+                ++i;
             }
-            if (slice_node_cnt == 0) {
-                auto mlir_inputs = var_array_to_value_array(opr->input());
+            if (slice_node_cnt != opr->input().size() - 1) {
+                auto mlir_inputs = var_array_to_value_array(index_opr_inputs);
                 sort_inputs_with_index(mlir_inputs, axiss);
                 mlir::Value value = m_builder.create<mlir::MGB::IndexingMultiAxisVec>(
                         m_builder.getUnknownLoc(), var_to_shaped_type(out), mlir_inputs,

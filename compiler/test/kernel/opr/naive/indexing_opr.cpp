@@ -29,6 +29,16 @@ TEST(NAIVE, IndexingMultiAxisVec) {
                 {60},
                 {60},
         });
+
+        // test ndarray index
+        checker.set_proxy({{0}});
+        checker.execs({
+                {10, 20},
+                {1, 5, 20},
+                {1, 5},
+        });
+        checker.set_proxy({{1, 2, 3}});
+        checker.execs({{5, 5, 6, 7, 3}, {5, 2, 3, 4, 3}, {3, 1}, {2, 1, 1}, {1, 4}});
     };
 
     checker.set_dtype(2, dtype::Int32())

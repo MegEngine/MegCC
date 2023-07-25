@@ -54,23 +54,42 @@ static inline bool is_contiguous(Layout layout) {
     return stride != 0;
 }
 
+static inline bool is_layout_scalar(const Layout* layout) {
+    return layout->nr_dim == 1 && layout->dims[0] == 1;
+}
+
 static inline void broadcast_layout(Layout* layout_in, const Layout layout_dst) {
-    uint32_t diff_dim = layout_dst.nr_dim - layout_in->nr_dim;
-    //! move old shape to end
-    for (uint32_t j = 0; j < layout_in->nr_dim; j++) {
-        if (layout_in->dims[j] == layout_dst.dims[diff_dim + j]) {
-            layout_in->dims[diff_dim + j] = layout_in->dims[j];
-            layout_in->stride[diff_dim + j] = layout_in->stride[j];
-        } else {
-            layout_in->dims[j] = layout_dst.dims[j];
-            layout_in->stride[diff_dim + j] = 0;
+    TINYNN_ASSERT_MSG(
+            layout_in->nr_dim && layout_dst.nr_dim, "broadcast involves empty layout");
+    if (is_layout_scalar(layout_in)) {
+        layout_in->nr_dim = layout_dst.nr_dim;
+        for (size_t j = 0; j < layout_dst.nr_dim; ++j) {
+            if (j) {
+                layout_in->dims[j - 1] = layout_dst.dims[j];
+            }
+            layout_in->stride[j] = (layout_dst.dims[j] == 1);
         }
     }
-    //! add new axis to high
-    for (uint32_t j = 0; j < diff_dim; j++) {
-        layout_in->dims[j] = layout_dst.dims[j];
-        layout_in->stride[j] = 0;
+    TINYNN_ASSERT_MSG(
+            layout_dst.nr_dim >= layout_in->nr_dim,
+            "dimension for broadcast must less than layout_dst");
+    for (size_t j = 0; j < layout_dst.nr_dim; ++j) {
+        int target_idx = layout_dst.nr_dim - j - 1;
+        int cur_idx = layout_in->nr_dim - j - 1;
+        size_t cur_shape = (cur_idx >= 0 ? layout_in->dims[cur_idx] : 1),
+               cur_stride = (cur_idx >= 0 ? layout_in->stride[cur_idx] : 0);
+        if (layout_dst.dims[target_idx] != cur_shape) {
+            TINYNN_ASSERT_MSG(
+                    cur_shape == 1 || cur_stride == 0,
+                    "broadcast on dim with shape not equal to 1");
+            layout_in->dims[target_idx] = layout_dst.dims[target_idx];
+            layout_in->stride[target_idx] = 0;
+        } else {
+            layout_in->dims[target_idx] = cur_shape;
+            layout_in->stride[target_idx] = cur_stride;
+        }
     }
+    layout_in->nr_dim = layout_dst.nr_dim;
 }
 
 static inline int32_t get_tensor_value(const Tensor* tensor, int index) {

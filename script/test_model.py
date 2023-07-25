@@ -21,6 +21,8 @@ def gen_input_name(shape, dtype):
 def gen_input(path, shape, dtype):
     if dtype == "ui8":
         res = np.random.randint(0, 255, size=shape, dtype="uint8")
+    elif dtype == "si32":
+        res = np.random.randint(0, 255, size=shape, dtype=np.int32)
     else:
         assert dtype == "f32", "" + dtype + " not support "
         res = np.random.randint(0, 255, size=shape).astype("float32") / 256

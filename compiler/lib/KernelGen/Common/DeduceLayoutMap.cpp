@@ -37,20 +37,81 @@ public:
         std::string body = R"(
                 uint32_t axis_vec[] = ${axis_vec};
                 Tensor* output = outputs[0];
-                output->layout = inputs[0]->layout;
+                const Layout input_layout = inputs[0]->layout; 
                 output->dtype = inputs[0]->dtype;
-                int new_shape = inputs[1]->layout.dims[0];
-                output->layout.dims[axis_vec[0]] = new_shape;
-                //! shrink dims
-                for (int in_idx = 1; in_idx < nr_input - 1; ++in_idx) {
-                    TINYNN_ASSERT_MSG(inputs[in_idx + 1]->layout.dims[0] == new_shape,
-                                "unsupport input\n");
-                    int axis = axis_vec[in_idx];
-                    int dim_offset = in_idx - 1;
-                    for (int dim = axis - dim_offset; dim < output->layout.nr_dim - 1; ++dim) {
-                        output->layout.dims[dim] = output->layout.dims[dim + 1];
+                int nr_index = nr_input - 1;
+                output->layout.nr_dim = input_layout.nr_dim - nr_index;
+                const Tensor* idx_tensors[5];
+                for (int i = 0; i < nr_index; ++i) {
+                    idx_tensors[i] = inputs[i + 1];
+                }
+                size_t dst_axis = 0;
+                ptrdiff_t prev_axis = -1;
+                Layout index_shape;
+                Layout index_shapes[7];
+                for (size_t i = 0; i < nr_index; ++i) {
+                    index_shapes[i] = idx_tensors[i]->layout;
+
+                    for (size_t j = prev_axis + 1; j < axis_vec[i]; ++j) {
+                        output->layout.dims[dst_axis++] = input_layout.dims[j];
                     }
-                    output->layout.nr_dim--;
+                    prev_axis = axis_vec[i];
+                }
+                for (size_t i = prev_axis + 1; i < input_layout.nr_dim; ++i) {
+                    output->layout.dims[dst_axis++] = input_layout.dims[i];
+                }
+                index_shape.nr_dim = 0;
+                for (int i = 0; i < nr_index; ++i) {
+                    index_shapes[i] = idx_tensors[i]->layout;
+                    TINYNN_ASSERT_MSG(index_shapes[i].nr_dim, 
+                            "bad input shape for polyadic operator");
+                    if (!index_shape.nr_dim || is_layout_scalar(&index_shape))
+                        index_shape = index_shapes[i];
+                    else if (!is_layout_scalar(&index_shapes[i])) {
+                        int max_dim = index_shape.nr_dim > index_shapes[i].nr_dim ? 
+                                        index_shape.nr_dim : index_shapes[i].nr_dim;
+                        for (int j = 0; j < max_dim; ++j) {
+                            int cur_idx = index_shapes[i].nr_dim - j - 1;
+                            int dst_idx = index_shape.nr_dim - j - 1;
+                            if (cur_idx >= 0 && dst_idx >= 0) {
+                                size_t v0 = index_shape.dims[dst_idx], v1 = index_shapes[i].dims[cur_idx];
+                                if (v0 != v1) {
+                                    TINYNN_ASSERT_MSG(v0 <= 1 || v1 <= 1, 
+                                            "bad input shape for polyadic operator");
+                                }
+                                int final_idx = cur_idx > dst_idx ? cur_idx : dst_idx;
+                                index_shape.dims[final_idx] = (v0 != 0 && v1 != 0) ? (v0>v1 ? v0:v1) : 0;
+                            } else {
+                                if (dst_idx < 0) {
+                                    index_shape.dims[cur_idx] = index_shapes[i].dims[cur_idx];
+                                }
+                            }
+                        }
+                        index_shape.nr_dim = max_dim;
+                    }
+                }
+                size_t idx_axis = 0;
+                {
+                    int contig_idx = 1;
+                    for (size_t i = 1; i < nr_index; ++i) {
+                        if (axis_vec[i] != axis_vec[i - 1] + 1) {
+                            contig_idx = 0;
+                            break;
+                        }
+                    }
+                    if (contig_idx) {
+                        idx_axis = axis_vec[0];
+                    }
+                }
+                for (size_t i = 0; i < index_shape.nr_dim; ++i) {
+                    // add_axis_inplace
+                    ++output->layout.nr_dim;
+                    for (size_t j = output->layout.nr_dim - 1; j > idx_axis + i; --j) {
+                        output->layout.dims[j] = output->layout.dims[j - 1];
+                        output->layout.stride[j] = output->layout.stride[j - 1];
+                    }
+                    output->layout.dims[idx_axis + i] = index_shape.dims[i];
+                    output->layout.stride[idx_axis + i] = 0;
                 }
                 force_layout_contiguous(&(output->layout));
                 return TinyNN_SUCCESS;
