@@ -64,6 +64,32 @@ void CCBenchmarker::load_model() {
 }
 
 void CCBenchmarker::profile() {
+    size_t nr_input = 0;
+    LITE_CAPI_CHECK(
+            LITE_get_all_input_name(m_model, &nr_input, NULL),
+            "get input number failed\n");
+    char* input_name_ptr[nr_input];
+    LITE_CAPI_CHECK(
+            LITE_get_all_input_name(m_model, NULL, (const char**)(&input_name_ptr)),
+            "get input name failed\n");
+    void* input_data[nr_input];
+    for (size_t i = 0; i < nr_input; ++i) {
+        LiteTensor input;
+        LITE_CAPI_CHECK(
+                LITE_get_io_tensor(m_model, input_name_ptr[i], LITE_INPUT, &input),
+                "get input tensor failed\n");
+
+        size_t length;
+        LITE_CAPI_CHECK(
+                LITE_get_tensor_total_size_in_byte(input, &length),
+                "get input tensor size failed\n");
+        input_data[i] = malloc(length);
+        LITE_CAPI_CHECK(
+                LITE_reset_tensor_memory(input, input_data[i], length),
+                "set input ptr failed\n");
+        LITE_CAPI_CHECK(LITE_destroy_tensor(input), "destory input tensor");
+    }
+
     for (int i = 0; i < warmup; i++) {
         LITE_CAPI_CHECK(LITE_forward(m_model), "run model failed\n");
         LITE_CAPI_CHECK(LITE_wait(m_model), "wait model failed\n");
@@ -77,6 +103,10 @@ void CCBenchmarker::profile() {
         LITE_CAPI_CHECK(LITE_wait(m_model), "wait model failed\n");
     }
     gettimeofday(&end, NULL);
+
+    for (size_t i = 0; i < nr_input; ++i) {
+        free(input_data[i]);
+    }
 
     unsigned long diff =
             1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec;

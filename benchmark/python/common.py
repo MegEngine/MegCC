@@ -85,7 +85,7 @@ def build_megcc_lib(arch_desc="x86",
 
 def build_model_and_megcc_lib(models, models_dir, arch_str):
     # dump all models from onnx to megengine
-    models.make(models_dir)
+    # models.make(models_dir)
     # prepare megcc compiler
     prepare_megcc()
     # build megcc model lib

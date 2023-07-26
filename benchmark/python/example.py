@@ -6,12 +6,14 @@ import yaml
 from common import *
 from src.benchmark import BenchMarkRunnerBase, ValidModel, ValidOutputDir
 from src.models import *
+import logging
 
+logging.basicConfig(level=logging.INFO)
 all_models = AllModel()
 # available arch_str = ["x86", "arm64", "armv7", "riscv"]
 arch_list = ["x86"]
 framework_str = ["megcc"]
-models_dir = "{}/benchmark/model/generated_models".format(megcc_path)
+models_dir = "{}/benchmark/model/generated_models/".format(megcc_path)
 benchmarker_list = {}
 # set as your own ssh device host and workdir(make sure install sshd and rsync on your device)
 ssh_device_info = [{"name": "", "host": "", "workdir": ""}]
@@ -106,6 +108,10 @@ def set_config_and_run(arch_str):
 
 
 def main():
+    logging.info("Downloading model...")
+    subprocess.check_output(
+        "aws --endpoint-url=http://oss.i.brainpp.cn s3 sync s3://megengine-built/megcc/integration_packaging/megcc_bench_model/ {}".format(models_dir), shell=True, stderr=subprocess.STDOUT)
+    logging.info("Download model done.")
     build_model_and_megcc_lib(all_models, models_dir, arch_list)
     gen_benchmarker(arch_list)
     build_benchmarker(x86_target="fallback",
