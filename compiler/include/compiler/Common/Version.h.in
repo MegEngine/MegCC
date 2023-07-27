@@ -4,7 +4,7 @@
 #include <vector>
 #define MEGCC_MAJOR 0
 #define MEGCC_MINOR 1
-#define MEGCC_PATCH 4
+#define MEGCC_PATCH 5
 namespace megcc {
 namespace {
 const std::string git_branch = "@GIT_BRANCH@";
