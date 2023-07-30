@@ -287,7 +287,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
                         rotate_clockwise_fp16_8x8(sptr, dptr,ih, iw, IH, IW);
                     }
                     for (; iw < IW; ++iw) {
-                        for(size_t i = 0; i < 7; ++i){
+                        for(size_t i = 0; i < 8; ++i){
                            rotate_pixel(sptr, dptr, ih+i, iw, IH, IW, 1, true);
                         }
                     }
