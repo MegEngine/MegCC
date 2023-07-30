@@ -11,7 +11,7 @@ using namespace Arm64;
 
 bool RotateKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool dtype_ok = src_dtype == "fp16";
+    bool dtype_ok = src_dtype == "f16";
     return dtype_ok;
 }
 
@@ -34,7 +34,7 @@ std::string RotateKernel::GetCVKernelBody(TContext* context) const {
         #include <arm_neon.h>
         #include <string.h>
         #include <stdio.h>
-        #include "my_tinycv_c.h"
+        #include "tinycv_c.h"
 #if defined(__aarch64__)
 static inline float64x2x4_t zip_f64_f32(float16x8x2_t rotate0, float16x8x2_t rotate1) {
     float32x4_t rotate0_32 = vreinterpretq_f32_f16(rotate0.val[0]);
@@ -75,7 +75,7 @@ static void rotate_clockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, size_t i
     float64x2_t dst01 = vzip2q_f64(dstA.val[0], dstB.val[0]);
 
     float64x2_t dst10 = vzip1q_f64(dstA.val[1], dstB.val[1]);
-    float64x2_t dst11 = vzip1q_f64(dstA.val[1], dstB.val[1]);
+    float64x2_t dst11 = vzip2q_f64(dstA.val[1], dstB.val[1]);
 
     float64x2_t dst20 = vzip1q_f64(dstA.val[2], dstB.val[2]);
     float64x2_t dst21 = vzip2q_f64(dstA.val[2], dstB.val[2]);
@@ -120,7 +120,7 @@ static void rotate_countclockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, siz
     float64x2_t dst01 = vzip2q_f64(dstA.val[0], dstB.val[0]);
 
     float64x2_t dst10 = vzip1q_f64(dstA.val[1], dstB.val[1]);
-    float64x2_t dst11 = vzip1q_f64(dstA.val[1], dstB.val[1]);
+    float64x2_t dst11 = vzip2q_f64(dstA.val[1], dstB.val[1]);
 
     float64x2_t dst20 = vzip1q_f64(dstA.val[2], dstB.val[2]);
     float64x2_t dst21 = vzip2q_f64(dstA.val[2], dstB.val[2]);
@@ -168,7 +168,7 @@ static void rotate_clockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, size_t
         float64x2_t dst01 = vzip2q_f64(dstA.val[0], dstB.val[0]);
 
         float64x2_t dst10 = vzip1q_f64(dstA.val[1], dstB.val[1]);
-        float64x2_t dst11 = vzip1q_f64(dstA.val[1], dstB.val[1]);
+        float64x2_t dst11 = vzip2q_f64(dstA.val[1], dstB.val[1]);
 
         float64x2_t dst20 = vzip1q_f64(dstA.val[2], dstB.val[2]);
         float64x2_t dst21 = vzip2q_f64(dstA.val[2], dstB.val[2]);
@@ -222,7 +222,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
         float64x2_t dst01 = vzip2q_f64(dstA.val[0], dstB.val[0]);
 
         float64x2_t dst10 = vzip1q_f64(dstA.val[1], dstB.val[1]);
-        float64x2_t dst11 = vzip1q_f64(dstA.val[1], dstB.val[1]);
+        float64x2_t dst11 = vzip2q_f64(dstA.val[1], dstB.val[1]);
 
         float64x2_t dst20 = vzip1q_f64(dstA.val[2], dstB.val[2]);
         float64x2_t dst21 = vzip2q_f64(dstA.val[2], dstB.val[2]);
@@ -379,7 +379,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
             }
         }
 
-        void {kernel_sig}{
+        void ${kernel_sig}{
             float16_t * sptr = src->data;
             float16_t * dptr = dst->data;
             size_t IH = src->rows;
