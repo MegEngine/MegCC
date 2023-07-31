@@ -74,8 +74,9 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
         a64_kerns.insert(a64_kerns.end(), valid_kern.begin(), valid_kern.end());
         return {a64_kerns, deduce_func};
 
-    } else if (arch == Arch::ARMV7) {
-        auto a32_kerns = Armv7::ArchKernelPack::GetKernel(kernel_type);
+    } else if (arch == Arch::ARMV7 || arch == Arch::ARMV7_WITH_DOT) {
+        bool with_dot = arch == Arch::ARMV7_WITH_DOT;
+        auto a32_kerns = Armv7::ArchKernelPack::GetKernel(kernel_type, with_dot);
 
         auto armcommon_kerns = ArmCommon::ArchKernelPack::GetKernel(kernel_type);
         auto gi_kerns = GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);

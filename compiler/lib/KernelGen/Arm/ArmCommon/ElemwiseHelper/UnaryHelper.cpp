@@ -76,8 +76,8 @@ std::string ElemwiseGenUnary::GenCodeBody(std::vector<std::string> strs) const {
                     .add("dst_store",
                          [=](std::string ptr, std::string dst_reg) {
                              if (m_i32_to_qs8) {
-                                 return "vst1_lane_s32((int32_t*)(" + ptr + ")," +
-                                        dst_reg + ", 0)\n";
+                                 return "vst1_lane_s32(" + ptr + "," + dst_reg +
+                                        ", 0)\n";
                              } else {
                                  return m_dst_simd->get_st1q_symbol() + "(" + ptr +
                                         "," + dst_reg + ")\n";
@@ -375,10 +375,11 @@ std::string ElemwiseGenUnaryHswish::GenKernelNaiveUnroll(
         body_render.add("i", i);
         if (m_i32_to_qs8) {
             writer << body_render.render(R"(
-                float temp = ${src_ptr}[${i}] + 3;
-                temp = temp > 6? 6 : temp;
-                temp = temp < 0? 0 : temp;
-                float res = ${src_ptr}[${i}] * temp / 6.f;
+                float temp0 = ${src_ptr}[${i}] * src_scale;
+                float temp1 = temp0 + 3;
+                temp1 = temp1 > 6? 6 : temp1;
+                temp1 = temp1 < 0? 0 : temp1;
+                float res = temp0 * temp1 / 6.f;
                 int res_i32 = (int)roundf(res * dst_scale);
                 res_i32 = res_i32 > 127 ? 127 : res_i32;
                 res_i32 = res_i32 < -128 ? -128 : res_i32;
@@ -460,7 +461,7 @@ std::string ElemwiseGenUnaryIdentity::GenKernelNaiveUnroll(
         body_render.add("i", i);
         if (m_i32_to_qs8) {
             writer << body_render.render(R"(
-                float res = ${src_ptr}[${i}] * src_scale * dst_scale;
+                float res = ${src_ptr}[${i}] * src_scale;
                 int res_i32 = (int)roundf(res * dst_scale);
                 res_i32 = res_i32 > 127 ? 127 : res_i32;
                 res_i32 = res_i32 < -128 ? -128 : res_i32;

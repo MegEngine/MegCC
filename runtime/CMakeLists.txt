@@ -7,6 +7,7 @@ project(TinyNN LANGUAGES C ASM)
 
 option(TINYNN_ENABLE_ASAN "Build with asan to check memory issue." OFF)
 option(TINYNN_ENABLE_FP16 "enable fp16 feature" OFF)
+option(TINYNN_ENABLE_AARCH32_DOT "enable dotprod feature on AArch32 platform." OFF)
 option(TINYNN_ACHIEVE_ALL "Build with achieve all lic static." OFF)
 option(TINYNN_SANITY_ALLOC "malloc all tensor dynamic for asan check." OFF)
 option(TINYNN_ENABLE_MEMORY_MANAGEMENT "Build with memory management componenet" OFF)
@@ -32,6 +33,7 @@ message(STATUS "\tEnabel alloc tensor dynamic:            ${TINYNN_SANITY_ALLOC}
 message(STATUS "\tEnabel dump tensor to dir:              ${TINYNN_DUMP_TENSOR}")
 message(STATUS "\tBuild with register callback:           ${TINYNN_CALLBACK_ENABLE}")
 message(STATUS "\tEnabel float16 feature:                 ${TINYNN_ENABLE_FP16}")
+message(STATUS "\tEnabel AArch32 dotprod feature:         ${TINYNN_ENABLE_AARCH32_DOT}")
 message(
   STATUS "\tBuild with Not standard os:             ${TINYNN_BUILD_FOR_NOT_STANDARD_OS}"
 )
@@ -109,8 +111,15 @@ if(TINYNN_BUILD_FOR_NOT_STANDARD_OS)
     )
     message(STATUS "set --target to armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --target=armv7-a")
-    set(CMAKE_C_FLAGS
-        "${CMAKE_C_FLAGS} -ffreestanding -mfloat-abi=softfp -mfpu=neon -march=armv7-a")
+    if(TINYNN_ENABLE_AARCH32_DOT)
+      set(CMAKE_C_FLAGS
+          "${CMAKE_C_FLAGS} -ffreestanding -mfloat-abi=softfp -mfpu=neon -march=armv7-a+dotprod"
+      )
+    else()
+      set(CMAKE_C_FLAGS
+          "${CMAKE_C_FLAGS} -ffreestanding -mfloat-abi=softfp -mfpu=neon -march=armv7-a"
+      )
+    endif()
   elseif(${MEGCC_ARCH} STREQUAL "armv7-a-qemu")
     # for qemu vexpress-a9 caused by it do not support NEON, please do no choose
     # armv7-a-qemu for real armv7 board caused by performance
@@ -146,6 +155,10 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "aarch64")
   if(TINYNN_ENABLE_FP16)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8.2-a+fp16+dotprod")
     message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
+  endif()
+elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "armv7-a")
+  if(TINYNN_ENABLE_AARCH32_DOT)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7-a+dotprod")
   endif()
 endif()
 set(CMAKE_C_FLAGS "-fPIC -fpie ${CMAKE_C_FLAGS}")

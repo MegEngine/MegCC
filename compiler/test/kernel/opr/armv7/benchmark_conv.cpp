@@ -10,8 +10,9 @@ static void run_conv(
         ConvBiasForward::Param::Format fmt = ConvBiasForward::Param::Format::NCHW,
         bool qint8 = false,
         ConvBiasForward::Param::NonlineMode noline =
-                ConvBiasForward::Param::NonlineMode::IDENTITY) {
-    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
+                ConvBiasForward::Param::NonlineMode::IDENTITY,
+        Arch arch = Arch::ARMV7) {
+    Benchmarker<ConvBiasForward> benchmarker(arch);
     if (!cc_algo_name.empty()) {
         benchmarker.set_kernel_symbol(cc_algo_name);
     }
@@ -155,6 +156,19 @@ TEST(ARMV7, BenchmarkInt8Conv1x1NCHW44) {
         run_conv(
                 1, 32, 71, 32, 1, 1, 0, cc_algo, dnn_algo,
                 ConvBiasForward::Param::Format::NCHW44, true, mode);
+    }
+}
+
+TEST(ARMV7, BenchmarkInt8DotConv1x1NCHW) {
+    std::string cc_algo = "Armv7_int8_dot_Conv1x1_M6N8K4.*";
+    std::string dnn_algo = "CONV1x1:AARCH32_INT8_K6X8X4.*";
+    for (auto mode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        run_conv(
+                1, 32, 128, 32, 1, 1, 0, cc_algo, dnn_algo,
+                ConvBiasForward::Param::Format::NCHW, true, mode, Arch::ARMV7_WITH_DOT);
     }
 }
 

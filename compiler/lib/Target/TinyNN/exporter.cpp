@@ -1171,8 +1171,12 @@ private:
                 return MegCC::Device_BARE_METAL;
             case megcc::KernelGen::ARM64:
                 return MegCC::Device_ARM64;
+            case megcc::KernelGen::ARMV7_WITH_DOT:
+            //! fall through
             case megcc::KernelGen::ARMV7:
                 return MegCC::Device_ARM32;
+            case megcc::KernelGen::ARM64V7_WITH_DOT:
+            //! fall through
             case megcc::KernelGen::ARM64V7: {
                 //! magic str
                 if (func_name.endswith(

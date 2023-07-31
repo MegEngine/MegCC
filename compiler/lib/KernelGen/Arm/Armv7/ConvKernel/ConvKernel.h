@@ -109,6 +109,28 @@ private:
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
 };
 
+class DotInt8Conv1x1NCHWM6N8K4 : public Armv7ConvImpl {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* ctx) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* context) const override {
+        return GetWorkspaceBodyCondition(context, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* context) const override {
+        return GetWorkspaceBodyCondition(context, true);
+    }
+
+private:
+    DotInt8x8x32M6N8K4MatMulKernel inner_gemm;
+    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+};
+
 }  // namespace Armv7
 }  // namespace KernelGen
 }  // namespace megcc

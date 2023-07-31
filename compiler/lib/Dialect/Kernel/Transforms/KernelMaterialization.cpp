@@ -23,8 +23,14 @@ llvm::cl::opt<megcc::KernelGen::Arch> target_arch(
                 clEnumValN(
                         megcc::KernelGen::ARMV7, "armv7", "compiler for device armv7."),
                 clEnumValN(
+                        megcc::KernelGen::ARMV7_WITH_DOT, "armv7_with_dot",
+                        "compiler for device armv7 with dotprod feature."),
+                clEnumValN(
                         megcc::KernelGen::ARM64V7, "arm64v7",
-                        "compiler for device arm64v7.")),
+                        "compiler for device arm64v7."),
+                clEnumValN(
+                        megcc::KernelGen::ARM64V7_WITH_DOT, "arm64v7_with_dot",
+                        "compiler for device arm64 and armv7 with dotprod feature.")),
         llvm::cl::init(megcc::KernelGen::BAREMETAL));
 
 namespace mlir {
@@ -272,7 +278,8 @@ private:
 }  // namespace
 
 void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
-    if (target_arch == megcc::KernelGen::ARM64V7) {
+    if (target_arch == megcc::KernelGen::ARM64V7 ||
+        target_arch == megcc::KernelGen::ARM64V7_WITH_DOT) {
         auto a64_registry = std::make_unique<Kernel::KernelTemplateRegistry>();
         Kernel::addBuiltinTemplates(*a64_registry, megcc::KernelGen::ARM64V7);
         //! a32_registry and a64_registry shared the same map to avoid
@@ -280,7 +287,12 @@ void populateKernelMaterializationPatterns(RewritePatternSet& patterns) {
         auto a32_registry = std::make_unique<Kernel::KernelTemplateRegistry>(
                 a64_registry->symbol2kernelDef, a64_registry->symbol2kernelFunc,
                 a64_registry->symbol2InternalKernel);
-        Kernel::addBuiltinTemplates(*a32_registry, megcc::KernelGen::ARMV7);
+        if (target_arch == megcc::KernelGen::ARM64V7) {
+            Kernel::addBuiltinTemplates(*a32_registry, megcc::KernelGen::ARMV7);
+        } else {
+            Kernel::addBuiltinTemplates(
+                    *a32_registry, megcc::KernelGen::ARMV7_WITH_DOT);
+        }
         //! copy function, origin function rename to
         //! old_name+KernelGen::ARM64V7_ARM64_POSTFIX, new function rename to
         //! old_name+KernelGen::ARM64V7_ARMV7_POSTFIX

@@ -58,6 +58,17 @@ static inline std::pair<std::string, std::string> gen_postprocess_inline(
                 }
             }
         )";
+        } else if (ctx->getAttrStr("format") == "MK") {
+            CC_ASSERT(Utils::is_quant_dtype(dtype));
+            post_process_temp = R"(
+                    if (LDC == N){
+                        ${ElemwiseImplName}(gemm_output, C, M * N, temp_scale, dst_scale_inv);
+                    }else{
+                        for(int m_idx = 0; m_idx < M; ++m_idx){
+                            ${ElemwiseImplName}(gemm_output + m_idx * LDC, C + m_idx * LDC, N, temp_scale, dst_scale_inv);
+                        }
+                    }
+                    )";
         } else if (ctx->getAttrStr("format") == "MK4") {
             post_process_temp = R"(
             if (LDC == (4 * N)){

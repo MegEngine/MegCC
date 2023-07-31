@@ -150,6 +150,11 @@ class Build:
             action="store_true",
             help="enable float16 compile flag, default is disable",
         )
+        parser.add_argument(
+            "--enable_aarch32_dot",
+            action="store_true",
+            help="enable AArch32 dotprod compile flag, default is disable",
+        )
         args = parser.parse_args()
         args.kernel_dir = os.path.realpath(args.kernel_dir)
         assert os.path.isdir(
@@ -379,6 +384,8 @@ class Build:
             "ON" if args.build_with_asan else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_FP16={}".format(
             "ON" if args.enable_fp16 else "OFF")
+        cmake_config = cmake_config + " -DTINYNN_ENABLE_AARCH32_DOT={}".format(
+            "ON" if args.enable_aarch32_dot else "OFF")
 
         logging.debug("python3 args: {}".format(args))
         config_cmd = "{}".format(cmake_config)

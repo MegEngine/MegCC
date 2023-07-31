@@ -265,4 +265,35 @@ TEST(ARMV7, ConvBiasConv1x1NCHW44Int8) {
     }
 }
 
+TEST(ARMV7, ConvBiasConv1x1NCHWDotInt8M6N8K4) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7_WITH_DOT);
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    UniformIntRNG rng(-4, 4);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("Armv7_int8_dot_Conv1x1_M6N8K4.*");
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    size_t kernel = 1;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs({{2, 7, 11, 11}, {7, 7, kernel, kernel}, {}, {}, {}});
+        checker.execs({{2, 3, 13, 10}, {13, 3, kernel, kernel}, {1, 13, 1, 1}, {}, {}});
+        checker.execs({{1, 5, 12, 10}, {7, 5, kernel, kernel}, {1, 7, 1, 1}, {}, {}});
+    }
+}
+
 // vim: syntax=cpp.doxygen

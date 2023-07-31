@@ -51,6 +51,15 @@ public:
     std::string GetPackBWorkspaceBody(TContext*) const override;
 };
 
+class DotInt8x8x32M6N8K4MatMulKernel : public Armv7MatmulInternal {
+public:
+    std::string GetKernelSymbol(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext*) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::string GetPackAWorkspaceBody(TContext*) const override;
+    std::string GetPackBWorkspaceBody(TContext*) const override;
+};
+
 }  // namespace Armv7
 }  // namespace KernelGen
 }  // namespace megcc
