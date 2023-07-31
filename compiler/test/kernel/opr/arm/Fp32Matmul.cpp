@@ -88,4 +88,32 @@ TEST(AARCH64, Fp32MatMulM8N12) {
                     }
 }
 
+TEST(AARCH64, Fp32BatchedMatMul) {
+    Checker<BatchedMatrixMulForward> checker(Arch::ARM64);
+    checker.set_kernel_symbol("Arm64_kernel_fp32_batched_matmul_.*");
+    BatchedMatrixMulForward::Param param;
+
+    for (bool trans_a : {false, true})
+        for (bool trans_b : {false, true})
+            for (size_t b : {1, 8, 23})
+                for (size_t m : {3, 8, 11})
+                    for (size_t n : {3, 8, 11})
+                        for (size_t k : {3, 8, 11}) {
+                            size_t a0 = m;
+                            size_t a1 = k;
+                            size_t b0 = k;
+                            size_t b1 = n;
+                            if (trans_a) {
+                                a0 = k, a1 = m;
+                            }
+                            if (trans_b) {
+                                b0 = n, b1 = k;
+                            }
+                            param.transposeA = trans_a;
+                            param.transposeB = trans_b;
+                            checker.set_param(param);
+                            checker.execs({{b, a0, a1}, {b, b0, b1}, {}});
+                        }
+}
+
 // vim: syntax=cpp.doxygen
