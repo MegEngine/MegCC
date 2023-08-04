@@ -193,7 +193,7 @@ static TinyNNStatus destruct(VM* vm, Instruction* inst) {
     FREE(opr->inputs);
     DeviceModel* model = get_active_device_model(vm);
     for (int i = 0; i < opr->nr_output; ++i) {
-        if (opr->outputs[i]->is_dynamic) {
+        if (opr->outputs[i]->is_dynamic && opr->outputs[i]->ptr) {
             model->opt.device->free(opr->outputs[i]->ptr);
         }
     }
