@@ -58,7 +58,7 @@ public:
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
                 int16x4_t s16_res = vqmovn_s32(s32_res);
                 int8x8_t s8_res = vqmovn_s16(vcombine_s16(s16_res, s16_res));
-                vst1_lane_s32((int32_t*)(${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
+                vst1_lane_s32((${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
             }        
         )";
         return StringTemplate::StringTemplateArgs()
@@ -96,12 +96,12 @@ public:
         std::string store_temp = R"(
             {
                 float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
-                 float32x4_t res = vmaxq_f32(vmulq_n_f32(f32_res, ${src_scale}), vzero);
+                float32x4_t res = vmaxq_f32(vmulq_n_f32(f32_res, ${src_scale}), vzero);
                 res = vmulq_n_f32(res, ${dst_scale}); 
                 int32x4_t s32_res = vcvtaq_s32_f32(res);
                 int16x4_t s16_res = vqmovn_s32(s32_res);
                 int8x8_t s8_res = vqmovn_s16(vcombine_s16(s16_res, s16_res));
-                vst1_lane_s32((int32_t*)(${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
+                vst1_lane_s32((${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
             }        
         )";
         return StringTemplate::StringTemplateArgs()
@@ -160,8 +160,29 @@ public:
     std::string GenIntrinsicQuantStore(
             const std::string& input, const std::string& outptr,
             const std::string& src_scale, const std::string& dst_scale) const override {
-        CC_ASSERT(0) << "not impl quant hswish act\n";
-        return "";
+        std::string store_temp = R"(
+            {
+                float32x4_t f32_res = vcvtq_f32_s32(${input_reg});
+                f32_res = vmulq_n_f32(f32_res, ${src_scale});
+
+                float32x4_t relu6 = vaddq_f32(f32_res, f3_v);
+                relu6 = vminq_f32(relu6, f6_v);
+                relu6 = vmaxq_f32(vzero, relu6);
+                f32_res = vmulq_f32(f32_res, relu6);
+                f32_res = vmulq_f32(f32_res, inv6_v);
+                f32_res = vmulq_n_f32(f32_res, ${dst_scale}); 
+                int32x4_t s32_res = vcvtaq_s32_f32(f32_res);
+                int16x4_t s16_res = vqmovn_s32(s32_res);
+                int8x8_t s8_res = vqmovn_s16(vcombine_s16(s16_res, s16_res));
+                vst1_lane_s32((${output_ptr}), vreinterpret_s32_s8(s8_res), 0);
+            }        
+        )";
+        return StringTemplate::StringTemplateArgs()
+                .add("input_reg", input)
+                .add("src_scale", src_scale)
+                .add("dst_scale", dst_scale)
+                .add("output_ptr", outptr)
+                .render(store_temp);
     }
 };
 

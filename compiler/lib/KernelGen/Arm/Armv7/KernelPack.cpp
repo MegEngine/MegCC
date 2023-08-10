@@ -17,9 +17,11 @@ struct AllA32Kernel {
                 std::make_shared<Armv7::WinogradFloatF23NCHW44>(),
                 std::make_shared<Armv7::ConvIm2colFloat>(),
                 std::make_shared<Armv7::Int8Conv1x1NCHW44>(),
+                std::make_shared<Armv7::Int8Conv5x5S1DirectNCHW>(),
         };
         inner_map_with_dot[KernelPack::KernType::ConvKernel] = {
                 std::make_shared<Armv7::DotInt8Conv1x1NCHWM6N8K4>(),
+                std::make_shared<Armv7::DotInt8Conv5x5S2DirectNCHW>(),
         };
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {

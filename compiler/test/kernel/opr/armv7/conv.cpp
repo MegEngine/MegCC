@@ -296,4 +296,86 @@ TEST(ARMV7, ConvBiasConv1x1NCHWDotInt8M6N8K4) {
     }
 }
 
+TEST(ARMV7, DotInt8Conv5x5S2DirectNCHW) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7_WITH_DOT);
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("Armv7_dot_int8_direct_.*");
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.stride_h = 2;
+    param.stride_w = 2;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    size_t kernel = 5;
+
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs(
+                {{2, 7, 11, 11}, {7, 1, 1, kernel, kernel}, {1, 7, 1, 1}, {}, {}});
+        checker.execs({{1, 4, 13, 16}, {2, 3, 2, kernel, kernel}, {}, {}, {}});
+    }
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs({{2, 2, 9, 23}, {3, 2, kernel, kernel}, {1, 3, 1, 1}, {}, {}});
+        checker.execs({{1, 4, 13, 16}, {6, 4, kernel, kernel}, {}, {}, {}});
+    }
+}
+
+TEST(ARMV7, Int8Conv5x5S1DirectNCHW) {
+    Checker<ConvBiasForward> checker(Arch::ARMV7);
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    checker.set_epsilon(1e-4);
+    checker.set_kernel_symbol("Armv7_int8_direct_.*");
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    size_t kernel = 5;
+
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs(
+                {{2, 7, 11, 11}, {7, 1, 1, kernel, kernel}, {1, 7, 1, 1}, {}, {}});
+        checker.execs({{1, 4, 13, 16}, {2, 3, 2, kernel, kernel}, {}, {}, {}});
+    }
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        checker.set_param(param);
+        checker.execs({{2, 2, 9, 23}, {3, 2, kernel, kernel}, {1, 3, 1, 1}, {}, {}});
+        checker.execs({{1, 4, 13, 16}, {6, 4, kernel, kernel}, {}, {}, {}});
+    }
+}
+
 // vim: syntax=cpp.doxygen

@@ -172,4 +172,96 @@ TEST(ARMV7, BenchmarkInt8DotConv1x1NCHW) {
     }
 }
 
+TEST(ARMV7, BenchmarkDotInt8Conv5x5S2DirectNCHW) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7_WITH_DOT);
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    benchmarker.set_kernel_symbol("Armv7_dot_int8_direct_.*");
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>("ARMDOTS8STRD2"));
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.stride_h = 2;
+    param.stride_w = 2;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    size_t kernel = 5;
+
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        benchmarker.set_param(param);
+        benchmarker
+                .execs({{1, 16, 128, 128},
+                        {8, 1, 2, kernel, kernel},
+                        {1, 8, 1, 1},
+                        {},
+                        {}})
+                .print();
+    }
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        benchmarker.set_param(param);
+        benchmarker.execs({{1, 16, 128, 128}, {8, 16, kernel, kernel}, {}, {}, {}})
+                .print();
+    }
+}
+
+TEST(ARMV7, BenchmarkInt8Conv5x5S1DirectNCHW) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARMV7);
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+    benchmarker.set_kernel_symbol("Armv7_int8_direct_.*");
+    benchmarker.set_before_exec_callback(
+            megdnn::test::AlgoChecker<ConvBiasForward>("S8STRD1"));
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.pad_h = 2;
+    param.pad_w = 2;
+    size_t kernel = 5;
+
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        benchmarker.set_param(param);
+        benchmarker
+                .execs({{1, 16, 128, 128},
+                        {8, 1, 2, kernel, kernel},
+                        {1, 8, 1, 1},
+                        {},
+                        {}})
+                .print();
+    }
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (auto nonlinemode :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = nonlinemode;
+        benchmarker.set_param(param);
+        benchmarker.execs({{1, 16, 128, 128}, {8, 16, kernel, kernel}, {}, {}, {}})
+                .print();
+    }
+}
+
 #endif

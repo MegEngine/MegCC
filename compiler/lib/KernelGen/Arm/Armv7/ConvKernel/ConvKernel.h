@@ -5,6 +5,7 @@
 #include "Arm/Armv7/InternalKernel/InternalKernel.h"
 #include "Arm/Armv7/KernelCommon.h"
 #include "Common/ConvKernel.h"
+#include "Int8DirectNchwBase.h"
 #include "Utils/StringTemplate.h"
 #include "Utils/SymbolHelper.h"
 #include "compiler/KernelGen/KernelGen.h"
@@ -129,6 +130,20 @@ private:
     DotInt8x8x32M6N8K4MatMulKernel inner_gemm;
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+};
+
+class DotInt8Conv5x5S2DirectNCHW : public Int8DirectNchwBase {
+public:
+    DotInt8Conv5x5S2DirectNCHW();
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* ctx) const override;
+};
+
+class Int8Conv5x5S1DirectNCHW : public Int8DirectNchwBase {
+public:
+    Int8Conv5x5S1DirectNCHW();
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* ctx) const override;
 };
 
 }  // namespace Armv7
