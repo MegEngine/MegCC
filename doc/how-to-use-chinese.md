@@ -105,11 +105,13 @@ Release 包中的 script 目录下面有一个 `ppl_gen.sh` 的文件，直接�
 mgb-to-tinynn --json=/path/to/json --[target]
 ``` 
 完成模型编译后，将生成的运行这个模型的 Kernel，和这些 Kernel 绑定的模型文件以及 cv 算子都放在 Json 文件中指定的目录。其中
-- target：可以是 baremetal, arm64, armv7, arm64v7.
+- target：可以是 baremetal, arm64, armv7, armv7_with_dot, arm64v7, arm64v7_with_dot.
   
 > Note: 
  - baremetal: 生成的 Kernel 为单片机可以运行的纯 C 形式
  - arm64v7: 生成能够同时在 Arm64 和 ArmV7 上可以运行的两套 Kernel 以及他们对应的模型，这时候，模型文件可能会比 target 为 arm64 时候大一点。
+ - armv7_with_dot: 在Arm64的AArch32模式运行，且设备支持dotprod时，可使用armv7_with_dot，会生成使用dot指令的armv7 kernel，通常比未使用dot指令的kernel性能更好。
+ - 如何确定设备是否支持dot？ `clang++ -target aarch64-none-linux-gnueabi -mcpu=cortex-a55  -E -dM - < /dev/null | grep DOT`, 根据实际情况指定 `-mcpu` 的参数即可。
   
 如编译 Release 包中的 mobilenet 模型，目标机器是 arm64 机器，运行如下命令：
 ```bash
@@ -130,7 +132,8 @@ MegCC 提供一个脚本方便完成上述编译操作
 
 - 解压上面`使用现成脚本进行编译`之后生成的`megcc_ppl_gen.tar.gz`，执行 `tar -xvf megcc_ppl_gen.tar.gz` 并进入加压之后的目录。
   - 如果编译平台是 arm64，执行 `./ppl_build.sh`。
-  - 如果编译平台是 armv7，执行 `./ppl_build.sh -m armeabi-v7a`。
+  - 如果编译平台是 armv7，执行 `./ppl_build.sh --cross_build_target_arch=armv7-a`。
+  - 如果编译平台是 armv7_with_dot，执行 `./ppl_build.sh --cross_build_target_arch=armv7-a --enable_aarch32_dot`。
 
 最终运行时需要的模型文件在解压之后的 model 目录下面 `mobilenet_nchw44.tiny`。
 
@@ -143,6 +146,7 @@ MegCC 提供一个脚本方便完成上述编译操作
 ``` 
 `runtime_build.py` 脚本默认编译支持 Android 上 aarch64 的编译，用户可以通过：
 - `--cross_build_target_arch`: 指定目标编译的平台，目前支持：['x86_64', 'i386', 'aarch64', 'armv7-a', 'cortex-m', 'armv7-a-qemu']。
+- `--enable_aarch32_dot`: 当编译模型时所指定的arch为`armv7_with_dot`时，必须开启此选项。
 - `--cross_build_target_os`：指定编译的目标操作系统，目前支持：['ANDROID', 'LINUX', 'IOS', 'NOT_STANDARD_OS']
 - `--kernel_dir`：指定编译的 Kernel 路径。
 

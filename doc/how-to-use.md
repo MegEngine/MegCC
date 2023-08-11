@@ -72,14 +72,16 @@ For example:
 #### Generate kernel and model with json file
 Generate kernels and models which needed by sdk with prebuild mgb-to-tinynn app. There is a helper script named `ppl_gen.sh` to dump the files and pack them to a tar file named `megcc_ppl_gen.tar.gz`.   
 - Execute `./script/ppl_gen.sh ./bin/mgb-to-tinynn ./path/to/you.json megcc_gen --arm64`. MegCC will compile models and dump new models with armv8 kernels, then pack the models, kernels, runtime file to `megcc_ppl_gen.tar.gz`.    
-- Or execute `./script/ppl_gen.sh ./bin/mgb-to-tinynn ./path/to/you.json megcc_gen --arm64v7` to dump both kernel for armv8 and armv7. However model support both armv8 and armv7 will be larger than the one only support one arch.   
+- Or execute `./script/ppl_gen.sh ./bin/mgb-to-tinynn ./path/to/you.json megcc_gen --arm64v7` to dump both kernel for armv8 and armv7. However model support both armv8 and armv7 will be larger than the one only support one arch.
+- Or execute `./script/ppl_gen.sh ./bin/mgb-to-tinynn ./path/to/you.json megcc_gen --armv7_with_dot` to generate armv7 kernel using `dot` instructions when the target device is AArch32 with dotprod feature.
 
 #### Integrate megcc
 > warning: **You should make sure a NDK is installed in your computer，and set env NDK_ROOT to its direction** 
 
 - Unzip `megcc_ppl_gen.tar.gz` by execute `tar -xvf megcc_ppl_gen.tar.gz` and enter the extracted dir
   - if build runtime with armv8, execute `./ppl_build.sh`.
-  - if build with armv7, execute `./ppl_build.sh -m armeabi-v7a`. 
+  - if build with armv7, execute `./ppl_build.sh --cross_build_target_arch=armv7-a`.
+  - if build with armv7_with_dot, execute `./ppl_build.sh --cross_build_target_arch=armv7-a --enable_aarch32_dot`.
 - Then the new tinynn model is in `model` directory, header and lib is in `./build/install/`. `./build/install/bin/tinynn_test_lite` is an example to run model, which compile from the source file `./example/lite_main.c`. 
 - Integrate megcc with `lite` API to run tinynn model, reference to `lite_main.c`. Use CV API from `tinycv_c.h` to construct pipeline.  
 

@@ -323,6 +323,7 @@ TEST(ARMV7, DotInt8Conv5x5S2DirectNCHW) {
         checker.execs(
                 {{2, 7, 11, 11}, {7, 1, 1, kernel, kernel}, {1, 7, 1, 1}, {}, {}});
         checker.execs({{1, 4, 13, 16}, {2, 3, 2, kernel, kernel}, {}, {}, {}});
+        checker.execs({{1, 3, 37, 63}, {1, 5, 3, kernel, kernel}, {}, {}, {}});
     }
 
     param.sparse = ConvBiasForward::Param::Sparse::DENSE;
@@ -334,6 +335,7 @@ TEST(ARMV7, DotInt8Conv5x5S2DirectNCHW) {
         checker.set_param(param);
         checker.execs({{2, 2, 9, 23}, {3, 2, kernel, kernel}, {1, 3, 1, 1}, {}, {}});
         checker.execs({{1, 4, 13, 16}, {6, 4, kernel, kernel}, {}, {}, {}});
+        checker.execs({{1, 3, 37, 63}, {5, 3, kernel, kernel}, {}, {}, {}});
     }
 }
 
@@ -364,6 +366,7 @@ TEST(ARMV7, Int8Conv5x5S1DirectNCHW) {
         checker.execs(
                 {{2, 7, 11, 11}, {7, 1, 1, kernel, kernel}, {1, 7, 1, 1}, {}, {}});
         checker.execs({{1, 4, 13, 16}, {2, 3, 2, kernel, kernel}, {}, {}, {}});
+        checker.execs({{3, 5, 51, 37}, {1, 3, 5, kernel, kernel}, {}, {}, {}});
     }
 
     param.sparse = ConvBiasForward::Param::Sparse::DENSE;
@@ -375,6 +378,7 @@ TEST(ARMV7, Int8Conv5x5S1DirectNCHW) {
         checker.set_param(param);
         checker.execs({{2, 2, 9, 23}, {3, 2, kernel, kernel}, {1, 3, 1, 1}, {}, {}});
         checker.execs({{1, 4, 13, 16}, {6, 4, kernel, kernel}, {}, {}, {}});
+        checker.execs({{3, 5, 51, 37}, {3, 5, kernel, kernel}, {}, {}, {}});
     }
 }
 
