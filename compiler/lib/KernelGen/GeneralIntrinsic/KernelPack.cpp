@@ -59,6 +59,9 @@ struct AllGICommonKernel {
 
         };
 
+        inner_map[KernelPack::KernType::ConvBackDataKernel] = {
+                std::make_shared<GeneralIntrinsic::Float32NchwBackward>()};
+
         inner_map[KernelPack::KernType::PoolingKernel] = {
                 std::make_shared<GeneralIntrinsic::PoolingNchw88Fp16>(),
                 std::make_shared<GeneralIntrinsic::PoolingNchw44Fp32>(),

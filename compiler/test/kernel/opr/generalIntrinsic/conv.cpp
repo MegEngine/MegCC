@@ -367,4 +367,55 @@ TEST(GI, ConvBiasIm2colNCHW44Group) {
                                     }
 }
 
+TEST(GI, ConvBackDataNCHW) {
+    Checker<ConvolutionBackwardData> checker(Arch::BAREMETAL);
+    checker.set_kernel_symbol("GI_kernel_back_data_conv2d_.*");
+    ConvolutionBackwardData::Param param;
+    param.compute_mode = ConvolutionBackwardData::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionBackwardData::Param::Format::NCHW;
+    checker.set_epsilon(1e-4);
+    for (size_t n : {2})
+        for (size_t oc : {1, 4})
+            for (size_t ic : {1, 4})
+                for (size_t hw : {7, 12})
+                    for (size_t kernel : {1, 2, 3, 5})
+                        for (size_t pad : {0, 1})
+                            for (size_t stride : {1, 2}) {
+                                param.pad_h = pad;
+                                param.pad_w = pad;
+                                param.stride_h = stride;
+                                param.stride_w = stride;
+                                param.sparse =
+                                        ConvolutionBackwardData::Param::Sparse::DENSE;
+                                checker.set_param(param);
+                                checker.execs(
+                                        {{oc, ic, kernel, kernel},
+                                         {n, oc, hw, hw},
+                                         {n, ic,
+                                          (hw - 1) * stride +
+                                                  (kernel - 1) * param.dilate_h + 1 -
+                                                  pad * 2,
+                                          (hw - 1) * stride +
+                                                  (kernel - 1) * param.dilate_w + 1 -
+                                                  pad * 2}});
+                                if (ic == oc) {
+                                    size_t group = oc > 1 ? 2 : 1;
+                                    param.sparse = ConvolutionBackwardData::Param::
+                                            Sparse::GROUP;
+                                    checker.set_param(param);
+                                    checker.execs(
+                                            {{group, oc / group, ic / group, kernel,
+                                              kernel},
+                                             {n, oc, hw, hw},
+                                             {n, ic,
+                                              (hw - 1) * stride +
+                                                      (kernel - 1) * param.dilate_h +
+                                                      1 - pad * 2,
+                                              (hw - 1) * stride +
+                                                      (kernel - 1) * param.dilate_w +
+                                                      1 - pad * 2}});
+                                }
+                            }
+}
+
 // vim: syntax=cpp.doxygen

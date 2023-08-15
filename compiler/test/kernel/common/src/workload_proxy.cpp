@@ -199,8 +199,8 @@ template <>
 size_t WorkloadOprProxy<megdnn::ConvolutionBackwardData>::get_compute_workload(
         megdnn::ConvolutionBackwardData* opr, const TensorNDArray& tensors) {
     auto param = opr->param();
-    auto src_layout = tensors[0].layout;
-    auto filter_layout = tensors[1].layout;
+    auto src_layout = tensors[1].layout;
+    auto filter_layout = tensors[0].layout;
     auto dst_layout = tensors[2].layout;
     return get_conv_compute_workload(
             src_layout, filter_layout, dst_layout, param.format, param.sparse);

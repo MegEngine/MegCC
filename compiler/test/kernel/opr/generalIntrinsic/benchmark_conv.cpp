@@ -181,4 +181,31 @@ TEST(GI, BenchmarkConvBiasIm2colNCHW88) {
             .print();
 }
 #endif
+TEST(GI, BenchmarkConvBackDataNCHW) {
+    Benchmarker<ConvolutionBackwardData> benchmarker(Arch::BAREMETAL);
+    benchmarker.set_kernel_symbol("GI_kernel_back_data_conv2d_.*");
+    ConvolutionBackwardData::Param param;
+    param.compute_mode = ConvolutionBackwardData::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionBackwardData::Param::Format::NCHW;
+
+    param.pad_h = 1;
+    param.pad_w = 1;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    benchmarker.set_param(param);
+    uint32_t kernel = 3;
+    benchmarker.execs({{8, 4, kernel, kernel}, {2, 8, 128, 128}, {2, 4, 128, 128}})
+            .print();
+
+    param.pad_h = 2;
+    param.pad_w = 2;
+    param.stride_h = 2;
+    param.stride_w = 2;
+    param.sparse = ConvolutionBackwardData::Param::Sparse::GROUP;
+    benchmarker.set_param(param);
+    kernel = 5;
+    benchmarker.execs({{4, 2, 1, kernel, kernel}, {2, 8, 128, 128}, {2, 4, 256, 256}})
+            .print();
+}
 #endif
