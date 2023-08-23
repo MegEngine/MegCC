@@ -93,6 +93,26 @@ public:
         return ret;
     }
 
+    static std::string GenNearestImpl() {
+        std::string ret;
+        ret = R"(
+            rep(n, N) {
+                rep(oh, OH) rep(ow, OW) {
+                    int ih = MIN((int)(oh / scale_h), IH - 1);
+                    int iw = MIN((int)(ow / scale_w), IW - 1);
+
+                    rep(c, C) {
+                        dptr[c * OH * OW + oh * OW + ow] =
+                                sptr[c * S_IC + ih * S_IH + iw * S_IW];
+                    }
+                }
+                sptr += S_IN;
+                dptr += C * OH * OW;
+            }
+        )";
+        return ret;
+    }
+
     static std::string GenLayoutDims(const std::string& format) {
         std::string ret;
         if (format == "NCHW") {
@@ -103,6 +123,10 @@ public:
                 int IW = src_layout.dims[3];
                 int OH = dst_layout.dims[2];
                 int OW = dst_layout.dims[3];
+                int S_IN = src_layout.stride[0];
+                int S_IC = src_layout.stride[1];
+                int S_IH = src_layout.stride[2];
+                int S_IW = src_layout.stride[3];
             )";
         } else {
             CC_ASSERT(format == "NCHW44");

@@ -15,10 +15,12 @@ using namespace BareMetal;
 bool ResizeKernel::IsAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     bool dtype_ok = src_dtype == "f32";
-    bool mode_ok = context->getAttrStr("imode") == "LINEAR";
+    bool mode_ok = context->getAttrStr("imode") == "LINEAR" ||
+                   context->getAttrStr("imode") == "NEAREST";
 
     bool format_ok = context->getAttrStr("format") == "NCHW" ||
-                     context->getAttrStr("format") == "NCHW44";
+                     (context->getAttrStr("format") == "NCHW44" &&
+                      context->getAttrStr("imode") == "LINEAR");
     return dtype_ok && mode_ok && format_ok;
 }
 //! kernel gen
@@ -38,9 +40,13 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
     auto fmt = context->getAttrStr("format");
     auto specifier = Utils::cvt_dtype_specifier(src_dtype);
     ss << R"(
+        #include <math.h>
         #include <stdalign.h>
     )";
-    auto coord_str = ResizeHelper::GenCoordHelper(imode, specifier);
+    std::string coord_str = "";
+    if (imode == "LINEAR") {
+        coord_str = ResizeHelper::GenCoordHelper(imode, specifier);
+    }
     auto gen_layout_dims = ResizeHelper::GenLayoutDims(fmt);
     auto get_offset = ResizeHelper::GenGetOffset(fmt);
     ss << StringTemplate::StringTemplateArgs()
@@ -53,6 +59,7 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
         ${coord_helper_str}
         ${get_offset}
         #define rep(i, n) for (int i = 0; i < (n); ++i)
+        #define MIN(x, y) ((x) < (y) ? (x) : (y))
     )");
     ss << GenCommonRet() << " " << GetKernelSignature(context);
     std::string body_temp = R"({
@@ -73,7 +80,13 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
 
         return TinyNN_SUCCESS;
     })";
-    auto normal_impl = ResizeHelper::GenNormImpl(fmt);
+    std::string normal_impl;
+    if (imode == "LINEAR") {
+        normal_impl = ResizeHelper::GenNormImpl(fmt);
+    } else {
+        CC_ASSERT(imode == "NEAREST");
+        normal_impl = ResizeHelper::GenNearestImpl();
+    }
     ss << StringTemplate::StringTemplateArgs()
                     .add("specifier", specifier)
                     .add("normal_impl", normal_impl)
