@@ -942,6 +942,7 @@ std::string Int16M8N8K8MatMulKernel::GetKernelSignature(TContext* context) const
 std::string Int16M8N8K8MatMulKernel::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     writer << "#include <marm_neon.h>\n";
+    writer << "#include <stddef.h>\n";
     writer << GetKern8x1();
     writer << "\n\n";
     writer << GetKern8x4();

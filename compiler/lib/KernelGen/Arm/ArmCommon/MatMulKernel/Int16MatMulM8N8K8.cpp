@@ -60,6 +60,7 @@ std::vector<KernelObj> Int16MatMulM8N8K8::GetDependInternalSymbol(
 std::string Int16MatMulM8N8K8::GetKernelBody(TContext* context) const {
     std::stringstream writer;
     writer << "#include <arm_neon.h>\n";
+    writer << "#include <stddef.h>\n";
     writer << "extern " << m_internal_kernel.GetKernelSignature(context) << ";\n";
     writer << GenCommonRet() << " ";
     writer << GetKernelSignature(context) << "{\n";
