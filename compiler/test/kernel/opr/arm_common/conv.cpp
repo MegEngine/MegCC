@@ -287,6 +287,24 @@ TEST(ARMCOMMON, WinogradF23NCHW44MK8Int8) {
              {1, 8, 1, 1, 4},
              {},
              {}});
+#ifdef __x86_64__
+    EXPECT_DEATH(
+            checker.execs(
+                    {{2, 3, 10, 10},
+                     {2, 3, kernel, kernel, 4},
+                     {1, 2, 1, 1, 4},
+                     {},
+                     {}}),
+            "");
+    EXPECT_DEATH(
+            checker.execs(
+                    {{2, 3, 10, 10},
+                     {3, 2, 1, kernel, kernel, 4},
+                     {1, 6, 1, 1, 4},
+                     {},
+                     {}}),
+            "");
+#endif
 }
 
 TEST(ARMCOMMON, ConvBiasNCHWNCHW44Int8) {

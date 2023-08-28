@@ -26,12 +26,15 @@ bool WinogradFloatF23Nchw44MK8Int8::IsAvailable(TContext* ctx) const {
     bool type_ok = is_qint8_conv_dtype(ctx);
 
     //! because of MK8 matmul
-    bool layout_ok = (ctx->getAttrStr("sparse") == "DENSE" &&
-                      ctx->getAttrOprand("operand:1").shape[0] % 2 == 0 &&
-                      ctx->getAttrOprand("operand:1").shape[0] % 2 == 0) ||
-                     (ctx->getAttrStr("sparse") == "GROUP" &&
-                      ctx->getAttrOprand("operand:1").shape[1] % 2 == 0 &&
-                      ctx->getAttrOprand("operand:1").shape[2] % 2 == 0);
+    bool layout_ok = ctx->getAttrOprand("operand:0").shape.size() == 5 &&
+                     ((ctx->getAttrStr("sparse") == "DENSE" &&
+                       ctx->getAttrOprand("operand:1").shape.size() == 6 &&
+                       ctx->getAttrOprand("operand:1").shape[0] % 2 == 0 &&
+                       ctx->getAttrOprand("operand:1").shape[1] % 2 == 0) ||
+                      (ctx->getAttrStr("sparse") == "GROUP" &&
+                       ctx->getAttrOprand("operand:1").shape.size() == 7 &&
+                       ctx->getAttrOprand("operand:1").shape[1] % 2 == 0 &&
+                       ctx->getAttrOprand("operand:1").shape[2] % 2 == 0));
 
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
 }
