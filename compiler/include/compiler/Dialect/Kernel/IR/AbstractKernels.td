@@ -64,6 +64,10 @@ def NegateKernel: UnaryElemwiseKernel<"NEGATE">;
 def RoundKernel: UnaryElemwiseKernel<"ROUND">;
 def SILUKernel: UnaryElemwiseKernel<"SILU">;
 def ERFKernel: UnaryElemwiseKernel<"ERF">;
+def SQRTKernel: UnaryElemwiseKernel<"SQRT">;
+def SINKernel: UnaryElemwiseKernel<"SIN">;
+def COSKernel: UnaryElemwiseKernel<"COS">;
+
 
 def AddKernel: BinaryElemwiseKernel<"ADD">;
 def SubKernel: BinaryElemwiseKernel<"SUB">;

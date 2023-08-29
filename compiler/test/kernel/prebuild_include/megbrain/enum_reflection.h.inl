@@ -493,6 +493,8 @@ struct EnumTrait<::megdnn::param::Elemwise::Mode> : public std::true_type {
                 return "OR";
             case ::megdnn::param::Elemwise::Mode::XOR:
                 return "XOR";
+            case ::megdnn::param::Elemwise::Mode::SQRT:
+                return "SQRT";
             default:
                 return {};
         }

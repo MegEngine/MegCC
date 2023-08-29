@@ -53,6 +53,12 @@ std::string gen_unary(std::string mode) {
         return "val / (1 + expf(-val))";
     } else if (mode == "ERF") {
         return "erff(val)";
+    } else if (mode == "SQRT") {
+        return "sqrtf(val)";
+    } else if (mode == "SIN") {
+        return "sinf(val)";
+    } else if (mode == "COS") {
+        return "cosf(val)";
     } else {
         CC_ABORT << "not support mode " << mode.c_str() << "\n";
     }
@@ -414,7 +420,8 @@ bool ElmwiseKernel::IsAvailable(TContext* context) const {
     bool mode_ok_unary = mode == "RELU" || mode == "SIGMOID" || mode == "EXP" ||
                          mode == "NEGATE" || mode == "ROUND" || mode == "ABS" ||
                          mode == "H_SWISH" || mode == "LOG" || mode == "SILU" ||
-                         mode == "ERF";
+                         mode == "ERF" || mode == "SQRT" || mode == "SIN" ||
+                         mode == "COS";
     bool mode_ok_binary = mode == "ADD" || mode == "SUB" || mode == "MUL" ||
                           mode == "MAX" || mode == "MIN" || mode == "LEQ" ||
                           mode == "LT" || mode == "FLOOR_DIV" || mode == "EQ" ||

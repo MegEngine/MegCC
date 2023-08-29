@@ -218,6 +218,12 @@ public:
                 return createOp<Kernel::SILUKernel>(op, operands, rewriter);
             case Mode::ERF:
                 return createOp<Kernel::ERFKernel>(op, operands, rewriter);
+            case Mode::SQRT:
+                return createOp<Kernel::SQRTKernel>(op, operands, rewriter);
+            case Mode::SIN:
+                return createOp<Kernel::SINKernel>(op, operands, rewriter);
+            case Mode::COS:
+                return createOp<Kernel::COSKernel>(op, operands, rewriter);
             default:
                 CC_ABORT << "Unsupport Elemwise mode :" << static_cast<int>(op.mode())
                          << "\n";

@@ -13,7 +13,7 @@ TEST(NAIVE, ElementwiseUnique) {
     ElemwiseForward::Param param;
     for (auto mode :
          {MODE::RELU, MODE::SIGMOID, MODE::EXP, MODE::NEGATE, MODE::ROUND,
-          MODE::H_SWISH, MODE::ABS, MODE::ERF}) {
+          MODE::H_SWISH, MODE::ABS, MODE::ERF, MODE::SIN, MODE::COS}) {
         param.mode = mode;
         checker.set_param(param);
         checker.execs({{1}, {}});
@@ -26,6 +26,13 @@ TEST(NAIVE, ElementwiseUnique) {
         megcc::test::UniformRNG rng(1e-5, 3);
         checker.set_rng(0, &rng);
         checker.execs({{1, 10}, {}});
+
+        param.mode = MODE::SQRT;
+        checker.set_param(param);
+        checker.set_rng(0, &rng);
+        checker.execs({{1}, {}});
+        checker.execs({{1, 10}, {}});
+        checker.execs({{1, 10, 12, 13}, {}});
     }
 }
 
