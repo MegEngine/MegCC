@@ -402,7 +402,8 @@ bool Int8Conv5x5S1DirectNCHW::IsAvailable(TContext* ctx) const {
                      ctx->getAttrStr("nonlineMode") == "H_SWISH";
     bool type_ok = is_qint8_conv_dtype(ctx);
 
-    return param_value_ok && param_mode_ok && type_ok && noline_ok;
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && bias_ok;
 }
 
 std::string Int8Conv5x5S1DirectNCHW::GetKernelSymbol(TContext* ctx) const {

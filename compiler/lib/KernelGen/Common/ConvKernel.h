@@ -11,6 +11,13 @@ public:
         return ctx->getAttrInt("nr_operands") > 3 &&
                ctx->getAttrOprand("operand:2").shape.size() > 0;
     }
+    static bool is_channel_broadcast_bias(TContext* ctx) {
+        if (is_bias(ctx)) {
+            CCOperand bias = ctx->getAttrOprand("operand:2");
+            return bias.shape[0] == 1 && bias.shape[2] == 1 && bias.shape[3] == 1;
+        }
+        return false;
+    }
     static bool is_no_pad(TContext* ctx) {
         auto pad_h = ctx->getAttrInt("pad_h");
         auto pad_w = ctx->getAttrInt("pad_w");

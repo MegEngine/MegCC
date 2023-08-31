@@ -45,7 +45,9 @@ bool DotInt8Conv1x1NCHWM6N8K4::IsAvailable(TContext* ctx) const {
     bool type_ok = is_qint8_conv_dtype(ctx);
     bool layout_ok = ctx->getAttrOprand("operand:0").shape.size() == 4;
 
-    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
+           bias_ok;
 }
 
 std::string DotInt8Conv1x1NCHWM6N8K4::GetKernelSymbol(TContext* ctx) const {

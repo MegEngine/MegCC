@@ -1201,7 +1201,9 @@ bool Int8NchwNchw44ConvS2::IsAvailable(TContext* ctx) const {
             ctx->getAttrOprand(
                        "operand:" + std::to_string(ctx->getAttrInt("nr_operands") - 1))
                             .shape.size() == 5;
-    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
+           bias_ok;
 }
 
 std::string Int8NchwNchw44ConvS2::GetKernelBody(TContext* ctx) const {

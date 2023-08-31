@@ -33,7 +33,9 @@ bool is_available(TContext* ctx) {
     bool layout_ok = ctx->getAttrOprand("operand:0").shape.size() == 5 &&
                      ctx->getAttrOprand("operand:0").shape[4] == 8;
 
-    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok;
+    bool bias_ok = !ConvImpl::is_bias(ctx) || ConvImpl::is_channel_broadcast_bias(ctx);
+    return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
+           bias_ok;
 }
 std::string get_header() {
     std::stringstream writer;

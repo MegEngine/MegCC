@@ -110,8 +110,9 @@ bool ConvIm2colDot::IsAvailable(TContext* ctx) const {
                     (ctx->getAttrStr("sparse") == "DENSE" &&
                      ctx->getAttrOprand("operand:1").shape.size() == 6);
     }
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
     bool available = param_value_ok && param_mode_ok && type_ok && noline_ok &&
-                     layout_ok && weight_ok;
+                     layout_ok && weight_ok && bias_ok;
     return available;
 }
 

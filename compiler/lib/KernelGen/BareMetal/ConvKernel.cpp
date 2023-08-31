@@ -41,7 +41,8 @@ bool ConvGeneral::IsAvailable(TContext* ctx) const {
         type_qint_ok = type_qint_ok && fabs(scale_src * scale_flt - scale_bias) < 1e-5;
     }
 
-    return param_mode_ok && (type_float_ok || type_qint_ok || type_fp16_ok);
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
+    return param_mode_ok && (type_float_ok || type_qint_ok || type_fp16_ok) && bias_ok;
 }
 namespace {
 std::string gen_filter_stride(std::string format_str, std::string sparse) {

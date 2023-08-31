@@ -1313,8 +1313,9 @@ bool ChannelWiseInt8Nchw44::IsAvailable(TContext* ctx) const {
                            ctx->getAttrOprand("operand:1").shape[5] == 4 &&
                            ctx->getAttrOprand("operand:1").shape[1] == 1 &&
                            ctx->getAttrOprand("operand:1").shape[2] == 1;
+    bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
-           channel_wise_ok;
+           channel_wise_ok && bias_ok;
 }
 std::string ChannelWiseInt8Nchw44::GetKernelSymbol(TContext* context) const {
     return "ArmCommon_chanwise_" + ConvImpl::GetKernelSymbol(context);

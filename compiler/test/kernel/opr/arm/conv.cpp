@@ -454,4 +454,74 @@ TEST(AARCH64, ConvBiasIm2colNCHW44Group) {
                                 }
 }
 
+TEST(AARCH64, ConvBiasChannelBroadcastBias) {
+    Checker<ConvBiasForward> checker(Arch::ARM64);
+    checker.set_kernel_symbol(".*");
+    ConvBiasForward::Param param;
+
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvBiasForward::Param::Format::NCHW44;
+    for (size_t kernel : {1, 2, 3, 5, 7}) {
+        param.pad_h = kernel / 2;
+        param.pad_w = kernel / 2;
+        for (ConvBiasForward::Param::Format format :
+             {param.format = ConvBiasForward::Param::Format::NCHW44,
+             param.format = ConvBiasForward::Param::Format::NCHW44_DOT}) {
+            param.format = format;
+            param.sparse = ConvolutionForward::Param::Sparse::DENSE;
+            checker.set_param(param);
+#ifdef __x86_64__
+            EXPECT_DEATH(
+                    checker.execs(
+                            {{2, 3, 10, 10, 4},
+                             {2, 3, kernel, kernel, 4, 4},
+                             {1, 2, 10, 10, 4},
+                             {},
+                             {}}),
+                    "gen kernel failed, available 0");
+#endif
+
+            param.sparse = ConvolutionForward::Param::Sparse::GROUP;
+            checker.set_param(param);
+#ifdef __x86_64__
+            EXPECT_DEATH(
+                    checker.execs(
+                            {{2, 3, 10, 10, 4},
+                             {3, 2, 1, kernel, kernel, 4, 4},
+                             {1, 6, 10, 10, 4},
+                             {},
+                             {}}),
+                    "gen kernel failed, available 0");
+#endif
+        }
+        param.format = param.format = ConvBiasForward::Param::Format::NCHW;
+        param.sparse = ConvolutionForward::Param::Sparse::DENSE;
+        checker.set_param(param);
+#ifdef __x86_64__
+        EXPECT_DEATH(
+                checker.execs(
+                        {{2, 3, 10, 10},
+                         {2, 3, kernel, kernel},
+                         {1, 2, 10, 10},
+                         {},
+                         {}}),
+                "gen kernel failed, available 0");
+#endif
+
+        param.sparse = ConvolutionForward::Param::Sparse::GROUP;
+        checker.set_param(param);
+#ifdef __x86_64__
+        EXPECT_DEATH(
+                checker.execs(
+                        {{2, 3, 10, 10},
+                         {3, 2, 1, kernel, kernel},
+                         {1, 6, 10, 10},
+                         {},
+                         {}}),
+                "gen kernel failed, available 0");
+#endif
+    }
+}
 // vim: syntax=cpp.doxygen
