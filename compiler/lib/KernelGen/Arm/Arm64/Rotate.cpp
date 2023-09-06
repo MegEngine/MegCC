@@ -33,7 +33,6 @@ std::string RotateKernel::GetCVKernelBody(TContext* context) const {
     std::string body_temp = R"(
         #include <arm_neon.h>
         #include <string.h>
-        #include <stdio.h>
         #include "tinycv_c.h"
 #if defined(__aarch64__)
 static inline float64x2x4_t zip_f64_f32(float16x8x2_t rotate0, float16x8x2_t rotate1) {
