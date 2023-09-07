@@ -24,7 +24,10 @@ public:
     using BeforeExecCallback = std::function<void(Opr*, const TensorNDArray&)>;
     Benchmarker(
             KernelGen::Arch arch = KernelGen::Arch::BAREMETAL, const int dnn_level = 0)
-            : Runner<Opr>(arch, dnn_level), m_arch(arch), m_kernel_symbol(".*") {
+            : Runner<Opr>(arch, dnn_level),
+              m_has_set_dnn_param(false),
+              m_arch(arch),
+              m_kernel_symbol(".*") {
         m_benchmark_option.disable_check = true;
         m_benchmark_option.valid_megcc_performance = true;
         m_benchmark_option.valid_dnn_performance = true;
@@ -54,6 +57,12 @@ public:
         m_param = param;
         return *this;
     }
+    //! for compare NCHW44 with NCHW44_DOT
+    Benchmarker& set_dnn_param(Param param) {
+        m_dnn_param = param;
+        m_has_set_dnn_param = true;
+        return *this;
+    }
     Benchmarker& set_dtype(size_t idx, megdnn::DType dtype) {
         m_dtype[idx] = dtype;
         return *this;
@@ -78,6 +87,8 @@ public:
 
 private:
     Param m_param;
+    Param m_dnn_param;
+    bool m_has_set_dnn_param;
     BenchmarkOption m_benchmark_option;
     std::unique_ptr<Opr> m_dnn_opr;
     std::unordered_map<size_t, RNG*> m_rng;

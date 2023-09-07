@@ -25,7 +25,8 @@ enum Arch {
     AUTO_BAREMETAL = 4,
     AUTO_ARM64 = 5,
     ARMV7_WITH_DOT = 6,
-    ARM64V7_WITH_DOT = 7
+    ARM64V7_WITH_DOT = 7,
+    ARM64_WITH_I8MM = 8
 };
 
 //! Flag the priority for Kernel selection

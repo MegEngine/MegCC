@@ -210,7 +210,7 @@ def parse_env(dump_dir, bin_dir=None):
     return env
 
 
-def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, user_input_dir, enable_fp16, enable_aarch32_dot):
+def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, user_input_dir, enable_fp16, enable_aarch32_dot, enable_aarch64_i8mm):
     build_script = env["build_script"]
     mgb_runner_path = env["mgb_runner_path"]
     mgb_to_tinynn_path = env["mgb_to_tinynn_path"]
@@ -241,6 +241,8 @@ def auto_check(model_name_2_all, eps, target_arch, target_host, env, mdl_str, us
         build_runtime_cmd.append("--enable_fp16")
     if enable_aarch32_dot:
         build_runtime_cmd.append("--enable_aarch32_dot")
+    if enable_aarch64_i8mm:
+        build_runtime_cmd.append("--enable_aarch64_i8mm")
     subprocess.run(build_runtime_cmd)
 
     for model_file in os.listdir(model_dir):
@@ -396,12 +398,18 @@ def main():
         action="store_true",
         help="megcc enable AArch32 dotprod compile flag"
     )
+    parser.add_argument(
+        "--enable-aarch64-i8mm",
+        action="store_true",
+        help="megcc enable AArch64 i8mm compile flag"
+    )
     args = parser.parse_args()
     eps = args.eps
     dump_dir = os.path.abspath(args.dump_dir)
     model_name_2_mdl = parse_dump_dir(args.mdl)
     enable_fp16 = args.enable_fp16
     enable_aarch32_dot = args.enable_aarch32_dot
+    enable_aarch64_i8mm = args.enable_aarch64_i8mm
     env = parse_env(dump_dir, args.bin_dir)
     print(env)
     auto_check(
@@ -413,7 +421,8 @@ def main():
         mdl_str=args.mdl,
         user_input_dir=args.input_dir,
         enable_fp16=enable_fp16,
-        enable_aarch32_dot=enable_aarch32_dot
+        enable_aarch32_dot=enable_aarch32_dot,
+        enable_aarch64_i8mm=enable_aarch64_i8mm
     )
 
 

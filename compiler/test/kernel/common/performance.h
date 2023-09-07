@@ -28,6 +28,7 @@ struct PerformanceResultPair {
             speed_up = megcc_performance.compute_throughput_gops /
                        dnn_performance.compute_throughput_gops;
         }
+        printf("test case: %s\n", args.c_str());
         printf("megcc result time = %f ms, throughput %f Gops, %f mbps, speedup "
                "%f\n",
                megcc_performance.kernel_time_ms,

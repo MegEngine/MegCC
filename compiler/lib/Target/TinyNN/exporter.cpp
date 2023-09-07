@@ -1169,6 +1169,8 @@ private:
         switch (target_arch) {
             case megcc::KernelGen::BAREMETAL:
                 return MegCC::Device_BARE_METAL;
+            case megcc::KernelGen::ARM64_WITH_I8MM:
+            //! fall through
             case megcc::KernelGen::ARM64:
                 return MegCC::Device_ARM64;
             case megcc::KernelGen::ARMV7_WITH_DOT:

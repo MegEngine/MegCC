@@ -56,9 +56,13 @@ static inline size_t get_conv_compute_workload(
             }
         } else {
             mgb_assert(sparse == Param::Sparse::GROUP);
-            icpg = filter_layout[2];
-            fh = filter_layout[3];
-            fw = filter_layout[4];
+            if (src_layout.ndim == 5) {
+                icpg = filter_layout[2] * 4;
+                fh = filter_layout[3];
+                fw = filter_layout[4];
+            } else {
+                mgb_assert(0);
+            }
         }
     }
 
@@ -104,7 +108,7 @@ size_t WorkloadOprProxy<megdnn::MatrixMulForward>::get_compute_workload(
     auto A_layout = tensors[0].layout;
     auto C_layout = tensors[2].layout;
     size_t m = A_layout[0], n = C_layout[1], k = A_layout[1];
-    if (param.format == Param::Format::MK4) {
+    if (param.format == Param::Format::MK4 || param.format == Param::Format::MK4_DOT) {
         m = A_layout[0] * 4;
         k = A_layout[1] * 4;
     }

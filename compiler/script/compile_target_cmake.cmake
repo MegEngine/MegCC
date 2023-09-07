@@ -11,6 +11,7 @@ target_compile_options(
   PRIVATE -DENABLE_ASSERT=1 -DENABLE_LOG=1 -Werror -Wno-format-zero-length
           $<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>)
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL aarch64)
+  target_compile_options(compile_target PRIVATE -march=armv8.6-a+i8mm)
   if(MEGCC_COMPILER_KERNEL_ENABLE_FP16)
     target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16+dotprod)
   endif()

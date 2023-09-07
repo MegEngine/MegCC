@@ -1,6 +1,7 @@
 #pragma once
 #include <sstream>
 #include <string>
+#include "../InternalKernel/InternalKernel.h"
 #include "Arm/Arm64/KernelCommon.h"
 #include "compiler/KernelGen/KernelGen.h"
 namespace megcc {
@@ -58,6 +59,26 @@ public:
 private:
     std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+};
+
+class Int8I8mmMatMulM8N12K8MK4 : public Arm64KernelFunc {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, true);
+    }
+    std::string GetInitBody(TContext* ctx) const override;
+
+private:
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+    MatmulInt8I8mmM8K8N12MK4Kernel m_inner_matmul;
 };
 
 class Fp16MatMulM8N8K8 : public Arm64KernelFunc {

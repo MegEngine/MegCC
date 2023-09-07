@@ -82,4 +82,32 @@ TEST(AARCH64, BenchmarkFP32GEMM) {
     benchmarker.execs({{a0, a1}, {b0, b1}, {}}).print();
 }
 
+TEST(AARCH64, BenchmarkInt8MatMulM8N12K8MK4I8mm) {
+    Benchmarker<MatrixMulForward> benchmarker(Arch::ARM64_WITH_I8MM);
+    MatrixMulForward::Param param, dnn_param;
+    UniformIntRNG rng(-127, 127);
+    benchmarker.set_rng(0, &rng);
+    benchmarker.set_rng(1, &rng);
+
+    benchmarker.set_dtype(0, dtype::Int8());
+    benchmarker.set_dtype(1, dtype::Int8());
+    benchmarker.set_dtype(2, dtype::Int32());
+    benchmarker.set_kernel_symbol("Arm64_kernel_int8_i8mm_matmul_8x8x12mk4_.*");
+    benchmarker.set_before_exec_callback(megdnn::test::AlgoChecker<MatrixMulForward>(
+            "AARCH64_INT8X8X32_MK4_8X12X4_DOTPROD"));
+    param.transposeA = false;
+    param.transposeB = false;
+    param.format = param::MatrixMul::Format::MK4;
+    benchmarker.set_param(param);
+    dnn_param = param;
+    dnn_param.format = param::MatrixMul::Format::MK4_DOT;
+    benchmarker.set_dnn_param(dnn_param);
+    for (size_t m : {16, 32})
+        for (size_t n : {224 * 224, 128 * 128}) {
+            for (size_t k : {16, 32}) {
+                benchmarker.execs({{m, k, 4, 4}, {k, n, 4}, {}}).print();
+            }
+        }
+}
+
 #endif

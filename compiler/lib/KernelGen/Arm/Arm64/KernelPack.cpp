@@ -28,6 +28,8 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::Fp32MatMulM8N12K4>(),
                 std::make_shared<Arm64::Fp32MatMulM4N16K4>(),
                 std::make_shared<Arm64::Int8DotMatMulM8N12K4>()};
+        inner_i8mm_map[KernelPack::KernType::MatrixMulKernel] = {
+                std::make_shared<Arm64::Int8I8mmMatMulM8N12K8MK4>()};
 
         inner_map[KernelPack::KernType::InternelKernel] = {
                 std::make_shared<Arm64::MatmulM4N16MK4Kernel>(),
@@ -43,12 +45,19 @@ struct AllA64Kernel {
     }
     std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
             inner_map;
+    std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>
+            inner_i8mm_map;
 };
 }  // namespace
 std::vector<const KernelFunc*> ArchKernelPack::GetKernel(
-        KernelPack::KernType kernel_type) {
+        KernelPack::KernType kernel_type, const bool& with_i8mm) {
     static AllA64Kernel all_kernel;
     std::vector<const KernelFunc*> ret_kernels;
+    if (with_i8mm) {
+        for (auto& kernel : all_kernel.inner_i8mm_map[kernel_type]) {
+            ret_kernels.push_back(kernel.get());
+        }
+    }
     for (auto& kernel : all_kernel.inner_map[kernel_type]) {
         ret_kernels.push_back(kernel.get());
     }

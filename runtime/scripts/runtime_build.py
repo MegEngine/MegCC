@@ -155,6 +155,11 @@ class Build:
             action="store_true",
             help="enable AArch32 dotprod compile flag, default is disable",
         )
+        parser.add_argument(
+            "--enable_aarch64_i8mm",
+            action="store_true",
+            help="enable AArch64 i8mm compile flag, default is disable",
+        )
         args = parser.parse_args()
         args.kernel_dir = os.path.realpath(args.kernel_dir)
         assert os.path.isdir(
@@ -386,6 +391,8 @@ class Build:
             "ON" if args.enable_fp16 else "OFF")
         cmake_config = cmake_config + " -DTINYNN_ENABLE_AARCH32_DOT={}".format(
             "ON" if args.enable_aarch32_dot else "OFF")
+        cmake_config = cmake_config + " -DTINYNN_ENABLE_AARCH64_I8MM={}".format(
+            "ON" if args.enable_aarch64_i8mm else "OFF")
 
         logging.debug("python3 args: {}".format(args))
         config_cmd = "{}".format(cmake_config)

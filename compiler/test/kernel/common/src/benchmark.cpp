@@ -70,27 +70,33 @@ PerformanceResultPair Benchmarker<Opr>::exec(TensorLayoutArray all_layouts) {
         //! fast return;
         return res;
     }
+    auto dnn_opr = dnn_handle->template create_operator<Opr>();
+    dnn_opr->param() = m_param;
+    if (m_has_set_dnn_param) {
+        dnn_opr->param() = m_dnn_param;
+    }
     //! run dnn
     if (m_before_exec_callback) {
-        m_before_exec_callback(opr.get(), tensor_array_dnn);
+        m_before_exec_callback(dnn_opr.get(), tensor_array_dnn);
     }
-    m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
+    m_dnn_proxy.exec(dnn_opr.get(), tensor_array_dnn);
     if (m_benchmark_option.valid_dnn_performance) {
         for (int i = 0; i < m_benchmark_option.warmup_iter; ++i) {
-            m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
+            m_dnn_proxy.exec(dnn_opr.get(), tensor_array_dnn);
         }
         mgb_assert(m_benchmark_option.test_iter > 0);
         Timer timer;
         timer.start();
         for (int i = 0; i < m_benchmark_option.test_iter; ++i) {
-            m_dnn_proxy.exec(opr.get(), tensor_array_dnn);
+            m_dnn_proxy.exec(dnn_opr.get(), tensor_array_dnn);
         }
         timer.stop();
         PerformanceResult dnn_perf;
         dnn_perf.valid = true;
         dnn_perf.kernel_time_ms =
                 timer.get_time_in_us() / 1e3 / m_benchmark_option.test_iter;
-        auto workload = WorkloadOprProxy<Opr>::get_workload(opr.get(), tensor_array);
+        auto workload =
+                WorkloadOprProxy<Opr>::get_workload(dnn_opr.get(), tensor_array);
         fill_performance_result(dnn_perf, workload);
         res.dnn_performance = dnn_perf;
     }

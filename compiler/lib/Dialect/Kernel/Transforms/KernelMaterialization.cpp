@@ -21,6 +21,9 @@ llvm::cl::opt<megcc::KernelGen::Arch> target_arch(
                 clEnumValN(
                         megcc::KernelGen::ARM64, "arm64", "compiler for device arm64."),
                 clEnumValN(
+                        megcc::KernelGen::ARM64_WITH_I8MM, "arm64_with_i8mm",
+                        "compiler for device arm64 with i8mm feature."),
+                clEnumValN(
                         megcc::KernelGen::ARMV7, "armv7", "compiler for device armv7."),
                 clEnumValN(
                         megcc::KernelGen::ARMV7_WITH_DOT, "armv7_with_dot",

@@ -28,8 +28,9 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
         KernelPack::KernType kernel_type, Arch arch) {
     //! arm64v7 is used by tinycv, nn opr should be armv64 or armv7, not arm64v7
     auto deduce_func = GetDeduceLayout(kernel_type);
-    if (arch == Arch::ARM64 || arch == Arch::ARM64V7) {
-        auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type);
+    if (arch == Arch::ARM64 || arch == Arch::ARM64V7 || arch == Arch::ARM64_WITH_I8MM) {
+        bool with_i8mm = (arch == Arch::ARM64_WITH_I8MM);
+        auto a64_kerns = Arm64::ArchKernelPack::GetKernel(kernel_type, with_i8mm);
         auto armcommon_kerns = ArmCommon::ArchKernelPack::GetKernel(kernel_type);
         auto gi_kerns = GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
         if (kernel_type == KernelPack::KernType::MatrixMulKernel) {
