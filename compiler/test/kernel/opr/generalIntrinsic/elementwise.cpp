@@ -97,6 +97,7 @@ TEST(GI, ElementwiseBinary) {
         checker.execs({{3, 9, 13}, {13}, {}});
         checker.execs({{1, 1, 1, 13}, {2, 3, 4, 13}, {}});
         checker.execs({{2, 100, 3, 96}, {1, 1, 1, 96}, {}});
+        checker.execs({{1, 10, 96}, {1, 10, 1}, {}});
     }
     megcc::test::UniformRNG div_rng(3, 12);
     checker.set_rng(0, &div_rng);

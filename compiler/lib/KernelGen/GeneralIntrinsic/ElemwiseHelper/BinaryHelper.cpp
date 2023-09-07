@@ -280,7 +280,7 @@ std::string BinaryCode<VEC_BCAST110>() {
             size_t index = 0;
             for(; index + SIMD_WIDTH * 2 - 1 < nr_elem_per_channel; index += SIMD_WIDTH * 2) {
                 ${simd_dtype_specifier} vsrc0_0 = ${load_vec}(src0);
-                ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + 4);
+                ${simd_dtype_specifier} vsrc0_1 = ${load_vec}(src0 + SIMD_WIDTH);
                 ${kernel_simd_unroll(2, dst, vsrc0_0, vsrc1, vsrc0_1, vsrc1)}
                 src0 += SIMD_WIDTH * 2;
                 dst += SIMD_WIDTH * 2;
