@@ -115,6 +115,158 @@ TEST(AARCH64, ConvBias1x1NCHW44DotNCHWNCHW44) {
 }
 #endif
 
+TEST(AARCH64, ConvBias1x1NCHW44I8mm) {
+    Checker<ConvBiasForward> checker(Arch::ARM64_WITH_I8MM);
+    UniformIntRNG rng(-127, 127);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_kernel_symbol("Arm64_kernel_im2col_i8mm_m8n12k8_.+");
+
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+
+    ConvBiasForward::Param param;
+    param.pad_h = 0;
+    param.pad_w = 0;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+
+    for (size_t stride : {1, 2}) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+            param.nonlineMode = noline;
+            checker.set_param(param);
+            for (size_t ic : {3, 4, 5}) {
+                for (size_t ohw = 7; ohw < 27; ++ohw) {
+                    checker.execs(
+                            {{2, ic, 1, ohw, 4}, {5, ic, 1, 1, 4, 4}, {}, {}, {}});
+                    checker.execs(
+                            {{1, ic, 3, ohw, 4},
+                             {6, ic, 1, 1, 4, 4},
+                             {1, 6, 1, 1, 4},
+                             {},
+                             {}});
+                }
+            }
+        }
+
+        param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+        const int group = 3;
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+            param.nonlineMode = noline;
+            checker.set_param(param);
+            for (size_t ic : {3, 4, 5}) {
+                for (size_t ohw = 7; ohw < 27; ++ohw) {
+                    checker.execs(
+                            {{2, ic * group, 1, ohw, 4},
+                             {group, 5, ic, 1, 1, 4, 4},
+                             {},
+                             {},
+                             {}});
+                    checker.execs(
+                            {{1, ic * group, 3, ohw, 4},
+                             {group, 6, ic, 1, 1, 4, 4},
+                             {1, 6 * group, 1, 1, 4},
+                             {},
+                             {}});
+                }
+            }
+        }
+    }
+}
+
+TEST(AARCH64, ConvBiasIm2colNCHW44I8mm) {
+    Checker<ConvBiasForward> checker(Arch::ARM64_WITH_I8MM);
+    UniformIntRNG rng(-127, 127);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_kernel_symbol("Arm64_kernel_im2col_i8mm_m8n12k8_.+");
+
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+
+    ConvBiasForward::Param param;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+
+    for (size_t stride : {1, 2}) {
+        param.stride_h = stride;
+        param.stride_w = stride;
+        param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+            param.nonlineMode = noline;
+            for (size_t kernel : {2, 3, 5, 7}) {
+                param.pad_h = kernel / 2;
+                param.pad_w = kernel / 2;
+                checker.set_param(param);
+                for (size_t ic : {3, 4, 5}) {
+                    for (size_t ohw = 7; ohw < 27; ++ohw) {
+                        checker.execs(
+                                {{2, ic, 1, ohw, 4},
+                                 {5, ic, kernel, kernel, 4, 4},
+                                 {},
+                                 {},
+                                 {}});
+                        checker.execs(
+                                {{1, ic, 3, ohw, 4},
+                                 {6, ic, kernel, kernel, 4, 4},
+                                 {1, 6, 1, 1, 4},
+                                 {},
+                                 {}});
+                    }
+                }
+            }
+        }
+
+        param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+        const int group = 3;
+        for (auto noline :
+             {ConvBiasForward::Param::NonlineMode::IDENTITY,
+              ConvBiasForward::Param::NonlineMode::RELU,
+              ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+            param.nonlineMode = noline;
+            for (size_t kernel : {2, 3, 5, 7}) {
+                param.pad_h = kernel / 2;
+                param.pad_w = kernel / 2;
+                checker.set_param(param);
+                for (size_t ic : {3, 4, 5}) {
+                    for (size_t ohw = 7; ohw < 27; ++ohw) {
+                        checker.execs(
+                                {{2, ic * group, 3, ohw, 4},
+                                 {group, 5, ic, kernel, kernel, 4, 4},
+                                 {},
+                                 {},
+                                 {}});
+                        checker.execs(
+                                {{1, ic * group, 5, ohw, 4},
+                                 {group, 6, ic, kernel, kernel, 4, 4},
+                                 {1, 6 * group, 1, 1, 4},
+                                 {},
+                                 {}});
+                    }
+                }
+            }
+        }
+    }
+}
+
 TEST(AARCH64, ConvBias1x1NCHW44) {
     Checker<ConvBiasForward> checker(Arch::ARM64);
     checker.set_kernel_symbol("Arm64_kernel_conv2d_conv1x1.+");

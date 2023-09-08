@@ -13,7 +13,7 @@ target_compile_options(
 if(CMAKE_SYSTEM_PROCESSOR STREQUAL aarch64)
   target_compile_options(compile_target PRIVATE -march=armv8.6-a+i8mm)
   if(MEGCC_COMPILER_KERNEL_ENABLE_FP16)
-    target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16+dotprod)
+    target_compile_options(compile_target PRIVATE -march=armv8.2-a+fp16+dotprod+i8mm)
   endif()
 elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL armv7-a)
   target_compile_options(compile_target PRIVATE -march=armv7-a+dotprod)

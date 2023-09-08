@@ -1,3 +1,4 @@
+#include "megbrain/reflection.h"
 #include "test/kernel/common/benchmark.h"
 using namespace megdnn;
 using namespace megcc::test;
@@ -181,6 +182,195 @@ TEST(AARCH64, BenchmarkConvBiasIm2colNCHW44) {
     auto fmt = ConvBiasForward::Param::Format::NCHW44;
     run_conv(1, 64, 56, 64, 3, 2, 1, cc_algo, dnn_algo, fmt);
     run_conv(1, 64, 56, 64, 3, 1, 1, cc_algo, dnn_algo, fmt);
+}
+
+TEST(AARCH64, BenchmarkConvBias1x1NCHW44I8mm) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64_WITH_I8MM);
+    UniformIntRNG rng(-127, 127);
+    benchmarker.set_rng(0, &rng);
+    benchmarker.set_rng(1, &rng);
+    benchmarker.set_rng(2, &rng);
+    benchmarker.set_kernel_symbol("Arm64_kernel_im2col_i8mm_m8n12k8_.+");
+    benchmarker.set_before_exec_callback(megdnn::test::AlgoChecker<ConvBiasForward>(
+            "CONV1x1:AARCH64_INT8X8X32_MK4_8X12X4_DOTPROD.*"));
+
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+
+    ConvBiasForward::Param param, dnn_param;
+    param.pad_h = 0;
+    param.pad_w = 0;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    printf("----------Dense----------\n");
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
+        printf("%s:\n", mgb::reflection::nameOfEnumValue(noline).c_str());
+        benchmarker.set_param(param);
+        dnn_param = param;
+        dnn_param.format = ConvolutionForward::Param::Format::NCHW44_DOT;
+        benchmarker.set_dnn_param(dnn_param);
+        for (size_t ic : {16, 64}) {
+            for (size_t oc : {32}) {
+                for (size_t hw : {224}) {
+                    benchmarker
+                            .execs({{2, ic, hw, hw, 4},
+                                    {oc, ic, 1, 1, 4, 4},
+                                    {},
+                                    {},
+                                    {}})
+                            .print();
+                    benchmarker
+                            .execs({{1, ic, hw, hw, 4},
+                                    {oc, ic, 1, 1, 4, 4},
+                                    {1, oc, 1, 1, 4},
+                                    {},
+                                    {}})
+                            .print();
+                }
+            }
+        }
+    }
+
+    printf("----------Group----------\n");
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    const int group = 3;
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
+        printf("%s:\n", mgb::reflection::nameOfEnumValue(noline).c_str());
+        benchmarker.set_param(param);
+        dnn_param = param;
+        dnn_param.format = ConvolutionForward::Param::Format::NCHW44_DOT;
+        benchmarker.set_dnn_param(dnn_param);
+        for (size_t ic : {32, 64}) {
+            for (size_t oc : {32}) {
+                for (size_t hw : {128}) {
+                    benchmarker
+                            .execs({{2, ic * group, hw, hw, 4},
+                                    {group, oc, ic, 1, 1, 4, 4},
+                                    {},
+                                    {},
+                                    {}})
+                            .print();
+                    benchmarker
+                            .execs({{1, ic * group, hw, hw, 4},
+                                    {group, oc, ic, 1, 1, 4, 4},
+                                    {1, oc * group, 1, 1, 4},
+                                    {},
+                                    {}})
+                            .print();
+                }
+            }
+        }
+    }
+}
+
+TEST(AARCH64, BenchmarkConvBiasIm2colNCHW44I8mm) {
+    Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64_WITH_I8MM);
+    UniformIntRNG rng(-127, 127);
+    benchmarker.set_rng(0, &rng);
+    benchmarker.set_rng(1, &rng);
+    benchmarker.set_rng(2, &rng);
+    benchmarker.set_kernel_symbol("Arm64_kernel_im2col_i8mm_m8n12k8_.+");
+    benchmarker.set_before_exec_callback(megdnn::test::AlgoChecker<ConvBiasForward>(
+            "IM2COLMATMUL:AARCH64_INT8X8X32_MK4_8X12X4_DOTPROD.*"));
+
+    benchmarker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+
+    ConvBiasForward::Param param, dnn_param;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+
+    for (size_t stride : {2, 1}) {
+        printf("stride: %zu\n", stride);
+        param.stride_h = stride;
+        param.stride_w = stride;
+        param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+        printf("----------Dense----------\n");
+        for (size_t kernel : {2, 3}) {
+            param.pad_h = kernel / 2;
+            param.pad_w = kernel / 2;
+            for (auto noline : {ConvBiasForward::Param::NonlineMode::RELU}) {
+                param.nonlineMode = noline;
+                printf("%s:\n", mgb::reflection::nameOfEnumValue(noline).c_str());
+                benchmarker.set_param(param);
+                dnn_param = param;
+                dnn_param.format = ConvolutionForward::Param::Format::NCHW44_DOT;
+                benchmarker.set_dnn_param(dnn_param);
+                for (size_t ic : {16, 32}) {
+                    for (size_t oc : {32}) {
+                        for (size_t hw : {224}) {
+                            benchmarker
+                                    .execs({{2, ic, hw, hw, 4},
+                                            {oc, ic, kernel, kernel, 4, 4},
+                                            {},
+                                            {},
+                                            {}})
+                                    .print();
+                            benchmarker
+                                    .execs({{1, ic, hw, hw, 4},
+                                            {oc, ic, kernel, kernel, 4, 4},
+                                            {1, oc, 1, 1, 4},
+                                            {},
+                                            {}})
+                                    .print();
+                        }
+                    }
+                }
+            }
+        }
+
+        printf("----------Group----------\n");
+        param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+        const int group = 3;
+        for (size_t kernel : {5}) {
+            param.pad_h = kernel / 2;
+            param.pad_w = kernel / 2;
+            for (auto noline : {ConvBiasForward::Param::NonlineMode::IDENTITY}) {
+                param.nonlineMode = noline;
+                printf("%s:\n", mgb::reflection::nameOfEnumValue(noline).c_str());
+                benchmarker.set_param(param);
+                dnn_param = param;
+                dnn_param.format = ConvolutionForward::Param::Format::NCHW44_DOT;
+                benchmarker.set_dnn_param(dnn_param);
+                for (size_t ic : {16}) {
+                    for (size_t oc : {32}) {
+                        for (size_t hw : {128}) {
+                            benchmarker
+                                    .execs({{2, ic * group, hw, hw, 4},
+                                            {group, oc, ic, kernel, kernel, 4, 4},
+                                            {},
+                                            {},
+                                            {}})
+                                    .print();
+                            benchmarker
+                                    .execs({{1, ic * group, hw, hw, 4},
+                                            {group, oc, ic, kernel, kernel, 4, 4},
+                                            {1, oc * group, 1, 1, 4},
+                                            {},
+                                            {}})
+                                    .print();
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 #endif

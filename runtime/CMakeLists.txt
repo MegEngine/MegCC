@@ -35,7 +35,8 @@ message(STATUS "\tEnabel dump tensor to dir:              ${TINYNN_DUMP_TENSOR}"
 message(STATUS "\tBuild with register callback:           ${TINYNN_CALLBACK_ENABLE}")
 message(STATUS "\tEnabel float16 feature:                 ${TINYNN_ENABLE_FP16}")
 message(STATUS "\tEnabel AArch32 dotprod feature:         ${TINYNN_ENABLE_AARCH32_DOT}")
-message(STATUS "\tEnabel AArch64 i8mm feature:            ${TINYNN_ENABLE_AARCH64_I8MM}")
+message(
+  STATUS "\tEnabel AArch64 i8mm feature:            ${TINYNN_ENABLE_AARCH64_I8MM}")
 message(
   STATUS "\tBuild with Not standard os:             ${TINYNN_BUILD_FOR_NOT_STANDARD_OS}"
 )

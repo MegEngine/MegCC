@@ -21,6 +21,9 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::ConvIm2colDot>(),
                 std::make_shared<Arm64::ConvDotNCHWNCHW44Stride2>(),
                 std::make_shared<Arm64::ConvDotNCHWNCHW44Stride1>()};
+        inner_i8mm_map[KernelPack::KernType::ConvKernel] = {
+                std::make_shared<Arm64::ConvBiasIm2colI8mmNCHW44>(),
+        };
 
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
                 std::make_shared<Arm64::Fp16MatMulM8N8K8>(),
