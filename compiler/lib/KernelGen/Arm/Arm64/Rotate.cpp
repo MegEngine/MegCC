@@ -51,7 +51,7 @@ static inline float64x2x4_t zip_f64_f32(float16x8x2_t rotate0, float16x8x2_t rot
 }
 
 
-static void rotate_clockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
+static void rotate_clockwise_f16_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
     float16_t* src = sptr + ih * W + iw;
     float16x8_t src0 = vld1q_f16(src + 0 * W);
     float16x8_t src1 = vld1q_f16(src + 1 * W);
@@ -96,7 +96,7 @@ static void rotate_clockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, size_t i
 }
 
 
-static void rotate_countclockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
+static void rotate_countclockwise_f16_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
     float16_t* src = sptr + ih * W + iw;
     float16x8_t src0 = vld1q_f16(src + 0 * W);
     float16x8_t src1 = vld1q_f16(src + 1 * W);
@@ -140,7 +140,7 @@ static void rotate_countclockwise_fp16_8x8(float16_t* sptr, float16_t* dptr, siz
 
 }
 
-static void rotate_clockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
+static void rotate_clockwise_f16x3_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
     float16_t* src = sptr + ih * W*3 + iw*3;
     
     float16x8x3_t src0 = vld3q_f16(src + 0  * W);
@@ -195,7 +195,7 @@ static void rotate_clockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, size_t
     vst3q_f16((float16_t *)(dst + 21 * H), a7);
 }
 
-static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
+static void rotate_countclockwise_f16x3_8x8(float16_t* sptr, float16_t* dptr, size_t ih, size_t iw, size_t H, size_t W) {
     float16_t* src = sptr + ih * W*3 + iw*3;
 
     float16x8x3_t src0 = vld3q_f16(src + 0  * W);
@@ -283,7 +283,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
                 for (; ih + 7 < IH; ih += 8) {
                     size_t iw = 0;
                     for (; iw + 7 < IW; iw += 8) {
-                        rotate_clockwise_fp16_8x8(sptr, dptr,ih, iw, IH, IW);
+                        rotate_clockwise_f16_8x8(sptr, dptr,ih, iw, IH, IW);
                     }
                     for (; iw < IW; ++iw) {
                         for(size_t i = 0; i < 8; ++i){
@@ -302,7 +302,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
                 for (; ih + 7 < IH; ih += 8) {
                     size_t iw = 0;
                     for (; iw + 7 < IW; iw += 8) {
-                        rotate_clockwise_fp16x3_8x8(sptr, dptr,ih, iw, IH, IW);
+                        rotate_clockwise_f16x3_8x8(sptr, dptr,ih, iw, IH, IW);
                     }
                     for (; iw < IW; ++iw) {
                         for(size_t i = 0;i<8;++i){
@@ -333,7 +333,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
                 for (; ih + 7 < IH; ih += 8) {
                     size_t iw = 0;
                     for (; iw + 7 < IW; iw += 8) {
-                            rotate_countclockwise_fp16_8x8(sptr, dptr, ih, iw, IH, IW);
+                            rotate_countclockwise_f16_8x8(sptr, dptr, ih, iw, IH, IW);
                     }
                     for (; iw < IW; ++iw) {
                         for(size_t i = 0;i<8;++i){
@@ -353,7 +353,7 @@ static void rotate_countclockwise_fp16x3_8x8(float16_t* sptr, float16_t* dptr, s
                 for (; ih + 7 < IH; ih += 8) {
                     size_t iw = 0;
                     for (; iw + 7 < IW; iw += 8) {
-                        rotate_countclockwise_fp16x3_8x8(sptr, dptr,ih, iw, IH, IW);
+                        rotate_countclockwise_f16x3_8x8(sptr, dptr,ih, iw, IH, IW);
                     }
                     for (; iw < IW; ++iw) {
                         for(size_t i = 0;i<8;++i){

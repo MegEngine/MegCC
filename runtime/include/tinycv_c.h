@@ -79,7 +79,7 @@ void tinycv_resize_linear_f32(const TinyMat* src, const TinyMat* dst);
 void tinycv_rotate_ui8(const TinyMat* src, const TinyMat* dst, bool clockwise);
 
 /**
- * \fn tinycv_rotate_fp16
+ * \fn tinycv_rotate_f16
  * \brief Rotate image 90 degree, clockwise indicate the direction.
  *
  * \param[in] src Input mat ptr.
@@ -87,7 +87,7 @@ void tinycv_rotate_ui8(const TinyMat* src, const TinyMat* dst, bool clockwise);
  * \param[in] clockwise The rotate direction.
  *
  */
-void tinycv_rotate_fp16(const TinyMat* src, const TinyMat* dst, bool clockwise);
+void tinycv_rotate_f16(const TinyMat* src, const TinyMat* dst, bool clockwise);
 
 /**
  * \fn tinycv_warp_affine_replicate_linear_ui8
