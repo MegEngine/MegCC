@@ -115,7 +115,6 @@ TEST(AARCH64, CVflip) {
 
 TEST(AARCH64, CVrotate) {
     Checker<megdnn::CVRotate> checker(Arch::ARM64);
-    Checker<megdnn::CVRotate> checker2(Arch::ARM64);
     megdnn::CVRotate::Param param;
     SequenceRNG seq;
     checker.set_rng(0, &seq);
@@ -139,27 +138,32 @@ TEST(AARCH64, CVrotate) {
 
         checker.exec({{1, 19, 19, 3}, {}});
     }
-    SequenceRNG seq2;
-    checker2.set_rng(0, &seq2);
-    checker2.set_dtype(0, dtype::Float16());
-    checker2.set_dtype(1, dtype::Float16());
+}
+#if ENABLE_KERNEL_FP16
+TEST(AARCH64, CVrotateFp16) {
+    Checker<megdnn::CVRotate> checker(Arch::ARM64);
+    megdnn::CVRotate::Param param;
+    SequenceRNG seq;
+    checker.set_rng(0, &seq);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
 
     for (bool clockwise : {false, true}) {
         param.clockwise = clockwise;
-        checker2.set_param(param);
-        checker2.exec({{1, 3, 5, 1}, {}});
+        checker.set_param(param);
+        checker.exec({{1, 3, 5, 1}, {}});
         // FIXME: dnn rotate only support channel==1 and channel == 3
-        // checker2.exec({{1, 3, 5, 2}, {}});
-        checker2.exec({{1, 3, 5, 3}, {}});
-        checker2.exec({{1, 16, 16, 1}, {}});
+        // checker.exec({{1, 3, 5, 2}, {}});
+        checker.exec({{1, 3, 5, 3}, {}});
+        checker.exec({{1, 16, 16, 1}, {}});
 
-        checker2.exec({{1, 16, 16, 3}, {}});
-        checker2.exec({{1, 16, 19, 1}, {}});
+        checker.exec({{1, 16, 16, 3}, {}});
+        checker.exec({{1, 16, 19, 1}, {}});
 
-        checker2.exec({{1, 16, 19, 3}, {}});
-        checker2.exec({{1, 19, 19, 1}, {}});
+        checker.exec({{1, 16, 19, 3}, {}});
+        checker.exec({{1, 19, 19, 1}, {}});
 
-        checker2.exec({{1, 19, 19, 3}, {}});
-    }
-
+        checker.exec({{1, 19, 19, 3}, {}});
+    } 
 }
+#endif
