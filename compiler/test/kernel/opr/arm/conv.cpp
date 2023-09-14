@@ -145,7 +145,7 @@ TEST(AARCH64, ConvBias1x1NCHW44I8mm) {
             param.nonlineMode = noline;
             checker.set_param(param);
             for (size_t ic : {3, 4, 5}) {
-                for (size_t ohw = 7; ohw < 27; ++ohw) {
+                for (size_t ohw = 7 * stride; ohw < 35 * stride; ohw += stride) {
                     checker.execs(
                             {{2, ic, 1, ohw, 4}, {5, ic, 1, 1, 4, 4}, {}, {}, {}});
                     checker.execs(
@@ -167,7 +167,7 @@ TEST(AARCH64, ConvBias1x1NCHW44I8mm) {
             param.nonlineMode = noline;
             checker.set_param(param);
             for (size_t ic : {3, 4, 5}) {
-                for (size_t ohw = 7; ohw < 27; ++ohw) {
+                for (size_t ohw = 7 * stride; ohw < 27 * stride; ohw += stride) {
                     checker.execs(
                             {{2, ic * group, 1, ohw, 4},
                              {group, 5, ic, 1, 1, 4, 4},
@@ -212,12 +212,12 @@ TEST(AARCH64, ConvBiasIm2colNCHW44I8mm) {
               ConvBiasForward::Param::NonlineMode::RELU,
               ConvBiasForward::Param::NonlineMode::H_SWISH}) {
             param.nonlineMode = noline;
-            for (size_t kernel : {2, 3, 5, 7}) {
+            for (size_t kernel : {2, 3, 4, 5, 7}) {
                 param.pad_h = kernel / 2;
                 param.pad_w = kernel / 2;
                 checker.set_param(param);
                 for (size_t ic : {3, 4, 5}) {
-                    for (size_t ohw = 7; ohw < 27; ++ohw) {
+                    for (size_t ohw = 7 * stride; ohw < 35 * stride; ohw += stride) {
                         checker.execs(
                                 {{2, ic, 1, ohw, 4},
                                  {5, ic, kernel, kernel, 4, 4},
@@ -242,12 +242,12 @@ TEST(AARCH64, ConvBiasIm2colNCHW44I8mm) {
               ConvBiasForward::Param::NonlineMode::RELU,
               ConvBiasForward::Param::NonlineMode::H_SWISH}) {
             param.nonlineMode = noline;
-            for (size_t kernel : {2, 3, 5, 7}) {
+            for (size_t kernel : {2, 3, 4, 5, 7}) {
                 param.pad_h = kernel / 2;
                 param.pad_w = kernel / 2;
                 checker.set_param(param);
                 for (size_t ic : {3, 4, 5}) {
-                    for (size_t ohw = 7; ohw < 27; ++ohw) {
+                    for (size_t ohw = 7 * stride; ohw < 27 * stride; ohw += stride) {
                         checker.execs(
                                 {{2, ic * group, 3, ohw, 4},
                                  {group, 5, ic, kernel, kernel, 4, 4},
