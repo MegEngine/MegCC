@@ -233,7 +233,7 @@ check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
 ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --remove_old_build --cross_build_target_arch aarch64 --cross_build_target_os NOT_STANDARD_OS --build_with_ninja_verbose --build_tensor_alloc_sanity --build_with_profile --build_with_dump_tensor --build_for_debug
 python3 runtime/scripts/check_tinynn_lib.py --tinynn_lib ${KERNEL_DIR}/runtime/install/lib/libTinyNN.a
 # verify STANDARD_OS(android) build
-export NDK_ROOT=/root/android-ndk-r21
+export NDK_ROOT=/root/android-ndk-r25c
 ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --remove_old_build --cross_build_target_arch aarch64 --cross_build_target_os ANDROID --build_with_ninja_verbose --build_tensor_alloc_sanity --build_with_profile --build_with_dump_tensor --build_for_debug --build_with_callback_register
 ./runtime/scripts/runtime_build.py --cross_build --kernel_dir ${KERNEL_DIR} --remove_old_build --cross_build_target_arch aarch64 --cross_build_target_os ANDROID --build_with_ninja_verbose --build_tensor_alloc_sanity --build_with_profile --build_with_dump_tensor
 check_key_words ${KERNEL_DIR}/runtime/install/lib/libTinyNN_share.so

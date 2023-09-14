@@ -54,5 +54,8 @@ RUN pip3 install lit
 # copy prebuilt megengine & mlir
 COPY llvm-project /root/llvm-project
 
+# copy NDK r25c
+RUN cd /root && wget http://brain-ftp.megvii-inc.com/android-ndk-r25c-linux.zip && unzip -X android-ndk-r25c-linux.zip && rm android-ndk-r25c-linux.zip
+
 # allow normal user to access root privilege
 RUN echo "engine-bot  ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
