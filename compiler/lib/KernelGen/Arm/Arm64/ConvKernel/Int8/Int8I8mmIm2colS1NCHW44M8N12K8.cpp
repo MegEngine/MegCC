@@ -23,15 +23,15 @@ static inline void pad_src(const int8_t *src, int8_t *dst, const int IC, const i
   const int paded_H = IH + 2 * PH;
   const int paded_W = IW + 2 * PW;
   const int paded_HW = paded_H * paded_W;
-  memset(dst, 0, IC * 4 * paded_HW * sizeof(int8_t));
+  memset(dst, 0, IC * PACKED_IC * paded_HW * sizeof(int8_t));
   for (int ic = 0; ic < IC; ic++) {
-    dst += PH * paded_W * 4;
+    dst += PH * paded_W * PACKED_IC;
     for (int ih = 0; ih < IH; ++ih) {
-      memcpy(dst + ih * paded_W * 4 + PW * 4, src + ih * IW * 4,
-             IW * 4 * sizeof(int8_t));
+      memcpy(dst + ih * paded_W * PACKED_IC + PW * PACKED_IC, src + ih * IW * PACKED_IC,
+             IW * PACKED_IC * sizeof(int8_t));
     }
-    dst += (IH + PH) * paded_W * 4;
-    src += IH * IW * 4;
+    dst += (IH + PH) * paded_W * PACKED_IC;
+    src += IH * IW * PACKED_IC;
   }
 }
     )";
@@ -42,15 +42,15 @@ std::string im2col_s1() {
 static inline void im2col(const int8_t *src, int8_t *dst, const int IC, const int OH,
             const int OW, const int FH, const int FW, const int paded_H,
             const int paded_W) {
-  const int src_stride_ic = paded_H * paded_W * 4;
-  const int src_stride_h = paded_W * 4;
-  const int dst_stride_ic = OH * OW * 4;
-  const int dst_stride_h = OW * 4;
+  const int src_stride_ic = paded_H * paded_W * PACKED_IC;
+  const int src_stride_h = paded_W * PACKED_IC;
+  const int dst_stride_ic = OH * OW * PACKED_IC;
+  const int dst_stride_h = OW * PACKED_IC;
   for (int ic = 0; ic < IC; ++ic) {
     for (int fh = 0; fh < FH; ++fh) {
       for (int fw = 0; fw < FW; ++fw) {
         const int8_t *src_base =
-            src + ic * src_stride_ic + fh * src_stride_h + fw * 4;
+            src + ic * src_stride_ic + fh * src_stride_h + fw * PACKED_IC;
         for (int oh = 0; oh < OH; ++oh) {
           memcpy(dst + oh * dst_stride_h, src_base + oh * src_stride_h,
                  dst_stride_h * sizeof(int8_t));
@@ -68,15 +68,15 @@ std::string im2col_s2() {
 static inline void im2col(const int8_t *src, int8_t *dst, const int IC, const int OH,
             const int OW, const int FH, const int FW, const int paded_H,
             const int paded_W) {
-  const int src_stride_ic = paded_H * paded_W * 4;
-  const int src_stride_h = paded_W * 4;
-  const int dst_stride_ic = OH * OW * 4;
-  const int dst_stride_h = OW * 4;
+  const int src_stride_ic = paded_H * paded_W * PACKED_IC;
+  const int src_stride_h = paded_W * PACKED_IC;
+  const int dst_stride_ic = OH * OW * PACKED_IC;
+  const int dst_stride_h = OW * PACKED_IC;
   for (int ic = 0; ic < IC; ++ic) {
     for (int fh = 0; fh < FH; ++fh) {
       for (int fw = 0; fw < FW; ++fw) {
         const int8_t *src_base =
-            src + ic * src_stride_ic + fh * src_stride_h + fw * 4;
+            src + ic * src_stride_ic + fh * src_stride_h + fw * PACKED_IC;
         for (int oh = 0; oh < OH; ++oh) {
           const int32_t *src_ptr = (const int32_t*)(src_base + oh * 2 * src_stride_h);
           int32_t *dst_ptr = (int32_t*)(dst + oh * dst_stride_h);
@@ -116,7 +116,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
   for (; n + 11 < N; n += 12) {
     const int oh = n / OW, ow = n % OW;
     const int32_t *src_base =
-        (const int32_t *)(src + oh * 2 * IW * 4 + ow * 2 * 4);
+        (const int32_t *)(src + oh * 2 * IW * PACKED_IC + ow * 2 * PACKED_IC);
     if (OW - ow >= 12) {)";
     if (FW % 2) {
         res += R"(
@@ -360,7 +360,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
                         dst_ptr += (${dst_offset} + 24);
                     }
                 } else {
-                    const int32_t* src_base_next = (const int32_t*)(src + (oh + 1) * 2 * IW * 4);
+                    const int32_t* src_base_next = (const int32_t*)(src + (oh + 1) * 2 * IW * PACKED_IC);
                     const int part0 = OW - ow, part1 = 12 - part0;
                     int ic = 0;
                     for (; ic + 1 < IC; ic += 2) {
@@ -692,7 +692,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
             for (; n + 7 < N; n += 8) {
                 const int oh = n / OW, ow = n % OW;
                 const int32_t *src_base =
-                    (const int32_t *)(src + oh * 2 * IW * 4 + ow * 2 * 4);
+                    (const int32_t *)(src + oh * 2 * IW * PACKED_IC + ow * 2 * PACKED_IC);
                 TINYNN_ASSERT(OW - ow >= 8);
                 int ic = 0;
                 for (; ic + 1 < IC; ic += 2) {
@@ -900,7 +900,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
                 }
                 for (; n < N; n += 4) {
                     const int oh = n / OW, ow = n % OW;
-                    const int32_t* src_base = (const int32_t*)(src + oh * 2 * IW * 4 + ow * 2 * 4);
+                    const int32_t* src_base = (const int32_t*)(src + oh * 2 * IW * PACKED_IC + ow * 2 * PACKED_IC);
                     TINYNN_ASSERT(oh + 1 == OH);
                     if (OW - ow >= 4) {
                         int ic = 0;
@@ -1284,7 +1284,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
         )");
         res += R"(
         } else {
-            const int32_t* src_base_next = (const int32_t*)(src + (oh + 1) * 2 * IW * 4);
+            const int32_t* src_base_next = (const int32_t*)(src + (oh + 1) * 2 * IW * PACKED_IC);
             const int part0 = OW - ow, part1 = 12 - part0;
             for (int ic = 0; ic < IC; ++ic) {
                 )";
@@ -1314,7 +1314,7 @@ static void fuse_im2col_packB_s2(const int8_t *src, int8_t *dst, const int IC,
     for (; n + 7 < N; n += 8) {
         const int oh = n / OW, ow = n % OW;
         const int32_t *src_base =
-            (const int32_t *)(src + oh * 2 * IW * 4 + ow * 2 * 4);
+            (const int32_t *)(src + oh * 2 * IW * PACKED_IC + ow * 2 * PACKED_IC);
         TINYNN_ASSERT(OW - ow >= 8);
         for (int ic = 0; ic < IC; ++ic) {)");
         for (int fh = 0; fh < FH; ++fh) {
@@ -1427,6 +1427,8 @@ std::string ConvBiasIm2colI8mmNCHW44::GetInitBody(TContext* ctx) const {
     const int oc_idx = is_group ? 1 : 0;
     writer << m_inner_gemm.GetPackASignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetPackAWorkspaceSignature(inner_ctx.get()) << ";\n";
+    writer << "#define PACKED_IC 4\n";
+    writer << "#define PACKED_OC 4\n";
     writer << GenCommonRet() << " " << GetInitSignature(ctx);
     const uint32_t nr_out_weight = 1;
     const std::string common_def = StringTemplate::StringTemplateArgs()
@@ -1435,9 +1437,9 @@ std::string ConvBiasIm2colI8mmNCHW44::GetInitBody(TContext* ctx) const {
                                            .render(R"(
         Tensor* in_weights = inputs[1];
         ${group}
-        const int ymax = in_weights->layout.dims[${oc_idx}] * 4;
-        const int kmax = in_weights->layout.dims[${oc_idx} + 1] * in_weights->layout.dims[${oc_idx} + 2] * in_weights->layout.dims[${oc_idx} + 3] * 4;
-        const int ldin = kmax * 4;
+        const int ymax = in_weights->layout.dims[${oc_idx}] * PACKED_OC;
+        const int kmax = in_weights->layout.dims[${oc_idx} + 1] * in_weights->layout.dims[${oc_idx} + 2] * in_weights->layout.dims[${oc_idx} + 3] * PACKED_IC;
+        const int ldin = kmax * PACKED_OC;
     )");
     const std::string fill_weight_attr =
             R"(
@@ -1468,6 +1470,8 @@ std::string ConvBiasIm2colI8mmNCHW44::GetInitBody(TContext* ctx) const {
     )");
     writer << StringTemplate::render_init_body(
             nr_out_weight, fill_weight_attr, fill_weight_transform, common_def);
+    writer << "\n#undef PACKED_IC\n";
+    writer << "#undef PACKED_OC\n";
 
     return writer.str();
 }
@@ -1486,6 +1490,7 @@ std::string ConvBiasIm2colI8mmNCHW44::GetWorkspaceBodyCondition(
         ss << "extern " << m_inner_gemm.GetPackBWorkspaceSignature(inner_ctx.get())
            << ";\n";
     }
+    ss << "#define PACKED_IC 4\n";
     ss << GenCommonRet() << " " << GetWorkspaceSignature(ctx);
     std::string workspace_temp = R"({
         TINYNN_ASSERT(workspace);
@@ -1493,7 +1498,7 @@ std::string ConvBiasIm2colI8mmNCHW44::GetWorkspaceBodyCondition(
         TINYNN_ASSERT(${kernel_h} == ${kernel_w});
         ${group}
         const Layout src_layout = inputs[0]->layout;
-        const size_t IC = src_layout.dims[1] / group * 4;
+        const size_t IC = src_layout.dims[1] / group * PACKED_IC;
         const size_t IH = src_layout.dims[2], IW = src_layout.dims[3];
 
         const size_t padded_IH = IH + 2 * ${pad_h};
@@ -1525,6 +1530,7 @@ std::string ConvBiasIm2colI8mmNCHW44::GetWorkspaceBodyCondition(
                     .add_ctx_int("stride_h")
                     .add_ctx_int("stride_w")
                     .render(workspace_temp);
+    ss << "\n#undef PACKED_IC\n";
     return ss.str();
 }
 
@@ -1562,6 +1568,8 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
     writer << m_inner_gemm.GetPackBWorkspaceSignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetNakedKernelSignature(inner_ctx.get()) << ";\n";
     writer << m_inner_gemm.GetPackBSignature(inner_ctx.get()) << ";\n";
+    writer << "#define PACKED_IC 4\n";
+    writer << "#define PACKED_OC 4\n";
     const bool need_pad = (ctx->getAttrInt("pad_h") || ctx->getAttrInt("pad_w")),
                need_im2col =
                        (ctx->getAttrInt("kernel_h") != 1 ||
@@ -1600,7 +1608,6 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
     const int in_c = in_layout.dims[1] / group * in_layout.dims[4];
     const int in_h = in_layout.dims[2];
     const int in_w = in_layout.dims[3];
-    const int PACK_C_SIZE = 4;
     const float src_scale = inputs[0]->dtype.param.scale;
     const float flt_scale = inputs[1]->dtype.param.scale;
     const float dst_scale = outputs[0]->dtype.param.scale;
@@ -1613,8 +1620,8 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
     const int out_w = out_layout.dims[3];
     const size_t N = out_h * out_w, M = out_c, K = in_c * ${kernel_h} * ${kernel_w};
 
-    const int LDC = out_h * out_w * PACK_C_SIZE;
-    const int LDB = out_h * out_w * PACK_C_SIZE;
+    const int LDC = out_h * out_w * PACKED_OC;
+    const int LDB = out_h * out_w * PACKED_OC;
 
     const size_t padded_ih = in_h + 2 * ${pad_h}, padded_iw = in_w + 2 * ${pad_w};
     size_t pad_size = 0, im2col_size = 0;
@@ -1671,7 +1678,7 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
             int8_t* weight_data = inputs[1]->ptr;
             for (int g = 0; g < group; ++g) {
                 ${exec_pad}
-                fuse_im2col_packB_s2(pad_ws, packb_ws, in_c / 4, padded_ih, padded_iw, out_h, out_w);
+                fuse_im2col_packB_s2(pad_ws, packb_ws, in_c / PACKED_IC, padded_ih, padded_iw, out_h, out_w);
                 ${naked_kern_sym}(weight_data, packb_ws, output_data, LDC, M, N, K, bias_data, NULL, scale, temp_scale, dst_scale_inv);
                 weight_data += weight_layout.stride[0];
                 bias_data += out_c;
@@ -1685,12 +1692,12 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
     }
     std::string exec_pad =
             (need_pad ? std::string(R"(
-            pad_src(input_data, pad_ws, in_c / 4, in_h, in_w, pad_h, pad_w);)")
+            pad_src(input_data, pad_ws, in_c / PACKED_IC, in_h, in_w, pad_h, pad_w);)")
                       : std::string(R"(
             pad_ws = input_data;)"));
     std::string exec_im2col =
             (need_im2col ? std::string(R"(
-            im2col(pad_ws, im2col_ws, in_c / 4, out_h, out_w, kernel_h, kernel_w,
+            im2col(pad_ws, im2col_ws, in_c / PACKED_IC, out_h, out_w, kernel_h, kernel_w,
             padded_ih, padded_iw);)")
                          : std::string(R"( im2col_ws = pad_ws;)"));
 
@@ -1711,6 +1718,8 @@ std::string ConvBiasIm2colI8mmNCHW44::GetKernelBody(TContext* ctx) const {
                       .add("exec_pad", exec_pad)
                       .add("exec_im2col", exec_im2col)
                       .render(temp_body);
+    writer << "\n#undef PACKED_IC\n";
+    writer << "#undef PACKED_OC\n";
     return writer.str();
 }
 

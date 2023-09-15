@@ -740,7 +740,8 @@ std::string gen_max_pooling_4x4_stride1_code() {
         const int8_t* restrict sptr3 = sptr + (ih + 3) * IW2 * 4;
         int8_t* restrict dptr = dst + oh * OW * 4;
         size_t ow = 0;
-        for (; ow + 3 < OW; ow += 4) {
+        //! `ow + 4 < OW` to avoid read memory out-of-bounds caused by `src04 = vld1q_s8(sptr##i + 4 * 4)`
+        for (; ow + 4 < OW; ow += 4) {
             int8x16_t src00, src04, max_out, max_tmp0, max_tmp1, max_tmp2, max_tmp3;
             int32x4_t src1234, src2345, src3456;
 
