@@ -139,3 +139,31 @@ TEST(AARCH64, CVrotate) {
         checker.exec({{1, 19, 19, 3}, {}});
     }
 }
+#if ENABLE_KERNEL_FP16
+TEST(AARCH64, CVrotateFp16) {
+    Checker<megdnn::CVRotate> checker(Arch::ARM64);
+    megdnn::CVRotate::Param param;
+    SequenceRNG seq;
+    checker.set_rng(0, &seq);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+
+    for (bool clockwise : {false, true}) {
+        param.clockwise = clockwise;
+        checker.set_param(param);
+        checker.exec({{1, 3, 5, 1}, {}});
+        // FIXME: dnn rotate only support channel==1 and channel == 3
+        // checker.exec({{1, 3, 5, 2}, {}});
+        checker.exec({{1, 3, 5, 3}, {}});
+        checker.exec({{1, 16, 16, 1}, {}});
+
+        checker.exec({{1, 16, 16, 3}, {}});
+        checker.exec({{1, 16, 19, 1}, {}});
+
+        checker.exec({{1, 16, 19, 3}, {}});
+        checker.exec({{1, 19, 19, 1}, {}});
+
+        checker.exec({{1, 19, 19, 3}, {}});
+    } 
+}
+#endif
