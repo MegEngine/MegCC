@@ -49,13 +49,16 @@ void KernelExporter::gen_kenrels() {
     std::string common_header = R"(
 #include <data_struct.h>
 )";
+    int cnt = 0;
     for (auto& i : kernels) {
         for (auto& ctx : attrs) {
             auto gen = [&]() {
                 bool is_cv = !i->GetCVKernelSymbol(&ctx).empty();
-                auto kernel_file_name = i->GetKernelSymbol(&ctx) + ".c";
+                auto kernel_file_name =
+                        i->GetKernelSymbol(&ctx) + "_" + std::to_string(cnt) + ".c";
                 if (is_cv) {
-                    kernel_file_name = i->GetCVKernelSymbol(&ctx) + ".c";
+                    kernel_file_name = i->GetCVKernelSymbol(&ctx) + "_" +
+                                       std::to_string(cnt) + ".c";
                 }
                 std::stringstream ss;
                 auto file_path = kernel_file_name;
@@ -80,13 +83,20 @@ void KernelExporter::gen_kenrels() {
             };
 
             try {
-                gen();
+                if (i->IsAvailable(&ctx) || i->IsCVAvailable(&ctx)) {
+                    gen();
+                    ++cnt;
+                }
             } catch (...) {
             }
         }
     }
 
-    llvm::outs() << "Export tinynnkernel done.\n";
+    if (cnt) {
+        llvm::outs() << "Export tinynnkernel done.\n";
+    } else {
+        llvm::outs() << "No kernel meets the requirements.\n";
+    }
 }
 
 std::map<std::string, KPT> KernelExporter::m_kern_name2type{

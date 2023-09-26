@@ -104,7 +104,7 @@ std::pair<std::string, std::map<int, std::string>> support_dtype() {
 
 std::pair<std::string, std::map<int, std::string>> support_format() {
     std::map<int, std::string> format2enum{
-            {0, "NCHW"}, {7, "NCHW44"}, {8, "NCHW44_DOT"}};
+            {0, "NCHW"}, {1, "NHWC"}, {7, "NCHW44"}, {8, "NCHW44_DOT"}};
 
     return {support_map_to_msg(format2enum), format2enum};
 }
