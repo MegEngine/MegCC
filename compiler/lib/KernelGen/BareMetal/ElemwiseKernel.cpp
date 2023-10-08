@@ -65,7 +65,7 @@ std::string gen_unary(std::string mode) {
     return "";
 }
 
-std::string gen_binary(std::string mode) {
+std::string gen_binary(std::string mode, std::string dtype) {
     if (mode == "ADD") {
         return "val + val2";
     } else if (mode == "SUB") {
@@ -93,9 +93,7 @@ std::string gen_binary(std::string mode) {
     } else if (mode == "FLOOR_DIV") {
         return "floorf(val / val2)";
     } else if (mode == "MOD") {
-        //! WARNING: this is just for integer float please use fmod(x,y) in C
-        //! and fmodf(x,y) in c++
-        return R"(val % val2)";
+        return dtype == "f32" ? "fmodf(val, val2)" : R"(val % val2)";
     } else {
         CC_ABORT << "not support mode " << mode.c_str() << "\n";
     }
@@ -422,12 +420,12 @@ bool ElmwiseKernel::IsAvailable(TContext* context) const {
                          mode == "H_SWISH" || mode == "LOG" || mode == "SILU" ||
                          mode == "ERF" || mode == "SQRT" || mode == "SIN" ||
                          mode == "COS";
-    bool mode_ok_binary = mode == "ADD" || mode == "SUB" || mode == "MUL" ||
-                          mode == "MAX" || mode == "MIN" || mode == "LEQ" ||
-                          mode == "LT" || mode == "FLOOR_DIV" || mode == "EQ" ||
-                          mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
-                          mode == "FUSE_ADD_SIGMOID" || mode == "FUSE_ADD_TANH" ||
-                          (mode == "MOD" && (dtype == "i32" || dtype == "si32"));
+    bool mode_ok_binary =
+            mode == "ADD" || mode == "SUB" || mode == "MUL" || mode == "MAX" ||
+            mode == "MIN" || mode == "LEQ" || mode == "LT" || mode == "FLOOR_DIV" ||
+            mode == "EQ" || mode == "TRUE_DIV" || mode == "FUSE_ADD_RELU" ||
+            mode == "FUSE_ADD_SIGMOID" || mode == "FUSE_ADD_TANH" ||
+            (mode == "MOD" && (dtype == "i32" || dtype == "si32" || dtype == "f32"));
     bool mode_ok_other = mode == "FUSE_MUL_ADD3" || mode == "FUSE_MUL_ADD4";
     return nr_operands_ok && (mode_ok_unary || mode_ok_binary || mode_ok_other);
 }
@@ -580,7 +578,7 @@ std::string ElmwiseKernel::GetKernelBody(TContext* context) const {
                           .add("set_broadcast_stride", set_broadcast_stride)
                           .add("get_broadcast_offset", get_broadcast_offset)
                           .add("specifier", specifier)
-                          .add("act", gen_binary(mode))
+                          .add("act", gen_binary(mode, src_dtype))
                           .render(binary_str);
     } else if (context->getAttrInt("nr_operands") == 4) {
         writer << compute_tenary_body(context, specifier);

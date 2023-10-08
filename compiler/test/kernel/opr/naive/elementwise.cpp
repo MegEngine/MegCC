@@ -64,7 +64,8 @@ TEST(NAIVE, ElementwiseBinary) {
     ElemwiseForward::Param param;
     for (auto mode :
          {MODE::ADD, MODE::SUB, MODE::MUL, MODE::FUSE_ADD_RELU, MODE::FUSE_ADD_SIGMOID,
-          MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT, MODE::EQ, MODE::FUSE_ADD_TANH}) {
+          MODE::MAX, MODE::MIN, MODE::LEQ, MODE::LT, MODE::EQ, MODE::FUSE_ADD_TANH,
+          MODE::MOD}) {
         param.mode = mode;
         checker.set_param(param);
         // scalar_scalar
