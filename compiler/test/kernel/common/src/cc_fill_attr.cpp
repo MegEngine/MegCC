@@ -421,6 +421,21 @@ KernelGenRet opr_fill_attr<megdnn::CVGaussianBlur>(
 }
 
 template <>
+KernelGenRet opr_fill_attr<megdnn::GaussianBlur>(
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::GaussianBlur* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
+        const std::unordered_map<std::string, CCAttr>& proxy_attr) {
+    auto param = opr->param();
+
+    FILL_MAP_EX(attr_map, param, border_mode, dnnparam_2_str);
+    FILL_MAP(attr_map, param, kernel_height);
+    FILL_MAP(attr_map, param, kernel_width);
+    FILL_MAP(attr_map, param, sigma_x);
+    FILL_MAP(attr_map, param, sigma_y);
+    return KernelGen::KernelPack::GetKernel(KernType::GaussianBlurKernel, arch);
+}
+
+template <>
 KernelGenRet opr_fill_attr<megdnn::CVRoicopy>(
         std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVRoicopy* opr,
         const TensorNDArray& tensors, KernelGen::Arch arch,

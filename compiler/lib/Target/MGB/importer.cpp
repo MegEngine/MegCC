@@ -848,6 +848,17 @@ private:
                     var_array_to_value_array(inputs_array), p.imode, p.bmode, p.format,
                     p.border_val, mat_id);
             m_var2value.emplace(out, value);
+        } else if (
+                auto gaussian_blur = opr->try_cast_final<opr::GaussianBlurForward>()) {
+            auto&& p = gaussian_blur->param();
+            auto&& out = opr->output(0);
+            VarNodeArray inputs_array;
+            inputs_array = opr->input();
+            mlir::Value value = m_builder.create<mlir::MGB::GaussianBlur>(
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
+                    m_var2value.at(opr->input(0)), p.border_mode, p.kernel_height,
+                    p.kernel_width, p.sigma_x, p.sigma_y);
+            m_var2value.emplace(out, value);
         } else if (auto typecvt = opr->try_cast_final<opr::TypeCvt>()) {
             auto&& out_dtype = dtype_to_type(m_context, typecvt->param());
             auto&& in_type = dtype_to_type(m_context, opr->input(0)->dtype());

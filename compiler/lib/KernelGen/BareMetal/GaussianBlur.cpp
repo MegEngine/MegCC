@@ -10,6 +10,41 @@ using namespace megcc;
 using namespace KernelGen;
 using namespace BareMetal;
 
+bool GaussianBlurKernel::IsAvailable(TContext* context) const {
+    auto src_dtype = context->getAttrOprand("operand:0").dtype;
+    bool dtype_ok =
+            Utils::is_int_dtype(src_dtype, 8) || Utils::is_float_dtype(src_dtype);
+    std::string mode = context->getAttrStr("border_mode");
+    bool bmode_ok =
+            (mode == "CONSTANT" || mode == "REFLECT" || mode == "REFLECT_101" ||
+             mode == "REPLICATE");
+    return dtype_ok && bmode_ok;
+}
+
+std::string GaussianBlurKernel::GetKernelSymbol(TContext* context) const {
+    std::stringstream ss;
+    auto src_dtype = context->getAttrOprand("operand:0").dtype;
+    std::string bmode = context->getAttrStr("border_mode");
+    uint32_t kh = context->getAttrUInt("kernel_height");
+    uint32_t kw = context->getAttrUInt("kernel_width");
+    float sigma_x = context->getAttrFloat("sigma_x");
+    float sigma_y = context->getAttrFloat("sigma_y");
+    std::transform(bmode.begin(), bmode.end(), bmode.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
+    ss << "kernel_gaussian_blur_" << bmode << "_" << kh << "x" << kw << "_sigmax_"
+       << sigma_x << "_sigmay_" << sigma_y << "_" << src_dtype;
+    std::string symbol = ss.str();
+    //! function names can't contains "." .
+    std::string target_str = ".", replacement_str = "_";
+    auto pos = symbol.find(target_str);
+    while (pos != std::string::npos) {
+        symbol.replace(pos, target_str.length(), replacement_str);
+        pos = symbol.find(target_str);
+    }
+    return symbol;
+}
+
 bool GaussianBlurKernel::IsCVAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
     bool dtype_ok =
@@ -583,6 +618,120 @@ std::string gen_kern_func(const std::string& bmode, const std::string& src_dtype
             .render(helper);
 }
 }  // namespace
+
+std::string GaussianBlurKernel::GetKernelBody(TContext* context) const {
+    auto kernel_sig = GetKernelSignature(context);
+    std::string bmode = context->getAttrStr("border_mode");
+    uint32_t kh = context->getAttrUInt("kernel_height");
+    uint32_t kw = context->getAttrUInt("kernel_width");
+    float sigma_x = context->getAttrFloat("sigma_x");
+    float sigma_y = context->getAttrFloat("sigma_y");
+    auto src_specifier =
+            Utils::cvt_dtype_specifier(context->getAttrOprand("operand:0").dtype);
+    std::stringstream writer;
+    writer << R"(
+        #include <math.h>
+        #include <stdlib.h>
+        #include <string.h>
+        #include "utils.h"
+
+        typedef struct TinyMat {
+            size_t rows;
+            size_t cols;
+            size_t channels;
+            void* data;
+        } TinyMat;
+    )";
+    writer << gen_border_interpolate(bmode);
+    writer << gen_create_gaussian_kernels();
+    writer << gen_kern_func(bmode, src_specifier);
+
+    std::string body_temp = R"(
+        void ${kernel_sig} {
+            int row = ${kernel_h}, col = ${kernel_w};
+            calRowsAndCols(&row, &col, ${sigma_x}, ${sigma_y});
+            TinyMat kernel_row = {1, row, 1, NULL};
+            TinyMat kernel_col = {1, col, 1, NULL};
+            kernel_row.data = (float*)tinynn_malloc(sizeof(float) * row);
+            kernel_col.data = (float*)tinynn_malloc(sizeof(float) * col);
+            createGaussianKernels(&kernel_col, &kernel_row, row, col, ${sigma_x}, ${sigma_y});
+
+            ${cast_kernel_to_int}
+
+            RowFilter rf;
+            rf.m_kernel = &kernel_col;
+            rf.m_anchor = col / 2;
+            rf.ksize = col;
+            if (rf.ksize <= 5) {
+                rf.m_filter = symmRowSmallFilter;
+            } else {
+                rf.m_filter = rowFilter;
+            }
+
+            ColFilter cf;
+            cf.m_kernel = &kernel_row;
+            cf.m_anchor = row / 2;
+            cf.ksize = row;
+            if (cf.ksize == 3) {
+                cf.m_filter = symmColumnSmallFilter;
+            } else {
+                cf.m_filter = columnFilter;
+            }
+
+            FilterEngine fe;
+            fe.ctor = filterEngineCtor;
+            fe.proceed = filterEngineProceed;
+            fe.dtor = filterEngineDtor;
+
+            Tensor *src = inputs[0];
+            Layout src_layout = src->layout;
+            const int src_n = src_layout.dims[0];
+            const int src_rows = src_layout.dims[1];
+            const int src_cols = src_layout.dims[2];
+            const int src_channels = src_layout.dims[3];
+
+            Tensor *dst = outputs[0];
+            Layout dst_layout = dst->layout;
+            const int dst_cols = dst_layout.dims[2];
+            const int dst_channels = dst_layout.dims[3];
+
+            fe.ctor(&fe, &rf, &cf, src_channels, src_cols, src_rows);
+            for (int i = 0; i < src_n; ++i) {
+                uint8_t *src_ptr = (uint8_t*)src->ptr + sizeof(${src_specifier}) * src_layout.stride[0] * i;
+                uint8_t *dst_ptr = (uint8_t*)dst->ptr + sizeof(${dst_specifier}) * dst_layout.stride[0] * i;
+                fe.proceed(&fe, src_ptr, src_cols * src_channels * sizeof(${src_specifier}), fe.m_whole_h, 
+                            dst_ptr, dst_cols * dst_channels * sizeof(${dst_specifier}));
+            }
+            fe.dtor(&fe);
+
+            tinynn_free(kernel_row.data);
+            tinynn_free(kernel_col.data);
+        }
+    )";
+
+    std::string cast_kernel_to_int = src_specifier == "uint8_t" ? R"(
+            const uint8_t bits = 8;
+            for(size_t i = 0; i < kernel_row.cols; ++i){
+                ((int*)(kernel_row.data))[i] = (int)(((float*)(kernel_row.data))[i] * (1 << bits));
+            }
+            for(size_t i = 0; i < kernel_col.cols; ++i){
+                ((int*)(kernel_col.data))[i] = (int)(((float*)(kernel_col.data))[i] * (1 << bits));
+            }
+    )"
+                                                                : "";
+    std::string dst_specifier = src_specifier;
+    writer << StringTemplate::StringTemplateArgs()
+                      .add("kernel_sig", kernel_sig)
+                      .add("cast_kernel_to_int", cast_kernel_to_int)
+                      .add("src_specifier", src_specifier)
+                      .add("dst_specifier", dst_specifier)
+                      .add("kernel_h", kh)
+                      .add("kernel_w", kw)
+                      .add("sigma_x", std::to_string(sigma_x))
+                      .add("sigma_y", std::to_string(sigma_y))
+                      .render(body_temp);
+    return writer.str();
+}
 
 std::string GaussianBlurKernel::GetCVKernelBody(TContext* context) const {
     auto kernel_sig = GetCVKernelSignature(context);

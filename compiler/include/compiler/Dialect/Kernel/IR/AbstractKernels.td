@@ -163,6 +163,19 @@ def ResizeKernel: AbstractKernelBase<"Resize"> {
     );
 }
 
+def GaussianBlurKernel: AbstractKernelBase<"GaussianBlur"> {
+    let arguments = (ins
+        StrAttr:$border_mode,
+        UI32Attr:$kernel_height,
+        UI32Attr:$kernel_width,
+        F32Attr:$sigma_x,
+        F32Attr:$sigma_y,
+
+        Arg<AnyMemRef, "", [MemRead]>:$input,
+        Arg<AnyMemRef, "", [MemWrite]>:$output
+    );
+}
+
 def IndexingMultiAxisVecKernel: AbstractKernelBase<"IndexingMultiAxisVec"> {
     let arguments = (ins
         ArrayAttr:$axis,

@@ -144,6 +144,11 @@ def Resize: MgbHashableOp<"Resize", [ResizeParam], [NoSideEffect]>{
   let results = (outs AnyType);
 }
 
+def GaussianBlur: MgbHashableOp<"GaussianBlur", [GaussianBlurParam], [NoSideEffect]>{
+  let inputs = (ins AnyType:$input);
+  let results = (outs AnyType);
+}
+
 def IndexingOneHot: MgbHashableOp<"IndexingOneHot", [AxisParam], [NoSideEffect]>{
   let inputs = (ins 
       AnyType:$input,

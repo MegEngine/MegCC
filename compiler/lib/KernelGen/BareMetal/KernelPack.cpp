@@ -94,6 +94,8 @@ struct AllBareKernel {
                 std::make_shared<BareMetal::FusedElmwiseKernel>()};
         inner_map[KernelPack::KernType::CVGaussianBlur] = {
                 std::make_shared<BareMetal::GaussianBlurKernel>()};
+        inner_map[KernelPack::KernType::GaussianBlurKernel] = {
+                std::make_shared<BareMetal::GaussianBlurKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>

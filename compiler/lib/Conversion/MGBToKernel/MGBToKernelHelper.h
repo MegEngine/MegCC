@@ -227,6 +227,20 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::WarpAffine>(
 }
 
 template <>
+SmallVector<NamedAttribute, 4> ConvertAttr<MGB::GaussianBlur>(
+        DictionaryAttr direct_attr, MLIRContext* context) {
+    SmallVector<NamedAttribute, 4> attrs;
+    using BMode = ::megdnn::param::WarpAffine::BorderMode;
+
+    GetParamEnum(BMode, "border_mode");
+    GetParam("kernel_height");
+    GetParam("kernel_width");
+    GetParam("sigma_x");
+    GetParam("sigma_y");
+    return attrs;
+}
+
+template <>
 SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Resize>(
         DictionaryAttr direct_attr, MLIRContext* context) {
     SmallVector<NamedAttribute, 4> attrs;

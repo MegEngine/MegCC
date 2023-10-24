@@ -50,6 +50,7 @@ INSTANCE_GET_KERNELS(mlir::Kernel::ArgsortKernel, KernType::ArgSortKernel)
 INSTANCE_GET_KERNELS(mlir::Kernel::ArgmaxKernel, KernType::ArgmaxKernel)
 INSTANCE_GET_KERNELS(mlir::Kernel::IndexingOneHotKernel, KernType::IndexingOneHotKernel)
 INSTANCE_GET_KERNELS(mlir::Kernel::FusedElemwiseKernel, KernType::FusedElemwiseKernel)
+INSTANCE_GET_KERNELS(mlir::Kernel::GaussianBlurKernel, KernType::GaussianBlurKernel)
 
 template <class T, typename... Args>
 void addBuiltinTemplatesOpr(
@@ -98,6 +99,7 @@ void addBuiltinTemplatesByOperator(
     addBuiltinTemplatesOpr<mlir::Kernel::ArgmaxKernel>(registry, arch);
     addBuiltinTemplatesOpr<mlir::Kernel::ConvBackDataKernel>(registry, arch);
     addBuiltinTemplatesOpr<mlir::Kernel::FusedElemwiseKernel>(registry, arch);
+    addBuiltinTemplatesOpr<mlir::Kernel::GaussianBlurKernel>(registry, arch);
 }
 }  // namespace Kernel
 }  // namespace mlir
