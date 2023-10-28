@@ -109,6 +109,30 @@ add_library(mgb_imported INTERFACE)
 target_link_libraries(mgb_imported INTERFACE ${MGB_INSTALL_LIB})
 target_include_directories(mgb_imported INTERFACE ${MGB_INCLUDE_DIR})
 
+find_library(
+  ONNX_INSTALL_LIB
+  NAMES libonnx.a
+  PATHS ${PROJECT_SOURCE_DIR}/../third_party/onnx/install/lib/ REQUIRED)
+find_library(
+  ONNX_PROTO_INSTALL_LIB
+  NAMES libonnx_proto.a
+  PATHS ${PROJECT_SOURCE_DIR}/../third_party/onnx/install/lib/ REQUIRED)
+
+list(APPEND ONNX_LIBS -Wl,--whole-archive ${ONNX_PROTO_INSTALL_LIB}
+     -Wl,--no-whole-archive)
+list(APPEND ONNX_LIBS ${ONNX_INSTALL_LIB})
+set(ONNX_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../third_party/onnx/install/include)
+
+list(APPEND PROTOBUF_LIBS
+     ${PROJECT_SOURCE_DIR}/../third_party/protobuf/install/lib/libprotobuf.a
+     ${PROJECT_SOURCE_DIR}/../third_party/protobuf/install/lib/libprotoc.a)
+set(PROTOBUF_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/../third_party/protobuf/install/include)
+
+add_library(onnx_imported INTERFACE)
+target_link_libraries(onnx_imported INTERFACE ${ONNX_LIB} ${PROTOBUF_LIBS})
+target_include_directories(onnx_imported INTERFACE ${ONNX_INCLUDE_DIR}
+                                                   ${PROTOBUF_INCLUDE_DIR})
+
 if(APPLE)
   if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES arm64)
     set(TCC_INSTALL_LIB
