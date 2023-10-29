@@ -1,14 +1,14 @@
 #pragma once
-#include <string>
 #include <sstream>
-#include "compiler/KernelGen/KernelGen.h"
+#include <string>
 #include "Utils/SymbolHelper.h"
 #include "Utils/Utils.h"
+#include "compiler/KernelGen/KernelGen.h"
 namespace megcc {
 namespace KernelGen {
 namespace Arm64 {
 
-class RotateKernel : public KernelFunc  {
+class RotateKernel : public KernelFunc {
 public:
     bool IsAvailable(TContext* context) const override { return false; };
     std::string GetKernelBody(TContext* context) const override { return ""; };

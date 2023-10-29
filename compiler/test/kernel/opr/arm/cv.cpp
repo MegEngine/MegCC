@@ -164,6 +164,6 @@ TEST(AARCH64, CVrotateFp16) {
         checker.exec({{1, 19, 19, 1}, {}});
 
         checker.exec({{1, 19, 19, 3}, {}});
-    } 
+    }
 }
 #endif

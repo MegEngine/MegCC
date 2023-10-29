@@ -3,10 +3,10 @@
 #include "BatchedMatmul/BatchedMatmul.h"
 #include "ConvKernel.h"
 #include "Elemwise/Elemwise.h"
-#include "Rotate.h"
 #include "InternalKernel/InternalKernel.h"
 #include "KernelPack.h"
 #include "MatMulKernel/MatMul.h"
+#include "Rotate.h"
 
 using namespace megcc;
 using namespace KernelGen;
@@ -46,7 +46,7 @@ struct AllA64Kernel {
 
         inner_map[KernelPack::KernType::BatchMatmulKernel] = {
                 std::make_shared<Arm64::Fp32BatchedMatmul>()};
-        
+
         inner_map[KernelPack::KernType::RotateKernel] = {
                 std::make_shared<Arm64::RotateKernel>()};
     }
