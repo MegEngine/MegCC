@@ -94,3 +94,54 @@ if [ ! -e $SRC_DIR/flatcc/bin/flatcc ];then
     flatcc_build=$SRC_DIR/flatcc/build
     build_flatcc $flatcc_dir $flatcc_build
 fi
+
+function build_protobuf() {
+    cd $1
+    git checkout v3.20.2
+    rm -rf $2
+    mkdir -p $2
+    cd $2
+    cmake $1/cmake \
+    -Dprotobuf_BUILD_SHARED_LIBS=OFF \
+    -DCMAKE_INSTALL_PREFIX=$3 \
+    -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -Dprotobuf_BUILD_TESTS=OFF \
+    -DCMAKE_BUILD_TYPE=Release
+    make -j32
+    make install
+}
+
+echo "begin to build protobuf"
+cd $SRC_DIR
+git submodule update -f --init protobuf
+protobuf_dir=$SRC_DIR/protobuf
+protobuf_build=$SRC_DIR/protobuf/build
+protobuf_install=$SRC_DIR/protobuf/install
+build_protobuf $protobuf_dir $protobuf_build $protobuf_install
+
+export PATH=$SRC_DIR/protobuf/install/bin:$PATH
+export CMAKE_PREFIX_PATH=$SRC_DIR/protobuf/install/lib:$CMAKE_PREFIX_PATH
+python3_path=$(which "python3")
+function build_onnx() {
+    cd $1 
+    git checkout 7f0a6331
+    rm -rf $2
+    mkdir -p $2
+    cd $2
+    cmake -DCMAKE_INSTALL_PREFIX=$3\
+          -DONNX_USE_LITE_PROTO=ON\
+          -DPYTHON_EXECUTABLE=$python3_path\
+          -G Ninja \
+        $1
+
+    ninja install
+}
+
+echo "begin to build onnx"
+cd $SRC_DIR
+git submodule update -f --init onnx
+onnx_dir=$SRC_DIR/onnx
+onnx_build=$SRC_DIR/onnx/build
+onnx_install=$SRC_DIR/onnx/install
+build_onnx $onnx_dir $onnx_build $onnx_install
