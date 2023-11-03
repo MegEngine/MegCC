@@ -645,9 +645,9 @@ std::string GaussianBlurKernel::GetKernelBody(TContext* context) const {
     writer << gen_border_interpolate(bmode);
     writer << gen_create_gaussian_kernels();
     writer << gen_kern_func(bmode, src_specifier);
+    writer << GenCommonRet() << " " << GetKernelSignature(context);
 
-    std::string body_temp = R"(
-        void ${kernel_sig} {
+    std::string body_temp = R"({
             int row = ${kernel_h}, col = ${kernel_w};
             calRowsAndCols(&row, &col, ${sigma_x}, ${sigma_y});
             TinyMat kernel_row = {1, row, 1, NULL};
@@ -706,6 +706,8 @@ std::string GaussianBlurKernel::GetKernelBody(TContext* context) const {
 
             tinynn_free(kernel_row.data);
             tinynn_free(kernel_col.data);
+
+            return TinyNN_SUCCESS;
         }
     )";
 

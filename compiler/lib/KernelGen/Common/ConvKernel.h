@@ -14,7 +14,7 @@ public:
     static bool is_channel_broadcast_bias(TContext* ctx) {
         if (is_bias(ctx)) {
             CCOperand bias = ctx->getAttrOprand("operand:2");
-            return (bias.shape[0] == 1 && bias.shape[2] == 1 && bias.shape[3] == 1) || bias.shape.size() == 1;
+            return bias.shape[0] == 1 && bias.shape[2] == 1 && bias.shape[3] == 1;
         }
         return false;
     }
