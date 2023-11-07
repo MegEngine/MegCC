@@ -80,6 +80,7 @@ DEF(Rotate, 2, true, true);
 DEF(CvtColor, 2, true, true);
 DEF(WarpAffine, 3, true, false);
 DEF(GaussianBlur, 2, true, true);
+DEF(Padding, 2, true, true);
 DEF(Resize, 2, true, false);
 DEF(ResizeBackward, 2, true, false);
 DEF(IndexingOneHot, 3, true, true);

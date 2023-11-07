@@ -149,6 +149,15 @@ def GaussianBlur: MgbHashableOp<"GaussianBlur", [GaussianBlurParam], [NoSideEffe
   let results = (outs AnyType);
 }
 
+def Padding: MgbHashableOp<"Padding", [PaddingParam], [NoSideEffect]>{
+  let inputs = (ins AnyType:$input);
+  let results = (outs AnyType);
+  let extraArguments = (ins
+    MgbArrayAttr<MgbI32Attr>:$front_offsets,
+    MgbArrayAttr<MgbI32Attr>:$back_offsets
+  );
+}
+
 def IndexingOneHot: MgbHashableOp<"IndexingOneHot", [AxisParam], [NoSideEffect]>{
   let inputs = (ins 
       AnyType:$input,

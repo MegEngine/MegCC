@@ -408,6 +408,7 @@ template class Checker<megdnn::ArgsortForward>;
 template class Checker<megdnn::ConcatForward>;
 template class Checker<megdnn::ArgmaxForward>;
 template class Checker<megdnn::GaussianBlurForward>;
+template class Checker<megdnn::PaddingForward>;
 
 //! CV
 DEF_CV_OPR(megdnn::CVtranspose);

@@ -364,6 +364,21 @@ SmallVector<NamedAttribute, 4> ConvertAttr<MGB::WarpPerspective>(
 }
 
 template <>
+SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Padding>(
+        DictionaryAttr direct_attr, MLIRContext* context) {
+    SmallVector<NamedAttribute, 4> attrs;
+
+    using PMode = ::megdnn::param::Padding::PaddingMode;
+    GetParamEnum(PMode, "padding_mode");
+
+    GetParam("padding_val");
+    GetParam("front_offsets");
+    GetParam("back_offsets");
+
+    return attrs;
+}
+
+template <>
 SmallVector<NamedAttribute, 4> ConvertAttr<MGB::Subtensor>(
         DictionaryAttr direct_attr, MLIRContext* context) {
     SmallVector<NamedAttribute, 4> attrs;

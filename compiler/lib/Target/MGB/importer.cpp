@@ -1061,6 +1061,32 @@ private:
             for (int i = 0; i < opr->output().size(); ++i) {
                 m_var2value.emplace(opr->output(i), values.getResult(i));
             }
+        } else if (auto padding_opr = opr->try_cast_final<opr::PaddingForward>()) {
+            std::vector<int32_t> front_offsets, back_offsets;
+            auto&& p = padding_opr->param();
+            auto&& out = padding_opr->output(0);
+            auto&& in = padding_opr->input(0);
+            front_offsets.push_back(p.front_offset_dim0);
+            front_offsets.push_back(p.front_offset_dim1);
+            front_offsets.push_back(p.front_offset_dim2);
+            front_offsets.push_back(p.front_offset_dim3);
+            front_offsets.push_back(p.front_offset_dim4);
+            front_offsets.push_back(p.front_offset_dim5);
+            front_offsets.push_back(p.front_offset_dim6);
+
+            back_offsets.push_back(p.back_offset_dim0);
+            back_offsets.push_back(p.back_offset_dim1);
+            back_offsets.push_back(p.back_offset_dim2);
+            back_offsets.push_back(p.back_offset_dim3);
+            back_offsets.push_back(p.back_offset_dim4);
+            back_offsets.push_back(p.back_offset_dim5);
+            back_offsets.push_back(p.back_offset_dim6);
+
+            mlir::Value value = m_builder.create<mlir::MGB::Padding>(
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
+                    m_var2value.at(in), p.padding_mode, p.padding_val, front_offsets,
+                    back_offsets);
+            m_var2value.emplace(out, value);
         } else {
             CC_ABORT << "unsupported mgb operator type " << opr->dyn_typeinfo()->name
                      << "\n";

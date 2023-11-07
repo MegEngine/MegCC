@@ -436,6 +436,38 @@ KernelGenRet opr_fill_attr<megdnn::GaussianBlur>(
 }
 
 template <>
+KernelGenRet opr_fill_attr<megdnn::Padding>(
+        std::unordered_map<std::string, CCAttr>& attr_map, megdnn::Padding* opr,
+        const TensorNDArray& tensors, KernelGen::Arch arch,
+        const std::unordered_map<std::string, CCAttr>& proxy_attr) {
+    auto param = opr->param();
+
+    if (param.padding_mode == ::megdnn::Padding::Param::PaddingMode::CONSTANT) {
+        attr_map["padding_mode"] = CCAttr("CONSTANT");
+    } else if (param.padding_mode == ::megdnn::Padding::Param::PaddingMode::REPLICATE) {
+        attr_map["padding_mode"] = CCAttr("REPLICATE");
+    } else if (param.padding_mode == ::megdnn::Padding::Param::PaddingMode::REFLECT) {
+        attr_map["padding_mode"] = CCAttr("REFLECT");
+    }
+    FILL_MAP(attr_map, param, padding_val);
+    attr_map["front_offsets:0"] = param.front_offset_dim0;
+    attr_map["front_offsets:1"] = param.front_offset_dim1;
+    attr_map["front_offsets:2"] = param.front_offset_dim2;
+    attr_map["front_offsets:3"] = param.front_offset_dim3;
+    attr_map["front_offsets:4"] = param.front_offset_dim4;
+    attr_map["front_offsets:5"] = param.front_offset_dim5;
+    attr_map["front_offsets:6"] = param.front_offset_dim6;
+    attr_map["back_offsets:0"] = param.back_offset_dim0;
+    attr_map["back_offsets:1"] = param.back_offset_dim1;
+    attr_map["back_offsets:2"] = param.back_offset_dim2;
+    attr_map["back_offsets:3"] = param.back_offset_dim3;
+    attr_map["back_offsets:4"] = param.back_offset_dim4;
+    attr_map["back_offsets:5"] = param.back_offset_dim5;
+    attr_map["back_offsets:6"] = param.back_offset_dim6;
+    return KernelGen::KernelPack::GetKernel(KernType::PaddingKernel, arch);
+}
+
+template <>
 KernelGenRet opr_fill_attr<megdnn::CVRoicopy>(
         std::unordered_map<std::string, CCAttr>& attr_map, megdnn::CVRoicopy* opr,
         const TensorNDArray& tensors, KernelGen::Arch arch,

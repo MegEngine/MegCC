@@ -480,6 +480,16 @@ class GaussianBlurParamBase<string accessor> : MgbPackedParamBase<"GaussianBlur"
 
 def GaussianBlurParam : GaussianBlurParamBase<"param">;
 
+def PaddingBorderMode : MgbEnumAttr<"::megdnn::param::Padding", "PaddingMode", ["REPLICATE", "REFLECT", "CONSTANT"], 0>;
+class PaddingParamBase<string accessor> : MgbPackedParamBase<"Padding", accessor> {
+    let fields = (ins
+        MgbDefaultValuedAttr<PaddingBorderMode, "::megdnn::param::Padding::PaddingMode::CONSTANT">:$padding_mode,
+        MgbDefaultValuedAttr<MgbF32Attr, "0.f">:$padding_val
+    );
+}
+
+def PaddingParam : PaddingParamBase<"param">;
+
 def ResizeInterpolationMode : MgbEnumAliasAttr<"::megdnn::param::Resize", "InterpolationMode", WarpPerspectiveV1InterpolationMode>;
 def ResizeFormat : MgbEnumAliasAttr<"::megdnn::param::Resize", "Format", ConvolutionFormat>;
 class ResizeParamBase<string accessor> : MgbPackedParamBase<"Resize", accessor> {

@@ -453,6 +453,7 @@ DEF_CCOPRPROXY(megdnn::Argsort);
 DEF_CCOPRPROXY(megdnn::ConcatForward);
 DEF_CCOPRPROXY(megdnn::ArgmaxForward);
 DEF_CCOPRPROXY(megdnn::GaussianBlurForward);
+DEF_CCOPRPROXY(megdnn::PaddingForward);
 
 #undef DEF_CCOPRPROXY
 

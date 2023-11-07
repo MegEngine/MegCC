@@ -19,6 +19,7 @@
 #include "IndexingOneHot.h"
 #include "MatrixInv.h"
 #include "MatrixMul.h"
+#include "Padding.h"
 #include "Pooling.h"
 #include "PowC.h"
 #include "Reduce.h"
@@ -96,6 +97,8 @@ struct AllBareKernel {
                 std::make_shared<BareMetal::GaussianBlurKernel>()};
         inner_map[KernelPack::KernType::GaussianBlurKernel] = {
                 std::make_shared<BareMetal::GaussianBlurKernel>()};
+        inner_map[KernelPack::KernType::PaddingKernel] = {
+                std::make_shared<BareMetal::PaddingKernel>()};
     }
 
     std::unordered_map<KernelPack::KernType, std::vector<std::shared_ptr<KernelFunc>>>

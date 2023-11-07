@@ -176,6 +176,18 @@ def GaussianBlurKernel: AbstractKernelBase<"GaussianBlur"> {
     );
 }
 
+def PaddingKernel: AbstractKernelBase<"Padding"> {
+    let arguments = (ins
+        StrAttr:$padding_mode,
+        F32Attr:$padding_val,
+        ArrayAttr:$front_offsets,
+        ArrayAttr:$back_offsets,
+
+        Arg<AnyMemRef, "", [MemRead]>:$input,
+        Arg<AnyMemRef, "", [MemWrite]>:$output
+    );
+}
+
 def IndexingMultiAxisVecKernel: AbstractKernelBase<"IndexingMultiAxisVec"> {
     let arguments = (ins
         ArrayAttr:$axis,

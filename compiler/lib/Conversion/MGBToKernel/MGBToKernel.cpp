@@ -572,6 +572,7 @@ void populateMGBToKernelConversionPatterns(
             GenericConverter<MGB::WarpAffine, Kernel::WarpAffineKernel>,
             GenericConverter<MGB::Resize, Kernel::ResizeKernel>,
             GenericConverter<MGB::GaussianBlur, Kernel::GaussianBlurKernel>,
+            GenericConverter<MGB::Padding, Kernel::PaddingKernel>,
             GenericConverter<MGB::MatrixInverse, Kernel::MatrixInvKernel>,
 
             GenericConverter<MGB::GetVarShape, Kernel::GetVarShapeIns>,
