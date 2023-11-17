@@ -16,7 +16,6 @@ if [ "$LLVM_DIR" == "" ];then
     pushd llvm-project >/dev/null
     git checkout a2361eb28160dc747b4f5a321faefb9c4cc15ba1
     git am ${SRC_DIR}/0001-feat-add-scale-to-int.patch
-    git am ${SRC_DIR}/0001-fix-mlir-buildintype-fix-float16-invalid-for-arrayre.patch
     popd >/dev/null
 fi
 git submodule update -f --init MegEngine
