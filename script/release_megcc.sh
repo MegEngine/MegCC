@@ -56,7 +56,7 @@ popd > /dev/null
 
 pushd ${OUT_DIR}/build_host
     cmake ${COMPILER_PATH} -G Ninja
-    ninja
+    ninja mgb-to-tinynn mgb-runner mgb-importer kernel_exporter megcc-opt
     cp tools/mgb-to-tinynn/mgb-to-tinynn ${OUT_DIR}/bin/
     cp tools/mgb-runner/mgb-runner ${OUT_DIR}/bin/
     cp tools/mgb-importer/mgb-importer ${OUT_DIR}/bin/
