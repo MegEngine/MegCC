@@ -3,6 +3,7 @@
 #include "BatchedMatmul/BatchedMatmul.h"
 #include "ConvKernel.h"
 #include "Elemwise/Elemwise.h"
+#include "Elemwise/ElemwiseMultiType.h"
 #include "InternalKernel/InternalKernel.h"
 #include "KernelPack.h"
 #include "MatMulKernel/MatMul.h"
@@ -43,6 +44,9 @@ struct AllA64Kernel {
 
         inner_map[KernelPack::KernType::ElemwiseKernel] = {
                 std::make_shared<Arm64::ElemwiseKernel>()};
+
+        inner_map[KernelPack::KernType::ElemwiseMultiKernel] = {
+                std::make_shared<Arm64::ElemwiseMultiTypeKernel>()};
 
         inner_map[KernelPack::KernType::BatchMatmulKernel] = {
                 std::make_shared<Arm64::Fp32BatchedMatmul>()};
