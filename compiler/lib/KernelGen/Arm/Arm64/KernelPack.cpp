@@ -20,6 +20,7 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::WinogradFloatF23Nchw44>(),
                 std::make_shared<Arm64::ConvIm2colFloat>(),
                 std::make_shared<Arm64::Conv1x1DotMk4>(),
+                std::make_shared<Arm64::Int8Conv1x1NCHW44>(),
                 std::make_shared<Arm64::ConvIm2colDot>(),
                 std::make_shared<Arm64::ConvDotNCHWNCHW44Stride2>(),
                 std::make_shared<Arm64::ConvDotNCHWNCHW44Stride1>()};

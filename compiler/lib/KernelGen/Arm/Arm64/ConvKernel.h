@@ -57,6 +57,29 @@ private:
     MatmulInt8DotM8N12MK4Kernel m_inner_gemm;
 };
 
+class Int8Conv1x1NCHW44 : public Arm64ConvImpl {
+public:
+    std::string GetKernelSymbol(TContext* context) const override;
+    bool IsAvailable(TContext* context) const override;
+    //! kernel gen
+    std::string GetKernelBody(TContext* context) const override;
+    //! init gen
+    std::string GetInitBody(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, true);
+    }
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+
+private:
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+    bool need_temp_dst(TContext* ctx) const;
+    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+    MatmulInt8M4N4K16MK4Kernel m_inner_gemm;
+};
+
 class ConvBiasIm2colI8mmNCHW44 : public Arm64ConvImpl {
 public:
     std::string GetKernelSymbol(TContext* context) const override;

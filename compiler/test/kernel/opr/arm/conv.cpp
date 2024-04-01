@@ -23,6 +23,55 @@ TEST(AARCH64, Conv1x1NCHW44) {
     checker.set_param(param);
     checker.execs({{2, 6, 17, 19, 4}, {2, 4, 3, 1, 1, 4, 4}, {}});
 }
+
+TEST(AARCH64, ConvBias1x1Int8NCHW44) {
+    Checker<ConvBiasForward> checker(Arch::ARM64);
+    UniformIntRNG rng(-127, 127);
+    checker.set_rng(0, &rng);
+    checker.set_rng(1, &rng);
+    checker.set_rng(2, &rng);
+    checker.set_kernel_symbol("Arm64_kernel_conv2d_conv1x1_.+");
+
+    checker.set_dtype(0, dtype::QuantizedS8(2.5f))
+            .set_dtype(1, dtype::QuantizedS8(2.5f))
+            .set_dtype(2, dtype::QuantizedS32(6.25f))
+            .set_dtype(4, dtype::QuantizedS8(40.25f));
+
+    ConvBiasForward::Param param;
+    param.pad_h = 0;
+    param.pad_w = 0;
+    param.stride_h = 1;
+    param.stride_w = 1;
+    param.compute_mode = ConvolutionForward::Param::ComputeMode::DEFAULT;
+    param.format = ConvolutionForward::Param::Format::NCHW44;
+
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
+        printf("mode=%s\n",
+               mgb::reflection::nameOfEnumValue<ConvBiasForward::Param::NonlineMode>(
+                       noline)
+                       .c_str());
+        checker.set_param(param);
+        for (size_t ic : {3, 4, 5, 17}) {
+            for (size_t ohw = 7; ohw < 27; ++ohw) {
+                checker.execs(
+                        {{2, ic, 1, ohw, 4},
+                         {5, ic, 1, 1, 4, 4},
+                         {1, 5, 1, 1, 4},
+                         {},
+                         {}});
+            }
+        }
+    }
+
+    checker.set_param(param);
+
+    checker.execs({{2, 33, 1, 23, 4}, {5, 33, 1, 1, 4, 4}, {1, 5, 1, 1, 4}, {}, {}});
+}
+
 #if !MEGCC_WITHOUT_DOT
 TEST(AARCH64, ConvBias1x1NCHW44Dot) {
     Checker<ConvBiasForward> checker(Arch::ARM64);
