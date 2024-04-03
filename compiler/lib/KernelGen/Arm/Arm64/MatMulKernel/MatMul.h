@@ -61,6 +61,25 @@ private:
     std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
 };
 
+class Int8MK4MatMulM4N4K16 : public Arm64KernelFunc {
+public:
+    bool IsAvailable(TContext* context) const override;
+    std::string GetKernelSymbol(TContext* context) const override;
+    std::string GetKernelBody(TContext* context) const override;
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* context) const override;
+    std::string GetWorkspaceBody(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, false);
+    }
+    std::string GetWorkspaceBodyAndJitExec(TContext* ctx) const override {
+        return GetWorkspaceBodyCondition(ctx, true);
+    }
+
+private:
+    std::string GetWorkspaceBodyCondition(TContext* ctx, bool jit) const;
+    std::shared_ptr<TContext> GetInnerCtx(TContext* ctx) const;
+    MatmulInt8M4N4K16MK4Kernel m_inner_matmul;
+};
+
 class Int8I8mmMatMulM8N12K8MK4 : public Arm64KernelFunc {
 public:
     bool IsAvailable(TContext* context) const override;

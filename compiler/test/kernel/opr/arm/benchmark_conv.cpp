@@ -113,6 +113,15 @@ TEST(AARCH64, BenchmarkConv1x1NCHW4Dot) {
             ConvBiasForward::Param ::NonlineMode::RELU);
 }
 
+TEST(AARCH64, BenchmarkConv1x1NCHW44Int8) {
+    std::string cc_algo = "Arm64_kernel_conv2d_conv1x1_.*";
+    std::string dnn_algo = "";
+    run_conv(
+            1, 120, 120, 96, 1, 1, 0, cc_algo, dnn_algo,
+            ConvBiasForward::Param::Format::NCHW44, true,
+            ConvBiasForward::Param ::NonlineMode::RELU);
+}
+
 TEST(AARCH64, BenchmarkConvDotNCHWNCHW44Stride1) {
     Benchmarker<ConvBiasForward> benchmarker(Arch::ARM64);
     ConvBiasForward::Param param;

@@ -33,7 +33,8 @@ struct AllA64Kernel {
                 std::make_shared<Arm64::Fp32MatMulM8N12>(),
                 std::make_shared<Arm64::Fp32MatMulM8N12K4>(),
                 std::make_shared<Arm64::Fp32MatMulM4N16K4>(),
-                std::make_shared<Arm64::Int8DotMatMulM8N12K4>()};
+                std::make_shared<Arm64::Int8DotMatMulM8N12K4>(),
+                std::make_shared<Arm64::Int8MK4MatMulM4N4K16>()};
         inner_i8mm_map[KernelPack::KernType::MatrixMulKernel] = {
                 std::make_shared<Arm64::Int8I8mmMatMulM8N12K8MK4>()};
 
