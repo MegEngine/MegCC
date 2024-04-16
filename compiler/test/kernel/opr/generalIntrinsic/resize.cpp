@@ -16,4 +16,15 @@ TEST(GI, Resize) {
     checker.execs({{1, 1, 5, 6}, {1, 1, 7, 13}});
     checker.execs({{1, 4, 5, 6}, {1, 4, 9, 12}});
     checker.execs({{2, 3, 15, 16}, {2, 3, 9, 12}});
+#ifdef ENABLE_KERNEL_FP16
+    param.format = megdnn::ResizeForward::Param::Format::NCHW88;
+    checker.set_param(param);
+    checker.set_dtype(0, dtype::Float16());
+    checker.set_dtype(1, dtype::Float16());
+    checker.set_epsilon(5e-2);
+    checker.execs({{1, 1, 5, 6, 8}, {1, 1, 7, 13, 8}});
+    checker.execs({{1, 4, 5, 6, 8}, {1, 4, 9, 12, 8}});
+    checker.execs({{2, 3, 15, 16, 8}, {2, 3, 9, 12, 8}});
+    checker.execs({{2, 3, 1, 1, 8}, {2, 3, 9, 12, 8}});
+#endif
 }

@@ -12,11 +12,14 @@ using namespace GeneralIntrinsic;
 
 bool ResizeKernel::IsAvailable(TContext* context) const {
     auto src_dtype = context->getAttrOprand("operand:0").dtype;
-    bool dtype_ok = src_dtype == "f32";
+    bool dtype_ok_f32 = src_dtype == "f32";
+    bool dtype_ok_f16 = src_dtype == "f16";
     bool mode_ok = context->getAttrStr("imode") == "LINEAR";
-    bool format_ok = context->getAttrStr("format") == "NCHW" ||
-                     context->getAttrStr("format") == "NCHW44";
-    return dtype_ok && mode_ok && format_ok;
+    bool format_ok_f32 = context->getAttrStr("format") == "NCHW" ||
+                         context->getAttrStr("format") == "NCHW44";
+    bool format_ok_f16 = context->getAttrStr("format") == "NCHW88";
+    return mode_ok &&
+           ((dtype_ok_f32 && format_ok_f32) || (dtype_ok_f16 && format_ok_f16));
 }
 //! kernel gen
 std::string ResizeKernel::GetKernelSymbol(TContext* context) const {
@@ -38,6 +41,11 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
         #include <math.h>
         #include <stdalign.h>
     )";
+    if (specifier == "gi_float16_t") {
+        ss << R"(
+            #include "gi_float16.h"
+        )";
+    }
     auto coord_str = ResizeHelper::GenCoordHelper(imode, specifier);
     auto gen_layout_dims = ResizeHelper::GenLayoutDims(fmt);
     auto get_offset = ResizeHelper::GenGetOffset(fmt);
@@ -70,7 +78,7 @@ std::string ResizeKernel::GetKernelBody(TContext* context) const {
         ${normal_impl}
         return TinyNN_SUCCESS;
     })";
-    auto normal_impl = ResizeHelper::GenNormImpl(fmt);
+    auto normal_impl = ResizeHelper::GenNormImpl(fmt, specifier);
     ss << StringTemplate::StringTemplateArgs()
                     .add("specifier", specifier)
                     .add("normal_impl", normal_impl)
