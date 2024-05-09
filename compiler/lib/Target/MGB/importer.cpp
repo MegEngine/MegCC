@@ -639,24 +639,12 @@ private:
         } else if (auto conv = opr->try_cast_final<opr::ConvBiasForward>()) {
             auto&& p = conv->param();
             auto&& out = opr->output(0);
-            if (opr->input().size() == 2) {
-                CC_ASSERT(
-                        !is_dynamic_value(m_var2value.at(opr->input(0))) &&
-                        !is_dynamic_value(m_var2value.at(opr->input(1))));
-                mlir::Value value = m_builder.create<mlir::MGB::Convolution>(
-                        m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                        m_var2value.at(opr->input(0)), m_var2value.at(opr->input(1)),
-                        p.mode, p.pad_h, p.pad_w, p.stride_h, p.stride_w, p.dilate_h,
-                        p.dilate_w, p.sparse, p.format, p.compute_mode);
-                m_var2value.emplace(out, value);
-            } else {
-                mlir::Value value = m_builder.create<mlir::MGB::ConvBias>(
-                        m_builder.getUnknownLoc(), var_to_shaped_type(out),
-                        var_array_to_value_array(opr->input(), true), p.nonlineMode,
-                        p.mode, p.sparse, p.format, p.pad_h, p.pad_w, p.stride_h,
-                        p.stride_w, p.dilate_h, p.dilate_w, p.compute_mode);
-                m_var2value.emplace(out, value);
-            }
+            mlir::Value value = m_builder.create<mlir::MGB::ConvBias>(
+                    m_builder.getUnknownLoc(), var_to_shaped_type(out),
+                    var_array_to_value_array(opr->input(), true), p.nonlineMode, p.mode,
+                    p.sparse, p.format, p.pad_h, p.pad_w, p.stride_h, p.stride_w,
+                    p.dilate_h, p.dilate_w, p.compute_mode);
+            m_var2value.emplace(out, value);
         } else if (auto resize_opr = opr->try_cast_final<opr::ResizeForward>()) {
             auto&& p = resize_opr->param();
             auto&& out = opr->output(0);

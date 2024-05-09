@@ -248,10 +248,12 @@ public:
                 return failure();
             operand_segment_sizes = {1, 1, 0, 0, 1};
         } else if (isa<MGB::ConvBias>(op)) {
-            // FIXME: only conv_bias(input, weight, bias) is supported now
-            if (operands.size() != 3)
+            if (operands.size() == 3)
+                operand_segment_sizes = {1, 1, 1, 0, 1};
+            else if (operands.size() == 2)
+                operand_segment_sizes = {1, 1, 0, 0, 1};
+            else
                 return failure();
-            operand_segment_sizes = {1, 1, 1, 0, 1};
         } else if (isa<MGB::ConvolutionBackwardData>(op)) {
             if (operands.size() != 2)
                 return failure();
