@@ -19,6 +19,21 @@ public:
         }
         return false;
     }
+    static bool is_elemwise_bias(TContext* ctx) {
+        if (is_bias(ctx)) {
+            CCOperand bias = ctx->getAttrOprand("operand:2");
+            CCOperand dst = Utils::get_last_operand(ctx);
+            if (bias.shape.size() != dst.shape.size())
+                return false;
+            size_t len = bias.shape.size();
+            for (size_t i = 0; i < len; ++i) {
+                if (bias.shape[i] != dst.shape[i])
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
     static bool is_no_pad(TContext* ctx) {
         auto pad_h = ctx->getAttrInt("pad_h");
         auto pad_w = ctx->getAttrInt("pad_w");

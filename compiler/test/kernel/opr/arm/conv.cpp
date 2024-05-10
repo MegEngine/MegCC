@@ -333,7 +333,10 @@ TEST(AARCH64, ConvBias1x1NCHW44) {
           ConvBiasForward::Param::NonlineMode::H_SWISH}) {
         param.nonlineMode = noline;
         checker.set_param(param);
+        checker.execs({{1, 3, 1, 1, 4}, {5, 3, 1, 1, 4, 4}, {1, 5, 1, 1, 4}, {}, {}});
         checker.execs({{2, 3, 5, 11, 4}, {5, 3, 1, 1, 4, 4}, {1, 5, 1, 1, 4}, {}, {}});
+        checker.execs({{2, 3, 5, 11, 4}, {5, 3, 1, 1, 4, 4}, {2, 5, 5, 11, 4}, {}, {}});
+        checker.execs({{2, 3, 5, 11, 4}, {5, 3, 1, 1, 4, 4}, {}, {}, {}});
     }
 
     param.sparse = ConvolutionForward::Param::Sparse::GROUP;
@@ -345,6 +348,8 @@ TEST(AARCH64, ConvBias1x1NCHW44) {
         checker.set_param(param);
         checker.execs(
                 {{2, 6, 17, 19, 4}, {2, 4, 3, 1, 1, 4, 4}, {1, 8, 1, 1, 4}, {}, {}});
+        checker.execs(
+                {{2, 6, 17, 19, 4}, {2, 4, 3, 1, 1, 4, 4}, {2, 8, 17, 19, 4}, {}, {}});
     }
 }
 

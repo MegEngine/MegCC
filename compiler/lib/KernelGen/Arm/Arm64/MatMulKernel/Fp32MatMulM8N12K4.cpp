@@ -10,7 +10,7 @@ using namespace Arm64;
 std::shared_ptr<TContext> Fp32MatMulM8N12K4::GetInnerCtx(TContext* ctx) const {
     auto inner_ctx = std::make_shared<CodeGenContext>();
     inner_ctx->setAttr("format", "MK4");
-    inner_ctx->setAttr("with_bias", false);
+    inner_ctx->setAttr("bias_mode", "NO_BIAS");
     inner_ctx->setAttr("transposeA", false);
     inner_ctx->setAttr("transposeB", false);
     inner_ctx->setAttr("dtype", "f32");

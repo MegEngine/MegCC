@@ -76,7 +76,6 @@ static std::string kern_8x12(TContext* ctx) {
     auto nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
-    bool with_bias = ctx->getAttrBool("with_bias");
 
     std::stringstream writer;
     //! kern_8x12
@@ -115,15 +114,17 @@ static std::string kern_8x12(TContext* ctx) {
         const float* b_ptr = packB;
         float* output0 = output;
         float* output1 = output0 + LDC;
+        const float* bias_ptr0 = bias_ptr;
+        const float* bias_ptr1 = bias_ptr0 + LDC;
 
         int oddk = (K & 1);
         K = ((K + 1) / 2) - 1;
 
         asm volatile()";
     //! if convolution with bias
-    if (with_bias) {
+    if (ctx->getAttrStr("bias_mode") == "CHANNEL_BROADCAST_BIAS") {
         writer << R"(
-            "ld1 {v6.4s}, [%[bias_ptr]], #16\n"
+            "ld1 {v6.4s}, [%[bias_ptr0]], #16\n"
             "mov    v8.16b, v6.16b             \n"
             "mov    v9.16b, v6.16b             \n"
             "mov    v10.16b, v6.16b            \n"
@@ -136,7 +137,7 @@ static std::string kern_8x12(TContext* ctx) {
             "mov    v15.16b, v6.16b            \n"
             "ld1 {v2.4s}, [%[b_ptr]], #16\n"
             "mov    v16.16b, v6.16b            \n"
-            "ld1 {v7.4s}, [%[bias_ptr]], #16\n"
+            "ld1 {v7.4s}, [%[bias_ptr0]], #16\n"
             "mov    v17.16b, v6.16b            \n"
             "mov    v18.16b, v6.16b            \n"
             "mov    v19.16b, v6.16b            \n"
@@ -156,7 +157,38 @@ static std::string kern_8x12(TContext* ctx) {
             "mov    v30.16b, v7.16b            \n"
             "mov    v31.16b, v7.16b            \n")";
 
-        //! if convolution without bias
+    } else if (ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS") {
+        writer << R"(
+            "ld1 {v8.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v9.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v10.4s}, [%[bias_ptr0]], #16\n"
+            "prfm pstl1keep, [%[output0]]\n"
+            "ld1 {v11.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v12.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v13.4s}, [%[bias_ptr0]], #16\n"
+            "prfm pstl1keep, [%[output1]]\n"
+            "ld1 {v14.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v15.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v2.4s}, [%[b_ptr]], #16\n"
+            "ld1 {v16.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v17.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v18.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v19.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v20.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v3.4s}, [%[b_ptr]], #16\n"
+            "ld1 {v21.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v22.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v23.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v4.4s}, [%[b_ptr]], #16\n"
+            "ld1 {v24.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v25.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v26.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v27.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v28.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v0.4s}, [%[a_ptr]], #16\n"
+            "ld1 {v29.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v30.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v31.4s}, [%[bias_ptr1]], #16\n")";
     } else {
         writer << R"(
             "eor  v8.16b, v8.16b, v8.16b     \n"
@@ -438,7 +470,7 @@ static std::string kern_8x12(TContext* ctx) {
 
             "6:\n"
             : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
-              [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
+              [ bias_ptr0 ] "+r"(bias_ptr0), [ bias_ptr1 ] "+r"(bias_ptr1), [ oddk ] "+r"(oddk),
               [ output0 ] "+r"(output0), [ output1 ] "+r"(output1)
             :
             : "v0", "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10",
@@ -459,7 +491,6 @@ static std::string kern_4x12(TContext* ctx) {
     auto nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
-    bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
     writer << R"(static inline void kern_4x12_bias_relu(const float* packA, const float* packB, int K,
                           float* output, int LDC, const float* bias_ptr) {
@@ -473,7 +504,7 @@ static std::string kern_4x12(TContext* ctx) {
 
         asm volatile()";
     //! if convolution with bias
-    if (with_bias) {
+    if (ctx->getAttrStr("bias_mode") == "CHANNEL_BROADCAST_BIAS") {
         writer << R"(
                 "ld1 {v6.4s}, [%[bias_ptr]], #16\n"
                 "mov    v8.16b, v6.16b             \n"
@@ -491,6 +522,24 @@ static std::string kern_4x12(TContext* ctx) {
                 "ld1 {v0.4s}, [%[a_ptr]], #16\n"
                 "mov    v18.16b, v6.16b            \n"
                 "mov    v19.16b, v6.16b            \n"
+        )";
+    } else if (ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS") {
+        writer << R"(
+                "ld1 {v8.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v9.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v10.4s}, [%[bias_ptr]], #16\n"
+                "prfm pstl1keep, [%[output0]]\n"
+                "ld1 {v11.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v12.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v13.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v2.4s, v3.4s, v4.4s}, [%[b_ptr]], #48\n"
+                "ld1 {v14.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v15.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v16.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v17.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v0.4s}, [%[a_ptr]], #16\n"
+                "ld1 {v18.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v19.4s}, [%[bias_ptr]], #16\n"
         )";
     } else {
         //! if convolution without bias
@@ -639,7 +688,6 @@ static std::string kern_8x4(TContext* ctx) {
     auto nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
-    bool with_bias = ctx->getAttrBool("with_bias");
 
     std::stringstream writer;
     //! kern_8x4
@@ -677,6 +725,8 @@ static std::string kern_8x4(TContext* ctx) {
             const float* b_ptr = packB;
             float* output0 = output;
             float* output1 = output0 + LDC;
+            const float* bias_ptr0 = bias_ptr;
+            const float* bias_ptr1 = bias_ptr0 + LDC;
 
             int oddk = (K & 1);
             K = ((K + 1) / 2) - 1;
@@ -707,10 +757,10 @@ static std::string kern_8x4(TContext* ctx) {
             //clang-format on
 
             asm volatile()";
-    if (with_bias) {
+    if (ctx->getAttrStr("bias_mode") == "CHANNEL_BROADCAST_BIAS") {
         writer << R"(
-            "ld1 {v30.4s}, [%[bias_ptr]], #16\n"
-            "ld1 {v31.4s}, [%[bias_ptr]], #16\n"
+            "ld1 {v30.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v31.4s}, [%[bias_ptr0]], #16\n"
             "mov v8.16b, v30.16b            \n"
             "mov v9.16b, v30.16b            \n"
             "ld1 {v0.4s}, [%[a_ptr]], #16\n"
@@ -723,6 +773,20 @@ static std::string kern_8x4(TContext* ctx) {
             "mov v14.16b, v31.16b            \n"
             "ld1 {v2.4s}, [%[b_ptr]], #16\n"
             "mov v15.16b, v31.16b            \n")";
+    } else if (ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS") {
+        writer << R"(
+            "ld1 {v8.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v9.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v0.4s}, [%[a_ptr]], #16\n"
+            "ld1 {v10.4s}, [%[bias_ptr0]], #16\n"
+            "prfm pstl1keep, [%[output0]]\n"
+            "ld1 {v11.4s}, [%[bias_ptr0]], #16\n"
+            "ld1 {v12.4s}, [%[bias_ptr1]], #16\n"
+            "prfm pstl1keep, [%[output1]]\n"
+            "ld1 {v13.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v14.4s}, [%[bias_ptr1]], #16\n"
+            "ld1 {v2.4s}, [%[b_ptr]], #16\n"
+            "ld1 {v15.4s}, [%[bias_ptr1]], #16\n")";
     } else {
         writer << R"(
             "eor    v8.16b, v8.16b, v8.16b   \n"
@@ -818,7 +882,7 @@ static std::string kern_8x4(TContext* ctx) {
             STORE_C
 
             : [ a_ptr ] "+r"(a_ptr), [ b_ptr ] "+r"(b_ptr), [ K ] "+r"(K),
-              [ bias_ptr ] "+r"(bias_ptr), [ oddk ] "+r"(oddk),
+              [ bias_ptr0 ] "+r"(bias_ptr0), [ bias_ptr1 ] "+r"(bias_ptr1), [ oddk ] "+r"(oddk),
               [ output0 ] "+r"(output0), [ output1 ] "+r"(output1),
               [ n_remain ] "+r"(n_remain)
             :
@@ -839,7 +903,6 @@ static std::string kern_4x4(TContext* ctx) {
     auto nonline_mode =
             ctx->haveAttr("nonlineMode") ? ctx->getAttrStr("nonlineMode") : "IDENTITY";
     auto activation_gen = create_activation_gener(nonline_mode);
-    bool with_bias = ctx->getAttrBool("with_bias");
     std::stringstream writer;
     //! kern_4x4
     writer << R"(
@@ -898,7 +961,7 @@ static std::string kern_4x4(TContext* ctx) {
                 //clang-format on
 
                 asm volatile(     )";
-    if (with_bias) {
+    if (ctx->getAttrStr("bias_mode") == "CHANNEL_BROADCAST_BIAS") {
         writer << R"(
                 // load accumulator C
                 "ld1 {v30.4s}, [%[bias_ptr]], #16\n"
@@ -908,6 +971,15 @@ static std::string kern_4x4(TContext* ctx) {
                 "ld1 {v0.4s}, [%[a_ptr]], #16\n"
                 "mov v10.16b, v30.16b            \n"
                 "mov v11.16b, v30.16b            \n")";
+    } else if (ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS") {
+        writer << R"(
+                // load accumulator C
+                "ld1 {v8.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v2.4s}, [%[b_ptr]], #16\n"
+                "ld1 {v9.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v0.4s}, [%[a_ptr]], #16\n"
+                "ld1 {v10.4s}, [%[bias_ptr]], #16\n"
+                "ld1 {v11.4s}, [%[bias_ptr]], #16\n")";
     } else {
         writer << R"(
                 "eor  v8.16b, v8.16b, v8.16b     \n"
@@ -1107,6 +1179,21 @@ std::string gen_kernel(
         const std::string& sig, TContext* ctx, const std::string& postprocess_call,
         const std::string& preset_str = "") {
     auto post_process_strs = gen_postprocess_inline(ctx);
+    std::string channel_broadcast_bias_init =
+            ctx->getAttrStr("bias_mode") == "CHANNEL_BROADCAST_BIAS"
+                    ? "_bias_ptr = bias_ptr + m;"
+                    : "";
+    std::string elemwise_bias_init = ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS"
+                                           ? "_bias_ptr = bias_ptr + m * N;"
+                                           : "";
+    std::string elemwise_bias_update_n12 =
+            ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS"
+                    ? "_bias_ptr += n_block * pack_mk;"
+                    : "";
+    std::string elemwise_bias_update_n4 =
+            ctx->getAttrStr("bias_mode") == "ELEMWISE_BIAS"
+                    ? "_bias_ptr += 4 * pack_mk;"
+                    : "";
     std::string keren_body =
             R"(
     ${kernel_sig}{
@@ -1118,46 +1205,54 @@ std::string gen_kernel(
         const int K12 = K * 12;
         const int K8 = K * 8;
         const int K4 = K * 4;
-        size_t m = 0;        
+        size_t m = 0;
+        const float* _bias_ptr = NULL;
         for (; m + m_block <= M; m += m_block) {
             float* output = C + (m / pack_mk * LDC);
+            ${channel_broadcast_bias_init}
+            ${elemwise_bias_init}
 
             size_t n = 0;
             const float* cur_pack_b = pack_b;
             for (; n + n_block <= N; n += n_block) {
                 kern_8x12_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                    bias_ptr);
+                                    _bias_ptr);
                 output += n_block * pack_mk;
+                ${elemwise_bias_update_n12};
                 cur_pack_b += K12;
             }
 
             for (; n < N; n += 4) {                
                 kern_8x4_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                   bias_ptr, N - n > 4 ? 4 : N - n);
+                                   _bias_ptr, N - n > 4 ? 4 : N - n);
                 output += 4 * pack_mk;
+                ${elemwise_bias_update_n4};
                 cur_pack_b += K4;
             }
             pack_a += K8;
-            bias_ptr += m_block;
         }        
         for (; m < M; m += m_block_4) {
             float* output = C + (m / pack_mk * LDC);
+            ${channel_broadcast_bias_init}
+            ${elemwise_bias_init}
+
             size_t n = 0;
             const float* cur_pack_b = pack_b;
             for (; n + n_block - 1 < N; n += n_block) {                
                 kern_4x12_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                    bias_ptr);
+                                    _bias_ptr);
                 output += n_block * pack_mk;
+                ${elemwise_bias_update_n12};
                 cur_pack_b += K12;
             }
             for (; n < N; n += 4) {                
                 kern_4x4_bias_relu(pack_a, cur_pack_b, K, output, LDC,
-                                   bias_ptr, N - n > 4 ? 4 : N - n);
+                                   _bias_ptr, N - n > 4 ? 4 : N - n);
                 output += 4 * pack_mk;
+                ${elemwise_bias_update_n4};
                 cur_pack_b += K4;
             }
             pack_a += K4;
-            bias_ptr += m_block_4;
         }
         ${postprocess_call}
     }
@@ -1166,6 +1261,10 @@ std::string gen_kernel(
             .add("postprocess_call", postprocess_call)
             .add("preset_str", preset_str)
             .add("kernel_sig", sig)
+            .add("channel_broadcast_bias_init", channel_broadcast_bias_init)
+            .add("elemwise_bias_init", elemwise_bias_init)
+            .add("elemwise_bias_update_n12", elemwise_bias_update_n12)
+            .add("elemwise_bias_update_n4", elemwise_bias_update_n4)
             .render(keren_body);
 }
 
@@ -1174,9 +1273,7 @@ std::string gen_kernel(
 std::string MatmulM8N12MK4Kernel::GetKernelSymbol(TContext* ctx) const {
     std::stringstream ss;
     ss << "Arm64_fp32_m8_n12_mk4_matmul";
-    if (ctx->getAttrBool("with_bias")) {
-        ss << "_bias";
-    }
+    ss << "_" << ctx->getAttrStr("bias_mode");
     if (ctx->haveAttr("nonlineMode") && ctx->getAttrStr("nonlineMode") != "IDENTITY") {
         ss << "_" << ctx->getAttrStr("nonlineMode");
     }

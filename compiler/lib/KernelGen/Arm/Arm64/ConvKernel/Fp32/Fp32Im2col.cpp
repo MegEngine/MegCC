@@ -261,6 +261,10 @@ std::shared_ptr<TContext> ConvIm2colFloat::GetInnerCtx(TContext* ctx) const {
         inner_ctx->setAttr("nonlineMode", CCAttr(ctx->getAttrStr("nonlineMode")));
     }
     inner_ctx->setAttr("with_bias", ConvImpl::is_bias(ctx));
+    inner_ctx->setAttr(
+            "bias_mode", ConvImpl::is_channel_broadcast_bias(ctx)
+                                 ? "CHANNEL_BROADCAST_BIAS"
+                                 : "NO_BIAS");
     inner_ctx->setAttr("transposeA", false);
     inner_ctx->setAttr("transposeB", false);
     inner_ctx->setAttr("dtype", "f32");
