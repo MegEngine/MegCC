@@ -186,6 +186,51 @@ public:
     }
 };
 
+template <>
+struct ActivationGenIntrinsic<NonlineMode::SIGMOID>
+        : public ActivationGenIntrinsicBase {
+public:
+    std::string GenIntrinsicInitFloat() const override {
+        std::stringstream writer;
+        writer << "\nfloat32x4_t vones = vdupq_n_f32(1.f);";
+        return writer.str();
+    }
+    std::string GenIntrinsicFloat(
+            const std::string& input, const std::string& output) const override {
+        std::stringstream writer;
+
+        writer << "\n{";
+        writer << "float32x4_t denom = vaddq_f32(vones, exp_ps_f32(vnegq_f32(" << input
+               << ")));\n";
+        writer << output << " = vrecpeq_f32(denom);\n";
+        writer << output << " = vmulq_f32(vrecpsq_f32(denom, " << output << "), "
+               << output << ");\n";
+        writer << "\n}";
+
+        return writer.str();
+    }
+    std::string GenIntrinsicFloatStore(
+            const std::string& input, const std::string& outptr) const override {
+        std::stringstream writer;
+
+        writer << "\n{";
+        writer << "float32x4_t denom = vaddq_f32(vones, exp_ps_f32(vnegq_f32(" << input
+               << ")));\n";
+        writer << "float32x4_t output = vrecpeq_f32(denom);\n";
+        writer << "output = vmulq_f32(vrecpsq_f32(denom, output), output);\n";
+        writer << "vst1q_f32(" << outptr << ", output);\n";
+        writer << "\n}";
+
+        return writer.str();
+    }
+    std::string GenIntrinsicQuantStore(
+            const std::string& input, const std::string& outptr,
+            const std::string& src_scale, const std::string& dst_scale) const override {
+        CC_ASSERT(0) << "Not implement.\n";
+        return "";
+    }
+};
+
 std::shared_ptr<ActivationGenIntrinsicBase> create_activation_gener_instrinsic(
         std::string mode);
 

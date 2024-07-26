@@ -12,6 +12,8 @@ std::shared_ptr<ActivationGenIntrinsicBase> megcc::KernelGen::ArmCommon::
         return std::make_shared<ActivationGenIntrinsic<NonlineMode::RELU>>();
     } else if (mode == "H_SWISH") {
         return std::make_shared<ActivationGenIntrinsic<NonlineMode::H_SWISH>>();
+    } else if (mode == "SIGMOID") {
+        return std::make_shared<ActivationGenIntrinsic<NonlineMode::SIGMOID>>();
     } else {
         CC_ABORT << "UNsupport NonlineMode\n";
         return nullptr;

@@ -1,6 +1,7 @@
 #include <string>
 #include "Arm/ArmCommon/Activation.h"
 #include "Arm/ArmCommon/ConvKernel.h"
+#include "Arm/ArmCommon/InternalKernel.h"
 #include "Utils/StringTemplate.h"
 #include "compiler/KernelGen/KernelGen.h"
 
@@ -335,7 +336,8 @@ bool ChannelWiseFloatMk4::IsAvailable(TContext* ctx) const {
     bool noline_ok = !ctx->haveAttr("nonlineMode") ||
                      ctx->getAttrStr("nonlineMode") == "IDENTITY" ||
                      ctx->getAttrStr("nonlineMode") == "RELU" ||
-                     ctx->getAttrStr("nonlineMode") == "H_SWISH";
+                     ctx->getAttrStr("nonlineMode") == "H_SWISH" ||
+                     ctx->getAttrStr("nonlineMode") == "SIGMOID";
 
     bool type_ok = ctx->getAttrInt("nr_operands") >= 3 &&
                    ctx->getAttrOprand("operand:0").dtype == "f32" &&
@@ -350,6 +352,14 @@ bool ChannelWiseFloatMk4::IsAvailable(TContext* ctx) const {
     bool bias_ok = !is_bias(ctx) || is_channel_broadcast_bias(ctx);
     return param_value_ok && param_mode_ok && type_ok && noline_ok && layout_ok &&
            channel_wise_ok && bias_ok;
+}
+
+std::vector<KernelObj> ChannelWiseFloatMk4::GetDependInternalSymbol(
+        TContext* ctx) const {
+    ExpNeonKernel exp;
+    return {
+            {exp.GetKernelSymbol(ctx), exp.GetKernelBody(ctx),
+             exp.GetBodyGuardBegin(ctx), exp.GetBodyGuardEnd(ctx)}};
 }
 
 std::string ChannelWiseFloatMk4::GetKernelBody(TContext* ctx) const {
@@ -367,6 +377,8 @@ std::string ChannelWiseFloatMk4::GetKernelBody(TContext* ctx) const {
     std::stringstream writer;
     writer << "#include<arm_neon.h>\n";
     writer << "#include<string.h>\n";
+    ExpNeonKernel exp;
+    writer << exp.GetKernelSignature(ctx) << ";\n";
     writer << border_compute.GenWholeFunction();
     writer << "\n\n";
 

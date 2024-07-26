@@ -56,6 +56,7 @@ public:
     std::string GetKernelSubSymbol(TContext* context) const override {
         return "chanwise";
     };
+    std::vector<KernelObj> GetDependInternalSymbol(TContext* ctx) const override;
 };
 class ChannelWiseInt8Nchw44 : public ArmCommonConvImpl {
 public:

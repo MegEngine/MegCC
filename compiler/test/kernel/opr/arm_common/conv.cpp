@@ -66,7 +66,8 @@ TEST(ARMCOMMON, ConvBiasChannelWiseNCHW4K3) {
     for (auto noline :
          {ConvBiasForward::Param::NonlineMode::IDENTITY,
           ConvBiasForward::Param::NonlineMode::RELU,
-          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+          ConvBiasForward::Param::NonlineMode::H_SWISH,
+          ConvBiasForward::Param::NonlineMode::SIGMOID}) {
         for (size_t stride : {1, 2}) {
             param.nonlineMode = noline;
             param.stride_h = stride;
@@ -115,7 +116,8 @@ TEST(ARMCOMMON, ConvBiasChannelWiseNCHW4K5) {
         for (auto noline :
              {ConvBiasForward::Param::NonlineMode::IDENTITY,
               ConvBiasForward::Param::NonlineMode::RELU,
-              ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+              ConvBiasForward::Param::NonlineMode::H_SWISH,
+              ConvBiasForward::Param::NonlineMode::SIGMOID}) {
             param.stride_h = stride;
             param.stride_w = stride;
             param.nonlineMode = noline;
