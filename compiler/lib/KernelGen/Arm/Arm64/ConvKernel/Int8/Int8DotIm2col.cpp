@@ -45,11 +45,11 @@ std::string gen_im2col(TContext* ctx, TContext* inner_ctx) {
         auto sh = ctx->getAttrInt("stride_h");
         auto sw = ctx->getAttrInt("stride_w");
         if (sh == sw && sw == 1) {
-            ss << nchw_im2col_s1_kern;
+            ss << gen_nchw_im2col_s1_kern(inner_ctx);
         } else {
-            ss << nchw_im2col_kern;
+            ss << gen_nchw_im2col_kern(inner_ctx);
         }
-        ss << nchw_pad_src_kern;
+        ss << gen_nchw_pad_src_kern(inner_ctx);
     }
     return ss.str();
 }
@@ -89,8 +89,8 @@ bool ConvIm2colDot::IsAvailable(TContext* ctx) const {
     std::string dst_oprands = std::string("operand:") + std::to_string(nr_operands - 1);
     bool param_value_ok =
             ctx->getAttrUInt("dilate_h") == 1 && ctx->getAttrUInt("dilate_w") == 1;
-    bool param_mode_ok =
-            (fmt == "NCHW44_DOT") && ctx->getAttrStr("mode") == "CROSS_CORRELATION";
+    bool param_mode_ok = (fmt == "NCHW44_DOT" || fmt == "NCHW") &&
+                         ctx->getAttrStr("mode") == "CROSS_CORRELATION";
     bool noline_ok = !ctx->haveAttr("nonlineMode") ||
                      ctx->getAttrStr("nonlineMode") == "IDENTITY" ||
                      ctx->getAttrStr("nonlineMode") == "RELU" ||
@@ -174,7 +174,7 @@ std::string ConvIm2colDot::GetInitBody(TContext* ctx) const {
 
 MatmulInternal* ConvIm2colDot::GetInnerCtxMatmul(TContext* ctx) const {
     static MatmulInt8DotM8N12MK4Kernel inner_mk4_gemm;
-    static MatmulM8N12Kernel inner_gemm;
+    static MatmulInt8M8N12K4Kernel inner_gemm;
     auto fmt = ctx->getAttrStr("format");
     if (fmt == "NCHW44_DOT") {
         return &inner_mk4_gemm;
@@ -214,12 +214,10 @@ std::string ConvIm2colDot::GetWorkspaceBodyCondition(TContext* ctx, bool jit) co
         const uint32_t iw = in_layout.dims[3];
         const Layout weight_layout = inputs[1]->layout;
         uint32_t group = 1;
-        uint32_t oc = weight_layout.dims[0] * 4;
         uint32_t fh = weight_layout.dims[2];
         uint32_t fw = weight_layout.dims[3];
         if (weight_layout.nr_dim == ${group_weight_dim}) {
             group = weight_layout.dims[0];
-            oc = weight_layout.dims[1] * 4;
             fh = weight_layout.dims[3];
             fw = weight_layout.dims[4];
         }

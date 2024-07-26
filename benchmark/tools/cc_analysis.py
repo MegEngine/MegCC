@@ -79,10 +79,10 @@ def main(passed_args=None):
                 kernel_rate.append(v[1] * 100)
 
             topK = 10
-            kernel_name = kernel_name[0:topK]
-            kernel_rate = kernel_rate[0:topK]
+            kernel_name_topk = kernel_name[0:topK]
+            kernel_rate_topk = kernel_rate[0:topK]
             br1 = np.arange(len(kernel_name))
-            for i, j in zip(kernel_name, kernel_rate):
+            for i, j in zip(kernel_name_topk, kernel_rate_topk):
                 print("{} {}%".format(i, j))
             if not args.no_figure:
                 plt.figure(figsize=(25, 6))

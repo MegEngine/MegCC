@@ -468,6 +468,7 @@ TEST(AARCH64, ConvBiasIm2colDot) {
     param.compute_mode = ConvBiasForward::Param::ComputeMode::DEFAULT;
     param.nonlineMode = ConvBiasForward::Param::NonlineMode::H_SWISH;
 
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
     for (auto noline :
          {ConvBiasForward::Param::NonlineMode::RELU,
           ConvBiasForward::Param::NonlineMode::IDENTITY,
@@ -500,10 +501,12 @@ TEST(AARCH64, ConvBiasIm2colDot) {
         checker.set_param(param);
         checker.execs({{1, 2, 22, 33, 4}, {2, 2, 3, 3, 4, 4}, {1, 2, 1, 1, 4}, {}, {}});
     }
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
     for (auto noline :
          {ConvBiasForward::Param::NonlineMode::RELU,
           ConvBiasForward::Param::NonlineMode::IDENTITY,
-          ConvBiasForward::Param::NonlineMode::H_SWISH})
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
         for (size_t n : {1, 3})
             for (size_t group : {3, 7})
                 for (size_t ocpg : {4, 8, 20})
@@ -511,9 +514,6 @@ TEST(AARCH64, ConvBiasIm2colDot) {
                         for (size_t stride : {1, 2})
                             for (size_t filter_size : {3})
                                 for (size_t hw : {22, 33}) {
-                                    param.nonlineMode = noline;
-                                    param.sparse =
-                                            ConvBiasForward::Param::Sparse::GROUP;
                                     param.pad_h = filter_size / 2;
                                     param.pad_w = filter_size / 2;
                                     param.stride_h = stride;
@@ -527,6 +527,59 @@ TEST(AARCH64, ConvBiasIm2colDot) {
                                              {},
                                              {}});
                                 }
+    }
+    param.format = ConvBiasForward::Param::Format::NCHW;
+    param.sparse = ConvBiasForward::Param::Sparse::DENSE;
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::H_SWISH})
+        for (size_t n : {1, 3})
+            for (size_t oc : {3, 7, 21})
+                for (size_t ic : {4, 21})
+                    for (size_t stride : {1, 2, 3})
+                        for (size_t filter_size : {2, 3, 5})
+                            for (size_t hw : {7, 13, 23}) {
+                                param.nonlineMode = noline;
+                                param.pad_h = filter_size / 2;
+                                param.pad_w = filter_size / 2;
+                                param.stride_h = stride;
+                                param.stride_w = stride;
+                                checker.set_param(param);
+                                checker.execs(
+                                        {{n, ic, hw, hw},
+                                         {oc, ic, filter_size, filter_size},
+                                         {1, oc, 1, 1},
+                                         {},
+                                         {}});
+                            }
+    param.sparse = ConvBiasForward::Param::Sparse::GROUP;
+    for (auto noline :
+         {ConvBiasForward::Param::NonlineMode::RELU,
+          ConvBiasForward::Param::NonlineMode::IDENTITY,
+          ConvBiasForward::Param::NonlineMode::H_SWISH}) {
+        param.nonlineMode = noline;
+        for (size_t n : {1, 3})
+            for (size_t group : {3, 7})
+                for (size_t ocpg : {3, 7, 21})
+                    for (size_t icpg : {4, 9})
+                        for (size_t stride : {1, 2})
+                            for (size_t filter_size : {3})
+                                for (size_t hw : {22, 33}) {
+                                    param.pad_h = filter_size / 2;
+                                    param.pad_w = filter_size / 2;
+                                    param.stride_h = stride;
+                                    param.stride_w = stride;
+                                    checker.set_param(param);
+                                    checker.execs(
+                                            {{n, group * icpg, hw, hw},
+                                             {group, ocpg, icpg, filter_size,
+                                              filter_size},
+                                             {1, group * ocpg, 1, 1},
+                                             {},
+                                             {}});
+                                }
+    }
 }
 #endif
 

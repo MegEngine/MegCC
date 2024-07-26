@@ -66,6 +66,19 @@ public:
     std::string GetPackBWorkspaceBody(TContext*) const override;
 };
 
+class MatmulInt8M8N12K4Kernel : public Arm64MatmulInternal {
+public:
+    std::string GetKernelSymbol(TContext*) const override;
+
+    std::string GetKernelBody(TContext*) const override;
+
+    std::vector<KernelObj> GetDependInternalSymbol(TContext*) const override;
+    bool need_post_process(TContext*) const override;
+
+    std::string GetPackAWorkspaceBody(TContext*) const override;
+    std::string GetPackBWorkspaceBody(TContext*) const override;
+};
+
 class MatmulInt8I8mmM8K8N12MK4Kernel : public Arm64MatmulInternal {
 public:
     std::string GetKernelSymbol(TContext*) const override;

@@ -91,14 +91,16 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
             CC_ASSERT(args_reg.size() >= 1);
             reg_0 = args_reg[0];
         } else if (mode == "H_SWISH") {
-            CC_ASSERT(int_regs.size() == 2) << "you need to impl int_reg == 1";
-            CC_ASSERT(args_reg.size() >= 6);
+            CC_ASSERT(
+                    (int_regs.size() == 2 && args_reg.size() >= 6) ||
+                    (int_regs.size() == 1 && args_reg.size() >= 5));
             reg_0 = args_reg[0];
             reg_3 = args_reg[1];
             reg_6 = args_reg[2];
             reg_6_inv = args_reg[3];
             reg_t0 = args_reg[4];
-            reg_t1 = args_reg[5];
+            if (int_regs.size() == 2)
+                reg_t1 = args_reg[5];
         }
         std::stringstream temp_ss;
         temp_ss << R"(
@@ -117,20 +119,30 @@ std::string ActivationGenAsmBase::GenAsmQuantStore(
                     "fmax  ${int_reg_2}.4s,   ${int_reg_2}.4s, ${zero_reg}.4s\n" )";
             }
         } else if (mode == "H_SWISH") {
-            CC_ASSERT(int_regs.size() == 2);
-            //! PERF: reorder below to improve perf
-            temp_ss << R"(
-                    "fadd  ${reg_t0}.4s,   ${int_reg}.4s, ${reg_3}.4s\n" 
-                    "fadd  ${reg_t1}.4s,   ${int_reg_2}.4s, ${reg_3}.4s\n"
-                    "fmax  ${reg_t0}.4s,   ${reg_t0}.4s, ${zero_reg}.4s\n" 
-                    "fmax  ${reg_t1}.4s,   ${reg_t1}.4s, ${zero_reg}.4s\n"
-                    "fmin  ${reg_t0}.4s,   ${reg_t0}.4s, ${reg_6}.4s\n" 
-                    "fmin  ${reg_t1}.4s,   ${reg_t1}.4s, ${reg_6}.4s\n"
-                    "fmul  ${int_reg}.4s,   ${reg_t0}.4s, ${int_reg}.4s\n" 
-                    "fmul  ${int_reg_2}.4s,   ${reg_t1}.4s, ${int_reg_2}.4s\n"
-                    "fmul  ${int_reg}.4s,   ${int_reg}.4s, ${reg_6_inv}.4s\n" 
-                    "fmul  ${int_reg_2}.4s,   ${int_reg_2}.4s, ${reg_6_inv}.4s\n"
-            )";
+            if (int_regs.size() == 1) {
+                temp_ss << R"(
+                        "fadd  ${reg_t0}.4s,   ${int_reg}.4s, ${reg_3}.4s\n" 
+                        "fmax  ${reg_t0}.4s,   ${reg_t0}.4s, ${zero_reg}.4s\n" 
+                        "fmin  ${reg_t0}.4s,   ${reg_t0}.4s, ${reg_6}.4s\n" 
+                        "fmul  ${int_reg}.4s,   ${reg_t0}.4s, ${int_reg}.4s\n" 
+                        "fmul  ${int_reg}.4s,   ${int_reg}.4s, ${reg_6_inv}.4s\n" 
+                )";
+            } else {
+                CC_ASSERT(int_regs.size() == 2);
+                //! PERF: reorder below to improve perf
+                temp_ss << R"(
+                        "fadd  ${reg_t0}.4s,   ${int_reg}.4s, ${reg_3}.4s\n" 
+                        "fadd  ${reg_t1}.4s,   ${int_reg_2}.4s, ${reg_3}.4s\n"
+                        "fmax  ${reg_t0}.4s,   ${reg_t0}.4s, ${zero_reg}.4s\n" 
+                        "fmax  ${reg_t1}.4s,   ${reg_t1}.4s, ${zero_reg}.4s\n"
+                        "fmin  ${reg_t0}.4s,   ${reg_t0}.4s, ${reg_6}.4s\n" 
+                        "fmin  ${reg_t1}.4s,   ${reg_t1}.4s, ${reg_6}.4s\n"
+                        "fmul  ${int_reg}.4s,   ${reg_t0}.4s, ${int_reg}.4s\n" 
+                        "fmul  ${int_reg_2}.4s,   ${reg_t1}.4s, ${int_reg_2}.4s\n"
+                        "fmul  ${int_reg}.4s,   ${int_reg}.4s, ${reg_6_inv}.4s\n" 
+                        "fmul  ${int_reg_2}.4s,   ${int_reg_2}.4s, ${reg_6_inv}.4s\n"
+                )";
+            }
 
         } else {
             CC_ASSERT(mode == "IDENTITY");

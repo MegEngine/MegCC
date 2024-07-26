@@ -47,11 +47,11 @@ std::string gen_im2col(TContext* ctx, TContext* inner_ctx) {
         auto sh = ctx->getAttrInt("stride_h");
         auto sw = ctx->getAttrInt("stride_w");
         if (sh == sw && sw == 1) {
-            ss << nchw_im2col_s1_kern;
+            ss << gen_nchw_im2col_s1_kern(inner_ctx);
         } else {
-            ss << nchw_im2col_kern;
+            ss << gen_nchw_im2col_kern(inner_ctx);
         }
-        ss << nchw_pad_src_kern;
+        ss << gen_nchw_pad_src_kern(inner_ctx);
     }
     return ss.str();
 }

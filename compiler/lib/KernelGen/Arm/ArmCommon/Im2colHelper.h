@@ -130,10 +130,12 @@ std::string gen_nchw44_pad_src_kern(TContext* ctx) {
             .render(nchw44_pad_src_temp);
 }
 
-std::string nchw_im2col_kern = R"(
+std::string gen_nchw_im2col_kern(TContext* ctx) {
+    auto dtype = ctx->getAttrStr("dtype");
+    std::string nchw_im2col_kern = R"(
     #define rep(i, n) for (int i = 0; i < (n); ++i)
     
-    static inline void img2col(const float* __restrict src, float* __restrict dst,
+    static inline void img2col(const ${specifier}* __restrict src, ${specifier}* __restrict dst,
                     const int OW, const int IC,
                     const int IH, const int IW, const int FH, const int FW,
                     const int SH, const int SW, const int cur_index,
@@ -187,11 +189,17 @@ std::string nchw_im2col_kern = R"(
             }
         }
     }
-)";
+    )";
+    return StringTemplate::StringTemplateArgs()
+            .add("specifier", Utils::cvt_dtype_specifier(dtype))
+            .render(nchw_im2col_kern);
+}
 
-std::string nchw_im2col_s1_kern = R"(
+std::string gen_nchw_im2col_s1_kern(TContext* ctx) {
+    auto dtype = ctx->getAttrStr("dtype");
+    std::string nchw_im2col_s1_kern = R"(
     #define rep(i, n) for (int i = 0; i < (n); ++i)
-    static inline void img2col(const float* __restrict src, float* __restrict dst, 
+    static inline void img2col(const ${specifier}* __restrict src, ${specifier}* __restrict dst, 
              const int OW, const int IC, const int IH,
              const int IW, const int FH, const int FW, const int SH, const int SW, const int cur_index,
              const int block_size) {
@@ -244,33 +252,43 @@ std::string nchw_im2col_s1_kern = R"(
         }
     }
 )";
+    return StringTemplate::StringTemplateArgs()
+            .add("specifier", Utils::cvt_dtype_specifier(dtype))
+            .render(nchw_im2col_s1_kern);
+}
 
-std::string nchw_pad_src_kern = R"(
-    static inline void pad_src(float* inptr, float* outptr, int ic, int ih, int iw, int pad_h, int pad_w){
+std::string gen_nchw_pad_src_kern(TContext* ctx) {
+    std::string dtype = ctx->getAttrStr("dtype");
+    std::string nchw_pad_src_kern = R"(
+    static inline void pad_src(${specifier}* inptr, ${specifier}* outptr, int ic, int ih, int iw, int pad_h, int pad_w){
         size_t out_idx = 0;
         int paded_iw = iw + 2 * pad_w;
         int nr_pad_top_bottom = pad_h * paded_iw;
 
         for(int ic_idx = 0; ic_idx < ic; ic_idx++){
-            memset(outptr, 0, sizeof(float) * nr_pad_top_bottom);
+            memset(outptr, 0, sizeof(${specifier}) * nr_pad_top_bottom);
             outptr += nr_pad_top_bottom;
             
             for (int ih_idx = 0; ih_idx < ih; ++ih_idx){
                 for(int i = 0; i < pad_w; ++i){
-                    *outptr++ = 0.f;
+                    *outptr++ = 0;
                 }
-                memcpy(outptr, inptr + ih_idx * iw, sizeof(float) * iw);
+                memcpy(outptr, inptr + ih_idx * iw, sizeof(${specifier}) * iw);
                 outptr += iw;
                 for(int i = 0; i < pad_w; ++i){
-                    *outptr++ = 0.f;
+                    *outptr++ = 0;
                 }
             }
-            memset(outptr, 0, sizeof(float) * nr_pad_top_bottom);
+            memset(outptr, 0, sizeof(${specifier}) * nr_pad_top_bottom);
             outptr += nr_pad_top_bottom;
             inptr += ih * iw;
         }
     }
 )";
+    return StringTemplate::StringTemplateArgs()
+            .add("specifier", Utils::cvt_dtype_specifier(dtype))
+            .render(nchw_pad_src_kern);
+}
 
 }  // namespace
 }  // namespace ArmCommon
