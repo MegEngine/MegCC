@@ -2,6 +2,7 @@
 #include "Arm/Arm64/KernelPack.h"
 #include "Arm/ArmCommon/KernelPack.h"
 #include "Arm/Armv7/KernelPack.h"
+#include "WebAssembly/KernelPack.h"
 #if MEGCC_ENABLE_MLIR_KERN_GEN
 #include "AutoBareMetal/KernelPack.h"
 #endif
@@ -85,6 +86,11 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
                 a32_kerns.end(), armcommon_kerns.begin(), armcommon_kerns.end());
         a32_kerns.insert(a32_kerns.end(), gi_kerns.begin(), gi_kerns.end());
         return {a32_kerns, deduce_func};
+    } else if (arch == Arch::WEB_ASSEMBLY) {
+        auto web32_kerns = WebAssembly::ArchKernelPack::GetKernel(kernel_type);
+        auto gi_kerns = GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
+        web32_kerns.insert(web32_kerns.end(), gi_kerns.begin(), gi_kerns.end());
+        return {web32_kerns, deduce_func};
     }
 #if MEGCC_ENABLE_MLIR_KERN_GEN
     else if (arch == Arch::AUTO_BAREMETAL) {

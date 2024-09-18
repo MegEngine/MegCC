@@ -1190,6 +1190,9 @@ private:
                     return MegCC::Device_ARM32;
                 }
             }
+            case megcc::KernelGen::WEB_ASSEMBLY: {
+                return MegCC::Device_WEB_ASSEMBLY;
+            }
             default:
                 CC_ABORT << "not supported device.\n";
         }
