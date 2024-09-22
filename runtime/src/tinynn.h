@@ -50,6 +50,7 @@ typedef enum {
     TinyNN_ARM64_V82,
     TinyNN_ARM32_V82,
     TinyNN_OPENCL_MALI,
+    TinyNN_WEB_ASSEMBLY
 } TinyNNDevice;
 
 const char* dtype2string(TinyNNDType type);

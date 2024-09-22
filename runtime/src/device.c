@@ -31,7 +31,7 @@ TinyNNStatus init_device(Device* device) {
         return TinyNN_ERROR_NULL_PTR;
     }
     if (device->device_type == TinyNN_ARM64 || device->device_type == TinyNN_ARM32 ||
-        device->device_type == TinyNN_BARE_METAL) {
+        device->device_type == TinyNN_BARE_METAL || device->device_type == TinyNN_WEB_ASSEMBLY) {
         device->alignment = CPU_ALIGNMENT;
         device->malloc = cpu_aligned_malloc;
         device->free = cpu_aligned_free;

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebAssembly Manual Main Call</title>
+     <!-- 引入 Emscripten 生成的 JS 文件 -->
+    <style>
+        .container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .left-column {
+            width: 45%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .right-column {
+            width: 45%;
+            padding: 20px;
+            box-sizing: border-box;
+            border-left: 2px solid #ccc;
+        }
+
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+
+        button,
+        .custom-file-input {
+            padding: 10px 15px;
+            background-color: #d3d3d3;
+            color: black;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        button:hover,
+        .custom-file-input:hover {
+            background-color: #b0b0b0;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .custom-file-input {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border: 1px solid #ddd;
+            height: 150px;
+            overflow-y: auto;
+        }
+
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            background-color: #f4f4f4; /* 灰色底 */
+            border: none;
+            resize: none;
+            font-size: 16px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MegCC WebAssembly Inference</h1>
+
+    <div class="container">
+        <!-- 左边列 -->
+        <div class="left-column">
+            <label for="model">Enter Model:</label>
+            <input type="text" id="model" name="model" placeholder="matmul.tiny" required><br>
+
+            <label for="inputs">Enter Input name separated by space:</label>
+            <input type="text" id="inputs" name="inputs" placeholder="input0 input1" required><br>
+
+            <label for="warmupInput">Enter warm-up count:</label>
+            <input type="number" id="warmupInput" value="1"><br>
+
+            <label for="iterationInput">Inference iterations:</label>
+            <input type="number" id="iterationInput" value="10"><br>
+
+            <button onclick="callMainWithArgs()">Run Inference</button>
+        </div>
+
+        <!-- 右边列 -->
+        <div class="right-column">
+            <label for="fileInput" class="custom-file-input">Upload Input</label>
+            <input type="file" id="fileInput">
+            <pre id="upload-output"></pre> <!-- 输出区域 -->
+
+        </div>
+
+
+    </div> <br>
+    <textarea id="output" rows="9"></textarea>
+
+    <script>
+        var outputElement = document.getElementById('upload-output');
+
+        function printToPage(text) {
+            outputElement.textContent += text + '\n'; // 将输出追加到 <pre> 中
+        }
+
+        var Module = {
+            preRun: [],
+            postRun: [],
+            // 自定义 print 函数，重定向 stdout 输出到 textarea
+            print: (function() {
+                var element = document.getElementById('output');
+                if (element) element.value = '';  // 清空旧输出
+                return function(text) {
+                    if (element) {
+                        element.value += text + "\n";  // 添加新输出
+                        element.scrollTop = element.scrollHeight;  // 自动滚动到最新输出
+                    }
+                };
+            })(),
+            printErr: function(text) {
+                console.error(text);
+            }
+        };
+
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            var file = event.target.files[0];
+
+            if (!file) {
+                alert("Please select a file.");
+                return;
+            }
+
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                var arrayBuffer = e.target.result;
+                var uint8Array = new Uint8Array(arrayBuffer);
+                try {
+                    Module.FS_createPath("/", "input", true, true);
+                } catch (e) {
+
+                }
+                // 将文件写入虚拟文件系统（MEMFS）
+                var filename = '/input/' + file.name; // 在虚拟文件系统中的文件路径
+                Module.FS_createDataFile('/input', file.name, uint8Array, true, true);
+
+                printToPage("Input uploaded: " + filename);
+            };
+            reader.readAsArrayBuffer(file); // 读取文件为 ArrayBuffer
+        });
+
+
+        function listInputFiles(input_list) {
+            var fileList = FS.readdir('/input');
+            fileList = fileList.filter(function (file) {
+                return file !== "." && file !== ".."; // 排除 . 和 ..
+            });
+
+            var formattedPaths = fileList.map(function (file, index) {
+                if (index < input_list.length) {
+                    return input_list[index] + '=/input/' + file;
+                } else {
+                    return null; // 如果 input_list 比 fileList 短，返回 null
+                }
+            }).filter(function (item) {
+                return item !== null; // 过滤掉 null 值
+            });
+
+            return formattedPaths.join(';'); // 以 ; 分隔
+        }
+
+        Module.onRuntimeInitialized = function () {
+            console.log("WebAssembly initialized.");
+            const printToHtml = (text) => {
+                document.getElementById('output').innerHTML += text + '<br>';
+            };
+            Module.print = printToHtml
+            function callMainWithArgs() {
+
+                var iteration = document.getElementById('iterationInput').value;
+                var warmup = document.getElementById('warmupInput').value;
+                var model = document.getElementById('model').value;
+                var input_list = document.getElementById('inputs').value.split(' ');
+                // 调用 main 函数并传递参数
+                if (Module._infer) {
+                    var model_path = allocate(intArrayFromString(model), 'i8', ALLOC_NORMAL);
+                    var output_dir = allocate(intArrayFromString('./'), 'i8', ALLOC_NORMAL);
+                    var data_str = allocate(intArrayFromString(listInputFiles(input_list)), 'i8', ALLOC_NORMAL);
+                    var iteration = allocate(intArrayFromString(iteration), 'i8', ALLOC_NORMAL);
+                    var warmup = allocate(intArrayFromString(warmup), 'i8', ALLOC_NORMAL);
+
+                    Module._infer(model_path, output_dir, "null", data_str, "null", "null", "null",warmup, iteration);
+
+
+                } else {
+                    console.error("Module._infer is not available");
+                }
+            }
+
+            window.callMainWithArgs = callMainWithArgs;
+        };
+    </script>
+    <script src="{{{ SCRIPT }}}"></script>
+</body>
+
+</html>

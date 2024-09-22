@@ -89,6 +89,8 @@ static TinyNNDevice device_from_fbs(ns(Device_enum_t) fbs_device) {
             return TinyNN_ARM32_V82;
         case ns(Device_OPENCL_MALI):
             return TinyNN_OPENCL_MALI;
+        case ns(Device_WEB_ASSEMBLY):
+            return TinyNN_WEB_ASSEMBLY;
         default: {
             LOG_ERROR("no support device from fbs.\n");
         }
@@ -403,6 +405,9 @@ static inline bool valid_device_check(TinyNNDevice device) {
     if (device == TinyNN_BARE_METAL) {
         return true;
     }
+    else if (device == TinyNN_WEB_ASSEMBLY) {
+        return true;
+    }
 #if defined(__aarch64__)
     else if (device == TinyNN_ARM64) {
         return true;
@@ -443,7 +448,6 @@ TinyNNStatus parse_model(
     memset(&(model->host_dev), 0, sizeof(Device));
     model->host_dev.device_type = TinyNN_BARE_METAL;
     TINYNN_ASSERT(init_device(&(model->host_dev)) == TinyNN_SUCCESS);
-
     //! parse weight
     ns(Weight_vec_t) fbs_weights = ns(Model_weight_pool(fbs_model));
     int nr_weight = ns(Weight_vec_len(fbs_weights));
@@ -460,10 +464,10 @@ TinyNNStatus parse_model(
             goto exit;
         }
     }
-
     //! parse device model
-    ns(DeviceModel_vec_t) fbs_device_models = ns(Model_device_models(fbs_model));
+    ns(DeviceModel_vec_t)fbs_device_models = ns(Model_device_models(fbs_model));
     int nr_model = ns(DeviceModel_vec_len(fbs_device_models));
+    printf("nr_model: %d", nr_model);
     int nr_valid_device_model = 0;
     {
         //! cal max memory for tensor and valid device model number
@@ -485,11 +489,11 @@ TinyNNStatus parse_model(
         model->max_tensor_memroy->length_in_byte = max_tensor_size;
         model->max_tensor_memroy->ptr = NULL;
         model->is_own_tensor_memory = 1;
-        LOG_DEBUG(
+        printf(
                 "max_tensor_memroy number %zu.\n",
                 model->max_tensor_memroy->length_in_byte);
     }
-    LOG_DEBUG(
+    printf(
             "device model number: %d, valid device model %d\n", nr_model,
             nr_valid_device_model);
     model->device_models = tinynn_malloc(sizeof(DeviceModel*) * nr_valid_device_model);

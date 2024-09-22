@@ -35,13 +35,14 @@ class Build:
         "armv7-a-qemu",
         "rv64gcv0p7",
         "rv64norvv",
+        "webassembly"
     ]
     # only config cross build target os, host build os, please check SUPPORT_BUILD_ENV
     CROSS_BUILD_TARGET_OS_LIST = ["ANDROID", "LINUX", "IOS", "NOT_STANDARD_OS"]
     CROSS_BUILD_TARGET_ARCH_OS_LIMIT = {
         "ANDROID": ["x86_64", "i386", "aarch64", "armv7-a"],
         # cross build for LINUX-arch, arch always not x86_64/i386
-        "LINUX": ["aarch64", "armv7-a", "rv64gcv0p7", "rv64norvv"],
+        "LINUX": ["aarch64", "armv7-a", "rv64gcv0p7", "rv64norvv", "webassembly"],
         "IOS": ["aarch64", "armv7-a"],
         "NOT_STANDARD_OS": CROSS_BUILD_TARGET_ARCH_LIST,
     }
@@ -289,6 +290,15 @@ class Build:
                         "RISCV_TOOLCHAIN_ROOT")
                     logging.debug("use RISCV toolchains: {}".format(
                         riscv_toolchain_root))
+                
+                webassembly_toolchain=""
+                if args.cross_build_target_arch == "webassembly": 
+                    assert (
+                        "EMSDK" in os.environ
+                    ), "can not find EMSDK env, please download first."
+                    emsdk_root = os.environ.get("EMSDK")
+                    webassembly_toolchain = os.path.join(emsdk_root, "upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake") 
+                    logging.debug("use EMSDK toolchains for webassembly: {}".format(webassembly_toolchain))
                 toolchains_maps = {
                     "aarch64":
                     "-DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_STRIP=aarch64-linux-gnu-strip",
@@ -298,6 +308,8 @@ class Build:
                     "-DCMAKE_TOOLCHAIN_FILE={}".format(rv64gcv0p7_toolchains),
                     "rv64norvv":
                     "-DCMAKE_TOOLCHAIN_FILE={}".format(rv64norvv_toolchains),
+                    "webassembly":
+                    "-DCMAKE_TOOLCHAIN_FILE={}".format(webassembly_toolchain)
                 }
                 assert (
                     args.cross_build_target_arch in toolchains_maps
@@ -373,6 +385,8 @@ class Build:
         cmake_config = 'cmake -G Ninja -H\\"{}\\" -B\\"{}\\" {} -DCMAKE_INSTALL_PREFIX=\\"{}\\" -DRUNTIME_KERNEL_DIR=\\"{}\\"'.format(
             src_dir, build_dir, toolchains_config, install_dir,
             args.kernel_dir)
+        cmake_config = cmake_config + " -DTINYNN_BUILD_FOR_WEBASSEMBLY={}".format(
+            "ON" if args.cross_build_target_arch == "webassembly" else "OFF")
         cmake_config = cmake_config + " -DCMAKE_BUILD_TYPE={}".format(
             "Debug" if args.build_for_debug else "Release")
         cmake_config = cmake_config + " -DTINYNN_SANITY_ALLOC={}".format(

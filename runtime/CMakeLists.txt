@@ -18,6 +18,7 @@ option(TINYNN_CALLBACK_ENABLE
        "enable register callback api, like malloc/free/file/time api" OFF)
 option(TINYNN_BUILD_FOR_NOT_STANDARD_OS
        "Build deploy for Not standard os, like TEE, Bare_board, RTOS etc." OFF)
+option(TINYNN_BUILD_FOR_WEBASSEMBLY "Build with webassembly." OFF)
 
 if(NOT DEFINED RUNTIME_KERNEL_DIR)
   message(FATAL_ERROR "build MegCC runtime RUNTIME_KERNEL_DIR kernel empty")
@@ -35,6 +36,7 @@ message(STATUS "\tEnabel dump tensor to dir:              ${TINYNN_DUMP_TENSOR}"
 message(STATUS "\tBuild with register callback:           ${TINYNN_CALLBACK_ENABLE}")
 message(STATUS "\tEnabel float16 feature:                 ${TINYNN_ENABLE_FP16}")
 message(STATUS "\tEnabel AArch32 dotprod feature:         ${TINYNN_ENABLE_AARCH32_DOT}")
+message(STATUS "\tBuild with Webassembly:                 $(TINYNN_BUILD_FOR_WEBASSEMBLY)")
 message(
   STATUS "\tEnabel AArch64 i8mm feature:            ${TINYNN_ENABLE_AARCH64_I8MM}")
 message(
@@ -235,11 +237,18 @@ target_include_directories(
          $<BUILD_INTERFACE:${FLATCC_DIR}/include>
          $<BUILD_INTERFACE:${IMMIGRATION_DIR}/include>)
 
-if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
+if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS AND NOT TINYNN_BUILD_FOR_WEBASSEMBLY)
   add_executable(tinynn_test_lite example/standard_OS/lite_main.c)
   target_link_libraries(tinynn_test_lite TinyNN m dl)
   add_executable(tinynn_test_lite_share example/standard_OS/lite_main.c)
   target_link_libraries(tinynn_test_lite_share TinyNN_share m dl)
+endif()
+
+if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS AND TINYNN_BUILD_FOR_WEBASSEMBLY)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msimd128 -msse -s EXPORTED_FUNCTIONS=['_infer'] --preload-file ./")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS=['cwrap','allocate','intArrayFromString','FS_createDataFile'] -s INITIAL_MEMORY=256MB")
+  add_executable(tinynn_test_lite example/WebAssembly/wasm_main.c)
+  target_link_libraries(tinynn_test_lite TinyNN m dl)
 endif()
 
 if(TINYNN_ACHIEVE_ALL AND NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS)
