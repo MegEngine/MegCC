@@ -51,7 +51,7 @@ static inline void interleave_helper(
 static inline void interleave_1(
         const float* inptr0, float* outptr, int unroll_k, int ksize, float val) {
     for (int k = 0; k < ksize; k += unroll_k) {
-        int size = min(unroll_k, ksize - k);
+        int size = unroll_k > (ksize - k)? (ksize - k) : unroll_k;
         interleave_helper(inptr0, outptr, unroll_k, size, val);
         inptr0 += size;outptr+=unroll_k;
     }
@@ -61,7 +61,7 @@ static inline void interleave_4(
         const float* inptr0, const float* inptr1, const float* inptr2, const float* inptr3,
         float* outptr, int unroll_k, int ksize, float val) {
      for (int k = 0; k < ksize; k += unroll_k) {
-        int size = min(unroll_k, ksize - k);
+        int size = unroll_k > (ksize - k)? (ksize - k) : unroll_k;
         interleave_helper(inptr0, outptr, unroll_k, size, val);
         inptr0 += size;outptr+=unroll_k;
         interleave_helper(inptr1, outptr, unroll_k, size, val);
@@ -413,7 +413,7 @@ static std::string kern_4x4(TContext* crx) {
 }
 
 std::string pack_A_n(const std::string kern_sym, TContext* ctx) {
-    return "void" + kern_sym + "_packa_n" +
+    return "void " + kern_sym + "_packa_n" +
         WebAssemblyMatmulInternal::GenPackACall(ctx) +
            R"({
         float zerobuff[4];
@@ -586,15 +586,15 @@ std::string gen_kernel(
         const float* cur_pack_b = pack_b;
         for (; n + B_INTERLEAVE - 1 < N; n += B_INTERLEAVE) {
             kern_4x12(pack_a, cur_pack_b, K, output, LDC, 
-                                  min(M - m, 4), bias_ptr);
+                                  (M - m) > 4 ? 4 : (M - m), bias_ptr);
             output += B_INTERLEAVE;
             cur_pack_b += K12;
         }
 
         for (; n < N; n += 4) {
             kern_4x4(pack_a, cur_pack_b, K, output, LDC, 
-                                 min(M - m, 4),
-                                 min(N - n, 4), bias_ptr);
+                                 (M - m) > 4 ? 4 : (M - m),
+                                 (N - n) > 4 ? 4 : (N - n), bias_ptr);
             output += 4;
             cur_pack_b += K4;
         }
