@@ -99,6 +99,9 @@
             <label for="inputs">Enter Input name separated by space:</label>
             <input type="text" id="inputs" name="inputs" placeholder="input0 input1" required><br>
 
+            <label for="print_res">Enter print flag(1 is print results):</label>
+            <input type="number" id="print_res" value="0"><br>
+
             <label for="warmupInput">Enter warm-up count:</label>
             <input type="number" id="warmupInput" value="1"><br>
 
@@ -228,6 +231,7 @@
                 var warmup = document.getElementById('warmupInput').value;
                 var model = document.getElementById('model').value;
                 var input_list = document.getElementById('inputs').value.split(' ');
+                var print = document.getElementById('print_res').value;
                 // 调用 main 函数并传递参数
                 if (Module._infer) {
                     var model_path = allocate(intArrayFromString(model), 'i8', ALLOC_NORMAL);
@@ -235,8 +239,9 @@
                     var data_str = allocate(intArrayFromString(listInputFiles(input_list)), 'i8', ALLOC_NORMAL);
                     var iteration = allocate(intArrayFromString(iteration), 'i8', ALLOC_NORMAL);
                     var warmup = allocate(intArrayFromString(warmup), 'i8', ALLOC_NORMAL);
+                    var print = allocate(intArrayFromString(print), 'i8', ALLOC_NORMAL)
 
-                    Module._infer(model_path, output_dir, "null", data_str, "null", "null", "null",warmup, iteration);
+                    Module._infer(model_path, output_dir, print, data_str, "null", "null", "null",warmup, iteration);
 
 
                 } else {
