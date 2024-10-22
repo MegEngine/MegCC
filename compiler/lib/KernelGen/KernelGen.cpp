@@ -88,8 +88,6 @@ std::pair<std::vector<const KernelFunc*>, const DeduceFunc*> KernelPack::GetKern
         return {a32_kerns, deduce_func};
     } else if (arch == Arch::WEB_ASSEMBLY) {
         auto web32_kerns = WebAssembly::ArchKernelPack::GetKernel(kernel_type);
-        auto gi_kerns = GeneralIntrinsic::ArchKernelPack::GetKernel(kernel_type);
-        web32_kerns.insert(web32_kerns.end(), gi_kerns.begin(), gi_kerns.end());
         return {web32_kerns, deduce_func};
     }
 #if MEGCC_ENABLE_MLIR_KERN_GEN

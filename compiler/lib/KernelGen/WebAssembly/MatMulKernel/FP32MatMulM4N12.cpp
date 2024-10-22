@@ -25,8 +25,11 @@ bool Fp32MatMulM4N12::IsAvailable(TContext* context) const {
                     context->getAttrOprand("operand:2").dtype == "f32";
     bool ok_mode = context->getAttrStr("format") == "DEFAULT" &&
                    context->getAttrStr("compute_mode") == "DEFAULT";
-    return ok_dtype && ok_mode;
-    return true;
+    bool ok_shape = context->getAttrOprand("operand:1").shape.size() == 2 &&
+                    context->getAttrOprand("operand:0").shape.size() == 2;
+    bool ok_tran = context->getAttrBool("transposeA") == false &&
+                   context->getAttrBool("transposeB") == false;
+    return ok_dtype && ok_mode && ok_shape && ok_tran;    
 }
 
 

@@ -30,6 +30,8 @@ static inline void transpose_4x4_1_s(
     _mm_storeu_ps(outptr + 4, xmm1);
     _mm_storeu_ps(outptr + 8, xmm2);
     _mm_storeu_ps(outptr + 12, xmm3);
+#else
+    #error "SSE not supported."
 #endif
 }
     )";
@@ -110,7 +112,8 @@ static inline void interleave_4x12_1_s(
     _mm_storeu_ps(outptr + 36, xmm9);
     _mm_storeu_ps(outptr + 40, xmm10);
     _mm_storeu_ps(outptr + 44, xmm11);
-
+#else
+    #error "SSE not supported."
 #endif
 }
 
@@ -123,6 +126,8 @@ static inline void interleave_1x12_1_s(const float* inptr0, float* outptr) {
     _mm_storeu_ps(outptr, xmm0);
     _mm_storeu_ps(outptr + 4, xmm1);
     _mm_storeu_ps(outptr + 8, xmm2);
+#else
+    #error "SSE not supported."
 #endif
 }
     )";
@@ -143,6 +148,8 @@ static inline void interleave_4x4_1_s(
     _mm_storeu_ps(outptr + 4, xmm1);
     _mm_storeu_ps(outptr + 8, xmm2);
     _mm_storeu_ps(outptr + 12, xmm3);
+#else
+    #error "SSE not supported."
 #endif
 }
 
@@ -150,6 +157,8 @@ static inline void interleave_1x4_1_s(const float* inptr0, float* outptr) {
 #ifdef __SSE__
     __m128 xmm0 = _mm_loadu_ps(inptr0); 
     _mm_storeu_ps(outptr, xmm0);
+#else
+    #error "SSE not supported."
 #endif
 }
     )";
@@ -187,132 +196,132 @@ static std::string kern_4x12(TContext* ctx) {
             xmm14 = wasm_f32x4_make(0.0f, 0.0f, 0.0f, 0.0f);
             xmm15 = wasm_f32x4_make(0.0f, 0.0f, 0.0f, 0.0f);
         }
+        int remain = K - k;
+        if (remain > 4) {
+            remain = 4;
+        }
+        b_ptr += (remain - 1) * 12;
+        switch (remain) {
+            case 4:
+                xmm1 = wasm_v128_load(b_ptr);
+                xmm2 = wasm_v128_load(b_ptr + 4);
+                xmm0 = wasm_f32x4_splat(*(a_ptr+12));
+                xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
+                xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
+                xmm3 = wasm_v128_load(b_ptr + 8); 
+                xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+13));
+                xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+14));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
+                xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+15));
+                xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
+                xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
+                xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                b_ptr -= 12;
+            case 3:
+                xmm1 = wasm_v128_load(b_ptr);
+                xmm0 = wasm_f32x4_splat(*(a_ptr+8));
+                xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
+                xmm2 = wasm_v128_load(b_ptr + 4);
+                xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
+                xmm3 = wasm_v128_load(b_ptr + 8); 
+                xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+9));
+                xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+10));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
+                xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+11));
+                xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
+                xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
+                xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                b_ptr -= 12;
+            case 2:
+                xmm1 = wasm_v128_load(b_ptr);
+                xmm0 = wasm_f32x4_splat(*(a_ptr+4));
+                xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
+                xmm2 = wasm_v128_load(b_ptr + 4);
+                xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
+                xmm3 = wasm_v128_load(b_ptr + 8); 
+                xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+5));
 
-        // line 1
-        xmm1 = wasm_v128_load(b_ptr);
-        xmm2 = wasm_v128_load(b_ptr + 4);
-        xmm3 = wasm_v128_load(b_ptr + 8); 
-        xmm0 = wasm_f32x4_splat(*(a_ptr+0));
-        xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
-        xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
-        xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+1));
-        xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+2));
-        
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
-        xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+3));
+                xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+6));
+                
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
+                xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+7));
 
-        xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
-        xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
-        xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
+                xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
+                xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                b_ptr -= 12;
+            case 1:
+                xmm1 = wasm_v128_load(b_ptr);
+                xmm2 = wasm_v128_load(b_ptr + 4);
+                xmm3 = wasm_v128_load(b_ptr + 8); 
+                xmm0 = wasm_f32x4_splat(*(a_ptr+0));
+                xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
+                xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
+                xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+1));
+                xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+2));
+                
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
+                xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
+                xmm0 = wasm_f32x4_splat(*(a_ptr+3));
 
-        b_ptr += 12;
-
-        if ((k + 1) >= K) break;
-
-        //line 2
-        xmm1 = wasm_v128_load(b_ptr);
-        xmm0 = wasm_f32x4_splat(*(a_ptr+4));
-        xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
-        xmm2 = wasm_v128_load(b_ptr + 4);
-        xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
-        xmm3 = wasm_v128_load(b_ptr + 8); 
-        xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+5));
-
-        xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+6));
-        
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
-        xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+7));
-
-        xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
-        xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
-        xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
+                xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
+                xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
+                break;
+            default:;
+        }
     
-        b_ptr += 12;
-
-        if ((k + 2) >= K) break;
-
-        // line 3
-        xmm1 = wasm_v128_load(b_ptr);
-        xmm0 = wasm_f32x4_splat(*(a_ptr+8));
-        xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
-        xmm2 = wasm_v128_load(b_ptr + 4);
-        xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
-        xmm3 = wasm_v128_load(b_ptr + 8); 
-        xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+9));
-        xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+10));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
-        xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+11));
-        xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
-        xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
-        xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
-    
-        b_ptr += 12;
-
-        if ((k + 3) >= K) break;
-
-        // line 4
-        xmm1 = wasm_v128_load(b_ptr);
-        xmm2 = wasm_v128_load(b_ptr + 4);
-        xmm0 = wasm_f32x4_splat(*(a_ptr+12));
-        xmm4 = wasm_f32x4_add(xmm4, wasm_f32x4_mul(xmm0, xmm1));
-        xmm5 = wasm_f32x4_add(xmm5, wasm_f32x4_mul(xmm0, xmm2));
-        xmm3 = wasm_v128_load(b_ptr + 8); 
-        xmm6 = wasm_f32x4_add(xmm6, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+13));
-        xmm7 = wasm_f32x4_add(xmm7, wasm_f32x4_mul(xmm0, xmm1));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm2));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+14));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm1));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm2));
-        xmm12 = wasm_f32x4_add(xmm12, wasm_f32x4_mul(xmm0, xmm3));
-        xmm0 = wasm_f32x4_splat(*(a_ptr+15));
-        xmm13 = wasm_f32x4_add(xmm13, wasm_f32x4_mul(xmm0, xmm1));
-        xmm14 = wasm_f32x4_add(xmm14, wasm_f32x4_mul(xmm0, xmm2));
-        xmm15 = wasm_f32x4_add(xmm15, wasm_f32x4_mul(xmm0, xmm3));
-    
-        b_ptr += 12;
+        b_ptr += 48;
         a_ptr += 16; 
     }
     
     // store
-    wasm_v128_store(output + 0, xmm4);
-    wasm_v128_store(output + 4, xmm5);
-    wasm_v128_store(output + 8, xmm6);
-    if (m_remain > 1) {
-        wasm_v128_store(output + LDC + 0, xmm7);
-        wasm_v128_store(output + LDC + 4, xmm8);
-        wasm_v128_store(output + LDC + 8, xmm9);
-    } 
-    if (m_remain > 2) {
-        wasm_v128_store(output + LDC * 2 + 0, xmm10);
-        wasm_v128_store(output + LDC * 2 + 4, xmm11);
-        wasm_v128_store(output + LDC * 2 + 8, xmm12);
-    }
-    if (m_remain > 3) {
-        wasm_v128_store(output + LDC * 3 + 0, xmm13);
-        wasm_v128_store(output + LDC * 3 + 4, xmm14);
-        wasm_v128_store(output + LDC * 3 + 8, xmm15);
-    }
 
+    switch (m_remain) {
+        case 4:
+            wasm_v128_store(output + LDC * 3 + 0, xmm13);
+            wasm_v128_store(output + LDC * 3 + 4, xmm14);
+            wasm_v128_store(output + LDC * 3 + 8, xmm15);
+        case 3:
+            wasm_v128_store(output + LDC * 2 + 0, xmm10);
+            wasm_v128_store(output + LDC * 2 + 4, xmm11);
+            wasm_v128_store(output + LDC * 2 + 8, xmm12);
+        case 2:
+            wasm_v128_store(output + LDC + 0, xmm7);
+            wasm_v128_store(output + LDC + 4, xmm8);
+            wasm_v128_store(output + LDC + 8, xmm9);
+        case 1:
+            wasm_v128_store(output + 0, xmm4);
+            wasm_v128_store(output + 4, xmm5);
+            wasm_v128_store(output + 8, xmm6);
+            break;
+        default:;
+    }
+#else
+    #error "WebAssembly not supported."
 #endif     
 
 }
@@ -342,51 +351,56 @@ static std::string kern_4x4(TContext* crx) {
             xmm11 = wasm_f32x4_make(0.0f, 0.0f, 0.0f, 0.0f);
         }
         // line 1
-        xmm0 = wasm_v128_load(b_ptr);            
-        xmm4 = wasm_f32x4_splat(*(a_ptr+0));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm4));
-        xmm5 = wasm_f32x4_splat(*(a_ptr+1));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm5));
-        xmm6 = wasm_f32x4_splat(*(a_ptr+2));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm6));
-        xmm7 = wasm_f32x4_splat(*(a_ptr+3));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm7));
+    
+        int remain = K - (k + 1);
+        if (remain > 4){
+            remain = 4;
+        }
+        switch(remain) {
+            case 4:
+                xmm3 = wasm_v128_load(b_ptr + 12);
+                xmm4 = wasm_f32x4_splat(*(a_ptr+12));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm3, xmm4));
+                xmm5 = wasm_f32x4_splat(*(a_ptr+13));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm3, xmm5));
+                xmm6 = wasm_f32x4_splat(*(a_ptr+14));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm3, xmm6));
+                xmm7 = wasm_f32x4_splat(*(a_ptr+15));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm3, xmm7));
+            case 3:
+                xmm2 = wasm_v128_load(b_ptr + 8);
+                xmm4 = wasm_f32x4_splat(*(a_ptr+8));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm2, xmm4));
+                xmm5 = wasm_f32x4_splat(*(a_ptr+9));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm2, xmm5));
+                xmm6 = wasm_f32x4_splat(*(a_ptr+10));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm2, xmm6));
+                xmm7 = wasm_f32x4_splat(*(a_ptr+11));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm2, xmm7));
+            case 2:
+                xmm1 = wasm_v128_load(b_ptr + 4);
+                xmm4 = wasm_f32x4_splat(*(a_ptr+4));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm1, xmm4));            
+                xmm5 = wasm_f32x4_splat(*(a_ptr+5));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm1, xmm5));
+                xmm6 = wasm_f32x4_splat(*(a_ptr+6));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm1, xmm6));
+                xmm7 = wasm_f32x4_splat(*(a_ptr+7));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm1, xmm7));
+            case 1:
+                xmm0 = wasm_v128_load(b_ptr);
+                xmm4 = wasm_f32x4_splat(*(a_ptr+0));
+                xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm0, xmm4));
+                xmm5 = wasm_f32x4_splat(*(a_ptr+1));
+                xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm0, xmm5));
+                xmm6 = wasm_f32x4_splat(*(a_ptr+2));
+                xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm0, xmm6));
+                xmm7 = wasm_f32x4_splat(*(a_ptr+3));
+                xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm0, xmm7));
+                break;
+            default:;
 
-        if ((k + 1) >= K) break;
-        // line 2
-        xmm1 = wasm_v128_load(b_ptr + 4);
-        xmm4 = wasm_f32x4_splat(*(a_ptr+4));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm1, xmm4));            
-        xmm5 = wasm_f32x4_splat(*(a_ptr+5));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm1, xmm5));
-        xmm6 = wasm_f32x4_splat(*(a_ptr+6));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm1, xmm6));
-        xmm7 = wasm_f32x4_splat(*(a_ptr+7));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm1, xmm7));
-        
-        if ((k + 2) >= K) break;
-        // line 3
-        xmm2 = wasm_v128_load(b_ptr + 8);
-        xmm4 = wasm_f32x4_splat(*(a_ptr+8));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm2, xmm4));
-        xmm5 = wasm_f32x4_splat(*(a_ptr+9));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm2, xmm5));
-        xmm6 = wasm_f32x4_splat(*(a_ptr+10));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm2, xmm6));
-        xmm7 = wasm_f32x4_splat(*(a_ptr+11));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm2, xmm7));
-        
-        if ((k + 3) >= K) break; 
-        // line 4
-        xmm3 = wasm_v128_load(b_ptr + 12);
-        xmm4 = wasm_f32x4_splat(*(a_ptr+12));
-        xmm8 = wasm_f32x4_add(xmm8, wasm_f32x4_mul(xmm3, xmm4));
-        xmm5 = wasm_f32x4_splat(*(a_ptr+13));
-        xmm9 = wasm_f32x4_add(xmm9, wasm_f32x4_mul(xmm3, xmm5));
-        xmm6 = wasm_f32x4_splat(*(a_ptr+14));
-        xmm10 = wasm_f32x4_add(xmm10, wasm_f32x4_mul(xmm3, xmm6));
-        xmm7 = wasm_f32x4_splat(*(a_ptr+15));
-        xmm11 = wasm_f32x4_add(xmm11, wasm_f32x4_mul(xmm3, xmm7));
+        }
         
         a_ptr += 16;
         b_ptr += 16;
@@ -404,7 +418,8 @@ static std::string kern_4x4(TContext* crx) {
         }
     }
 
-    
+#else
+    #error "WebAssembly not supported."
 #endif
 
 

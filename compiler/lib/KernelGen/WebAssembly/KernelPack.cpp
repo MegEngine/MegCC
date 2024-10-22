@@ -7,6 +7,7 @@ using namespace megcc;
 using namespace KernelGen;
 using namespace WebAssembly;
 
+namespace {
 struct AllWebAssemblyKernel {
     AllWebAssemblyKernel() {
         inner_map[KernelPack::KernType::MatrixMulKernel] = {
@@ -19,7 +20,7 @@ struct AllWebAssemblyKernel {
             inner_map;
 
 };
-
+}
 std::vector<const KernelFunc*> WebAssembly::ArchKernelPack::GetKernel(
         KernelPack::KernType kernel_type) {
     static AllWebAssemblyKernel all_kernel;

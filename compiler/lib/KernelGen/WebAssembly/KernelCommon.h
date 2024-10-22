@@ -7,9 +7,6 @@ namespace megcc {
 namespace KernelGen {
 namespace WebAssembly {
 
-struct WebAssemblyInternalKernelFunc : public InternalKernelFunc {
-    
-};
 
 class WebAssemblyKernelFunc : public KernelFunc {
 
