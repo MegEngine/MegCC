@@ -106,6 +106,7 @@
             <input type="number" id="iterationInput" value="10"><br>
 
             <button onclick="callMainWithArgs()">Run Inference</button>
+            <button onclick="downloadFile()">Download Output</button> 
         </div>
 
         <!-- 右边列 -->
@@ -122,10 +123,6 @@
 
     <script>
         var outputElement = document.getElementById('upload-output');
-
-        function printToPage(text) {
-            outputElement.textContent += text + '\n'; // 将输出追加到 <pre> 中
-        }
 
         var Module = {
             preRun: [],
@@ -145,6 +142,33 @@
                 console.error(text);
             }
         };
+
+        function downloadFile() {
+            const filename = 'output'; // 指定要下载的文件名
+            const filePath = './output'; // 在虚拟文件系统中的路径
+            
+            // 从虚拟文件系统读取文件内容
+            const fileData = Module.FS_readFile(filePath);
+            console.log(fileData)
+            // 创建 Blob 对象
+            const blob = new Blob([fileData], { type: 'application/octet-stream' });
+
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            alert(url);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename; // 指定下载的文件名
+            document.body.appendChild(a);
+            a.click(); // 触发下载
+            document.body.removeChild(a); // 移除链接
+
+            // 释放 Blob URL
+            URL.revokeObjectURL(url);
+        }
+        function printToPage(text) {
+            outputElement.textContent += text + '\n'; // 将输出追加到 <pre> 中
+        }
 
         document.getElementById('fileInput').addEventListener('change', function (event) {
             var file = event.target.files[0];
@@ -223,7 +247,7 @@
             window.callMainWithArgs = callMainWithArgs;
         };
     </script>
-    <script src="{{{ SCRIPT }}}"></script>
+    <script src="tinynn_test_lite.js"></script>
 </body>
 
 </html>

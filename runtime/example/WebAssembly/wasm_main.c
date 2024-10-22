@@ -44,6 +44,7 @@ static void* read_file(const char* file_name) {
 }
 
 static void write_file(const char* file_name, void* ptr, size_t length) {
+    printf("%s", file_name);
     FILE* fout = fopen(file_name, "wb");
     if (!fout) {
         fprintf(stderr, "Open file error!!\n");
@@ -108,10 +109,9 @@ static inline void run_model(
                 "get output tensor size failed\n");
         char path_buffer[200];
         if (output_dir) {
-            snprintf(
-                    path_buffer, 200, "%s/%s_%d", output_dir, output_name_ptr[i],
-                    instance_cnt);
-            write_file(path_buffer, output_ptr, length);
+            const char* file_path = "./output";
+            
+            write_file(file_path, output_ptr, length);
         }
         if (print_out) {
             printf("output data: ");

@@ -246,7 +246,7 @@ endif()
 
 if(NOT TINYNN_BUILD_FOR_NOT_STANDARD_OS AND TINYNN_BUILD_FOR_WEBASSEMBLY)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msimd128 -msse -s EXPORTED_FUNCTIONS=['_infer'] --preload-file ./")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS=['cwrap','allocate','intArrayFromString','FS_createDataFile'] -s INITIAL_MEMORY=256MB")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS=['cwrap','allocate','intArrayFromString','FS_createDataFile','FS_readFile'] -s INITIAL_MEMORY=256MB")
   add_executable(tinynn_test_lite example/WebAssembly/wasm_main.c)
   target_link_libraries(tinynn_test_lite TinyNN m dl)
 endif()

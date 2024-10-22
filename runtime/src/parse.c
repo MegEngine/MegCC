@@ -467,7 +467,6 @@ TinyNNStatus parse_model(
     //! parse device model
     ns(DeviceModel_vec_t)fbs_device_models = ns(Model_device_models(fbs_model));
     int nr_model = ns(DeviceModel_vec_len(fbs_device_models));
-    printf("nr_model: %d", nr_model);
     int nr_valid_device_model = 0;
     {
         //! cal max memory for tensor and valid device model number
@@ -489,11 +488,11 @@ TinyNNStatus parse_model(
         model->max_tensor_memroy->length_in_byte = max_tensor_size;
         model->max_tensor_memroy->ptr = NULL;
         model->is_own_tensor_memory = 1;
-        printf(
+        LOG_DEBUG(
                 "max_tensor_memroy number %zu.\n",
                 model->max_tensor_memroy->length_in_byte);
     }
-    printf(
+    LOG_DEBUG(
             "device model number: %d, valid device model %d\n", nr_model,
             nr_valid_device_model);
     model->device_models = tinynn_malloc(sizeof(DeviceModel*) * nr_valid_device_model);
