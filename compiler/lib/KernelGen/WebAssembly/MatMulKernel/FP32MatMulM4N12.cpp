@@ -29,7 +29,8 @@ bool Fp32MatMulM4N12::IsAvailable(TContext* context) const {
                     context->getAttrOprand("operand:0").shape.size() == 2;
     bool ok_tran = context->getAttrBool("transposeA") == false &&
                    context->getAttrBool("transposeB") == false;
-    return ok_dtype && ok_mode && ok_shape && ok_tran;    
+    bool ok_bias = context->getAttrInt("nr_operands") == 3;
+    return ok_dtype && ok_mode && ok_shape && ok_tran && ok_bias;    
 }
 
 
