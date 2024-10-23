@@ -12,6 +12,7 @@ file(GLOB_RECURSE COMMON_SOURCES_FILE ./Common/*.cpp ./Common/*.h)
 file(GLOB_RECURSE UTILS_SOURCES_FILE ./Utils/*.cpp ./Utils/*.h)
 file(GLOB_RECURSE JIT_SOURCES_FILE ./Jit/*.cpp ./Jit/*.h)
 file(GLOB_RECURSE AUTO_BARE_SOURCES_FILE ./AutoBareMetal/*.cpp ./AutoBareMetal/*.h)
+file(GLOB_RECURSE WEBASM_SOURCES_FILE ./WebAssembly/*.cpp ./WebAssembly/*.h)
 file(GLOB INTERFACE_SOURCE_FILE ./KernelGen.cpp)
 file(GLOB_RECURSE GI_SOURCES_FILE ./GeneralIntrinsic/*.cpp ./GeneralIntrinsic/*.h)
 
@@ -32,7 +33,8 @@ list(
   ${COMMON_SOURCES_FILE}
   ${UTILS_SOURCES_FILE}
   ${JIT_SOURCES_FILE}
-  ${GI_SOURCES_FILE})
+  ${GI_SOURCES_FILE}
+  ${WEBASM_SOURCES_FILE})
 if(MEGCC_ENABLE_MLIR_KERN_GEN)
   list(APPEND STATIC_KERNEL ${AUTO_BARE_SOURCES_FILE})
 endif()

@@ -455,6 +455,7 @@ __flatbuffers_define_integer_type(MegCC_Device, MegCC_Device_enum_t, 8)
 #define MegCC_Device_ARM64_V82 ((MegCC_Device_enum_t)INT8_C(3))
 #define MegCC_Device_ARM32_V82 ((MegCC_Device_enum_t)INT8_C(4))
 #define MegCC_Device_OPENCL_MALI ((MegCC_Device_enum_t)INT8_C(5))
+#define MegCC_Device_WEB_ASSEMBLY ((MegCC_Device_enum_t)INT8_C(6))
 
 static inline const char *MegCC_Device_name(MegCC_Device_enum_t value)
 {
@@ -465,6 +466,7 @@ static inline const char *MegCC_Device_name(MegCC_Device_enum_t value)
     case MegCC_Device_ARM64_V82: return "ARM64_V82";
     case MegCC_Device_ARM32_V82: return "ARM32_V82";
     case MegCC_Device_OPENCL_MALI: return "OPENCL_MALI";
+    case MegCC_Device_WEB_ASSEMBLY: return "WEB_ASSEMBLY";
     default: return "";
     }
 }
@@ -478,6 +480,7 @@ static inline int MegCC_Device_is_known_value(MegCC_Device_enum_t value)
     case MegCC_Device_ARM64_V82: return 1;
     case MegCC_Device_ARM32_V82: return 1;
     case MegCC_Device_OPENCL_MALI: return 1;
+    case MegCC_Device_WEB_ASSEMBLY: return 1;
     default: return 0;
     }
 }

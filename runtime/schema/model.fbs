@@ -44,6 +44,7 @@ enum Device : byte {
     ARM64_V82,
     ARM32_V82,
     OPENCL_MALI,
+    WEB_ASSEMBLY
 }
 
 // flag the tensor type

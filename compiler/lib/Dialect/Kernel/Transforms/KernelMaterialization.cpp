@@ -33,7 +33,10 @@ llvm::cl::opt<megcc::KernelGen::Arch> target_arch(
                         "compiler for device arm64v7."),
                 clEnumValN(
                         megcc::KernelGen::ARM64V7_WITH_DOT, "arm64v7_with_dot",
-                        "compiler for device arm64 and armv7 with dotprod feature.")),
+                        "compiler for device arm64 and armv7 with dotprod feature."),
+                clEnumValN(
+                        megcc::KernelGen::WEB_ASSEMBLY, "webassembly",
+                        "compiler for device webassembly.")),
         llvm::cl::init(megcc::KernelGen::BAREMETAL));
 
 namespace mlir {
