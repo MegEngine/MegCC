@@ -11,7 +11,7 @@ env:
 
 jobs:
   test_compiler:
-    runs-on: [self-hosted, amax]
+    runs-on: self-hosted
     timeout-minutes: 240
     container:
       image: mcd.io/mcd-apps/megcc-ci:v1
@@ -26,7 +26,7 @@ jobs:
         run: ./compiler/script/ci/run_local_regression_test.sh ./compiler/local_cmake_build
 
   test_kernel:
-    runs-on: [self-hosted, amax]
+    runs-on: self-hosted
     timeout-minutes: 240
     container:
       image: mcd.io/mcd-apps/megcc-ci:v1
